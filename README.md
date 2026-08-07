@@ -10,12 +10,12 @@ trying to make it a (fairly) realistic frisbee world.
   Finances, player contracts, transfers, and world environment are based on football.
 Some stats/attributes/traits are generated randomly instead of being pulled from wherever.
 Currently there is no mechanism of generating new players, so long-running careers might not work.
-
-  send feedback/report errors to
-krzysztofjrud@gmail.com
+Yes, I know the media articles are cringe but I think it's still fun x
+The game was vibe-coded so it might have some weird bugs i haven't caught yet.
 
   have fun!
-
-  the game was vibe-coded so it might have some weird bugs i haven't caught yet
+  
+  send feedback/report errors to
+krzysztofjrud@gmail.com
 
   This game has no affiliation to Ultimate Frisbee Association (UFA) and is my personal non-commercial hobby project.
