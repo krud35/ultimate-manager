@@ -23,7 +23,7 @@ const pl = {
   errWeekly: 'Nie udało się dodać — wybierz dwa różne fokusy i wolny dzień tygodnia.',
   errOneOff: 'Nie udało się zaplanować jednorazowego treningu (data + 2 różne fokusy).',
   intensityHint:
-    'Intensywność: lekka +mało zmęczenia / wysoka +więcej wzrostu i zmęczenia. Wzrost skilli jest celowo wolny — potencjał i wiek limitują sufit.',
+    'Intensywność: lekka +mało zmęczenia / wysoka +więcej wzrostu i zmęczenia. Wzrost skilli jest celowo wolny — wiek i potencjał rozwoju limitują sufit.',
   individual: 'Trening indywidualny',
   individualHint: 'Dzienny fokus zawodnika (obok planu drużynowego).',
   filterAll: 'Wszyscy',
@@ -50,8 +50,6 @@ const pl = {
   attendance: 'frekwencja',
   engagement: 'zaangażowanie',
   luck: 'szczęście',
-  roomPlus: (n) => `room +${n}`,
-  decline: 'decline',
 }
 
 const en = {
@@ -76,7 +74,7 @@ const en = {
   errWeekly: 'Could not add — pick two different focuses and a free weekday.',
   errOneOff: 'Could not schedule one-off training (date + 2 different focuses).',
   intensityHint:
-    'Intensity: light = less fatigue / high = more growth and fatigue. Skill growth is intentionally slow — potential and age cap the ceiling.',
+    'Intensity: light = less fatigue / high = more growth and fatigue. Skill growth is intentionally slow — age and development room cap the ceiling.',
   individual: 'Individual training',
   individualHint: 'Daily player focus (alongside the team plan).',
   filterAll: 'All',
@@ -103,8 +101,6 @@ const en = {
   attendance: 'attendance',
   engagement: 'engagement',
   luck: 'luck',
-  roomPlus: (n) => `room +${n}`,
-  decline: 'decline',
 }
 
 export function trainingStrings(lang = UI_LANG.PL) {

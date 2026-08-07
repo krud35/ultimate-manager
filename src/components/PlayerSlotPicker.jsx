@@ -554,6 +554,7 @@ export default function PlayerSlotPicker({
         }
         leaguePlayerStats={leaguePlayerStats}
         teamName={teamName}
+        isOwnPlayer
       />
     </div>
   )

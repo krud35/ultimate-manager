@@ -1,5 +1,5 @@
 import { useUiLang } from './UiLangContext'
-import { pickDesc, pickLabel, resolveTeamName, displaySeasonLabel } from './locale'
+import { resolveTeamName, displaySeasonLabel } from './locale'
 import { useMemo, useState } from 'react'
 import { getPlayerFullName } from '../data/mockPlayers'
 import { teamDisplayName, teamStandingsRank } from '../seasonEngine/seasonStateFromLeague.js'
@@ -33,7 +33,6 @@ import {
   getPlayerMarketValue,
   getTransferBudget,
   getSalaryBudget,
-  getTransferPolicy,
   ensureTeamReputation,
   getTeamReputation,
   reputationLabel,
@@ -52,6 +51,7 @@ import {
 } from '../career'
 import PlayerTraitChips from '../components/PlayerTraitChips'
 import { teamProfileStrings } from './strings/teamProfile'
+import { financeStateLabel, financeStateToneClass } from './fogOfWar'
 
 function StatPill({ label, value, valueClassName = 'text-ufa-text' }) {
   return (
@@ -62,7 +62,7 @@ function StatPill({ label, value, valueClassName = 'text-ufa-text' }) {
   )
 }
 
-function StartingSevenCard({ player, seasonState }) {
+function StartingSevenCard({ player, seasonState, isOwnClub }) {
   const { lang } = useUiLang()
   const t = teamProfileStrings(lang)
   const line = playerSeasonLine(seasonState, player)
@@ -80,23 +80,15 @@ function StartingSevenCard({ player, seasonState }) {
       <StaminaBar stamina={stamina} compact />
       <div className="flex items-center justify-between gap-2 text-[11px]">
         <span className="text-ufa-muted">{t.form}</span>
-        <span
-          className={`font-semibold tabular-nums ${formToneClass(form)}`}
-          title={formLabel(form, lang)}
-        >
-          {form}
-        </span>
+        <span className={`font-semibold ${formToneClass(form)}`}>{formLabel(form, lang)}</span>
       </div>
       <div className="flex items-center justify-between gap-2 text-[11px]">
         <span className="text-ufa-muted">{t.morale}</span>
-        <span
-          className={`font-semibold tabular-nums ${moraleToneClass(morale)}`}
-          title={moraleLabel(morale, lang)}
-        >
-          {morale}
+        <span className={`font-semibold ${moraleToneClass(morale)}`}>
+          {moraleLabel(morale, lang)}
         </span>
       </div>
-      <PlayerTraitChips player={player} max={2} />
+      {isOwnClub && <PlayerTraitChips player={player} max={2} />}
       <div className="grid grid-cols-4 gap-1 text-center text-[11px] tabular-nums">
         <span title={t.goals}>
           <span className="text-ufa-muted block">G</span>
@@ -144,21 +136,22 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
   const standing = seasonState?.standings?.[teamId]
   const rank = teamStandingsRank(seasonState, teamId)
   const ratings = useMemo(() => teamOffenseDefenseRatings(team), [team])
+  const isOwnClub = Boolean(teamId && teamId === seasonState?.playerTeamId)
 
   const finances = useMemo(() => {
     if (!team) return null
     ensureTeamFinances(team)
     const budget = getTransferBudget(team)
     const salaryBudget = getSalaryBudget(team)
-    const policy = getTransferPolicy(team)
     let rosterValue = 0
     for (const p of team.players ?? []) {
       rosterValue += getPlayerMarketValue(p)
     }
-    return { budget, salaryBudget, policy, rosterValue }
+    return { budget, salaryBudget, rosterValue }
   }, [team])
 
   const teamMorale = useMemo(() => {
+    if (!isOwnClub) return null
     const players = team?.players ?? []
     if (!players.length) return null
     let sum = 0
@@ -167,7 +160,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
       sum += getPlayerMorale(p)
     }
     return Math.round(sum / players.length)
-  }, [team?.players])
+  }, [team?.players, isOwnClub])
 
   const teamForm = useMemo(() => {
     const players = team?.players ?? []
@@ -346,14 +339,14 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
             {teamForm != null && (
               <StatPill
                 label={t.form}
-                value={teamForm}
+                value={formLabel(teamForm, lang)}
                 valueClassName={formToneClass(teamForm)}
               />
             )}
             {teamMorale != null && (
               <StatPill
                 label={t.morale}
-                value={teamMorale}
+                value={moraleLabel(teamMorale, lang)}
                 valueClassName={moraleToneClass(teamMorale)}
               />
             )}
@@ -386,8 +379,6 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
             <span className={`font-medium ${reputationToneClass(teamReputation)}`}>
               {reputationLabel(teamReputation, lang)}
             </span>
-            {' · '}
-            {t.prestigeHint}
           </p>
         )}
         {teamFans != null && (
@@ -422,54 +413,51 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
       {finances && (
         <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
           <h3 className="font-semibold text-ufa-text mb-1">{t.finances}</h3>
-          <p className="text-xs text-ufa-muted mb-4">{t.financesHint}</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+          {isOwnClub ? (
+            <>
+              <p className="text-xs text-ufa-muted mb-4">{t.financesHintOwn}</p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+                    {t.transferBudget}
+                  </p>
+                  <p className="mt-1 text-xl font-bold tabular-nums text-ufa-accent">
+                    {formatUsd(finances.budget)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+                    {t.wageBudget}
+                  </p>
+                  <p className="mt-1 text-xl font-bold tabular-nums text-ufa-gold">
+                    {formatUsd(finances.salaryBudget)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+                    {t.rosterValue}
+                  </p>
+                  <p className="mt-1 text-xl font-bold tabular-nums text-ufa-gold">
+                    {formatUsdCompact(finances.rosterValue)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-ufa-muted tabular-nums">
+                    {formatUsd(finances.rosterValue)}
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3 max-w-sm">
               <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
-                {t.transferBudget}
+                {t.financesState}
               </p>
-              <p className="mt-1 text-xl font-bold tabular-nums text-ufa-accent">
-                {formatUsd(finances.budget)}
+              <p
+                className={`mt-1 text-xl font-bold capitalize ${financeStateToneClass(finances.budget)}`}
+              >
+                {financeStateLabel(finances.budget, lang)}
               </p>
             </div>
-            <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
-              <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
-                {t.wageBudget}
-              </p>
-              <p className="mt-1 text-xl font-bold tabular-nums text-ufa-gold">
-                {formatUsd(finances.salaryBudget)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
-              <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
-                {t.rosterValue}
-              </p>
-              <p className="mt-1 text-xl font-bold tabular-nums text-ufa-gold">
-                {formatUsdCompact(finances.rosterValue)}
-              </p>
-              <p className="mt-0.5 text-xs text-ufa-muted tabular-nums">
-                {formatUsd(finances.rosterValue)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
-              <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
-                {t.transferPolicy}
-              </p>
-              <p className="mt-1 text-lg font-semibold text-ufa-text">
-                {pickLabel(finances.policy, lang)}
-              </p>
-              <p className="mt-1 text-xs text-ufa-muted leading-relaxed">
-                {pickDesc(finances.policy, lang) || finances.policy.blurb}
-              </p>
-              <p className="mt-2 text-xs tabular-nums text-ufa-muted">
-                {t.negotiationDifficulty}{' '}
-                <span className="font-semibold text-ufa-text">
-                  ×{Number(finances.policy.negotiationDifficulty).toFixed(2)}
-                </span>
-                {' · '}ask ×{Number(finances.policy.askPriceMultiplier).toFixed(2)}
-              </p>
-            </div>
-          </div>
+          )}
         </section>
       )}
 
@@ -479,7 +467,12 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
         <p className="text-xs text-ufa-muted mb-4">{t.bestSevenHint}</p>
         <div className="flex gap-3 overflow-x-auto pb-1">
           {startingSeven.map((p) => (
-            <StartingSevenCard key={p.id} player={p} seasonState={seasonState} />
+            <StartingSevenCard
+              key={p.id}
+              player={p}
+              seasonState={seasonState}
+              isOwnClub={isOwnClub}
+            />
           ))}
         </div>
       </section>
@@ -576,7 +569,9 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
                   </th>
                 ))}
                 <th className="px-3 py-3 font-medium text-left">{t.hand}</th>
-                <th className="px-3 py-3 font-medium text-left min-w-[140px]">{t.traits}</th>
+                {isOwnClub && (
+                  <th className="px-3 py-3 font-medium text-left min-w-[140px]">{t.traits}</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-ufa-border">
@@ -588,17 +583,11 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
                   <td className="px-3 py-2.5 min-w-[100px]">
                     <StaminaBar stamina={stamina} compact />
                   </td>
-                  <td
-                    className={`px-3 py-2.5 tabular-nums font-semibold ${formToneClass(form)}`}
-                    title={formLabel(form, lang)}
-                  >
-                    {form}
+                  <td className={`px-3 py-2.5 font-semibold ${formToneClass(form)}`}>
+                    {formLabel(form, lang)}
                   </td>
-                  <td
-                    className={`px-3 py-2.5 tabular-nums font-semibold ${moraleToneClass(morale)}`}
-                    title={moraleLabel(morale, lang)}
-                  >
-                    {morale}
+                  <td className={`px-3 py-2.5 font-semibold ${moraleToneClass(morale)}`}>
+                    {moraleLabel(morale, lang)}
                   </td>
                   <td className="px-3 py-2.5 tabular-nums text-center">{line.games}</td>
                   <td className="px-3 py-2.5 tabular-nums text-center">{line.pointsPlayed}</td>
@@ -611,9 +600,11 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
                     <ThrowingHandBadge player={player} />
                     <span className="sr-only">{getDominantHand(player)}</span>
                   </td>
-                  <td className="px-3 py-2.5 max-w-[200px]">
-                    <PlayerTraitChips player={player} max={2} />
-                  </td>
+                  {isOwnClub && (
+                    <td className="px-3 py-2.5 max-w-[200px]">
+                      <PlayerTraitChips player={player} max={2} />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

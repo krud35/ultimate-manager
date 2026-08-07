@@ -33,17 +33,17 @@ export function getPlayerForm(player) {
 export function formLabel(form = FORM_DEFAULT, lang = 'pl') {
   const m = clampForm(form)
   if (lang === 'en') {
-    if (m >= 88) return 'Excellent'
-    if (m >= 75) return 'Good'
-    if (m >= 60) return 'Steady'
-    if (m >= 45) return 'Poor'
-    return 'Awful'
+    if (m >= 88) return 'great'
+    if (m >= 75) return 'good'
+    if (m >= 60) return 'neutral'
+    if (m >= 45) return 'bad'
+    return 'terrible'
   }
-  if (m >= 88) return 'Świetna'
-  if (m >= 75) return 'Dobra'
-  if (m >= 60) return 'Stabilna'
-  if (m >= 45) return 'Słaba'
-  return 'Kiepska'
+  if (m >= 88) return 'świetna'
+  if (m >= 75) return 'dobra'
+  if (m >= 60) return 'neutralna'
+  if (m >= 45) return 'zła'
+  return 'fatalna'
 }
 
 export function formToneClass(form = FORM_DEFAULT) {

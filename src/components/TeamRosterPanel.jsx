@@ -375,6 +375,7 @@ export default function TeamRosterPanel({
         onClose={() => setProfilePlayer(null)}
         stamina={profilePlayer ? getSt(profilePlayer) : null}
         leaguePlayerStats={leaguePlayerStats}
+        isOwnPlayer
       />
     </>
   )

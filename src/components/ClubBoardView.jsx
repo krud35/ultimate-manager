@@ -15,7 +15,6 @@ import {
   facilityLevelBlurb,
   facilityToneClass,
   facilityUpgradeCost,
-  facilityEffectSummary,
   upgradeFacility,
   FACILITY_LEVEL_MAX,
   getSponsorContract,
@@ -52,9 +51,6 @@ function FacilityCard({ team, facilityId, budget, lang, t, busy, onUpgrade }) {
       </div>
       <p className="text-xs text-ufa-muted leading-relaxed min-h-[2.5rem]">
         {facilityLevelBlurb(facilityId, level, lang)}
-      </p>
-      <p className={`text-xs font-medium ${facilityToneClass(facilityId, level)}`}>
-        {t.effect}: {facilityEffectSummary(facilityId, level, lang)}
       </p>
       <div className="mt-auto flex items-center justify-between gap-2 pt-1">
         <span className="text-[11px] text-ufa-muted">
@@ -300,7 +296,6 @@ export default function ClubBoardView({ career, onChange }) {
       <section className="space-y-3">
         <div>
           <h3 className="font-semibold text-ufa-text">{t.facilities}</h3>
-          <p className="text-xs text-ufa-muted mt-0.5">{t.hintFacilities}</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {FACILITY_IDS.map((id) => (

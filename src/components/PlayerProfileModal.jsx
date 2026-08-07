@@ -39,8 +39,15 @@ import { useUiLang } from '../ui/UiLangContext'
 import { UI_LANG } from '../ui/locale'
 import { playerProfileStrings } from '../ui/strings/playerProfile'
 import { resolveTeamName } from '../ui/locale'
+import {
+  attributeBandLabel,
+  attributeBandToneClass,
+  fatigueBandLabel,
+  fatigueBandToneClass,
+} from '../ui/fogOfWar'
 
-function CategoryBlock({ category, skills }) {
+function CategoryBlock({ category, skills, fogged }) {
+  const { lang } = useUiLang()
   const overall = Math.round(getCategoryOverall(skills, category))
   const keys = PLAYER_STAT_CATEGORIES[category]
   const labels = SUB_STAT_LABELS[category] ?? {}
@@ -49,17 +56,32 @@ function CategoryBlock({ category, skills }) {
     <section className="rounded-lg border border-ufa-border bg-ufa-bg/50 p-3">
       <div className="flex items-center justify-between gap-2 mb-3">
         <h3 className="text-sm font-semibold text-ufa-text">{CATEGORY_LABELS[category]}</h3>
-        <span className="text-xs font-bold tabular-nums text-ufa-accent">{overall}</span>
+        {fogged ? (
+          <span className={`text-xs font-bold ${attributeBandToneClass(overall)}`}>
+            {attributeBandLabel(overall, lang)}
+          </span>
+        ) : (
+          <span className="text-xs font-bold tabular-nums text-ufa-accent">{overall}</span>
+        )}
       </div>
       <ul className="space-y-2">
-        {keys.map((key) => (
-          <li key={key} className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
-            <span className="text-xs text-ufa-muted sm:w-[9.5rem] shrink-0">
-              {labels[key] ?? key}
-            </span>
-            <SkillBar value={getSubStat(skills, category, key)} />
-          </li>
-        ))}
+        {keys.map((key) => {
+          const value = getSubStat(skills, category, key)
+          return (
+            <li key={key} className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+              <span className="text-xs text-ufa-muted sm:w-[9.5rem] shrink-0">
+                {labels[key] ?? key}
+              </span>
+              {fogged ? (
+                <span className={`text-xs font-semibold ${attributeBandToneClass(value)}`}>
+                  {attributeBandLabel(value, lang)}
+                </span>
+              ) : (
+                <SkillBar value={value} />
+              )}
+            </li>
+          )
+        })}
       </ul>
     </section>
   )
@@ -71,6 +93,7 @@ export default function PlayerProfileModal({
   stamina = null,
   leaguePlayerStats = null,
   teamName = null,
+  isOwnPlayer = true,
 }) {
   const { lang } = useUiLang()
   const t = playerProfileStrings(lang)
@@ -114,6 +137,7 @@ export default function PlayerProfileModal({
     resolveTeamName(teamObj, lang) ||
     player.team ||
     '—'
+  const fatigue = player.developmentFatigue ?? 0
 
   return createPortal(
     <div
@@ -142,14 +166,11 @@ export default function PlayerProfileModal({
                   {t.age} <span className="font-semibold text-ufa-text">{player.age}</span>
                 </span>
               )}
-              {player.potential != null && (
-                <span className="rounded bg-ufa-accent/10 px-2 py-0.5 text-xs text-ufa-accent ring-1 ring-ufa-accent/30">
-                  POT {player.potential}
-                </span>
-              )}
-              {player.developmentFatigue != null && player.developmentFatigue > 0 && (
-                <span className="rounded bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400 ring-1 ring-amber-500/30">
-                  {t.fatigue} {player.developmentFatigue}
+              {isOwnPlayer && (
+                <span
+                  className={`rounded bg-ufa-bg px-2 py-0.5 text-xs ring-1 ring-ufa-border ${fatigueBandToneClass(fatigue)}`}
+                >
+                  {t.fatigue} <span className="font-semibold">{fatigueBandLabel(fatigue, lang)}</span>
                 </span>
               )}
               {injured ? (
@@ -165,29 +186,27 @@ export default function PlayerProfileModal({
               ) : null}
               <span
                 className={`rounded bg-ufa-bg px-2 py-0.5 text-xs ring-1 ring-ufa-border ${formToneClass(form)}`}
-                title={t.formTitle(form)}
               >
-                {t.form} <span className="font-semibold">{form}</span>
-                <span className="text-ufa-muted font-normal"> · {formLabel(form, lang)}</span>
+                {t.form} <span className="font-semibold">{formLabel(form, lang)}</span>
               </span>
               <span
                 className={`rounded bg-ufa-bg px-2 py-0.5 text-xs ring-1 ring-ufa-border ${moraleToneClass(morale)}`}
-                title={t.moraleTitle(morale)}
               >
-                {t.morale} <span className="font-semibold">{morale}</span>
-                <span className="text-ufa-muted font-normal"> · {moraleLabel(morale, lang)}</span>
+                {t.morale} <span className="font-semibold">{moraleLabel(morale, lang)}</span>
               </span>
               <span className="text-xs text-ufa-muted">
                 {t.dominant}:{' '}
                 <span className="font-medium text-ufa-text">{dominantLabel}</span>
               </span>
-              <span
-                className={`inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm font-bold ${
-                  ovr >= 85 ? 'bg-ufa-accent/20 text-ufa-accent' : 'bg-slate-700/50 text-slate-200'
-                }`}
-              >
-                OVR {ovr}
-              </span>
+              {isOwnPlayer && (
+                <span
+                  className={`inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm font-bold ${
+                    ovr >= 85 ? 'bg-ufa-accent/20 text-ufa-accent' : 'bg-slate-700/50 text-slate-200'
+                  }`}
+                >
+                  OVR {ovr}
+                </span>
+              )}
               <span
                 className="rounded bg-ufa-bg px-2 py-0.5 text-xs text-ufa-gold ring-1 ring-ufa-border tabular-nums"
                 title={t.marketValueTitle}
@@ -197,13 +216,19 @@ export default function PlayerProfileModal({
               {contract && (
                 <span
                   className="rounded bg-ufa-bg px-2 py-0.5 text-xs text-ufa-accent ring-1 ring-ufa-border tabular-nums"
-                  title={t.contractTitle(
-                    formatUsd(contract.weeklyWage),
-                    contract.years,
-                    contract.weeksRemaining,
-                  )}
+                  title={
+                    isOwnPlayer
+                      ? t.contractTitle(
+                          formatUsd(contract.weeklyWage),
+                          contract.years,
+                          contract.weeksRemaining,
+                        )
+                      : undefined
+                  }
                 >
-                  {t.contractWeekShort(formatUsdCompact(contract.weeklyWage), contract.years)}
+                  {isOwnPlayer
+                    ? t.contractWeekShort(formatUsdCompact(contract.weeklyWage), contract.years)
+                    : t.yearsShort(contract.years)}
                 </span>
               )}
               {stamina != null && (
@@ -226,10 +251,12 @@ export default function PlayerProfileModal({
           <p className="text-xs uppercase tracking-wide text-ufa-muted mb-2">{t.contractSection}</p>
           {contract ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <p className="text-xs text-ufa-muted">{t.weeklyWage}</p>
-                <p className="text-lg font-semibold tabular-nums">{formatUsd(contract.weeklyWage)}</p>
-              </div>
+              {isOwnPlayer && (
+                <div>
+                  <p className="text-xs text-ufa-muted">{t.weeklyWage}</p>
+                  <p className="text-lg font-semibold tabular-nums">{formatUsd(contract.weeklyWage)}</p>
+                </div>
+              )}
               <div>
                 <p className="text-xs text-ufa-muted">{t.years}</p>
                 <p className="text-lg font-semibold tabular-nums">{contract.years}</p>
@@ -240,22 +267,26 @@ export default function PlayerProfileModal({
                   {t.weeks(contract.weeksRemaining)}
                 </p>
               </div>
-              <div>
-                <p className="text-xs text-ufa-muted">{t.totalCost}</p>
-                <p className="text-lg font-semibold tabular-nums text-ufa-gold">
-                  {formatUsd(contract.weeklyWage * (contract.weeksRemaining ?? 0))}
-                </p>
-              </div>
+              {isOwnPlayer && (
+                <div>
+                  <p className="text-xs text-ufa-muted">{t.totalCost}</p>
+                  <p className="text-lg font-semibold tabular-nums text-ufa-gold">
+                    {formatUsd(contract.weeklyWage * (contract.weeksRemaining ?? 0))}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-ufa-muted text-xs">{t.noContract}</p>
           )}
         </div>
 
-        <div className="px-5 py-4 border-b border-ufa-border/80 text-sm">
-          <p className="text-xs uppercase tracking-wide text-ufa-muted mb-2">{t.traits}</p>
-          <PlayerTraitChips player={player} />
-        </div>
+        {isOwnPlayer && (
+          <div className="px-5 py-4 border-b border-ufa-border/80 text-sm">
+            <p className="text-xs uppercase tracking-wide text-ufa-muted mb-2">{t.traits}</p>
+            <PlayerTraitChips player={player} />
+          </div>
+        )}
 
         <div className="px-5 py-4 border-b border-ufa-border/80 text-sm">
           <p className="text-xs uppercase tracking-wide text-ufa-muted mb-2">{t.season}</p>
@@ -286,7 +317,7 @@ export default function PlayerProfileModal({
 
         <div className="p-5 grid gap-4 sm:grid-cols-2">
           {Object.keys(PLAYER_STAT_CATEGORIES).map((cat) => (
-            <CategoryBlock key={cat} category={cat} skills={skills} />
+            <CategoryBlock key={cat} category={cat} skills={skills} fogged={!isOwnPlayer} />
           ))}
         </div>
       </div>

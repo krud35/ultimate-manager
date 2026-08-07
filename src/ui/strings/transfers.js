@@ -54,19 +54,14 @@ const pl = {
 
   close: 'Zamknij',
 
-  askPrice: 'Cena wywoławcza',
-
   yourBudget: 'Twój budżet',
 
   negotiateHint:
-
-    'Kluby niechętnie sprzedają najlepszych. Oferta bliska lub powyżej ceny wywoławczej zwiększa szansę, ale nigdy nie gwarantuje sukcesu — trudność zależy od polityki transferowej klubu.',
+    'Kluby niechętnie sprzedają najlepszych. Oferta bliska lub powyżej oficjalnej wyceny zwiększa szansę, ale nigdy nie gwarantuje sukcesu.',
 
   yourOffer: 'Twoja oferta (USD)',
 
-  setAsk: 'Ustaw ask',
-
-  askPlus: 'Ask +15%',
+  setValue: 'Ustaw wycenę',
 
   acceptCounter: (usd) => `Akceptuj kontrpropozycję ${usd}`,
 
@@ -77,8 +72,7 @@ const pl = {
   clubBudgetHint: (name) => `${name} · budżet, negocjacje i Twoje deale`,
 
   leagueMarketHint:
-
-    'Pełny rynek ligi · wartości OVR × wiek × potencjał · AI handluje w oknie',
+    'Pełny rynek ligi · wyceny × wiek · AI handluje w oknie',
 
   transferBudget: 'Budżet transferowy',
 
@@ -89,6 +83,10 @@ const pl = {
   searchPlaceholder: 'Szukaj zawodnika / klubu…',
 
   sortValue: 'Sortuj: wartość',
+
+  sortAge: 'Sortuj: wiek',
+
+  age: 'Wiek',
 
   showN: (n) => `Pokaż: ${n}`,
 
@@ -265,19 +263,14 @@ const en = {
 
   close: 'Close',
 
-  askPrice: 'Asking price',
-
   yourBudget: 'Your budget',
 
   negotiateHint:
-
-    'Clubs are reluctant to sell stars. An offer near or above asking improves odds but never guarantees success — difficulty depends on transfer policy.',
+    'Clubs are reluctant to sell stars. An offer near or above official valuation improves odds but never guarantees success.',
 
   yourOffer: 'Your offer (USD)',
 
-  setAsk: 'Set ask',
-
-  askPlus: 'Ask +15%',
+  setValue: 'Set valuation',
 
   acceptCounter: (usd) => `Accept counter ${usd}`,
 
@@ -288,8 +281,7 @@ const en = {
   clubBudgetHint: (name) => `${name} · budget, negotiations and your deals`,
 
   leagueMarketHint:
-
-    'Full league market · OVR × age × potential · AI trades in-window',
+    'Full league market · valuation × age · AI trades in-window',
 
   transferBudget: 'Transfer budget',
 
@@ -300,6 +292,10 @@ const en = {
   searchPlaceholder: 'Search player / club…',
 
   sortValue: 'Sort: value',
+
+  sortAge: 'Sort: age',
+
+  age: 'Age',
 
   showN: (n) => `Show: ${n}`,
 

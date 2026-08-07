@@ -201,6 +201,25 @@ export default function App() {
   const [matchStamina, setMatchStamina] = useState(null)
   const [teamProfileId, setTeamProfileId] = useState(null)
   const [simProgress, setSimProgress] = useState(null)
+  const [navOpen, setNavOpen] = useState(() => {
+    try {
+      return localStorage.getItem('ufa-nav-open') !== '0'
+    } catch {
+      return true
+    }
+  })
+
+  const toggleNav = useCallback(() => {
+    setNavOpen((open) => {
+      const next = !open
+      try {
+        localStorage.setItem('ufa-nav-open', next ? '1' : '0')
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }, [])
 
   const league = career?.league ?? null
   const playerTeamId = career?.playerTeamId ?? null
@@ -1372,6 +1391,17 @@ export default function App() {
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-3">
+              {activeTab !== 'match' && (
+                <button
+                  type="button"
+                  onClick={toggleNav}
+                  className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover sm:text-sm"
+                  aria-expanded={navOpen}
+                  aria-controls="main-nav"
+                >
+                  {navOpen ? tShell.navHide : tShell.navShow}
+                </button>
+              )}
               <LangSwitch lang={uiLang} onChange={setUiLang} />
               <button
                 type="button"
@@ -1383,8 +1413,8 @@ export default function App() {
             </div>
           </div>
 
-          {activeTab !== 'match' && (
-            <nav className="flex flex-col gap-2" aria-label={tShell.navAria}>
+          {activeTab !== 'match' && navOpen && (
+            <nav id="main-nav" className="flex flex-col gap-2" aria-label={tShell.navAria}>
               <div className="flex flex-wrap gap-1 rounded-lg bg-ufa-bg p-1 ring-1 ring-ufa-border">
                 {NAV_CATEGORIES.map((cat) => {
                   const active = cat.id === activeCategoryId

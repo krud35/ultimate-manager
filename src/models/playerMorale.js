@@ -54,17 +54,17 @@ export function applyMoraleToStat(value, morale = MORALE_DEFAULT) {
 export function moraleLabel(morale = MORALE_DEFAULT, lang = 'pl') {
   const m = clampMorale(morale)
   if (lang === 'en') {
-    if (m >= 88) return 'Excellent'
-    if (m >= 75) return 'Good'
-    if (m >= 60) return 'Steady'
-    if (m >= 45) return 'Poor'
-    return 'Awful'
+    if (m >= 88) return 'great'
+    if (m >= 75) return 'good'
+    if (m >= 60) return 'neutral'
+    if (m >= 45) return 'bad'
+    return 'terrible'
   }
-  if (m >= 88) return 'Świetne'
-  if (m >= 75) return 'Dobre'
-  if (m >= 60) return 'Stabilne'
-  if (m >= 45) return 'Słabe'
-  return 'Kiepskie'
+  if (m >= 88) return 'świetne'
+  if (m >= 75) return 'dobre'
+  if (m >= 60) return 'neutralne'
+  if (m >= 45) return 'złe'
+  return 'fatalne'
 }
 
 export function moraleToneClass(morale = MORALE_DEFAULT) {

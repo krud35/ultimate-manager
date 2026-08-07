@@ -24,13 +24,12 @@ import {
   weekdayLabel,
 } from '../career/teamTraining.js'
 import { injuryStatusLabel, isPlayerInjured } from '../models/playerInjury.js'
-
-function fatigueClass(fatigue) {
-  if (fatigue >= 75) return 'text-red-400'
-  if (fatigue >= 50) return 'text-amber-400'
-  if (fatigue >= 25) return 'text-ufa-gold'
-  return 'text-ufa-accent'
-}
+import {
+  fatigueBandLabel,
+  fatigueBandToneClass,
+  trainingRoomLabel,
+  trainingRoomToneClass,
+} from '../ui/fogOfWar'
 
 function qualityClass(q) {
   if (q >= 78) return 'text-emerald-400'
@@ -343,7 +342,11 @@ export default function TrainingView({
   const players = useMemo(() => {
     const list = [...(team?.players ?? [])]
     for (const p of list) ensurePlayerDevelopment(p, { leaguePlayerStats })
-    return list.sort((a, b) => (b.potential ?? 0) - (a.potential ?? 0))
+    return list.sort((a, b) => {
+      const roomA = (a.potential ?? getOverallRating(a.skills)) - getOverallRating(a.skills)
+      const roomB = (b.potential ?? getOverallRating(b.skills)) - getOverallRating(b.skills)
+      return roomB - roomA
+    })
   }, [team, leaguePlayerStats])
 
   const filtered = useMemo(() => {
@@ -429,7 +432,6 @@ export default function TrainingView({
                 <th className="px-4 py-3 font-medium">{t.player}</th>
                 <th className="px-3 py-3 font-medium">{t.age}</th>
                 <th className="px-3 py-3 font-medium">OVR</th>
-                <th className="px-3 py-3 font-medium">POT</th>
                 <th className="px-3 py-3 font-medium">{t.fatigue}</th>
                 <th className="px-3 py-3 font-medium">{t.status}</th>
                 <th className="px-3 py-3 font-medium">{t.trainingFocus}</th>
@@ -445,15 +447,16 @@ export default function TrainingView({
                   <tr key={player.id} className="hover:bg-ufa-panel-hover">
                     <td className="px-4 py-3">
                       <p className="font-medium text-ufa-text">{getPlayerFullName(player)}</p>
-                      <p className="text-xs text-ufa-muted">
-                        {room > 0 ? t.roomPlus(room) : player.age >= 30 ? t.decline : '—'}
+                      <p
+                        className={`text-xs ${trainingRoomToneClass(room, player.age ?? 0)}`}
+                      >
+                        {trainingRoomLabel(room, player.age ?? 0, lang)}
                       </p>
                     </td>
                     <td className="px-3 py-3 tabular-nums text-ufa-text">{player.age}</td>
                     <td className="px-3 py-3 tabular-nums text-ufa-text">{ovr}</td>
-                    <td className="px-3 py-3 tabular-nums text-ufa-accent font-semibold">{pot}</td>
-                    <td className={`px-3 py-3 tabular-nums font-medium ${fatigueClass(fatigue)}`}>
-                      {fatigue}
+                    <td className={`px-3 py-3 font-medium ${fatigueBandToneClass(fatigue)}`}>
+                      {fatigueBandLabel(fatigue, lang)}
                     </td>
                     <td className="px-3 py-3 text-sm">
                       {isPlayerInjured(player) ? (

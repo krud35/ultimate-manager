@@ -1,5 +1,5 @@
 import { useUiLang } from '../ui/UiLangContext'
-import { pickDesc, pickLabel } from '../ui/locale'
+import { pickLabel } from '../ui/locale'
 import { transfersStrings } from '../ui/strings/transfers'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getOverallRating } from '../data/mockPlayers'
@@ -11,7 +11,6 @@ import {
   getPlayerMarketValue,
   getTransferBudget,
   getSalaryBudget,
-  getTransferPolicy,
   getTransferWindowState,
   listTransferMarket,
   simulateAiTransferActivity,
@@ -39,20 +38,6 @@ function WindowBanner({ windowState }) {
   )
 }
 
-function PolicyBadge({ policy }) {
-  const { lang } = useUiLang()
-  const t = transfersStrings(lang)
-  if (!policy) return null
-  return (
-    <span
-      className="rounded bg-ufa-bg px-1.5 py-0.5 text-[10px] text-ufa-muted ring-1 ring-ufa-border"
-      title={`${pickDesc(policy, lang)} · ${t.difficulty} ×${policy.negotiationDifficulty}`}
-    >
-      {pickLabel(policy, lang)} ×{Number(policy.negotiationDifficulty).toFixed(2)}
-    </span>
-  )
-}
-
 function formatTransferDate(entry, lang = 'pl') {
   if (entry?.date) return entry.date
   if (entry?.at) {
@@ -73,7 +58,7 @@ function NegotiateModal({
 }) {
   const { lang } = useUiLang()
   const t = transfersStrings(lang)
-  const [offer, setOffer] = useState(() => String(row?.askPrice ?? row?.marketValue ?? 0))
+  const [offer, setOffer] = useState(() => String(row?.marketValue ?? 0))
 
   if (!row) return null
 
@@ -98,7 +83,8 @@ function NegotiateModal({
             <p className="text-xs uppercase tracking-wide text-ufa-muted">{t.negotiateTitle}</p>
             <h3 className="text-lg font-semibold text-ufa-text">{row.name}</h3>
             <p className="mt-1 text-sm text-ufa-muted">
-              {row.teamName} · OVR {row.ovr}
+              {row.teamName}
+              {row.age != null ? ` · ${row.age}` : ''}
               {row.rank === 0 ? t.clubTop1 : row.rank <= 2 ? t.clubTopN(row.rank + 1) : ''}
             </p>
           </div>
@@ -113,23 +99,14 @@ function NegotiateModal({
             <p className="font-semibold tabular-nums text-ufa-text">{formatUsd(row.marketValue)}</p>
           </div>
           <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
-            <p className="text-[10px] uppercase text-ufa-muted">{t.askPrice}</p>
-            <p className="font-semibold tabular-nums text-ufa-gold">{formatUsd(row.askPrice)}</p>
-          </div>
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
-            <p className="text-[10px] uppercase text-ufa-muted">{t.weeklyWage}</p>
-            <p className="font-semibold tabular-nums text-ufa-text">{formatUsd(row.weeklyWage ?? 0)}</p>
-          </div>
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
             <p className="text-[10px] uppercase text-ufa-muted">{t.years}</p>
             <p className="font-semibold tabular-nums text-ufa-text">{row.contractYears ?? '—'}</p>
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <PolicyBadge policy={row.transferPolicy} />
-          <span className="text-xs text-ufa-muted">{t.yourBudget + ': ' + formatUsd(budget)}</span>
-        </div>
+        <p className="mt-3 text-xs text-ufa-muted">
+          {t.yourBudget}: {formatUsd(budget)}
+        </p>
 
         <p className="mt-3 text-xs text-ufa-muted leading-relaxed">{t.negotiateHint}</p>
         <p className="mt-2 text-xs text-ufa-gold leading-relaxed">
@@ -137,43 +114,36 @@ function NegotiateModal({
         </p>
 
         <div className="mt-4 space-y-3">
-            <label className="block text-sm text-ufa-text">
-              {t.yourOffer}
-              <input
-                type="number"
-                min={0}
-                step={1000}
-                value={offer}
-                onChange={(e) => setOffer(e.target.value)}
-                className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text tabular-nums"
-              />
-            </label>
-            {overBudget && <p className="text-xs text-red-400">{t.overBudget}</p>}
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={overBudget || offerNum <= 0}
-                onClick={() => onSubmitOffer(offerNum)}
-                className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
-              >
-                {t.sendOffer}
-              </button>
-              <button
-                type="button"
-                onClick={() => setOffer(String(row.askPrice))}
-                className="rounded-md border border-ufa-border px-3 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
-              >
-                {t.setAsk}
-              </button>
-              <button
-                type="button"
-                onClick={() => setOffer(String(Math.round((row.askPrice * 1.15) / 1000) * 1000))}
-                className="rounded-md border border-ufa-border px-3 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
-              >
-                {t.askPlus}
-              </button>
-            </div>
+          <label className="block text-sm text-ufa-text">
+            {t.yourOffer}
+            <input
+              type="number"
+              min={0}
+              step={1000}
+              value={offer}
+              onChange={(e) => setOffer(e.target.value)}
+              className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text tabular-nums"
+            />
+          </label>
+          {overBudget && <p className="text-xs text-red-400">{t.overBudget}</p>}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={overBudget || offerNum <= 0}
+              onClick={() => onSubmitOffer(offerNum)}
+              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+            >
+              {t.sendOffer}
+            </button>
+            <button
+              type="button"
+              onClick={() => setOffer(String(row.marketValue))}
+              className="rounded-md border border-ufa-border px-3 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
+            >
+              {t.setValue}
+            </button>
           </div>
+        </div>
       </div>
     </div>
   )
@@ -188,10 +158,9 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
   const budget = getTransferBudget(buyer)
   const salaryBudget = getSalaryBudget(buyer)
   const weeklyBill = teamWeeklyWageBill(buyer)
-  const buyerPolicy = getTransferPolicy(buyer)
 
   const [teamFilter, setTeamFilter] = useState('all')
-  const [sortKey, setSortKey] = useState('ovr')
+  const [sortKey, setSortKey] = useState('value')
   const [query, setQuery] = useState('')
   const [pageSize, setPageSize] = useState(20)
   const [page, setPage] = useState(0)
@@ -259,10 +228,9 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
     }
     const sorted = [...list]
     sorted.sort((a, b) => {
-      if (sortKey === 'value') return b.marketValue - a.marketValue
-      if (sortKey === 'ask') return b.askPrice - a.askPrice
+      if (sortKey === 'age') return (a.age ?? 99) - (b.age ?? 99)
       if (sortKey === 'name') return a.name.localeCompare(b.name)
-      return b.ovr - a.ovr
+      return b.marketValue - a.marketValue
     })
     return sorted
   }, [market, teamFilter, query, sortKey])
@@ -351,9 +319,6 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                 </p>
               </div>
             </div>
-            <div className="mt-1">
-              <PolicyBadge policy={buyerPolicy} />
-            </div>
           </div>
         </div>
 
@@ -405,9 +370,8 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                 onChange={(e) => setSortKey(e.target.value)}
                 className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-1.5 text-sm text-ufa-text"
               >
-                <option value="ovr">{t.sortOvr}</option>
                 <option value="value">{t.sortValue}</option>
-                <option value="ask">{t.sortAsk}</option>
+                <option value="age">{t.sortAge}</option>
                 <option value="name">{t.sortName}</option>
               </select>
               <select
@@ -425,15 +389,13 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
           </div>
 
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="text-xs uppercase tracking-wide text-ufa-muted">
                 <tr className="border-b border-ufa-border">
                   <th className="px-2 py-2 font-medium">{t.player}</th>
                   <th className="px-2 py-2 font-medium">{t.club}</th>
-                  <th className="px-2 py-2 font-medium">OVR</th>
+                  <th className="px-2 py-2 font-medium">{t.age}</th>
                   <th className="px-2 py-2 font-medium">{t.value}</th>
-                  <th className="px-2 py-2 font-medium">{t.ask}</th>
-                  <th className="px-2 py-2 font-medium">{t.policy}</th>
                   <th className="px-2 py-2 font-medium" />
                 </tr>
               </thead>
@@ -462,17 +424,11 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                       </div>
                     </td>
                     <td className="px-2 py-2.5 text-ufa-muted">{row.teamShort}</td>
-                    <td className="px-2 py-2.5 tabular-nums font-semibold text-ufa-text">
-                      {row.ovr}
+                    <td className="px-2 py-2.5 tabular-nums text-ufa-text">
+                      {row.age ?? '—'}
                     </td>
                     <td className="px-2 py-2.5 tabular-nums text-ufa-text">
                       {formatUsdCompact(row.marketValue)}
-                    </td>
-                    <td className="px-2 py-2.5 tabular-nums text-ufa-gold">
-                      {formatUsdCompact(row.askPrice)}
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <PolicyBadge policy={row.transferPolicy} />
                     </td>
                     <td className="px-2 py-2.5 text-right">
                       <button
@@ -491,7 +447,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-2 py-8 text-center text-ufa-muted">
+                    <td colSpan={5} className="px-2 py-8 text-center text-ufa-muted">
                       {t.noPlayers}
                     </td>
                   </tr>
@@ -689,6 +645,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
           setProfileTeamName(null)
         }}
         teamName={profileTeamName}
+        isOwnPlayer={false}
       />
     </div>
   )

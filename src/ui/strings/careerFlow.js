@@ -70,6 +70,9 @@ const pl = {
   errTeam: 'Wybierz drużynę.',
   startCareer: 'Rozpocznij karierę',
   cancel: 'Anuluj',
+  pcHint: 'Przeznaczone do gry na PC — na telefonie może być nieczytelne',
+  disclaimer:
+    'Ta gra to osobisty projekt hobbystyczny, nie jest powiązana z Ultimate Frisbee Association (UFA) ani żadną inną organizacją. Copyright by Krzysztof Rud 2026©',
 }
 
 const en = {
@@ -143,6 +146,9 @@ const en = {
   errTeam: 'Choose a team.',
   startCareer: 'Start career',
   cancel: 'Cancel',
+  pcHint: 'Intended to play on PC - might be messy on the phone',
+  disclaimer:
+    "This game is a personal hobby project, it's not affiliated with Ultimate Frisbee Association (UFA) or any other body. Copyright by Krzysztof Rud 2026©",
 }
 
 const BY_LANG = {

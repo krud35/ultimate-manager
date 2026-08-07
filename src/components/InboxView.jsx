@@ -17,6 +17,8 @@ import {
   deleteInboxMessage,
 } from '../career/inbox.js'
 import { formatUsd, formatUsdCompact, isTransferWindowOpen, previewContractOffer, CONTRACT_BONUS_DEFS, CONTRACT_PROMISE_DEFS, paymentModelLabel, describeSponsorOfferTotals, brandDisplayName, performanceBonusLabel, sponsorSlotLabel } from '../career'
+import { formLabel } from '../models/playerForm.js'
+import { moraleLabel } from '../models/playerMorale.js'
 import { BoxScoreTable } from './BoxScoreTable'
 
 function formatDayLabel(iso, lang = UI_LANG.PL) {
@@ -99,18 +101,15 @@ function IncomingBidPanel({ message, career, onAction, busy }) {
       <p className="text-ufa-text">
         <span className="text-ufa-muted">{t.currentOffer}:</span>{' '}
         <span className="font-semibold tabular-nums text-ufa-gold">{formatUsd(p.fee)}</span>
-        {p.askPrice != null ? (
-          <span className="text-ufa-muted"> · {t.yourAsk} {formatUsd(p.askPrice)}</span>
-        ) : null}
       </p>
       <p className="text-xs text-ufa-muted">
-        OVR {p.playerOvr}
-        {p.playerAge != null ? ` · ${p.playerAge} ${lang === 'en' ? 'yo' : 'lat'}` : ''}
-        {p.playerPotential != null ? ` · POT ${p.playerPotential}` : ''}
+        {p.playerAge != null ? `${p.playerAge} ${lang === 'en' ? 'yo' : 'lat'}` : ''}
         {p.playerForm != null
-          ? ` · ${lang === 'en' ? 'form' : 'forma'} ${p.playerForm}`
+          ? ` · ${lang === 'en' ? 'form' : 'forma'} ${formLabel(p.playerForm, lang)}`
           : ''}
-        {p.playerMorale != null ? ` · morale ${p.playerMorale}` : ''}
+        {p.playerMorale != null
+          ? ` · morale ${moraleLabel(p.playerMorale, lang)}`
+          : ''}
         {p.targetMotive === 'prospect'
           ? t.youngTarget
           : p.targetMotive === 'veteran'
@@ -376,9 +375,6 @@ function OutgoingClubOfferPanel({ message, career, onAction, busy }) {
         <span className="font-semibold tabular-nums text-ufa-gold">
           {formatUsd(p.agreedFee ?? p.offerAmount)}
         </span>
-        {p.askPrice != null ? (
-          <span className="text-ufa-muted"> · ask {formatUsd(p.askPrice)}</span>
-        ) : null}
       </p>
 
       {p.status === 'awaiting_reply' && <p className="text-xs text-ufa-gold">{t.awaitingClub}</p>}

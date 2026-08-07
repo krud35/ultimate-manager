@@ -120,6 +120,11 @@ export default function CareerSelectScreen({ slots, lang, onLangChange, onNew, o
           />
         ))}
       </div>
+
+      <footer className="mt-auto pt-12 pb-2 text-center text-[11px] leading-relaxed text-ufa-muted">
+        <p>{t.pcHint}</p>
+        <p className="mt-1.5">{t.disclaimer}</p>
+      </footer>
     </div>
   )
 }

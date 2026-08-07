@@ -262,7 +262,6 @@ export default function RosterView({
                 <th className="px-3 py-3 font-medium">{t.hand}</th>
                 <th className="px-3 py-3 font-medium">OVR</th>
                 <th className="px-3 py-3 font-medium">{t.value}</th>
-                <th className="px-3 py-3 font-medium">POT</th>
                 <th className="px-3 py-3 font-medium">{t.form}</th>
                 <th className="px-3 py-3 font-medium">{t.morale}</th>
                 <th className="px-3 py-3 font-medium min-w-[140px]">{t.traits}</th>
@@ -338,20 +337,11 @@ export default function RosterView({
                     <td className="px-3 py-3 tabular-nums text-ufa-gold font-medium">
                       {formatUsdCompact(getPlayerMarketValue(player))}
                     </td>
-                    <td className="px-3 py-3 tabular-nums text-ufa-accent font-semibold">
-                      {player.potential ?? '—'}
+                    <td className={`px-3 py-3 font-semibold ${formToneClass(form)}`}>
+                      {formLabel(form, lang)}
                     </td>
-                    <td
-                      className={`px-3 py-3 tabular-nums font-semibold ${formToneClass(form)}`}
-                      title={formLabel(form, lang)}
-                    >
-                      {form}
-                    </td>
-                    <td
-                      className={`px-3 py-3 tabular-nums font-semibold ${moraleToneClass(morale)}`}
-                      title={moraleLabel(morale, lang)}
-                    >
-                      {morale}
+                    <td className={`px-3 py-3 font-semibold ${moraleToneClass(morale)}`}>
+                      {moraleLabel(morale, lang)}
                     </td>
                     <td className="px-3 py-3 max-w-[200px]">
                       <PlayerTraitChips player={player} max={2} />
@@ -383,6 +373,7 @@ export default function RosterView({
         stamina={profilePlayer ? getSt(profilePlayer) : null}
         leaguePlayerStats={leaguePlayerStats}
         teamName={profilePlayer ? teamNameOf(profilePlayer) : null}
+        isOwnPlayer={clubOnly}
       />
     </>
   )
