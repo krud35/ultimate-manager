@@ -1,0 +1,433 @@
+import { pickDict, UI_LANG } from '../locale'
+
+
+
+const pl = {
+
+  windowClosed: 'Okno transferowe zamknięte',
+
+  windowClosedHint:
+
+    'Możesz negocjować już teraz. Dogadany transfer zarejestrujesz dopiero po otwarciu okna — dostaniesz wtedy prośbę o potwierdzenie w skrzynce (styczeń oraz 1 lip – 31 sie).',
+
+  windowOpenHint:
+
+    'Negocjujesz transfery, a kluby AI handlują między sobą w tle. Umowy wstępne spoza okna wymagają potwierdzenia rejestracji w skrzynce przy otwarciu.',
+
+  marketTitle: 'Rynek transferowy',
+
+  clubTitle: 'Centrum transferowe',
+
+  leagueTitle: 'Transfery ligowe',
+
+  budget: 'Budżet',
+
+  sendOffer: 'Wyślij ofertę',
+
+  history: 'Historia transferów',
+
+  noPlayers: 'Brak zawodników spełniających filtry.',
+
+  overBudget: 'Oferta przekracza budżet transferowy.',
+
+  overBudgetContract: 'Transfer + kontrakt przekracza budżet transferowy.',
+
+  search: 'Szukaj',
+
+  allTeams: 'Wszystkie drużyny',
+
+  value: 'Wartość',
+
+  offer: 'Oferta',
+
+  cancel: 'Anuluj',
+
+  negotiate: 'Negocjuj',
+
+  accept: 'Akceptuj',
+
+  reject: 'Odrzuć',
+
+  difficulty: 'trudność negocjacji',
+
+  negotiateTitle: 'Negocjacje',
+
+  close: 'Zamknij',
+
+  askPrice: 'Cena wywoławcza',
+
+  yourBudget: 'Twój budżet',
+
+  negotiateHint:
+
+    'Kluby niechętnie sprzedają najlepszych. Oferta bliska lub powyżej ceny wywoławczej zwiększa szansę, ale nigdy nie gwarantuje sukcesu — trudność zależy od polityki transferowej klubu.',
+
+  yourOffer: 'Twoja oferta (USD)',
+
+  setAsk: 'Ustaw ask',
+
+  askPlus: 'Ask +15%',
+
+  acceptCounter: (usd) => `Akceptuj kontrpropozycję ${usd}`,
+
+  clubTop1: ' · #1 w klubie',
+
+  clubTopN: (n) => ` · top ${n}`,
+
+  clubBudgetHint: (name) => `${name} · budżet, negocjacje i Twoje deale`,
+
+  leagueMarketHint:
+
+    'Pełny rynek ligi · wartości OVR × wiek × potencjał · AI handluje w oknie',
+
+  transferBudget: 'Budżet transferowy',
+
+  salaryBudget: 'Budżet pensji',
+
+  weeklyWageBill: 'Tygodniówka składu',
+
+  searchPlaceholder: 'Szukaj zawodnika / klubu…',
+
+  sortValue: 'Sortuj: wartość',
+
+  showN: (n) => `Pokaż: ${n}`,
+
+  showAll: 'Pokaż: wszyscy',
+
+  yourRosterValues: 'Twój skład · wartości',
+
+  yourDeals: (n) => `Twoje deale · łącznie w lidze ${n}`,
+
+  allDeals: (n) => `Wszystkie transakcje w lidze · łącznie ${n}`,
+
+  noTransfersCat: 'Brak transferów w tej kategorii.',
+
+  transferError: 'Błąd transferu',
+
+  aiWave: (n) => `Rynek AI: ${n} nowych transferów między klubami`,
+
+  january: 'Styczeń',
+
+  next: 'Następna →',
+
+  phaseClub: '1. Negocjacje z klubem',
+
+  phasePlayer: '2. Negocjacje z zawodnikiem',
+
+  playerNegotiateTitle: 'Kontrakt z zawodnikiem',
+
+  playerNegotiateHint:
+
+    'Po zgodzie klubu musisz dogadać się z zawodnikiem. Na chęć przenosin wpływają: miejsce w lidze obu klubów, morale, obecna pensja oraz reputacja.',
+
+  weeklyWage: 'Tygodniówka',
+
+  totalContractCost: 'Łączny koszt kontraktu',
+
+  contractYears: 'Lata kontraktu',
+
+  currentWage: 'Obecna pensja',
+
+  demandedWage: 'Oczekiwana pensja',
+
+  willingness: 'Chęć przenosin',
+
+  bonuses: 'Bonusy za osiągnięcia',
+
+  promises: 'Obietnice',
+
+  sendContractOffer: 'Wyślij ofertę kontraktu',
+
+  acceptPlayerCounter: (wage, years, total) =>
+
+    `Akceptuj ${wage}/tydz. × ${years} lat (${total})`,
+
+  setDemand: 'Ustaw oczekiwania',
+
+  feeAgreed: 'Uzgodniona kwota transferu',
+
+  remainingAfterContract: 'Zostanie w budżecie transferowym',
+
+  wage: 'Pensja',
+
+  years: 'Lata',
+
+  player: 'Zawodnik',
+
+  club: 'Klub',
+
+  policy: 'Polityka',
+
+  ask: 'Ask',
+
+  sortOvr: 'Sortuj: OVR',
+
+  sortAsk: 'Sortuj: ask',
+
+  sortName: 'Sortuj: nazwisko',
+
+  listSizeTitle: 'Liczba zawodników na liście',
+
+  viewProfile: 'Zobacz profil',
+
+  prev: '← Poprzednia',
+
+  historyMine: 'Twoje',
+
+  historyAll: 'Wszystkie',
+
+  historyAi: 'AI',
+
+  summer: 'Lato',
+
+  yourClub: 'Twój klub',
+
+  offerSentFlash: 'Oferta wysłana — sprawdź skrzynkę za 1–3 dni',
+
+  negotiateInboxHint:
+    'Klub i zawodnik odpowiadają w skrzynce w ciągu 1–3 dni. Przy zamkniętym oknie dogadany transfer czeka na Twoje potwierdzenie rejestracji w dniu otwarcia.',
+
+  allClubs: 'Wszystkie kluby',
+
+  date: 'Data',
+
+  from: 'Z',
+
+  to: 'Do',
+
+  fee: 'Kwota',
+
+  windowCol: 'Okno',
+
+  type: 'Typ',
+
+  you: 'Ty',
+
+  showingOf: (shown, total) => `Pokazano ${shown} z ${total}`,
+
+  pageOf: (page, count) => ` · strona ${page}/${count}`,
+
+  perWeekShort: '/t',
+
+}
+
+
+
+const en = {
+
+  windowClosed: 'Transfer window closed',
+
+  windowClosedHint:
+
+    'You can negotiate now. An agreed deal only registers when the window opens — you will get an inbox confirmation prompt (January and 1 Jul – 31 Aug).',
+
+  windowOpenHint:
+
+    'You negotiate transfers while AI clubs trade in the background. Pre-agreements outside the window need inbox registration confirmation when it opens.',
+
+  marketTitle: 'Transfer market',
+
+  clubTitle: 'Transfer center',
+
+  leagueTitle: 'League transfers',
+
+  budget: 'Budget',
+
+  sendOffer: 'Send offer',
+
+  history: 'Transfer history',
+
+  noPlayers: 'No players match the filters.',
+
+  overBudget: 'Offer exceeds the transfer budget.',
+
+  overBudgetContract: 'Transfer fee + contract exceeds the transfer budget.',
+
+  search: 'Search',
+
+  allTeams: 'All teams',
+
+  value: 'Value',
+
+  offer: 'Offer',
+
+  cancel: 'Cancel',
+
+  negotiate: 'Negotiate',
+
+  accept: 'Accept',
+
+  reject: 'Reject',
+
+  difficulty: 'negotiation difficulty',
+
+  negotiateTitle: 'Negotiate',
+
+  close: 'Close',
+
+  askPrice: 'Asking price',
+
+  yourBudget: 'Your budget',
+
+  negotiateHint:
+
+    'Clubs are reluctant to sell stars. An offer near or above asking improves odds but never guarantees success — difficulty depends on transfer policy.',
+
+  yourOffer: 'Your offer (USD)',
+
+  setAsk: 'Set ask',
+
+  askPlus: 'Ask +15%',
+
+  acceptCounter: (usd) => `Accept counter ${usd}`,
+
+  clubTop1: ' · #1 at club',
+
+  clubTopN: (n) => ` · top ${n}`,
+
+  clubBudgetHint: (name) => `${name} · budget, negotiations and your deals`,
+
+  leagueMarketHint:
+
+    'Full league market · OVR × age × potential · AI trades in-window',
+
+  transferBudget: 'Transfer budget',
+
+  salaryBudget: 'Wage budget',
+
+  weeklyWageBill: 'Weekly wage bill',
+
+  searchPlaceholder: 'Search player / club…',
+
+  sortValue: 'Sort: value',
+
+  showN: (n) => `Show: ${n}`,
+
+  showAll: 'Show: all',
+
+  yourRosterValues: 'Your roster · values',
+
+  yourDeals: (n) => `Your deals · ${n} league-wide`,
+
+  allDeals: (n) => `All league deals · ${n} total`,
+
+  noTransfersCat: 'No transfers in this category.',
+
+  transferError: 'Transfer error',
+
+  aiWave: (n) => `AI market: ${n} new club-to-club transfers`,
+
+  january: 'January',
+
+  next: 'Next →',
+
+  phaseClub: '1. Club negotiations',
+
+  phasePlayer: '2. Player contract',
+
+  playerNegotiateTitle: 'Player contract',
+
+  playerNegotiateHint:
+
+    'After the club agrees you must agree terms with the player. Willingness depends on league places, morale, current wage and club reputations.',
+
+  weeklyWage: 'Weekly wage',
+
+  totalContractCost: 'Total contract cost',
+
+  contractYears: 'Contract length (years)',
+
+  currentWage: 'Current wage',
+
+  demandedWage: 'Expected wage',
+
+  willingness: 'Willingness to move',
+
+  bonuses: 'Achievement bonuses',
+
+  promises: 'Promises',
+
+  sendContractOffer: 'Send contract offer',
+
+  acceptPlayerCounter: (wage, years, total) =>
+
+    `Accept ${wage}/wk × ${years} yrs (${total})`,
+
+  setDemand: 'Match demand',
+
+  feeAgreed: 'Agreed transfer fee',
+
+  remainingAfterContract: 'Left in transfer budget',
+
+  wage: 'Wage',
+
+  years: 'Years',
+
+  player: 'Player',
+
+  club: 'Club',
+
+  policy: 'Policy',
+
+  ask: 'Ask',
+
+  sortOvr: 'Sort: OVR',
+
+  sortAsk: 'Sort: ask',
+
+  sortName: 'Sort: name',
+
+  listSizeTitle: 'Players shown on the list',
+
+  viewProfile: 'View profile',
+
+  prev: '← Previous',
+
+  historyMine: 'Yours',
+
+  historyAll: 'All',
+
+  historyAi: 'AI',
+
+  summer: 'Summer',
+
+  yourClub: 'Your club',
+
+  offerSentFlash: 'Offer sent — check inbox in 1–3 days',
+
+  negotiateInboxHint:
+    'Club and player reply in your inbox within 1–3 days. If the window is closed, a fully agreed deal waits for your registration confirmation when it opens.',
+
+  allClubs: 'All clubs',
+
+  date: 'Date',
+
+  from: 'From',
+
+  to: 'To',
+
+  fee: 'Fee',
+
+  windowCol: 'Window',
+
+  type: 'Type',
+
+  you: 'You',
+
+  showingOf: (shown, total) => `Showing ${shown} of ${total}`,
+
+  pageOf: (page, count) => ` · page ${page}/${count}`,
+
+  perWeekShort: '/wk',
+
+}
+
+
+
+export function transfersStrings(lang = UI_LANG.PL) {
+
+  return pickDict({ pl, en }, lang)
+
+}
+
+

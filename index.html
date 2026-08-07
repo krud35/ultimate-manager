@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ultimate Manager</title>
+    <script>
+      // Pokazuje błędy ładowania ES modules (np. brakujący named export) zamiast pustego ekranu.
+      ;(function () {
+        function paint(err) {
+          if (window.__UFA_APP_BOOTED__) return
+          var root = document.getElementById('root')
+          if (!root) return
+          var msg = (err && (err.message || String(err))) || 'Unknown boot error'
+          var stack = (err && err.stack) || ''
+          var box = document.getElementById('ufa-boot-error')
+          if (!box) {
+            box = document.createElement('div')
+            box.id = 'ufa-boot-error'
+            box.style.cssText =
+              'min-height:100vh;padding:24px;box-sizing:border-box;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0f1419;color:#f2f4f7'
+            root.appendChild(box)
+          }
+          box.innerHTML =
+            '<h1 style="margin:0 0 8px;font-size:18px;color:#f87171">Aplikacja nie wystartowała</h1>' +
+            '<p style="margin:0 0 16px;color:#94a3b8;font-size:13px">Błąd ładowania modułu — zwykle zły import/eksport. Napraw i odśwież (F5).</p>' +
+            '<pre style="margin:0;padding:16px;overflow:auto;white-space:pre-wrap;word-break:break-word;background:#1a222c;border:1px solid #334155;border-radius:8px;font-size:12px;line-height:1.45;color:#fecaca"></pre>'
+          box.querySelector('pre').textContent = msg + (stack ? '\n\n' + stack : '')
+        }
+        window.addEventListener('error', function (e) {
+          paint(e.error || e.message)
+        })
+        window.addEventListener('unhandledrejection', function (e) {
+          paint(e.reason)
+        })
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,73 @@
+import { pickDict, UI_LANG } from '../locale'
+
+const pl = {
+  closeAria: 'Zamknij profil',
+  close: 'Zamknij',
+  age: 'Wiek',
+  fatigue: 'Zmęcz.',
+  injury: 'Kontuzja',
+  days: (n) => (n === 1 ? 'dzień' : 'dni'),
+  form: 'Forma',
+  morale: 'Morale',
+  dominant: 'Dominant',
+  dominantRight: 'Praworęczny',
+  dominantLeft: 'Leworęczny',
+  marketValueTitle: 'Wartość rynkowa (OVR × wiek × potencjał)',
+  contractTitle: (wage, years, weeks) =>
+    `Kontrakt: ${wage}/tydz. · ${years} lat · pozostało ${weeks} tyg.`,
+  contractWeekShort: (wage, years) => `${wage}/t · ${years}l`,
+  contractSection: 'Kontrakt',
+  weeklyWage: 'Tygodniówka',
+  years: 'Lata',
+  remaining: 'Pozostało',
+  weeks: (n) => `${n} tyg.`,
+  totalCost: 'Łączny koszt (reszta)',
+  noContract: 'Brak kontraktu',
+  traits: 'Cechy',
+  season: 'Sezon bieżący',
+  goals: 'Gole',
+  assists: 'Asysty',
+  blocks: 'Bloki',
+  pointsPlayed: 'Punkty rozegrane',
+  thisMatch: (n) => `w tym meczu: ${n}`,
+  formTitle: (n) => `Forma ${n}/100`,
+  moraleTitle: (n) => `Morale ${n}/100`,
+}
+
+const en = {
+  closeAria: 'Close profile',
+  close: 'Close',
+  age: 'Age',
+  fatigue: 'Fatigue',
+  injury: 'Injury',
+  days: (n) => (n === 1 ? 'day' : 'days'),
+  form: 'Form',
+  morale: 'Morale',
+  dominant: 'Dominant',
+  dominantRight: 'Right-handed',
+  dominantLeft: 'Left-handed',
+  marketValueTitle: 'Market value (OVR × age × potential)',
+  contractTitle: (wage, years, weeks) =>
+    `Contract: ${wage}/wk · ${years} yrs · ${weeks} wks left`,
+  contractWeekShort: (wage, years) => `${wage}/w · ${years}y`,
+  contractSection: 'Contract',
+  weeklyWage: 'Weekly wage',
+  years: 'Years',
+  remaining: 'Remaining',
+  weeks: (n) => `${n} wks`,
+  totalCost: 'Total cost (remaining)',
+  noContract: 'No contract',
+  traits: 'Traits',
+  season: 'Current season',
+  goals: 'Goals',
+  assists: 'Assists',
+  blocks: 'Blocks',
+  pointsPlayed: 'Points played',
+  thisMatch: (n) => `this match: ${n}`,
+  formTitle: (n) => `Form ${n}/100`,
+  moraleTitle: (n) => `Morale ${n}/100`,
+}
+
+export function playerProfileStrings(lang = UI_LANG.PL) {
+  return pickDict({ pl, en }, lang)
+}
