@@ -12,11 +12,15 @@ import {
   getTransferBudget,
   getSalaryBudget,
   getTransferWindowState,
-  listTransferMarket,
+  listTransferMarketWithFreeAgents,
+  signFreeAgent,
   simulateAiTransferActivity,
   worldTeamById,
   teamWeeklyWageBill,
   mergeInbox,
+  previewContractOffer,
+  computePlayerContractDemands,
+  canBuyPlayers,
 } from '../career'
 
 function WindowBanner({ windowState }) {
@@ -58,12 +62,28 @@ function NegotiateModal({
 }) {
   const { lang } = useUiLang()
   const t = transfersStrings(lang)
+  const isFa = !!row?.freeAgent
   const [offer, setOffer] = useState(() => String(row?.marketValue ?? 0))
+  const [wage, setWage] = useState(() => {
+    if (!row?.player) return '500'
+    const d = computePlayerContractDemands({
+      player: row.player,
+      sellerTeam: null,
+      buyerTeam: null,
+    })
+    return String(d.minWeeklyWage)
+  })
+  const [years, setYears] = useState('3')
 
   if (!row) return null
 
   const offerNum = Math.round(Number(offer) || 0)
-  const overBudget = offerNum > budget
+  const overBudget = !isFa && offerNum > budget
+  const preview = previewContractOffer(
+    Math.round(Number(wage) || 0),
+    Math.max(1, Math.min(5, Math.round(Number(years) || 1))),
+  )
+  const faOverBudget = isFa && preview.totalCost > budget
 
   return (
     <div
@@ -85,7 +105,11 @@ function NegotiateModal({
             <p className="mt-1 text-sm text-ufa-muted">
               {row.teamName}
               {row.age != null ? ` · ${row.age}` : ''}
-              {row.rank === 0 ? t.clubTop1 : row.rank <= 2 ? t.clubTopN(row.rank + 1) : ''}
+              {!isFa && row.rank === 0
+                ? t.clubTop1
+                : !isFa && row.rank <= 2
+                  ? t.clubTopN(row.rank + 1)
+                  : ''}
             </p>
           </div>
           <button type="button" onClick={onClose} className="text-ufa-muted hover:text-ufa-text text-sm">
@@ -100,7 +124,9 @@ function NegotiateModal({
           </div>
           <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
             <p className="text-[10px] uppercase text-ufa-muted">{t.years}</p>
-            <p className="font-semibold tabular-nums text-ufa-text">{row.contractYears ?? '—'}</p>
+            <p className="font-semibold tabular-nums text-ufa-text">
+              {isFa ? 'FA' : row.contractYears ?? '—'}
+            </p>
           </div>
         </div>
 
@@ -108,42 +134,86 @@ function NegotiateModal({
           {t.yourBudget}: {formatUsd(budget)}
         </p>
 
-        <p className="mt-3 text-xs text-ufa-muted leading-relaxed">{t.negotiateHint}</p>
-        <p className="mt-2 text-xs text-ufa-gold leading-relaxed">
-          {t.negotiateInboxHint}
-        </p>
-
-        <div className="mt-4 space-y-3">
-          <label className="block text-sm text-ufa-text">
-            {t.yourOffer}
-            <input
-              type="number"
-              min={0}
-              step={1000}
-              value={offer}
-              onChange={(e) => setOffer(e.target.value)}
-              className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text tabular-nums"
-            />
-          </label>
-          {overBudget && <p className="text-xs text-red-400">{t.overBudget}</p>}
-          <div className="flex flex-wrap gap-2">
+        {isFa ? (
+          <div className="mt-4 space-y-3">
+            <p className="text-xs text-ufa-muted leading-relaxed">{t.faHint}</p>
+            <label className="block text-sm text-ufa-text">
+              {t.weeklyWage}
+              <input
+                type="number"
+                value={wage}
+                onChange={(e) => setWage(e.target.value)}
+                className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text tabular-nums"
+              />
+            </label>
+            <label className="block text-sm text-ufa-text">
+              {t.years}
+              <input
+                type="number"
+                min={1}
+                max={5}
+                value={years}
+                onChange={(e) => setYears(e.target.value)}
+                className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text tabular-nums"
+              />
+            </label>
+            <p className="text-xs text-ufa-muted tabular-nums">{formatUsd(preview.totalCost)}</p>
+            {faOverBudget && <p className="text-xs text-red-400">{t.overBudgetContract}</p>}
             <button
               type="button"
-              disabled={overBudget || offerNum <= 0}
-              onClick={() => onSubmitOffer(offerNum)}
+              disabled={faOverBudget || budget <= 0}
+              onClick={() =>
+                onSubmitOffer(0, {
+                  weeklyWage: Math.round(Number(wage) || 0),
+                  years: Math.max(1, Math.min(5, Math.round(Number(years) || 1))),
+                  bonuses: [],
+                  promises: [],
+                })
+              }
               className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
             >
               {t.sendOffer}
             </button>
-            <button
-              type="button"
-              onClick={() => setOffer(String(row.marketValue))}
-              className="rounded-md border border-ufa-border px-3 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
-            >
-              {t.setValue}
-            </button>
           </div>
-        </div>
+        ) : (
+          <>
+            <p className="mt-3 text-xs text-ufa-muted leading-relaxed">{t.negotiateHint}</p>
+            <p className="mt-2 text-xs text-ufa-gold leading-relaxed">
+              {t.negotiateInboxHint}
+            </p>
+            <div className="mt-4 space-y-3">
+              <label className="block text-sm text-ufa-text">
+                {t.yourOffer}
+                <input
+                  type="number"
+                  min={0}
+                  step={1000}
+                  value={offer}
+                  onChange={(e) => setOffer(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text tabular-nums"
+                />
+              </label>
+              {overBudget && <p className="text-xs text-red-400">{t.overBudget}</p>}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={overBudget || offerNum <= 0 || budget <= 0}
+                  onClick={() => onSubmitOffer(offerNum)}
+                  className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                >
+                  {t.sendOffer}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOffer(String(row.marketValue))}
+                  className="rounded-md border border-ufa-border px-3 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
+                >
+                  {t.setValue}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -203,27 +273,32 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
   }, [windowState.open, windowState.kind, career.seasonIndex, career.phase])
 
   const market = useMemo(
-    () => listTransferMarket(career.world, career.playerTeamId),
+    () => listTransferMarketWithFreeAgents(career.world, career.playerTeamId),
     [career.world, career.playerTeamId],
   )
 
   const teams = useMemo(() => {
     const map = new Map()
     for (const row of market) {
+      if (!row.teamId) {
+        map.set('__fa__', lang === 'en' ? 'Free Agents' : 'Wolni agenci')
+        continue
+      }
       if (!map.has(row.teamId)) map.set(row.teamId, row.teamName)
     }
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]))
-  }, [market])
+  }, [market, lang])
 
   const rows = useMemo(() => {
     let list = market
-    if (teamFilter !== 'all') list = list.filter((r) => r.teamId === teamFilter)
+    if (teamFilter === '__fa__') list = list.filter((r) => r.freeAgent)
+    else if (teamFilter !== 'all') list = list.filter((r) => r.teamId === teamFilter)
     const q = query.trim().toLowerCase()
     if (q) {
       list = list.filter(
         (r) =>
           r.name.toLowerCase().includes(q) ||
-          r.teamName.toLowerCase().includes(q),
+          (r.teamName ?? '').toLowerCase().includes(q),
       )
     }
     const sorted = [...list]
@@ -266,8 +341,43 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
     return list
   }, [log, historyFilter])
 
-  const handleOffer = (offerAmount) => {
+  const handleOffer = (offerAmount, contractTerms = null) => {
     if (!selected) return
+
+    if (selected.freeAgent) {
+      if (!canBuyPlayers(buyer)) {
+        setFlash({ type: 'error', text: t.negativeBudgetBlock })
+        return
+      }
+      const demands = computePlayerContractDemands({
+        player: selected.player,
+        sellerTeam: null,
+        buyerTeam: buyer,
+        league: career.league,
+      })
+      const terms = contractTerms ?? {
+        weeklyWage: demands.minWeeklyWage,
+        years: demands.preferredYears,
+        bonuses: [],
+        promises: [],
+      }
+      const result = signFreeAgent(career, {
+        playerId: selected.playerId,
+        contract: terms,
+      })
+      if (!result.ok) {
+        setFlash({ type: 'error', text: result.error ?? t.transferError })
+        return
+      }
+      onCareerUpdate({
+        world: result.world,
+        transferLog: result.transferLog,
+      })
+      setFlash({ type: 'ok', text: t.faSigned })
+      setSelected(null)
+      return
+    }
+
     const result = queueOutgoingClubOffer(career, {
       playerId: selected.playerId,
       offerAmount,
@@ -402,7 +512,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
               <tbody>
                 {visibleRows.map((row) => (
                   <tr
-                    key={`${row.teamId}-${row.playerId}`}
+                    key={`${row.teamId ?? 'fa'}-${row.playerId}`}
                     className="border-b border-ufa-border/70 hover:bg-ufa-bg/40"
                   >
                     <td className="px-2 py-2.5">

@@ -368,7 +368,11 @@ export function simulateBackgroundMatch(homeTeam, awayTeam, options = {}) {
       const pp = player.stats?.pointsPlayedMatch ?? 0
       if (pp <= 0) continue
       const stam = getStamina(side.stamina, player.id)
-      const hit = tryMatchAiInjury(player, stam, rngFn, { chanceMult: injuryMult })
+      const hit = tryMatchAiInjury(player, stam, rngFn, {
+        chanceMult: injuryMult,
+        team: side.team,
+        medicalLevel: side.team?.facilities?.medicalCenter,
+      })
       if (!hit) continue
       injuries.push({
         playerId: player.id,

@@ -74,6 +74,7 @@ export default function RosterView({
   teams = null,
   /** Tylko skład Twojej drużyny (bez filtrów ligowych). */
   clubOnly = false,
+  onExtendContract = null,
 }) {
   const { lang } = useUiLang()
   const t = rosterStrings(lang)
@@ -374,6 +375,7 @@ export default function RosterView({
         leaguePlayerStats={leaguePlayerStats}
         teamName={profilePlayer ? teamNameOf(profilePlayer) : null}
         isOwnPlayer={clubOnly}
+        onExtendContract={clubOnly ? onExtendContract : null}
       />
     </>
   )

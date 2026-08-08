@@ -122,6 +122,8 @@ export function createWorldFromTemplate(templateSeasonYear = 2025, options = {})
     rosterMode,
     teamIds: teams.map((t) => t.id),
     teamsById,
+    freeAgents: [],
+    retiredPlayers: [],
   }
   ensureWorldFinances(world, { seed: financeSeed, force: true })
   ensureWorldContracts(world, { seed: financeSeed, force: true, syncBudgets: true })

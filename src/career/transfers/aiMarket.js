@@ -9,6 +9,7 @@ import {
   ensureWorldFinances,
   getTransferBudget,
   getTransferPolicy,
+  canBuyPlayers,
 } from './clubFinances.js'
 import { computeAskPrice, evaluateBuyOffer, playerOvrRank, classifyTransferTarget } from './negotiation.js'
 import { refreshPlayerMarketValue } from './playerValue.js'
@@ -111,17 +112,20 @@ function tryOneAiDeal(career, rng, excludePlayerIds) {
   if (aiTeams.length < 2) return null
 
   const buyers = shuffle(
-    aiTeams.filter((t) => getTransferBudget(t) >= 40_000),
+    aiTeams.filter((t) => canBuyPlayers(t) && getTransferBudget(t) >= 40_000),
     rng,
   )
+
+  // Kluby z niskim budżetem chętniej sprzedają (desperately avoid negative).
+  const sellersSorted = shuffle(
+    aiTeams.filter((t) => (t.players?.length ?? 0) > MIN_ROSTER),
+    rng,
+  ).sort((a, b) => getTransferBudget(a) - getTransferBudget(b))
 
   for (const buyer of buyers) {
     if (rng.float() > 0.55) continue
     const budget = getTransferBudget(buyer)
-    const sellers = shuffle(
-      aiTeams.filter((t) => t.id !== buyer.id && (t.players?.length ?? 0) > MIN_ROSTER),
-      rng,
-    )
+    const sellers = sellersSorted.filter((t) => t.id !== buyer.id)
 
     for (const seller of sellers) {
       const candidates = shuffle(

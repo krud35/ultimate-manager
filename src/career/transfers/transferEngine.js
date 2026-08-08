@@ -11,6 +11,7 @@ import {
   ensureWorldFinances,
   getTransferBudget,
   getTransferPolicy,
+  canBuyPlayers,
 } from './clubFinances.js'
 import { evaluateBuyOffer, computeAskPrice, playerOvrRank, evaluateSellerCounter } from './negotiation.js'
 import {
@@ -95,6 +96,45 @@ export function listTransferMarket(world, buyerTeamId) {
 }
 
 /**
+ * Lista zawodników dostępnych na rynku (wszyscy poza drużyną gracza) + wolni agenci.
+ */
+export function listTransferMarketWithFreeAgents(world, buyerTeamId) {
+  const clubRows = listTransferMarket(world, buyerTeamId)
+  // Lazy import cycle avoidance — inline FA rows
+  if (!world) return clubRows
+  if (!Array.isArray(world.freeAgents)) world.freeAgents = []
+  const faRows = []
+  for (const player of world.freeAgents) {
+    if (player?.status === 'retired') continue
+    refreshPlayerMarketValue(player)
+    const ovr = getOverallRating(player.skills)
+    faRows.push({
+      player,
+      playerId: player.id,
+      name: getPlayerFullName(player),
+      position: player.position ?? '—',
+      ovr,
+      age: player.age ?? null,
+      marketValue: getPlayerMarketValue(player),
+      askPrice: 0,
+      rank: 0,
+      teamId: null,
+      teamName: 'Free Agent',
+      teamShort: 'FA',
+      transferPolicy: null,
+      sellerBudget: 0,
+      weeklyWage: null,
+      contractYears: null,
+      contractRemaining: 0,
+      freeAgent: true,
+    })
+  }
+  return [...faRows, ...clubRows].sort(
+    (a, b) => b.ovr - a.ovr || (b.marketValue ?? 0) - (a.marketValue ?? 0),
+  )
+}
+
+/**
  * Finalizuje transfer między dowolnymi klubami (gracz lub AI).
  *
  * @param {object} career
@@ -153,10 +193,12 @@ export function completeTransferBetweenClubs(career, opts) {
   const preview = previewContractOffer(contractTerms.weeklyWage, contractTerms.years)
   const contractCost = preview.totalCost
   const budget = getTransferBudget(buyer)
-  if (fee + contractCost > budget) {
+  if (!canBuyPlayers(buyer) || fee + contractCost > budget) {
     return {
       ok: false,
-      error: `Niewystarczający budżet (transfer ${formatUsd(fee)} + kontrakt ${formatUsd(contractCost)}; dostępne ${formatUsd(budget)})`,
+      error: !canBuyPlayers(buyer)
+        ? 'Ujemny lub zerowy budżet — nie można kupować zawodników'
+        : `Niewystarczający budżet (transfer ${formatUsd(fee)} + kontrakt ${formatUsd(contractCost)}; dostępne ${formatUsd(budget)})`,
     }
   }
 
@@ -387,10 +429,12 @@ export function negotiatePlayerContract(career, opts) {
   const fee = Math.max(0, Math.round(Number(opts.fee) || 0))
   const preview = previewContractOffer(opts.weeklyWage, opts.years)
   const budget = getTransferBudget(buyer)
-  if (fee + preview.totalCost > budget) {
+  if (!canBuyPlayers(buyer) || fee + preview.totalCost > budget) {
     return {
       ok: false,
-      error: `Brak środków (transfer ${formatUsd(fee)} + kontrakt ${formatUsd(preview.totalCost)}; budżet ${formatUsd(budget)})`,
+      error: !canBuyPlayers(buyer)
+        ? 'Ujemny lub zerowy budżet — nie można kupować zawodników'
+        : `Brak środków (transfer ${formatUsd(fee)} + kontrakt ${formatUsd(preview.totalCost)}; budżet ${formatUsd(budget)})`,
     }
   }
 

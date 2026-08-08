@@ -535,6 +535,38 @@ export function applyFanShopAfterMatch(team, options = {}) {
 }
 
 /**
+ * Koszt wyjazdu / pucharu: liczba zawodników × losowy koszt 100–500$.
+ * Ciche odjęcie od budżetu transferowego (bez inbox).
+ * @returns {{ amount: number } | null}
+ */
+export function applyTravelCostAfterMatch(team, { rng = Math.random } = {}) {
+  if (!team) return null
+  const rosterSize = Math.max(1, (team.players ?? []).length)
+  const perPlayer = 100 + Math.floor((typeof rng === 'function' ? rng() : Math.random()) * 401)
+  const amount = rosterSize * perPlayer
+  if (amount <= 0) return null
+  adjustTransferBudget(team, -amount)
+  if (!team.facilities) ensureTeamFacilities(team)
+  team.facilities.lastTravelCost = amount
+  team.facilities.lastTravelAt = Date.now()
+  return { amount }
+}
+
+/**
+ * Po meczu: merch + ewentualny koszt wyjazdu (away liga / obie strony w pucharze).
+ */
+export function applyPostMatchFinances(homeTeam, awayTeam, { isCup = false, homeWon = false, awayWon = false, rng = Math.random } = {}) {
+  if (homeTeam) {
+    applyFanShopAfterMatch(homeTeam, { won: homeWon, isHome: true })
+    if (isCup) applyTravelCostAfterMatch(homeTeam, { rng })
+  }
+  if (awayTeam) {
+    applyFanShopAfterMatch(awayTeam, { won: awayWon, isHome: false })
+    applyTravelCostAfterMatch(awayTeam, { rng })
+  }
+}
+
+/**
  * Ulepsza strukturę o 1 poziom za pieniądze.
  * @returns {{ ok: boolean, error?: string, level?: number, cost?: number, remainingBudget?: number }}
  */

@@ -178,7 +178,7 @@ export function rollSeasonBudgets(world, options = {}) {
 }
 
 export function getTransferBudget(team) {
-  return Math.max(0, Math.round(team?.finances?.transferBudget ?? 0))
+  return Math.round(team?.finances?.transferBudget ?? 0)
 }
 
 export function getSalaryBudget(team) {
@@ -189,13 +189,22 @@ export function getTransferPolicy(team) {
   return team?.modifiers?.transferPolicy ?? TRANSFER_POLICY_PRESETS[1]
 }
 
+/** Klub może kupować tylko przy dodatnim budżecie transferowym. */
+export function canBuyPlayers(team) {
+  return getTransferBudget(team) > 0
+}
+
+/** Próg bankructwa — forfeit 15–0 do odzyskania środków. */
+export const FORFEIT_BUDGET_THRESHOLD = -2_500_000
+
+export function isClubBankrupt(team) {
+  return getTransferBudget(team) <= FORFEIT_BUDGET_THRESHOLD
+}
+
 export function adjustTransferBudget(team, delta) {
   if (!team) return
   if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
-  team.finances.transferBudget = Math.max(
-    0,
-    Math.round((team.finances.transferBudget ?? 0) + delta),
-  )
+  team.finances.transferBudget = Math.round((team.finances.transferBudget ?? 0) + delta)
 }
 
 export function adjustSalaryBudget(team, delta) {

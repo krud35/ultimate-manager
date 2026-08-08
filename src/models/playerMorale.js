@@ -207,3 +207,25 @@ export function applyMoraleForMatchTeams(homeTeam, awayTeam, homeScore, awayScor
     fanMood: getFanMood(awayTeam),
   })
 }
+
+/**
+ * Negatywny budżet transferowy obniża morale składu (cotygodniowy tick).
+ * @param {object} team
+ * @param {number} transferBudget — może być ujemny
+ */
+export function applyDebtMoraleToTeam(team, transferBudget) {
+  if (!team?.players?.length) return
+  const budget = Number(transferBudget)
+  if (!Number.isFinite(budget) || budget >= 0) return
+
+  // Lekki hit: −1 przy lekkim długu, do −4 przy −2.5M+
+  let delta = -1
+  if (budget <= -2_500_000) delta = -4
+  else if (budget <= -1_000_000) delta = -3
+  else if (budget <= -250_000) delta = -2
+
+  for (const player of team.players) {
+    ensurePlayerMorale(player)
+    player.morale = clampMorale(player.morale + delta)
+  }
+}

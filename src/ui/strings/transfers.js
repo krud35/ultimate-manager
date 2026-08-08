@@ -32,6 +32,10 @@ const pl = {
 
   overBudgetContract: 'Transfer + kontrakt przekracza budżet transferowy.',
 
+  faHint: 'Wolny agent — tylko kontrakt (bez opłaty transferowej).',
+  faSigned: 'Podpisano wolnego agenta.',
+  negativeBudgetBlock: 'Ujemny lub zerowy budżet — nie można podpisywać zawodników.',
+
   search: 'Szukaj',
 
   allTeams: 'Wszystkie drużyny',
@@ -240,6 +244,10 @@ const en = {
   overBudget: 'Offer exceeds the transfer budget.',
 
   overBudgetContract: 'Transfer fee + contract exceeds the transfer budget.',
+
+  faHint: 'Free agent — contract only (no transfer fee).',
+  faSigned: 'Free agent signed.',
+  negativeBudgetBlock: 'Budget ≤ 0 — you cannot sign players.',
 
   search: 'Search',
 

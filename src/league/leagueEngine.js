@@ -18,7 +18,8 @@ import { ensurePlayerStats } from '../models/playerStats.js'
 import { teamFromLeague } from '../career/worldState.js'
 import { applyReputationForMatchTeams } from '../models/teamReputation.js'
 import { applyFansMoodForMatchTeams } from '../models/teamFans.js'
-import { applyFanShopAfterMatch } from '../career/clubFacilities.js'
+import { applyPostMatchFinances } from '../career/clubFacilities.js'
+import { isClubBankrupt } from '../career/transfers/clubFinances.js'
 import {
   findFixture,
   isNeutralVenue,
@@ -48,8 +49,59 @@ function tacticsForResolvedTeam(team) {
   return tacticsForTeam(team)
 }
 
+/**
+ * Walkover 15–0 gdy klub ma budżet ≤ −2.5M.
+ * @returns {object|null}
+ */
+export function tryForfeitMatchRecord(league, fixture) {
+  const home = resolveTeam(league, fixture.homeTeamId)
+  const away = resolveTeam(league, fixture.awayTeamId)
+  const homeBroke = isClubBankrupt(home)
+  const awayBroke = isClubBankrupt(away)
+  if (!homeBroke && !awayBroke) return null
+
+  let homeScore = 0
+  let awayScore = 0
+  let winner = fixture.homeTeamId
+  if (homeBroke && awayBroke) {
+    homeScore = 15
+    awayScore = 0
+    winner = fixture.homeTeamId
+  } else if (homeBroke) {
+    homeScore = 0
+    awayScore = 15
+    winner = fixture.awayTeamId
+  } else {
+    homeScore = 15
+    awayScore = 0
+    winner = fixture.homeTeamId
+  }
+
+  return {
+    fixtureId: fixture.id,
+    round: fixture.round,
+    homeTeamId: fixture.homeTeamId,
+    awayTeamId: fixture.awayTeamId,
+    homeScore,
+    awayScore,
+    winner,
+    boxScore: [],
+    playedByPlayer: false,
+    competition: fixture.competition ?? 'league',
+    injuries: [],
+    forfeited: true,
+    bankruptTeamIds: [
+      ...(homeBroke ? [fixture.homeTeamId] : []),
+      ...(awayBroke ? [fixture.awayTeamId] : []),
+    ],
+  }
+}
+
 /** Symuluje pojedynczy mecz AI (szybki silnik tła + statystyki indywidualne). */
 export function simulateFixtureMatch(league, fixture) {
+  const forfeit = tryForfeitMatchRecord(league, fixture)
+  if (forfeit) return forfeit
+
   const home = resolveTeam(league, fixture.homeTeamId)
   const away = resolveTeam(league, fixture.awayTeamId)
 
@@ -175,12 +227,11 @@ export function applyMatchResultToLeague(league, matchRecord) {
   const awayTeam = teamFromLeague(league, matchRecord.awayTeamId)
   const homeWon = (matchRecord.homeScore ?? 0) > (matchRecord.awayScore ?? 0)
   const awayWon = (matchRecord.awayScore ?? 0) > (matchRecord.homeScore ?? 0)
-  if (homeTeam) {
-    applyFanShopAfterMatch(homeTeam, { won: homeWon, isHome: true })
-  }
-  if (awayTeam) {
-    applyFanShopAfterMatch(awayTeam, { won: awayWon, isHome: false })
-  }
+  applyPostMatchFinances(homeTeam, awayTeam, {
+    isCup,
+    homeWon,
+    awayWon,
+  })
 
   delete fixture.boxScore
 

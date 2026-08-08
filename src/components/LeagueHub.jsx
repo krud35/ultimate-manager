@@ -223,14 +223,16 @@ export default function LeagueHub({
               >
                 {t.nextDay}
               </button>
-              <button
-                type="button"
-                onClick={onSimulateUntilMatch}
-                disabled={simulating}
-                className="rounded-md border border-ufa-border px-5 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover disabled:opacity-40"
-              >
-                {simulating ? t.simulating : t.simUntilMatch}
-              </button>
+              {!(playerFix && playerFix.status !== 'completed') && (
+                <button
+                  type="button"
+                  onClick={onSimulateUntilMatch}
+                  disabled={simulating}
+                  className="rounded-md border border-ufa-border px-5 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover disabled:opacity-40"
+                >
+                  {simulating ? t.simulating : t.simUntilMatch}
+                </button>
+              )}
             </div>
           )}
         </div>

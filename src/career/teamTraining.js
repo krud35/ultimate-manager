@@ -362,6 +362,7 @@ function rollSessionInjuries(
   rng,
   attendedOnly = null,
   injuryChanceMult = 1,
+  team = null,
 ) {
   const injuries = []
   for (const player of players) {
@@ -374,6 +375,8 @@ function rollSessionInjuries(
 
     const hit = tryTrainingInjury(player, intensityId, sessionFocuses, rng, {
       chanceMult: injuryChanceMult,
+      team,
+      medicalLevel: team?.facilities?.medicalCenter,
     })
     if (!hit) continue
     injuries.push({
@@ -547,6 +550,7 @@ function runSessionCore(team, focuses, intensityId, meta) {
       rng,
       attendedIds,
       injuryChanceMult,
+      team,
     )
     const tacticsDelta = applyTacticsGain(tt, focuses, quality, intensityId)
     const report = buildReport({
@@ -616,6 +620,7 @@ function runSessionCore(team, focuses, intensityId, meta) {
     rng,
     attendedIds,
     injuryChanceMult,
+    team,
   )
   const tacticsDelta = applyTacticsGain(tt, focuses, quality, intensityId)
   const report = buildReport({

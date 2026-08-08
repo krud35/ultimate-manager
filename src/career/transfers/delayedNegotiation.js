@@ -17,6 +17,7 @@ import { computeAskPrice, evaluateBuyOffer, evaluateSellerCounter } from './nego
 import {
   getTransferBudget,
   ensureWorldFinances,
+  canBuyPlayers,
 } from './clubFinances.js'
 import { isTransferWindowOpen } from './transferWindow.js'
 import {
@@ -104,6 +105,12 @@ export function queueOutgoingClubOffer(career, { playerId, offerAmount }) {
   if (offer <= 0) return { ok: false, error: 'Podaj kwotę oferty' }
 
   ensureWorldFinances(career.world)
+  if (!canBuyPlayers(buyer)) {
+    return {
+      ok: false,
+      error: 'Ujemny lub zerowy budżet — nie można kupować zawodników',
+    }
+  }
   const budget = getTransferBudget(buyer)
   if (offer > budget) {
     return {

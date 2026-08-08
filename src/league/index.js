@@ -4,6 +4,7 @@ export { standingsTable, pointDifferential, applyGameToStandings } from './stand
 export { topLeaders, mergeMatchBoxScore, seasonStatsForPlayer } from './leagueStats.js'
 export {
   simulateFixtureMatch,
+  tryForfeitMatchRecord,
   applyMatchResultToLeague,
   simulatePendingRoundMatches,
   finishRound,

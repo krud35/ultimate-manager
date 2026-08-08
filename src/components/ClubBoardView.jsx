@@ -228,6 +228,7 @@ export default function ClubBoardView({ career, onChange }) {
   const budget = team ? getTransferBudget(team) : 0
   const salaryBudget = team ? getSalaryBudget(team) : 0
   const lastMerch = team?.facilities?.lastMerchAmount
+  const lastTravel = team?.facilities?.lastTravelCost
 
   const handleSponsorChanged = (result) => {
     if (result?.ok) {
@@ -282,6 +283,12 @@ export default function ClubBoardView({ career, onChange }) {
               <p className="text-[11px] text-ufa-muted mt-0.5">
                 {t.lastMerch}:{' '}
                 <span className="text-emerald-400">{formatUsd(lastMerch)}</span>
+              </p>
+            )}
+            {lastTravel != null && (
+              <p className="text-[11px] text-ufa-muted mt-0.5">
+                {t.lastTravel}:{' '}
+                <span className="text-red-400">{formatUsd(lastTravel)}</span>
               </p>
             )}
           </div>

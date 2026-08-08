@@ -19,7 +19,7 @@ import { standingsTable } from './standings.js'
 import { teamFromLeague } from '../career/worldState.js'
 import { applyReputationForMatchTeams } from '../models/teamReputation.js'
 import { applyFansMoodForMatchTeams } from '../models/teamFans.js'
-import { applyFanShopAfterMatch } from '../career/clubFacilities.js'
+import { applyPostMatchFinances } from '../career/clubFacilities.js'
 
 function toIso(date) {
   return typeof date === 'string' ? String(date).slice(0, 10) : formatISODate(date)
@@ -262,8 +262,11 @@ function applyCupMatchResult(league, fixture, record) {
   const awayTeam = teamFromLeague(league, record.awayTeamId)
   const homeWon = (record.homeScore ?? 0) > (record.awayScore ?? 0)
   const awayWon = (record.awayScore ?? 0) > (record.homeScore ?? 0)
-  if (homeTeam) applyFanShopAfterMatch(homeTeam, { won: homeWon, isHome: true })
-  if (awayTeam) applyFanShopAfterMatch(awayTeam, { won: awayWon, isHome: false })
+  applyPostMatchFinances(homeTeam, awayTeam, {
+    isCup: true,
+    homeWon,
+    awayWon,
+  })
 }
 
 function findFixtureInLeague(league, fixtureId) {

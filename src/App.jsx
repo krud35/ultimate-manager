@@ -54,6 +54,8 @@ import {
   confirmPendingRegistration,
   declinePendingRegistration,
   formatUsd,
+  renewPlayerContract,
+  isClubBankrupt,
 } from './career'
 import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
 import {
@@ -69,6 +71,7 @@ import {
   simulateUntilDateAsync,
   simulateUntilPlayerMatchOrEndAsync,
   isOfficialSeasonEnded,
+  tryForfeitMatchRecord,
 } from './league'
 import { resolvePlayerDefaultTactics } from './matchEngine'
 
@@ -646,10 +649,8 @@ export default function App() {
         ultiworld: uw.ultiworld,
       })
       syncCareer(next)
-      if (result.blocked && result.playerFixture) {
-        setLeagueFixture(result.playerFixture)
-        setActiveTab('match')
-      } else if (isOfficialSeasonEnded(nextLeague) || nextLeague.status === 'complete') {
+      // Stay on hub — user opens the match via "Go to match" when ready.
+      if (isOfficialSeasonEnded(nextLeague) || nextLeague.status === 'complete') {
         setActiveTab('hub')
       }
     } finally {
@@ -1234,11 +1235,40 @@ export default function App() {
   )
 
   const handlePlayFixture = useCallback((fixture) => {
-    if (!fixture || fixture.status === 'completed') return
-    // Przyszły termin → zakładka meczu pokaże PreMatchView; dziś/zaległy → MatchView.
+    if (!fixture || fixture.status === 'completed' || !career?.league) return
+
+    const playerTeamObj = career.world
+      ? worldTeamById(career.world, career.playerTeamId)
+      : null
+    if (playerTeamObj && isClubBankrupt(playerTeamObj)) {
+      const forfeit = tryForfeitMatchRecord(career.league, fixture)
+      if (forfeit) {
+        const nextLeague = cloneLeague(career.league)
+        applyMatchResultToLeague(nextLeague, forfeit)
+        const next = persistCareer(career, { league: nextLeague })
+        syncCareer(next)
+        setLeagueFixture(null)
+        setActiveTab('hub')
+        return
+      }
+    }
+
     setLeagueFixture(fixture)
     setActiveTab('match')
-  }, [])
+  }, [career, syncCareer])
+
+  const handleExtendContract = useCallback(
+    (opts) => {
+      if (!career) return { ok: false, error: 'Brak kariery' }
+      const result = renewPlayerContract(career, opts)
+      if (result.completed) {
+        const next = persistCareer(career, { world: result.world ?? career.world })
+        syncCareer(next)
+      }
+      return result
+    },
+    [career, syncCareer],
+  )
 
   const handleReturnToLeague = useCallback(() => {
     setLeagueFixture(null)
@@ -1563,6 +1593,7 @@ export default function App() {
             leaguePlayerStats={league.playerStats}
             teams={worldTeams}
             clubOnly
+            onExtendContract={handleExtendContract}
           />
         )}
 

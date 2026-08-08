@@ -30,6 +30,10 @@ import {
 import { ensureWorldFinances, rollSeasonBudgets } from './transfers/clubFinances.js'
 import { ensureWorldContracts } from './transfers/playerContracts.js'
 import { simulateAiOffseasonTransferBurst } from './transfers/aiMarket.js'
+import { processAiContractCycle, simulateAiFreeAgentSignings, ensureWorldFreeAgents } from './transfers/freeAgency.js'
+import { processSeasonRetirements } from './retirement.js'
+import { spawnYouthFreeAgents } from './youthIntake.js'
+import { resetWorldSeasonInjuryCounts } from '../models/playerInjury.js'
 import {
   processSeasonEndSponsorPayouts,
   processSeasonStartSponsorPayouts,
@@ -294,15 +298,48 @@ export function finalizeSeason(career) {
     ageWorldPlayersOneYear(career.world)
   }
 
+  let seasonCycleInbox = []
+  let worldAfterCycle = career.world
+  let transferLogAfterCycle = career.transferLog ?? []
+  if (career.world) {
+    ensureWorldFreeAgents(career.world)
+    const retire = processSeasonRetirements(
+      { ...career, world: career.world },
+      {
+        leaguePlayerStats: archive.playerStats,
+        seed: (career.seasonYear ?? 2025) * 7919 + (career.seasonIndex ?? 1),
+      },
+    )
+    seasonCycleInbox = [...(retire.inboxMessages ?? [])]
+    spawnYouthFreeAgents(career.world, retire.retired?.length ?? 0, {
+      seasonYear: (career.seasonYear ?? 2025) + 1,
+      seed: (career.seasonYear ?? 2025) * 13331 + (career.seasonIndex ?? 1),
+    })
+    processAiContractCycle(career.world, {
+      playerTeamId: career.playerTeamId,
+      seed: (career.seasonYear ?? 2025) * 4243,
+      league: career.league,
+    })
+    const faSign = simulateAiFreeAgentSignings(
+      { ...career, world: career.world, transferLog: transferLogAfterCycle },
+      {
+        maxDeals: 6,
+        seed: (career.seasonYear ?? 2025) * 5557,
+      },
+    )
+    transferLogAfterCycle = faSign.transferLog ?? transferLogAfterCycle
+    worldAfterCycle = career.world
+  }
+
   // Wypłaty sponsorskie na koniec sezonu + wygaśnięcia umów
   let sponsorInbox = []
-  if (career.world) {
+  if (worldAfterCycle) {
     const seasonEnd = processSeasonEndSponsorPayouts(
-      career.world,
+      worldAfterCycle,
       career.league,
       career.seasonYear,
     )
-    const probe = { ...career, world: career.world, league: career.league }
+    const probe = { ...career, world: worldAfterCycle, league: career.league }
     sponsorInbox = [
       ...messagesFromSponsorPayouts(seasonEnd.payouts, probe, {
         kind: 'season_end',
@@ -324,7 +361,7 @@ export function finalizeSeason(career) {
 
   // Off-season: kluby AI robią serię transferów między sobą.
   const ai = simulateAiOffseasonTransferBurst(
-    { ...career, phase: 'season_complete' },
+    { ...career, phase: 'season_complete', world: worldAfterCycle, transferLog: transferLogAfterCycle },
     {
       maxDeals: 12,
       seed: (career.seasonYear ?? 2025) * 1009 + (career.seasonIndex ?? 1) * 47,
@@ -337,12 +374,12 @@ export function finalizeSeason(career) {
     careerStats,
     allTimeStats,
     league: career.league,
-    world: ai.world ?? career.world,
-    transferLog: ai.transferLog ?? career.transferLog ?? [],
+    world: ai.world ?? worldAfterCycle,
+    transferLog: ai.transferLog ?? transferLogAfterCycle,
     aiOffseasonTransferWaves: 1,
     inbox: mergeInbox(
       { ...career, inbox: career.inbox },
-      sponsorInbox,
+      [...seasonCycleInbox, ...sponsorInbox],
     ),
   })
 }
@@ -366,6 +403,8 @@ export function startNextSeason(career) {
   initAllAiTeamTraining(world, base.playerTeamId)
   ensureTeamTraining(worldTeamById(world, base.playerTeamId))
   resetWorldSeasonStats(world)
+  resetWorldSeasonInjuryCounts(world)
+  ensureWorldFreeAgents(world)
   rollSeasonBudgets(world, {
     seed: nextYear * 1009 + base.slotIndex * 17 + nextIndex * 31,
   })

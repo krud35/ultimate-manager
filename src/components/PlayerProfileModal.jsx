@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { getPlayerFullName, getOverallRating } from '../data/mockPlayers'
 import {
@@ -31,7 +31,14 @@ import {
   injuryStatusLabel,
   isPlayerInjured,
 } from '../models/playerInjury.js'
-import { formatUsd, formatUsdCompact, getPlayerMarketValue, ensurePlayerContract } from '../career'
+import {
+  formatUsd,
+  formatUsdCompact,
+  getPlayerMarketValue,
+  ensurePlayerContract,
+  computePlayerContractDemands,
+  previewContractOffer,
+} from '../career'
 import { SkillBar, ThrowingHandBadge } from './TeamRosterPanel'
 import StaminaBar from './StaminaBar'
 import PlayerTraitChips from './PlayerTraitChips'
@@ -94,9 +101,15 @@ export default function PlayerProfileModal({
   leaguePlayerStats = null,
   teamName = null,
   isOwnPlayer = true,
+  onExtendContract = null,
 }) {
   const { lang } = useUiLang()
   const t = playerProfileStrings(lang)
+  const [extendOpen, setExtendOpen] = useState(false)
+  const [extendWage, setExtendWage] = useState('')
+  const [extendYears, setExtendYears] = useState('3')
+  const [extendBusy, setExtendBusy] = useState(false)
+  const [extendFlash, setExtendFlash] = useState(null)
 
   useEffect(() => {
     if (!player) return undefined
@@ -106,6 +119,21 @@ export default function PlayerProfileModal({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [player, onClose])
+
+  useEffect(() => {
+    setExtendOpen(false)
+    setExtendFlash(null)
+    if (player?.contract?.weeklyWage) {
+      const demands = computePlayerContractDemands({
+        player,
+        sellerTeam: null,
+        buyerTeam: null,
+        renew: true,
+      })
+      setExtendWage(String(demands.minWeeklyWage ?? player.contract.weeklyWage))
+      setExtendYears(String(demands.preferredYears ?? 3))
+    }
+  }, [player])
 
   if (!player) return null
 
@@ -123,6 +151,38 @@ export default function PlayerProfileModal({
   const dominantHand = getDominantHand(player)
   const dominantLabel =
     dominantHand === DOMINANT_HAND.LEFT ? t.dominantLeft : t.dominantRight
+
+  const handleExtendSubmit = () => {
+    if (!onExtendContract || extendBusy) return
+    setExtendBusy(true)
+    setExtendFlash(null)
+    const result = onExtendContract({
+      playerId: player.id,
+      weeklyWage: Math.round(Number(extendWage) || 0),
+      years: Math.max(1, Math.min(5, Math.round(Number(extendYears) || 1))),
+    })
+    setExtendBusy(false)
+    if (result?.completed) {
+      setExtendFlash({ ok: true, text: t.extendAccepted })
+      setExtendOpen(false)
+    } else if (result?.ok === false) {
+      setExtendFlash({ ok: false, text: result.error ?? t.extendRejected })
+    } else {
+      const msg =
+        result?.playerEvaluation?.messageEn && lang === 'en'
+          ? result.playerEvaluation.messageEn
+          : result?.playerEvaluation?.message ?? t.extendRejected
+      setExtendFlash({ ok: false, text: msg })
+      if (result?.playerEvaluation?.counterWeeklyWage) {
+        setExtendWage(String(result.playerEvaluation.counterWeeklyWage))
+      }
+    }
+  }
+
+  const extendPreview = previewContractOffer(
+    Math.round(Number(extendWage) || 0),
+    Math.max(1, Math.min(5, Math.round(Number(extendYears) || 1))),
+  )
   const injuryDays = getInjuryDaysRemaining(player)
   const injuryLabel =
     lang === UI_LANG.EN
@@ -278,6 +338,62 @@ export default function PlayerProfileModal({
             </div>
           ) : (
             <p className="text-ufa-muted text-xs">{t.noContract}</p>
+          )}
+          {isOwnPlayer && onExtendContract && (
+            <div className="mt-3 space-y-2">
+              {!extendOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setExtendOpen(true)}
+                  className="rounded-md bg-ufa-accent/15 px-3 py-1.5 text-xs font-semibold text-ufa-accent ring-1 ring-ufa-accent/30 hover:bg-ufa-accent/25"
+                >
+                  {t.extendContract}
+                </button>
+              ) : (
+                <div className="rounded-lg border border-ufa-border bg-ufa-bg/40 p-3 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="text-xs text-ufa-muted">
+                      {t.extendWage}
+                      <input
+                        type="number"
+                        value={extendWage}
+                        onChange={(e) => setExtendWage(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-panel px-2 py-1.5 text-sm text-ufa-text"
+                      />
+                    </label>
+                    <label className="text-xs text-ufa-muted">
+                      {t.extendYears}
+                      <input
+                        type="number"
+                        min={1}
+                        max={5}
+                        value={extendYears}
+                        onChange={(e) => setExtendYears(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-panel px-2 py-1.5 text-sm text-ufa-text"
+                      />
+                    </label>
+                  </div>
+                  <p className="text-[11px] text-ufa-muted tabular-nums">
+                    {formatUsd(extendPreview.totalCost)}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={extendBusy}
+                    onClick={handleExtendSubmit}
+                    className="rounded-md bg-ufa-accent px-3 py-1.5 text-xs font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                  >
+                    {extendBusy ? t.extending : t.extendSubmit}
+                  </button>
+                </div>
+              )}
+              {extendFlash && (
+                <p
+                  className={`text-xs ${extendFlash.ok ? 'text-emerald-400' : 'text-red-400'}`}
+                >
+                  {extendFlash.text}
+                </p>
+              )}
+            </div>
           )}
         </div>
 

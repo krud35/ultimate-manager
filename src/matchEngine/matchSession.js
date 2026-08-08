@@ -360,7 +360,11 @@ function rollInjuriesAfterPoint(session, pullTeamBeforePoint) {
       if (!player) continue
       ensurePlayerInjury(player)
       const stamina = getStamina(map, player.id)
-      const hit = tryMatchPointInjury(player, stamina, rng, { chanceMult: injuryMult })
+      const hit = tryMatchPointInjury(player, stamina, rng, {
+        chanceMult: injuryMult,
+        team,
+        medicalLevel: team?.facilities?.medicalCenter,
+      })
       if (!hit) continue
       events.push(
         createEvent(EVENT.INJURY, {

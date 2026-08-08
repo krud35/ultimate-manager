@@ -7,6 +7,8 @@
 import { createRng } from '../../matchEngine/rng.js'
 import { getOverallRating } from '../../models/playerStats.js'
 import { worldTeamsList } from '../worldState.js'
+import { applyDebtMoraleToTeam } from '../../models/playerMorale.js'
+import { getTransferBudget } from './clubFinances.js'
 
 export const WEEKS_PER_CONTRACT_YEAR = 52
 
@@ -381,7 +383,7 @@ export function releaseContractFunds(team, amount) {
   const salary = Math.max(0, Math.round(team.finances.salaryBudget ?? 0))
   const take = Math.min(salary, refund)
   team.finances.salaryBudget = salary - take
-  team.finances.transferBudget = Math.max(0, Math.round(team.finances.transferBudget ?? 0)) + take
+  team.finances.transferBudget = Math.round((team.finances.transferBudget ?? 0) + take)
 }
 
 /**
@@ -427,13 +429,17 @@ export function processWeeklyWages(world) {
       weekBill += c.weeklyWage
       c.weeksRemaining = Math.max(0, Math.round(c.weeksRemaining) - 1)
     }
-    if (weekBill <= 0) continue
+    if (weekBill <= 0) {
+      applyDebtMoraleToTeam(team, getTransferBudget(team))
+      continue
+    }
     const salary = Math.max(0, Math.round(team.finances.salaryBudget ?? 0))
     const deduct = Math.min(salary, weekBill)
     team.finances.salaryBudget = salary - deduct
     // Niedobór (np. stary save) — nie pożeraj budżetu transferowego.
     paid += deduct
     teams += 1
+    applyDebtMoraleToTeam(team, getTransferBudget(team))
   }
   return { paid, teams }
 }

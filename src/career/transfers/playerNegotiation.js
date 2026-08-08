@@ -78,6 +78,7 @@ export function computePlayerContractDemands({
   sellerTeam,
   buyerTeam,
   league = null,
+  renew = false,
 }) {
   ensurePlayerContract(player)
   ensurePlayerMorale(player)
@@ -109,21 +110,24 @@ export function computePlayerContractDemands({
   willingness += ((buyerRep - sellerRep) / 100) * 0.4
   willingness += ((buyerRep - REPUTATION_DEFAULT) / 100) * 0.12
   willingness += traitMods.transferWillingnessDelta ?? 0
+  if (renew) {
+    // Przedłużenie: niska chęć odejścia — chce zostać przy uczciwej podwyżce.
+    willingness = Math.min(willingness, 0.28)
+    willingness *= 0.55
+  }
   willingness = Math.max(0.08, Math.min(0.95, willingness))
 
   // Bazowa pensja: obecna + premia za OVR / chęć (niska chęć → wyższe żądania).
-  let demandMult = 1.05
-  demandMult += (1 - willingness) * 0.35 // niechętny żąda więcej
-  demandMult += ((buyerRep - REPUTATION_DEFAULT) / 100) * -0.08 // prestiżowy klub lekko taniej
-  demandMult += (buyerForm - sellerForm) * -0.06 // awans tabelowy = ulga
-  if (morale >= 75 && sellerForm >= 0.7) demandMult += 0.12 // szczęśliwy w liderze
-  if (morale < 40) demandMult -= 0.08 // chce wyjść — łatwiej ugiąć pensję
+  let demandMult = renew ? 1.08 : 1.05
+  demandMult += (1 - willingness) * (renew ? 0.18 : 0.35)
+  demandMult += ((buyerRep - REPUTATION_DEFAULT) / 100) * -0.08
+  demandMult += (buyerForm - sellerForm) * -0.06
+  if (morale >= 75 && sellerForm >= 0.7) demandMult += renew ? 0.06 : 0.12
+  if (morale < 40) demandMult -= 0.08
   if (pot - ovr >= 6 && (traitMods.promiseDevelopmentBias ?? 0) > 0.2) {
-    // Ciekawy talent: nieco niższe żądania jeśli widzi ścieżkę rozwoju.
     demandMult *= 0.97
   }
   if (pot - ovr >= 6 && (traitMods.benchMoraleSensitivity ?? 1) > 1.2) {
-    // Niecierpliwy talent: droższy, gdy czuje potencjał.
     demandMult *= 1.06
   }
   demandMult *= traitMods.wageDemandMult ?? 1
@@ -132,14 +136,17 @@ export function computePlayerContractDemands({
     1,
     Math.min(5, player.contract?.years ?? rollContractYears(player, createRng(null))),
   )
-  // Preferuje podobną długość; przy niskiej lojalności krócej.
   let yearBias = preferredYears + (traitMods.preferredYearsDelta ?? 0)
   if (willingness < 0.35) yearBias = Math.min(yearBias, 2)
   else if (willingness > 0.7) yearBias = Math.max(yearBias, 3)
+  if (renew) yearBias = Math.max(yearBias, 2)
   yearBias = Math.max(1, Math.min(5, Math.round(yearBias)))
 
   const minWeeklyWage = roundWage(
-    Math.max(currentWage * 0.92, weeklyWageFromOvr(ovr) * 0.85) * demandMult,
+    Math.max(
+      renew ? currentWage * 1.02 : currentWage * 0.92,
+      weeklyWageFromOvr(ovr) * 0.85,
+    ) * demandMult,
   )
 
   const preferredPromises = []
@@ -163,32 +170,47 @@ export function computePlayerContractDemands({
     sellerForm: Math.round(sellerForm * 100),
     buyerForm: Math.round(buyerForm * 100),
     willingness: Math.round(willingness * 100),
+    renew: !!renew,
   }
 
   const placeNote = (place, name) =>
     place != null ? `${name} · ${place}. miejsce` : `${name}`
 
-  const summaryPl = [
-    `Chęć przenosin: ${Math.round(willingness * 100)}%`,
-    `Morale ${morale}`,
-    placeNote(sellerPlace, sellerTeam?.name ?? 'Obecny klub'),
-    placeNote(buyerPlace, buyerTeam?.name ?? 'Kupujący'),
-    `Rep. ${Math.round(sellerRep)} → ${Math.round(buyerRep)}`,
-    `Obecna pensja ${formatUsd(currentWage)}/tydz.`,
-  ].join(' · ')
+  const summaryPl = renew
+    ? [
+        `Przedłużenie kontraktu`,
+        `Morale ${morale}`,
+        `Obecna pensja ${formatUsd(currentWage)}/tydz.`,
+        `Oczekiwania od ${formatUsd(minWeeklyWage)}/tydz.`,
+      ].join(' · ')
+    : [
+        `Chęć przenosin: ${Math.round(willingness * 100)}%`,
+        `Morale ${morale}`,
+        placeNote(sellerPlace, sellerTeam?.name ?? 'Obecny klub'),
+        placeNote(buyerPlace, buyerTeam?.name ?? 'Kupujący'),
+        `Rep. ${Math.round(sellerRep)} → ${Math.round(buyerRep)}`,
+        `Obecna pensja ${formatUsd(currentWage)}/tydz.`,
+      ].join(' · ')
 
-  const summaryEn = [
-    `Move willingness: ${Math.round(willingness * 100)}%`,
-    `Morale ${morale}`,
-    sellerPlace != null
-      ? `${sellerTeam?.name ?? 'Current'} · ${sellerPlace}th`
-      : sellerTeam?.name ?? 'Current club',
-    buyerPlace != null
-      ? `${buyerTeam?.name ?? 'Buyer'} · ${buyerPlace}th`
-      : buyerTeam?.name ?? 'Buyer',
-    `Rep. ${Math.round(sellerRep)} → ${Math.round(buyerRep)}`,
-    `Current wage ${formatUsd(currentWage)}/wk`,
-  ].join(' · ')
+  const summaryEn = renew
+    ? [
+        `Contract extension`,
+        `Morale ${morale}`,
+        `Current wage ${formatUsd(currentWage)}/wk`,
+        `Wants from ${formatUsd(minWeeklyWage)}/wk`,
+      ].join(' · ')
+    : [
+        `Move willingness: ${Math.round(willingness * 100)}%`,
+        `Morale ${morale}`,
+        sellerPlace != null
+          ? `${sellerTeam?.name ?? 'Current'} · ${sellerPlace}th`
+          : sellerTeam?.name ?? 'Current club',
+        buyerPlace != null
+          ? `${buyerTeam?.name ?? 'Buyer'} · ${buyerPlace}th`
+          : buyerTeam?.name ?? 'Buyer',
+        `Rep. ${Math.round(sellerRep)} → ${Math.round(buyerRep)}`,
+        `Current wage ${formatUsd(currentWage)}/wk`,
+      ].join(' · ')
 
   return {
     willingness,
@@ -231,12 +253,14 @@ export function evaluatePlayerContractOffer({
   bonuses = [],
   promises = [],
   seed = null,
+  renew = false,
 }) {
   const demands = computePlayerContractDemands({
     player,
     sellerTeam,
     buyerTeam,
     league,
+    renew,
   })
 
   const offerWage = roundWage(weeklyWage)
@@ -390,6 +414,7 @@ export function aiAutoPlayerContractTerms({
   buyerTeam,
   league = null,
   rng = null,
+  renew = false,
 }) {
   const r = rng ?? createRng(null)
   const demands = computePlayerContractDemands({
@@ -397,10 +422,11 @@ export function aiAutoPlayerContractTerms({
     sellerTeam,
     buyerTeam,
     league,
+    renew,
   })
 
-  // Niska chęć → AI czasem odpada.
-  if (demands.willingness < 0.22 && r.float() > 0.35) {
+  // Niska chęć → AI czasem odpada (przy renew prawie zawsze zostaje).
+  if (!renew && demands.willingness < 0.22 && r.float() > 0.35) {
     return { ok: false, demands }
   }
 

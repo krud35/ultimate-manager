@@ -20,6 +20,9 @@ export {
   getTransferBudget,
   getSalaryBudget,
   getTransferPolicy,
+  canBuyPlayers,
+  isClubBankrupt,
+  FORFEIT_BUDGET_THRESHOLD,
   adjustTransferBudget,
   adjustSalaryBudget,
 } from './clubFinances.js'
@@ -77,6 +80,7 @@ export {
 
 export {
   listTransferMarket,
+  listTransferMarketWithFreeAgents,
   negotiateTransfer,
   completeTransfer,
   completeTransferBetweenClubs,
@@ -86,6 +90,18 @@ export {
   respondToIncomingBid,
   negotiatePlayerContract,
 } from './transferEngine.js'
+
+export {
+  PLAYER_STATUS,
+  ensureWorldFreeAgents,
+  findPlayerAnywhere,
+  releasePlayerToFreeAgency,
+  signFreeAgent,
+  renewPlayerContract,
+  listFreeAgents,
+  processAiContractCycle,
+  simulateAiFreeAgentSignings,
+} from './freeAgency.js'
 
 export {
   simulateAiTransferActivity,
