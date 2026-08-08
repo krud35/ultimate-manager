@@ -260,15 +260,6 @@ function TacticDetail({ entry, accent, lang, t }) {
         </div>
       )}
 
-      {(entry.engineStatus || entry.engineStatusEn) && (
-        <section className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2.5">
-          <SectionTitle>{t.engineStatus}</SectionTitle>
-          <p className="mt-1.5 text-sm leading-relaxed text-amber-100/80">
-            {pickField(entry, 'engineStatus', lang)}
-          </p>
-        </section>
-      )}
-
       {entry.sources?.length > 0 && (
         <section>
           <SectionTitle>{t.sources}</SectionTitle>
