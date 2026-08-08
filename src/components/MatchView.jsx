@@ -450,7 +450,7 @@ export default function MatchView({
   function handleSimulateAll() {
     const finished = simulateMatch({
       ...matchOptions(),
-      ...pointAiOptions({ rotateHome: true, rotateAway: true, aiHome: true, aiAway: true }),
+      ...pointAiOptions({ rotateHome: true, rotateAway: true }),
     })
     setInstantResult(finished)
     publishStamina(finished)
@@ -504,12 +504,18 @@ export default function MatchView({
         setPointPlaybackComplete(true)
 
         try {
-          playNextPoint(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions())
+          playNextPoint(
+            sessionRef.current,
+            tacticsUpdateForPoint(),
+            pointAiOptions({ rotateHome: true, rotateAway: true }),
+          )
         } catch (err) {
           console.error('[MatchView] fast sim point failed:', err)
           break
         }
 
+        const sideTactics = sessionRef.current?.[playerSideRef.current]?.tactics
+        if (sideTactics) handleMatchTacticsChange(sideTactics)
         scrubInjuredFromPlayerTactics()
         const played = sessionRef.current.pointIndex - 1
         setReviewPointIndex(played)

@@ -291,9 +291,13 @@ export function tickStaminaRecovery(velocity, isDefense, enduranceStat, dtSec) {
     50,
   )
   const enduranceBoost = 0.7 + (enduranceStat / 100) * 0.7
+  // Brak ruchu / trucht: regeneracja obniżona o 40% względem bazowej skali.
+  const idleJogScale = 0.6
   if (velocity >= SPRINT_SPEED_MPS) return 0
-  if (velocity < STAND_STILL_MPS) return baseRef * 0.6 * enduranceBoost * (dtSec / 0.2)
-  return baseRef * 0.3 * enduranceBoost * (dtSec / 0.2)
+  if (velocity < STAND_STILL_MPS) {
+    return baseRef * 0.6 * enduranceBoost * idleJogScale * (dtSec / 0.2)
+  }
+  return baseRef * 0.3 * enduranceBoost * idleJogScale * (dtSec / 0.2)
 }
 
 /**

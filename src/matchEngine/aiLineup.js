@@ -33,8 +33,12 @@ import {
 } from './playerSubRoles.js'
 import { offenseLineSlotsForAttackStyle } from './offenseLineSlots.js'
 import { isPlayerAvailable } from '../models/playerInjury.js'
+import { padLine } from './lineups.js'
 
 const LINE_SIZE = MATCH_CONFIG.lineupSize
+
+/** Próg auto-substytucji w symulacji (drużyna gracza): STA poniżej → zmiana. */
+export const AUTO_SUB_STAMINA_MIN = 60
 
 function fillLineFromCandidates(candidates, size = LINE_SIZE) {
   const line = []
@@ -257,5 +261,91 @@ export function autoRotateTacticsForTeam(team, staminaMap, rng = null) {
     playerSubRoles: normalizePlayerSubRolesMap(mergedSubs),
     lineupWhenOffenseStartPlayerIds: oLine,
     lineupWhenDefenseStartPlayerIds: fillLineFromCandidates(dCandidates),
+  })
+}
+
+function playerNeedsAutoSub(player, staminaMap, minStamina) {
+  if (!player) return true
+  if (!isPlayerAvailable(player)) return true
+  return getStamina(staminaMap, player.id) < minStamina
+}
+
+/**
+ * Zamienia tylko słabe / kontuzjowane sloty — resztę składu i rozkazy zostawia.
+ * Używane dla drużyny gracza w trakcie symulacji.
+ */
+export function autoSubstituteTacticsForTeam(
+  team,
+  staminaMap,
+  { minStamina = AUTO_SUB_STAMINA_MIN } = {},
+) {
+  const existing = normalizeTactics(team.tactics ?? defaultTacticsForPlayers(team.players ?? []))
+  const roster = team.players ?? []
+  const byId = Object.fromEntries(roster.map((p) => [p.id, p]))
+
+  function subLine(lineIds, scoreFn) {
+    const next = padLine(lineIds)
+    const used = new Set(next.filter((id) => id != null))
+    const freshBench = () =>
+      roster
+        .filter(
+          (p) =>
+            isPlayerAvailable(p) &&
+            getStamina(staminaMap, p.id) >= minStamina &&
+            !used.has(p.id),
+        )
+        .sort((a, b) => scoreFn(b, staminaMap) - scoreFn(a, staminaMap))
+    const anyBench = () =>
+      roster
+        .filter((p) => isPlayerAvailable(p) && !used.has(p.id))
+        .sort((a, b) => scoreFn(b, staminaMap) - scoreFn(a, staminaMap))
+
+    for (let i = 0; i < next.length; i += 1) {
+      const pid = next[i]
+      const player = pid != null ? byId[pid] : null
+      if (player && !playerNeedsAutoSub(player, staminaMap, minStamina)) continue
+
+      const rep = freshBench()[0] ?? anyBench()[0] ?? null
+      if (!rep) {
+        if (player && !isPlayerAvailable(player)) next[i] = null
+        continue
+      }
+      if (pid != null) used.delete(pid)
+      used.add(rep.id)
+      next[i] = rep.id
+    }
+    return next
+  }
+
+  const oLine = subLine(
+    existing.lineupWhenOffenseStartPlayerIds,
+    scorePlayerForOffense,
+  )
+  const dLine = subLine(
+    existing.lineupWhenDefenseStartPlayerIds,
+    scorePlayerForDefense,
+  )
+
+  const attackStyle = existing.oLineAttackStyle ?? existing.attackStyle
+  const slots = offenseLineSlotsForAttackStyle(attackStyle)
+  const map = { ...normalizePlayerSubRolesMap(existing.playerSubRoles) }
+  const prevO = padLine(existing.lineupWhenOffenseStartPlayerIds)
+  for (let i = 0; i < slots.length; i += 1) {
+    const pid = oLine[i]
+    if (pid == null) continue
+    const slot = slots[i]
+    if (!slot) continue
+    const key = String(pid)
+    if (prevO[i] !== pid || !map[key]) {
+      map[key] =
+        slot.defaultSubRole ?? defaultSubRoleForSlot(slot.role, slot.roleIndex ?? 1)
+    }
+  }
+
+  return normalizeTactics({
+    ...existing,
+    playerSubRoles: normalizePlayerSubRolesMap(map),
+    lineupWhenOffenseStartPlayerIds: oLine,
+    lineupWhenDefenseStartPlayerIds: dLine,
   })
 }

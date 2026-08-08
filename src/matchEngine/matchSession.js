@@ -7,6 +7,7 @@ import { attachTacticsToTeam } from './tacticsModifiers.js'
 import {
   applyFatigueAfterPoint,
   autoRotateTacticsForTeam,
+  autoSubstituteTacticsForTeam,
 } from './rotation.js'
 import { resolveAiTeamIdentity, tacticsForTeam } from './aiLineup.js'
 import {
@@ -150,19 +151,15 @@ function preparePointTeams(session, { homeTactics, awayTactics, rotateAway, rota
   applySessionTactics(session, { homeTactics, awayTactics })
 
   if (rotateHome) {
-    session.home.tactics = autoRotateTacticsForTeam(
-      session.home,
-      session.stamina.home,
-      session.rng,
-    )
+    session.home.tactics = aiHome
+      ? autoRotateTacticsForTeam(session.home, session.stamina.home, session.rng)
+      : autoSubstituteTacticsForTeam(session.home, session.stamina.home)
   }
 
   if (rotateAway) {
-    session.away.tactics = autoRotateTacticsForTeam(
-      session.away,
-      session.stamina.away,
-      session.rng,
-    )
+    session.away.tactics = aiAway
+      ? autoRotateTacticsForTeam(session.away, session.stamina.away, session.rng)
+      : autoSubstituteTacticsForTeam(session.away, session.stamina.away)
   }
 
   // Adaptacja stylu / instrukcji / reakcja na przeciwnika — po rotacji składu, przed punktem
@@ -424,20 +421,30 @@ export function simulateMatch(options) {
   const aiHome = options.aiHome ?? rotateHome
   const aiAway = options.aiAway ?? rotateAway
   let session = initMatchSession(options)
-  // AI dobiera style + linie na start
+  // AI dobiera style + linie; drużyna gracza (rotate bez ai) — tylko auto-sub
   if (rotateHome) {
-    session.home.tactics = autoRotateTacticsForTeam(
-      { ...session.home, tactics: session.home.tactics },
-      session.stamina.home,
-      session.rng,
-    )
+    session.home.tactics = aiHome
+      ? autoRotateTacticsForTeam(
+          { ...session.home, tactics: session.home.tactics },
+          session.stamina.home,
+          session.rng,
+        )
+      : autoSubstituteTacticsForTeam(
+          { ...session.home, tactics: session.home.tactics },
+          session.stamina.home,
+        )
   }
   if (rotateAway) {
-    session.away.tactics = autoRotateTacticsForTeam(
-      { ...session.away, tactics: session.away.tactics },
-      session.stamina.away,
-      session.rng,
-    )
+    session.away.tactics = aiAway
+      ? autoRotateTacticsForTeam(
+          { ...session.away, tactics: session.away.tactics },
+          session.stamina.away,
+          session.rng,
+        )
+      : autoSubstituteTacticsForTeam(
+          { ...session.away, tactics: session.away.tactics },
+          session.stamina.away,
+        )
   }
 
   while (session.status !== 'finished') {

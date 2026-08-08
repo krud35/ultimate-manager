@@ -11,9 +11,9 @@ import {
   staminaRoleFamily,
 } from './stamina.js'
 import { findExhaustedInTactics } from './lineups.js'
-import { autoRotateTacticsForTeam } from './aiLineup.js'
+import { autoRotateTacticsForTeam, autoSubstituteTacticsForTeam } from './aiLineup.js'
 
-export { autoRotateTacticsForTeam, tacticsForTeam } from './aiLineup.js'
+export { autoRotateTacticsForTeam, autoSubstituteTacticsForTeam, tacticsForTeam } from './aiLineup.js'
 
 const LINE_SIZE = MATCH_CONFIG.lineupSize
 

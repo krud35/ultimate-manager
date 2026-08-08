@@ -78,7 +78,7 @@ export {
   subRoleMods,
   subRoleAllowsInitiateCut,
 } from './playerSubRoles.js'
-export { tacticsForTeam, autoRotateTacticsForTeam, suggestAiPlayerInstructions, suggestAiPlayerSubRoles, resolveAiTeamIdentity } from './aiLineup.js'
+export { tacticsForTeam, autoRotateTacticsForTeam, autoSubstituteTacticsForTeam, AUTO_SUB_STAMINA_MIN, suggestAiPlayerInstructions, suggestAiPlayerSubRoles, resolveAiTeamIdentity } from './aiLineup.js'
 export {
   AI_COACH_ARCHETYPES,
   rollAiCoachProfilesForWorld,

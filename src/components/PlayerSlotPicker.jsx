@@ -529,6 +529,27 @@ export default function PlayerSlotPicker({
                     </button>
                     <button
                       type="button"
+                      disabled={injured}
+                      onClick={() => pick(p.id)}
+                      title={
+                        injured
+                          ? injuryStatusLabel(p, lang)
+                          : canSwap
+                            ? t.swapPositions
+                            : t.pickBtn
+                      }
+                      className={`shrink-0 border-l border-ufa-border/50 px-2.5 text-[11px] font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
+                        injured
+                          ? 'text-ufa-muted'
+                          : isCurrent
+                            ? 'text-ufa-accent'
+                            : 'text-ufa-accent hover:bg-ufa-accent/15'
+                      }`}
+                    >
+                      {isCurrent ? '✓' : t.pickBtn}
+                    </button>
+                    <button
+                      type="button"
                       title={t.openProfile}
                       onClick={(e) => {
                         e.stopPropagation()
@@ -536,7 +557,7 @@ export default function PlayerSlotPicker({
                       }}
                       className="shrink-0 border-l border-ufa-border/50 px-2.5 text-[11px] text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-accent"
                     >
-                      Profil
+                      {t.profile}
                     </button>
                   </li>
                 )
