@@ -204,24 +204,64 @@ export default function App() {
   const [matchStamina, setMatchStamina] = useState(null)
   const [teamProfileId, setTeamProfileId] = useState(null)
   const [simProgress, setSimProgress] = useState(null)
-  const [navOpen, setNavOpen] = useState(() => {
+  /** User preference from Show/Hide menu (persisted). Scroll can temporarily collapse when open. */
+  const [navUserOpen, setNavUserOpen] = useState(() => {
     try {
       return localStorage.getItem('ufa-nav-open') !== '0'
     } catch {
       return true
     }
   })
+  /** True after scrolling away from the top — hides nav unless pinned open. */
+  const [navScrollHidden, setNavScrollHidden] = useState(false)
+  /** Manual Show while scrolled down keeps nav visible until back at top. */
+  const [navPinnedOpen, setNavPinnedOpen] = useState(false)
+  const navOpen = navUserOpen && (!navScrollHidden || navPinnedOpen)
+
+  const persistNavUserOpen = useCallback((next) => {
+    try {
+      localStorage.setItem('ufa-nav-open', next ? '1' : '0')
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   const toggleNav = useCallback(() => {
-    setNavOpen((open) => {
-      const next = !open
-      try {
-        localStorage.setItem('ufa-nav-open', next ? '1' : '0')
-      } catch {
-        /* ignore */
+    if (navOpen) {
+      setNavUserOpen(false)
+      setNavPinnedOpen(false)
+      persistNavUserOpen(false)
+      return
+    }
+    setNavUserOpen(true)
+    persistNavUserOpen(true)
+    if (navScrollHidden) setNavPinnedOpen(true)
+  }, [navOpen, navScrollHidden, persistNavUserOpen])
+
+  useEffect(() => {
+    const NAV_SCROLL_HIDE_Y = 72
+    let ticking = false
+
+    const updateFromScroll = () => {
+      ticking = false
+      const y = window.scrollY || document.documentElement.scrollTop || 0
+      if (y <= NAV_SCROLL_HIDE_Y) {
+        setNavScrollHidden(false)
+        setNavPinnedOpen(false)
+      } else {
+        setNavScrollHidden(true)
       }
-      return next
-    })
+    }
+
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      window.requestAnimationFrame(updateFromScroll)
+    }
+
+    updateFromScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   const league = career?.league ?? null
@@ -1403,29 +1443,29 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col bg-ufa-bg">
-      <header className="sticky top-0 z-10 border-b border-ufa-border bg-ufa-panel/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1600px] flex-col gap-3 px-4 py-4 sm:px-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-ufa-accent to-ufa-accent-dim text-lg font-black text-ufa-bg shadow-lg shadow-ufa-accent/20">
+      <header className="sticky top-0 z-20 border-b border-ufa-border bg-ufa-panel/95 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-ufa-accent to-ufa-accent-dim text-base font-black text-ufa-bg shadow-lg shadow-ufa-accent/20 sm:h-10 sm:w-10 sm:text-lg">
                 U
               </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight text-ufa-text">
+              <div className="min-w-0">
+                <h1 className="truncate text-base font-bold tracking-tight text-ufa-text sm:text-xl">
                   Ultimate Manager
                 </h1>
-                <p className="text-xs text-ufa-muted">
+                <p className="truncate text-[10px] text-ufa-muted sm:text-xs">
                   {career.managerName} · {displaySeasonLabel(league.seasonLabel, uiLang)} ·{' '}
                   {league.currentDate} · {userTeam.name}
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
               {activeTab !== 'match' && (
                 <button
                   type="button"
                   onClick={toggleNav}
-                  className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover sm:text-sm"
+                  className="min-h-9 rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover sm:min-h-0 sm:px-3 sm:text-sm"
                   aria-expanded={navOpen}
                   aria-controls="main-nav"
                 >
@@ -1436,16 +1476,25 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleExitToSlots}
-                className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover sm:text-sm"
+                className="min-h-9 max-w-[7.5rem] truncate rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover sm:min-h-0 sm:max-w-none sm:px-3 sm:text-sm"
               >
                 {tShell.saveAndExit}
               </button>
             </div>
           </div>
 
-          {activeTab !== 'match' && navOpen && (
-            <nav id="main-nav" className="flex flex-col gap-2" aria-label={tShell.navAria}>
-              <div className="flex flex-wrap gap-1 rounded-lg bg-ufa-bg p-1 ring-1 ring-ufa-border">
+          {activeTab !== 'match' && (
+            <nav
+              id="main-nav"
+              className={`flex flex-col gap-1.5 overflow-hidden transition-[max-height,opacity,margin] duration-200 ease-out sm:gap-2 ${
+                navOpen
+                  ? 'mt-0.5 max-h-[28rem] opacity-100'
+                  : 'pointer-events-none mt-0 max-h-0 opacity-0'
+              }`}
+              aria-label={tShell.navAria}
+              aria-hidden={!navOpen}
+            >
+              <div className="flex gap-1 overflow-x-auto overscroll-x-contain rounded-lg bg-ufa-bg p-1 ring-1 ring-ufa-border [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap [&::-webkit-scrollbar]:hidden">
                 {NAV_CATEGORIES.map((cat) => {
                   const active = cat.id === activeCategoryId
                   const badge = categoryBadge(cat)
@@ -1454,7 +1503,7 @@ export default function App() {
                       key={cat.id}
                       type="button"
                       onClick={() => navigateTo(cat.items[0].id)}
-                      className={`relative rounded-md px-3 py-2 text-sm font-medium transition-all ${
+                      className={`relative shrink-0 rounded-md px-3 py-2.5 text-sm font-medium transition-all sm:py-2 ${
                         active
                           ? 'bg-ufa-accent text-ufa-bg shadow-md'
                           : 'text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text'
@@ -1477,7 +1526,7 @@ export default function App() {
                 })}
               </div>
 
-              <div className="flex flex-wrap gap-1 rounded-lg bg-ufa-bg/60 p-1 ring-1 ring-ufa-border/70">
+              <div className="flex gap-1 overflow-x-auto overscroll-x-contain rounded-lg bg-ufa-bg/60 p-1 ring-1 ring-ufa-border/70 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap [&::-webkit-scrollbar]:hidden">
                 {activeCategory.items.map((item) => {
                   const active = activeTab === item.id
                   const badgeCount =
@@ -1491,7 +1540,7 @@ export default function App() {
                       key={item.id}
                       type="button"
                       onClick={() => navigateTo(item.id)}
-                      className={`relative rounded-md px-2.5 py-1.5 text-xs sm:text-sm font-medium transition-all ${
+                      className={`relative shrink-0 rounded-md px-2.5 py-2 text-xs font-medium transition-all sm:py-1.5 sm:text-sm ${
                         active
                           ? 'bg-ufa-panel text-ufa-text ring-1 ring-ufa-accent/50 shadow-sm'
                           : 'text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text'
@@ -1518,7 +1567,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 league-fade-in">
+      <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-6 league-fade-in">
         {activeTab === 'hub' && (
           <LeagueHub
             league={league}

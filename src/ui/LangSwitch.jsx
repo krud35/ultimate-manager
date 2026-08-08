@@ -10,7 +10,7 @@ export function LangSwitch({ lang, onChange, className = '' }) {
       <button
         type="button"
         onClick={() => onChange(UI_LANG.PL)}
-        className={`rounded px-2.5 py-1 text-xs font-semibold tracking-wide transition-colors ${
+        className={`min-h-8 rounded px-2.5 py-1 text-xs font-semibold tracking-wide transition-colors sm:min-h-0 ${
           lang === UI_LANG.PL
             ? 'bg-ufa-accent text-ufa-bg'
             : 'text-ufa-muted hover:text-ufa-text'
@@ -21,7 +21,7 @@ export function LangSwitch({ lang, onChange, className = '' }) {
       <button
         type="button"
         onClick={() => onChange(UI_LANG.EN)}
-        className={`rounded px-2.5 py-1 text-xs font-semibold tracking-wide transition-colors ${
+        className={`min-h-8 rounded px-2.5 py-1 text-xs font-semibold tracking-wide transition-colors sm:min-h-0 ${
           lang === UI_LANG.EN
             ? 'bg-ufa-accent text-ufa-bg'
             : 'text-ufa-muted hover:text-ufa-text'

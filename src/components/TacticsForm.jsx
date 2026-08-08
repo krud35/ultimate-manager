@@ -127,7 +127,9 @@ function CompactLineupSection({
   return (
     <section
       className={
-        compact ? '' : 'rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-xl shadow-black/30'
+        compact
+          ? ''
+          : 'rounded-xl border border-ufa-border bg-ufa-panel p-3 shadow-xl shadow-black/30 sm:p-5'
       }
     >
       <div className="mb-3">
@@ -209,7 +211,7 @@ function RichLineupSection({
   const handlerN = slots.filter((s) => s.role === 'handler').length
   const cutterN = slots.filter((s) => s.role === 'cutter').length
   return (
-    <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-xl shadow-black/30">
+    <section className="rounded-xl border border-ufa-border bg-ufa-panel p-3 shadow-xl shadow-black/30 sm:p-5">
       <div className="mb-3">
         <div className="flex items-baseline justify-between gap-2">
           <h3 className="font-semibold text-ufa-text">{title}</h3>
