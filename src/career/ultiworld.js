@@ -17,11 +17,13 @@ import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/
 import { UI_LANG } from '../ui/locale.js'
 
 const ARTICLES_MAX = 80
-const WORLD_EVENT_CHANCE = 0.28
+const WORLD_EVENT_CHANCE = 0.24
 /** Dodatkowa szansa na czystą ciekawostkę / felieton (bez wpływu na gameplay). */
-const CURIOSITY_CHANCE = 0.38
+const CURIOSITY_CHANCE = 0.3
 /** Max relacji z pojedynczych meczów na tick (dzień / FF). */
 const MAX_MATCH_ARTICLES_PER_TICK = 1
+/** Ile dni dany szablon world-eventu musi „odpocząć”, zanim może wrócić — ogranicza spam tych samych nagłówków. */
+const WORLD_EVENT_COOLDOWN_DAYS = 6
 
 const MATCH_ANGLE_SCORE = {
   upset: 10,
@@ -63,6 +65,22 @@ function mulberry32(seed) {
 function pick(arr, rng) {
   if (!arr?.length) return null
   return arr[Math.floor(rng() * arr.length)]
+}
+
+function daysBetween(isoA, isoB) {
+  try {
+    const a = parseISODate(isoA)
+    const b = parseISODate(isoB)
+    return Math.round((b.getTime() - a.getTime()) / 86_400_000)
+  } catch {
+    return Infinity
+  }
+}
+
+function isEventOnCooldown(cooldowns, eventId, simDate) {
+  const last = cooldowns?.[eventId]
+  if (!last || !simDate) return false
+  return daysBetween(last, simDate) < WORLD_EVENT_COOLDOWN_DAYS
 }
 
 function monthKey(iso) {
@@ -149,6 +167,7 @@ export function ensureUltiworld(career) {
       lastRoundCovered: 0,
       lastPomMonth: null,
       coveredFixtureIds: [],
+      worldEventCooldowns: {},
       seeded: false,
     }
   }
@@ -157,6 +176,7 @@ export function ensureUltiworld(career) {
   if (!Array.isArray(u.coveredFixtureIds)) u.coveredFixtureIds = []
   if (typeof u.lastRoundCovered !== 'number') u.lastRoundCovered = 0
   if (u.lastPomMonth === undefined) u.lastPomMonth = null
+  if (!u.worldEventCooldowns || typeof u.worldEventCooldowns !== 'object') u.worldEventCooldowns = {}
   return u
 }
 
@@ -742,15 +762,36 @@ const WORLD_EVENTS = [
       const ovr = getOverallRating(player.skills)
       const dayWordPl = days === 1 ? 'dzień' : 'dni'
       const dayWordEn = days === 1 ? 'day' : 'days'
+      const variants = [
+        {
+          h: `Alarm w ${team.name}: ${name} kontuzjowany`,
+          hEn: `Alert at ${team.name}: ${name} injured`,
+          b: `Według źródeł szatniowych ${name} (OVR ${ovr}) nabawił się urazu (${label}) i wypadnie na około ${days} ${dayWordPl}. To cios w rotację ${team.name} — a okazja dla rywali, by naciskać w najbliższych meczach.`,
+          bEn: `Locker-room sources say ${name} (OVR ${ovr}) suffered a ${labelEn} and will miss about ${days} ${dayWordEn}. A blow to ${team.name}'s rotation — and a chance for rivals to press in upcoming games.`,
+        },
+        {
+          h: `${team.name} traci ${name} na ${days} ${dayWordPl}`,
+          hEn: `${team.name} lose ${name} for ${days} ${dayWordEn}`,
+          b: `Sztab medyczny ${team.name} potwierdza: ${name} (OVR ${ovr}) zmaga się z ${label}. Trener musi przetasować rotację, a Ultiworld już liczy, kto skorzysta na dodatkowych minutach.`,
+          bEn: `${team.name}'s medical staff confirms: ${name} (OVR ${ovr}) is dealing with a ${labelEn}. The coach has to reshuffle the rotation, and Ultiworld is already counting who benefits from the extra minutes.`,
+        },
+        {
+          h: `Kontuzja komplikuje sezon ${team.name}`,
+          hEn: `Injury complicates ${team.name}'s season`,
+          b: `${name} (OVR ${ovr}) opuści około ${days} ${dayWordPl} z powodu ${label}. Ultiworld: krótkoterminowy cios, długoterminowe pytanie o głębokość składu ${team.name}.`,
+          bEn: `${name} (OVR ${ovr}) will miss about ${days} ${dayWordEn} with a ${labelEn}. Ultiworld: a short-term blow, a long-term question about ${team.name}'s squad depth.`,
+        },
+      ]
+      const v = pick(variants, rng)
       return {
         article: {
           category: 'breaking',
-          headline: `Alarm w ${team.name}: ${name} kontuzjowany`,
-          headlineEn: `Alert at ${team.name}: ${name} injured`,
+          headline: v.h,
+          headlineEn: v.hEn,
           dek: `Ultiworld: ${label}, pauza ok. ${days} ${dayWordPl}.`,
           dekEn: `Ultiworld: ${labelEn}, out ~${days} ${dayWordEn}.`,
-          body: `Według źródeł szatniowych ${name} (OVR ${ovr}) nabawił się urazu (${label}) i wypadnie na około ${days} ${dayWordPl}. To cios w rotację ${team.name} — a okazja dla rywali, by naciskać w najbliższych meczach.`,
-          bodyEn: `Locker-room sources say ${name} (OVR ${ovr}) suffered a ${labelEn} and will miss about ${days} ${dayWordEn}. A blow to ${team.name}'s rotation — and a chance for rivals to press in upcoming games.`,
+          body: v.b,
+          bodyEn: v.bEn,
           tags: ['breaking', 'kontuzja'],
           relatedTeamIds: [team.id],
           relatedPlayerIds: [player.id],
@@ -796,15 +837,36 @@ const WORLD_EVENTS = [
         fixture.awayTeamId === career.playerTeamId
       const home = names[fixture.homeTeamId]
       const away = names[fixture.awayTeamId]
+      const variants = [
+        {
+          h: `Przełożony mecz: ${home} – ${away}`,
+          hEn: `Postponed match: ${home} – ${away}`,
+          b: `UFA i Ultiworld potwierdzają: spotkanie ${home} vs ${away} nie odbędzie się w terminie. Nowa data: ${fixture.date} (+${delay} dni). Sztaby dostały czas na regenerację — kalendarz dostał migrenę.`,
+          bEn: `The league and Ultiworld confirm: ${home} vs ${away} will not be played on schedule. New date: ${fixture.date} (+${delay} days). Staffs get recovery time — the calendar gets a migraine.`,
+        },
+        {
+          h: `Liga przesuwa ${home} – ${away}`,
+          hEn: `League shifts ${home} – ${away}`,
+          b: `Organizatorzy ogłosili zmianę terminu spotkania ${home} – ${away}: z ${oldDate} na ${fixture.date}. Kibice muszą przestawić budziki, sztaby dostają nieplanowany tydzień na taktykę.`,
+          bEn: `Organizers announced a date change for ${home} – ${away}: from ${oldDate} to ${fixture.date}. Fans have to reset their alarms; staffs get an unplanned week for tactics.`,
+        },
+        {
+          h: `${home} – ${away} czeka na nowy termin`,
+          hEn: `${home} – ${away} awaits a new date`,
+          b: `Mecz ${home} – ${away} nie odbędzie się zgodnie z pierwotnym planem. Liga wyznaczyła ${fixture.date} jako nową datę (+${delay} dni). Ultiworld: kalendarz znów robi za trzeciego trenera.`,
+          bEn: `${home} – ${away} won't go ahead as originally scheduled. The league set ${fixture.date} as the new date (+${delay} days). Ultiworld: the calendar is playing third coach again.`,
+        },
+      ]
+      const v = pick(variants, rng)
       return {
         article: {
           category: 'breaking',
-          headline: `Przełożony mecz: ${home} – ${away}`,
-          headlineEn: `Postponed match: ${home} – ${away}`,
+          headline: v.h,
+          headlineEn: v.hEn,
           dek: `Z ${oldDate} na ${fixture.date}. Powód: logistyka / pogoda / „siła wyższa”.`,
           dekEn: `From ${oldDate} to ${fixture.date}. Reason: logistics / weather / force majeure.`,
-          body: `UFA i Ultiworld potwierdzają: spotkanie ${home} vs ${away} nie odbędzie się w terminie. Nowa data: ${fixture.date} (+${delay} dni). Sztaby dostały czas na regenerację — kalendarz dostał migrenę.`,
-          bodyEn: `The league and Ultiworld confirm: ${home} vs ${away} will not be played on schedule. New date: ${fixture.date} (+${delay} days). Staffs get recovery time — the calendar gets a migraine.`,
+          body: v.b,
+          bodyEn: v.bEn,
           tags: ['przełożenie', 'kalendarz'],
           relatedTeamIds: [fixture.homeTeamId, fixture.awayTeamId],
           effectsSummary: `Mecz przesunięty o ${delay} dni`,
@@ -850,15 +912,36 @@ const WORLD_EVENTS = [
         },
       ]
       const who = pick(sponsors, rng)
+      const headlines = [
+        {
+          h: `Zastrzyk gotówki dla ${team.name}`,
+          hEn: `Cash injection for ${team.name}`,
+          b: `Ultiworld Exclusive: ${who.pl} dokłada ${formatUsd(amount)} do budżetu transferowego ${team.name}. Oficjalnie „inwestycja w rozwój ultimate”. Nieoficjalnie — ktoś mocno wierzy w ten sezon. Dyrektor sportowy uśmiecha się szerzej niż po buzzer-beaterze.`,
+          bEn: `Ultiworld Exclusive: ${who.en} adds ${formatUsd(amount)} to ${team.name}'s transfer budget. Officially “an investment in ultimate.” Unofficially — someone really believes in this season. The sporting director smiles wider than after a buzzer-beater.`,
+        },
+        {
+          h: `${team.name} z nowym partnerem finansowym`,
+          hEn: `${team.name} lands a new financial partner`,
+          b: `${who.pl} podpisuje czek na ${formatUsd(amount)} dla ${team.name}. Ultiworld: to nie zmienia stylu gry, ale zmienia rozmowy w oknie transferowym.`,
+          bEn: `${who.en} signs a check for ${formatUsd(amount)} for ${team.name}. Ultiworld: it won't change the style of play, but it will change conversations in the transfer window.`,
+        },
+        {
+          h: `Budżet ${team.name} rośnie o ${formatUsd(amount)}`,
+          hEn: `${team.name}'s budget grows by ${formatUsd(amount)}`,
+          b: `Cicha transakcja, głośne skutki: ${who.pl} dorzuca się do kasy transferowej ${team.name}. Rywale już liczą, ile z tego pójdzie na wzmocnienia.`,
+          bEn: `A quiet transaction, loud consequences: ${who.en} tops up ${team.name}'s transfer kitty. Rivals are already guessing how much goes into reinforcements.`,
+        },
+      ]
+      const v = pick(headlines, rng)
       return {
         article: {
           category: 'feature',
-          headline: `Zastrzyk gotówki dla ${team.name}`,
-          headlineEn: `Cash injection for ${team.name}`,
+          headline: v.h,
+          headlineEn: v.hEn,
           dek: `${formatUsd(amount)} od: ${who.pl}.`,
           dekEn: `${formatUsd(amount)} from: ${who.en}.`,
-          body: `Ultiworld Exclusive: ${who.pl} dokłada ${formatUsd(amount)} do budżetu transferowego ${team.name}. Oficjalnie „inwestycja w rozwój ultimate”. Nieoficjalnie — ktoś mocno wierzy w ten sezon. Dyrektor sportowy uśmiecha się szerzej niż po buzzer-beaterze.`,
-          bodyEn: `Ultiworld Exclusive: ${who.en} adds ${formatUsd(amount)} to ${team.name}'s transfer budget. Officially “an investment in ultimate.” Unofficially — someone really believes in this season. The sporting director smiles wider than after a buzzer-beater.`,
+          body: v.b,
+          bodyEn: v.bEn,
           tags: ['finanse', 'sponsor'],
           relatedTeamIds: [team.id],
           effectsSummary: `Budżet +${formatUsd(amount)}`,
@@ -882,15 +965,36 @@ const WORLD_EVENTS = [
       if (!team) return null
       const amount = (15 + Math.floor(rng() * 25)) * 1000
       adjustTransferBudget(team, amount)
+      const variants = [
+        {
+          h: `${team.name} zasilone kasą — rynek się trzęsie`,
+          hEn: `${team.name} flush with cash — the market shakes`,
+          b: `Źródła Ultiworld: ${team.name} dostało zastrzyk płynności. To oznacza agresywniejsze oferty w oknie i więcej nerwów u dyrektorów pozostałych klubów. „Pieniądze nie grają w ultimate — ale kupują czas i spokój” — komentuje nasz transferowy plotkarz.`,
+          bEn: `Ultiworld sources: ${team.name} just got a liquidity shot. Expect sharper bids in the window and more stress for other GMs. “Money doesn’t play ultimate — but it buys time and calm,” says our transfer gossip columnist.`,
+        },
+        {
+          h: `Konkurencja się zbroi: ${team.name} z nowym budżetem`,
+          hEn: `The competition arms up: ${team.name} gets a fresh budget`,
+          b: `${team.name} właśnie dostało zielone światło na wydatki. Ultiworld: reszta ligi patrzy nerwowo na tablicę transferową, bo ${formatUsd(amount)} w jednych rękach potrafi namieszać w kolejce.`,
+          bEn: `${team.name} just got the green light to spend. Ultiworld: the rest of the league is nervously watching the transfer board, because ${formatUsd(amount)} in one club's hands can shake up the standings.`,
+        },
+        {
+          h: `Plotki potwierdzone: ${team.name} ma nowe środki`,
+          hEn: `Rumors confirmed: ${team.name} has fresh funds`,
+          b: `Po tygodniach spekulacji Ultiworld potwierdza: ${team.name} dysponuje dodatkowym budżetem transferowym. Agenci już wykręcają numery, dyrektorzy sportowi rywali już wzdychają.`,
+          bEn: `After weeks of speculation, Ultiworld confirms: ${team.name} has an extra transfer budget. Agents are already dialing numbers; rival sporting directors are already sighing.`,
+        },
+      ]
+      const v = pick(variants, rng)
       return {
         article: {
           category: 'breaking',
-          headline: `${team.name} zasilone kasą — rynek się trzęsie`,
-          headlineEn: `${team.name} flush with cash — the market shakes`,
+          headline: v.h,
+          headlineEn: v.hEn,
           dek: `+${formatUsd(amount)} w budżecie transferowym rywala.`,
           dekEn: `+${formatUsd(amount)} in a rival's transfer budget.`,
-          body: `Źródła Ultiworld: ${team.name} dostało zastrzyk płynności. To oznacza agresywniejsze oferty w oknie i więcej nerwów u dyrektorów pozostałych klubów. „Pieniądze nie grają w ultimate — ale kupują czas i spokój” — komentuje nasz transferowy plotkarz.`,
-          bodyEn: `Ultiworld sources: ${team.name} just got a liquidity shot. Expect sharper bids in the window and more stress for other GMs. “Money doesn’t play ultimate — but it buys time and calm,” says our transfer gossip columnist.`,
+          body: v.b,
+          bodyEn: v.bEn,
           tags: ['transfery', 'rynek'],
           relatedTeamIds: [team.id],
           effectsSummary: `${team.name} budżet +${formatUsd(amount)}`,
@@ -966,15 +1070,36 @@ const WORLD_EVENTS = [
         p.form = Math.max(25, Math.min(99, p.form + 3))
       }
       const names = picks.map((p) => getPlayerFullName(p)).join(', ')
+      const variants = [
+        {
+          h: `Mikro-cykl formy w ${team.name}`,
+          hEn: `Form micro-cycle at ${team.name}`,
+          b: `Po intensywnym mikrocyklu (bez oficjalnego komunikatu UFA) forma rośnie u: ${names}. Ultiworld lubi takie historie — ciche przygotowania, głośne skutki w kolejce.`,
+          bEn: `After an intense micro-cycle (no official league memo) form rises for: ${names}. Ultiworld loves these stories — quiet prep, loud results next round.`,
+        },
+        {
+          h: `${team.name} łapie rytm przed kolejką`,
+          hEn: `${team.name} finds its rhythm ahead of the round`,
+          b: `Sztab ${team.name} przeprowadził krótki blok pracy indywidualnej. Efekt: wyraźny skok formy u ${names}. Ultiworld: czasem to nie taktyka, tylko powtórki decydują.`,
+          bEn: `${team.name}'s staff ran a short individual-work block. Result: a clear form spike for ${names}. Ultiworld: sometimes it's not tactics but reps that decide.`,
+        },
+        {
+          h: `Cicha praca, głośne efekty w ${team.name}`,
+          hEn: `Quiet work, loud results at ${team.name}`,
+          b: `${names} wracają z dodatkowych sesji wyraźnie ostrzejsi. Ultiworld zagląda za kulisy ${team.name} i widzi plan, który zaczyna działać.`,
+          bEn: `${names} return from extra sessions noticeably sharper. Ultiworld peeks behind the curtain at ${team.name} and sees a plan starting to work.`,
+        },
+      ]
+      const v = pick(variants, rng)
       return {
         article: {
           category: 'feature',
-          headline: `Mikro-cykl formy w ${team.name}`,
-          headlineEn: `Form micro-cycle at ${team.name}`,
+          headline: v.h,
+          headlineEn: v.hEn,
           dek: 'Krótki sharpening camp — kilku zawodników łapie timing.',
           dekEn: 'A short sharpening camp — a few players catch their timing.',
-          body: `Po intensywnym mikrocyklu (bez oficjalnego komunikatu UFA) forma rośnie u: ${names}. Ultiworld lubi takie historie — ciche przygotowania, głośne skutki w kolejce.`,
-          bodyEn: `After an intense micro-cycle (no official league memo) form rises for: ${names}. Ultiworld loves these stories — quiet prep, loud results next round.`,
+          body: v.b,
+          bodyEn: v.bEn,
           tags: ['forma', 'trening'],
           relatedTeamIds: [team.id],
           relatedPlayerIds: picks.map((p) => p.id),
@@ -2396,10 +2521,16 @@ const WORLD_EVENTS = [
   },
 ]
 
-function pickWorldEvent(career, league, rng, { flavorOnly = false, excludeIds = null } = {}) {
+function pickWorldEvent(
+  career,
+  league,
+  rng,
+  { flavorOnly = false, excludeIds = null, cooldowns = null, simDate = null } = {},
+) {
   const pool = WORLD_EVENTS.filter((e) => {
     if (flavorOnly && e.impact) return false
     if (excludeIds?.has?.(e.id)) return false
+    if (isEventOnCooldown(cooldowns, e.id, simDate)) return false
     try {
       return !e.canSpawn || e.canSpawn(career, league)
     } catch {
@@ -2564,9 +2695,13 @@ export function processUltiworldTick(career, { date = null } = {}) {
 
   // 4) Losowe wydarzenie świata (+ osobna szansa na ciekawostkę)
   const usedEventIds = new Set()
+  const cooldowns = { ...(ultiworld.worldEventCooldowns ?? {}) }
   if (rng() < WORLD_EVENT_CHANCE) {
-    const event = pickWorldEvent({ ...career, world, league }, league, rng)
-    if (event) usedEventIds.add(event.id)
+    const event = pickWorldEvent({ ...career, world, league }, league, rng, { cooldowns, simDate })
+    if (event) {
+      usedEventIds.add(event.id)
+      cooldowns[event.id] = simDate
+    }
     const ran = runWorldEventArticle(event, { ...career, world, league }, world, league, simDate, rng, inboxMessages)
     world = ran.world
     league = ran.league
@@ -2576,7 +2711,10 @@ export function processUltiworldTick(career, { date = null } = {}) {
     const curiosity = pickWorldEvent({ ...career, world, league }, league, rng, {
       flavorOnly: true,
       excludeIds: usedEventIds,
+      cooldowns,
+      simDate,
     })
+    if (curiosity) cooldowns[curiosity.id] = simDate
     const ran = runWorldEventArticle(
       curiosity,
       { ...career, world, league },
@@ -2590,6 +2728,7 @@ export function processUltiworldTick(career, { date = null } = {}) {
     league = ran.league
     if (ran.article) newArticles.push(ran.article)
   }
+  ultiworld.worldEventCooldowns = cooldowns
 
   // Cup champion flash
   if (league.cup?.championTeamId && !ultiworld.cupChampionCovered) {

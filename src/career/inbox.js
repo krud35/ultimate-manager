@@ -955,7 +955,7 @@ export function expireStaleTransferOffers(career, { date = null } = {}) {
 }
 
 /**
- * Zdarzenia losowe decyzyjne — ~22% szansy na 1 event / dzień.
+ * Zdarzenia losowe decyzyjne — ~26% szansy na 1 event / dzień (SPAWN_CHANCE w randomEvents.js).
  */
 export function generateRandomEvents(career, { date = null } = {}) {
   const msg = pickRandomEventMessage(career, { date })

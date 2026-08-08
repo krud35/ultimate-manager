@@ -759,12 +759,12 @@ export const RANDOM_EVENT_TEMPLATES = [
       {
         id: 'sign',
         label: 'Podpisz umowę',
-        hint: '+$15k, morale +1, reputacja +2',
+        hint: '+$15k, reputacja +2, morale drużyny −1 (za dużo logo)',
       },
       {
         id: 'negotiate',
         label: 'Negocjuj wyżej',
-        hint: '50%: +$22k i reputacja +3 albo nic',
+        hint: '50%: +$26k i reputacja +4 / albo morale −2, reputacja −1',
       },
       {
         id: 'refuse',
@@ -777,31 +777,31 @@ export const RANDOM_EVENT_TEMPLATES = [
         return {
           effects: [
             { type: 'budget', delta: 15000 },
-            { type: 'moraleTeam', delta: 1 },
+            { type: 'moraleTeam', delta: -1 },
             { type: 'reputation', delta: 2 },
           ],
-          summary: 'Umowa na stroje podpisana. Klub ma +15 000 $ i świeższy branding.',
-          summaryEn: 'Kit deal signed. The club has +$15,000 and fresher branding.',
+          summary: 'Umowa na stroje podpisana. Klub ma +15 000 $ i świeższy branding, ale część szatni narzeka na ilość logo na koszulce.',
+          summaryEn: 'Kit deal signed. The club has +$15,000 and fresher branding, but part of the locker room grumbles about all the logos on the jersey.',
         }
       }
       if (choiceId === 'negotiate') {
         if (rng() < 0.5) {
           return {
             effects: [
-              { type: 'budget', delta: 22000 },
-              { type: 'reputation', delta: 3 },
+              { type: 'budget', delta: 26000 },
+              { type: 'reputation', delta: 4 },
             ],
-            summary: 'Negocjacje poszły świetnie — producent dołożył do 22 000 $, a media chwalą deal.',
-            summaryEn: 'Negotiations went great — the maker topped up to $22,000 and media praise the deal.',
+            summary: 'Negocjacje poszły świetnie — producent dołożył do 26 000 $, a media chwalą deal.',
+            summaryEn: 'Negotiations went great — the maker topped up to $26,000 and media praise the deal.',
           }
         }
         return {
           effects: [
-            { type: 'moraleTeam', delta: -1 },
+            { type: 'moraleTeam', delta: -2 },
             { type: 'reputation', delta: -1 },
           ],
-          summary: 'Producent się wycofał po twardych negocjacjach. Szansa i trochę prestiżu przepadły.',
-          summaryEn: 'The maker walked away after hard talks. The chance and some prestige are gone.',
+          summary: 'Producent się wycofał po twardych negocjacjach. Szansa i trochę prestiżu przepadły, a szatnia czuje, że przeciągnęliście strunę.',
+          summaryEn: 'The maker walked away after hard talks. The chance and some prestige are gone, and the locker room feels you overplayed it.',
         }
       }
       return {
@@ -977,7 +977,7 @@ export const RANDOM_EVENT_TEMPLATES = [
       {
         id: 'take',
         label: 'Bierz kasę',
-        hint: 'Budżet +, reputacja +1',
+        hint: 'Budżet +, reputacja +1, morale drużyny −1 (presja obietnicy)',
       },
       {
         id: 'negotiate',
@@ -997,9 +997,10 @@ export const RANDOM_EVENT_TEMPLATES = [
           effects: [
             { type: 'budget', delta: pay },
             { type: 'reputation', delta: 1 },
+            { type: 'moraleTeam', delta: -1 },
           ],
-          summary: `Premia sponsora: +${formatUsd(pay)}. Zarząd uśmiecha się na zdjęciu z logo.`,
-          summaryEn: `Sponsor bonus: +${formatUsd(pay)}. The board smiles in the logo photo.`,
+          summary: `Premia sponsora: +${formatUsd(pay)}. Zarząd uśmiecha się na zdjęciu z logo, ale szatnia czuje ciężar obietnicy o top tabeli.`,
+          summaryEn: `Sponsor bonus: +${formatUsd(pay)}. The board smiles in the logo photo, but the locker room feels the weight of the top-table promise.`,
         }
       }
       if (choiceId === 'negotiate') {
@@ -1247,7 +1248,7 @@ export const RANDOM_EVENT_TEMPLATES = [
       {
         id: 'classy',
         label: 'Klasyczna, spokojna odpowiedź',
-        hint: 'Morale +3, reputacja +3',
+        hint: `Morale +2, reputacja +3, forma ${ctx.starName} −1 (brak ujścia dla adrenaliny)`,
       },
       { id: 'mute', label: 'Ignoruj', hint: 'Bez zmian' },
     ],
@@ -1266,11 +1267,12 @@ export const RANDOM_EVENT_TEMPLATES = [
       if (choiceId === 'classy') {
         return {
           effects: [
-            { type: 'moraleTeam', delta: 3 },
+            { type: 'moraleTeam', delta: 2 },
             { type: 'reputation', delta: 3 },
+            { type: 'form', playerId: ctx.starId, delta: -1 },
           ],
-          summary: 'Spokojna odpowiedź wzmocniła wizerunek i reputację klubu. Atmosfera w drużynie dobra.',
-          summaryEn: 'A calm reply strengthened the club’s image and reputation. Team vibe is good.',
+          summary: `Spokojna odpowiedź wzmocniła wizerunek i reputację klubu, ale ${ctx.starName} nie miał gdzie wyładować adrenaliny.`,
+          summaryEn: `A calm reply strengthened the club’s image and reputation, but ${ctx.starName} had nowhere to burn off the adrenaline.`,
         }
       }
       return {
@@ -2034,7 +2036,7 @@ export const RANDOM_EVENT_TEMPLATES = [
       'Sztab proponuje mini-turniej w ramach tygodnia. Rywalizacja wewnętrzna może podnieść poziom — albo zostawić siniaki na ego.',
     choices: () => [
       { id: 'compete', label: 'Pełna rywalizacja', hint: 'Forma top ↑, morale bench ryzykowne' },
-      { id: 'fun', label: 'Luz + nagrody śmieszne', hint: 'Morale drużyny +, forma 0' },
+      { id: 'fun', label: 'Luz + nagrody śmieszne', hint: 'Morale drużyny +, forma −1 (mniej intensywności)' },
       { id: 'skip', label: 'Zwykły trening', hint: 'Bez zmian' },
     ],
     resolve(ctx, choiceId, rng) {
@@ -2057,9 +2059,12 @@ export const RANDOM_EVENT_TEMPLATES = [
       }
       if (choiceId === 'fun') {
         return {
-          effects: [{ type: 'moraleTeam', delta: 4 }],
-          summary: 'Luźny turniej z nagrodami-żartami. Szatnia umocniona.',
-          summaryEn: 'A loose tournament with joke prizes. Locker room strengthened.',
+          effects: [
+            { type: 'moraleTeam', delta: 4 },
+            { type: 'formTeam', delta: -1 },
+          ],
+          summary: 'Luźny turniej z nagrodami-żartami. Szatnia umocniona, ale ostrość treningowa lekko spadła.',
+          summaryEn: 'A loose tournament with joke prizes. Locker room strengthened, but training sharpness dipped a little.',
         }
       }
       return { effects: [], summary: 'Zostajecie przy standardowym planie treningowym.',
@@ -2252,9 +2257,11 @@ export const RANDOM_EVENT_TEMPLATES = [
     pickContext(roster) {
       const sorted = sortByOvrDesc(roster)
       const bench = sorted.slice(Math.floor(sorted.length / 2))
+      const starters = sorted.slice(0, Math.floor(sorted.length / 2))
       return {
         benchIds: bench.slice(0, 5).map((p) => p.id),
         benchNames: bench.slice(0, 3).map((p) => playerName(p)),
+        starterIds: starters.map((p) => p.id),
       }
     },
     title: () => 'Spotkanie z ławką',
@@ -2263,10 +2270,10 @@ export const RANDOM_EVENT_TEMPLATES = [
       `Część rotacji (${ctx.benchNames.join(', ')}…) chce rozmowy o minutach i perspektywach. Ignorowanie też jest decyzją.`,
     choices: () => [
       { id: 'honest', label: 'Szczera rozmowa + plan', hint: 'Morale ławki +, forma top −1 (czas)' },
-      { id: 'promise', label: 'Obiecaj więcej minut', hint: 'Morale ławki ++; ryzyko niespełnienia (− później nie modelujemy)' },
+      { id: 'promise', label: 'Obiecaj więcej minut', hint: 'Morale ławki ++; 40%: wyjściowy skład czuje się zagrożony (morale top −)' },
       { id: 'ignore', label: '„Skład wybiera boisko”', hint: 'Morale ławki −' },
     ],
-    resolve(ctx, choiceId) {
+    resolve(ctx, choiceId, rng) {
       if (choiceId === 'honest') {
         return {
           effects: [
@@ -2278,6 +2285,17 @@ export const RANDOM_EVENT_TEMPLATES = [
         }
       }
       if (choiceId === 'promise') {
+        const backfire = rng() < 0.4
+        if (backfire) {
+          return {
+            effects: [
+              { type: 'moraleMany', playerIds: ctx.benchIds, delta: 6 },
+              { type: 'moraleMany', playerIds: ctx.starterIds, delta: -3 },
+            ],
+            summary: 'Obietnice podniosły morale ławki, ale wyjściowy skład zwąchał politykę i czuje się zagrożony.',
+            summaryEn: 'Promises lifted bench morale, but the starting lineup smells politics and feels threatened.',
+          }
+        }
         return {
           effects: [{ type: 'moraleMany', playerIds: ctx.benchIds, delta: 6 }],
           summary: 'Obietnice podniosły morale ławki. Teraz trzeba ich dotrzymać na boisku.',
@@ -2303,23 +2321,37 @@ export const RANDOM_EVENT_TEMPLATES = [
     body: () =>
       'Marketing chce limitowany drop koszulek. Możesz wejść agresywnie, ostrożnie albo odpuścić sezonowy hype.',
     choices: () => [
-      { id: 'big', label: 'Duży drop', hint: 'Budżet − teraz, potem + (netto +); morale +' },
+      { id: 'big', label: 'Duży drop', hint: 'Budżet −$8k teraz, 70%: duży zwrot i morale + / 30%: klapa, strata' },
       { id: 'small', label: 'Mała seria', hint: 'Mały zysk, mały boost' },
       { id: 'skip', label: 'Bez merchu', hint: 'Bez zmian' },
     ],
     resolve(ctx, choiceId, rng) {
       if (choiceId === 'big') {
         const invest = 8000
-        const revenue = 12000 + Math.floor(rng() * 8001)
+        const hit = rng() < 0.7
+        if (hit) {
+          const revenue = 14000 + Math.floor(rng() * 9001)
+          const rev = Math.round(revenue / 1000) * 1000
+          return {
+            effects: [
+              { type: 'budget', delta: -invest },
+              { type: 'budget', delta: rev },
+              { type: 'moraleTeam', delta: 2 },
+            ],
+            summary: `Drop hype’owy: −${formatUsd(invest)} kosztów, +${formatUsd(rev)} wpływu. Szatnia lubi buzz.`,
+            summaryEn: `Hype drop: −${formatUsd(invest)} costs, +${formatUsd(rev)} revenue. The locker room likes the buzz.`,
+          }
+        }
+        const revenue = 2000 + Math.floor(rng() * 4001)
         const rev = Math.round(revenue / 1000) * 1000
         return {
           effects: [
             { type: 'budget', delta: -invest },
             { type: 'budget', delta: rev },
-            { type: 'moraleTeam', delta: 2 },
+            { type: 'moraleTeam', delta: -1 },
           ],
-          summary: `Drop hype’owy: −${formatUsd(invest)} kosztów, +${formatUsd(rev)} wpływu. Szatnia lubi buzz.`,
-          summaryEn: `Hype drop: −${formatUsd(invest)} costs, +${formatUsd(rev)} revenue. The locker room likes the buzz.`,
+          summary: `Drop klapnął: −${formatUsd(invest)} kosztów, tylko +${formatUsd(rev)} wpływu. Magazyn pełen niesprzedanych koszulek, marketing zawstydzony.`,
+          summaryEn: `The drop flopped: −${formatUsd(invest)} costs, only +${formatUsd(rev)} revenue. A warehouse full of unsold jerseys; marketing is embarrassed.`,
         }
       }
       if (choiceId === 'small') {
