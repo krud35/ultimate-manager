@@ -41,7 +41,6 @@ import {
   getFanSize,
   getFanMood,
   getFanTraits,
-  formatFanSize,
   fanSizeLabel,
   fanMoodLabel,
   fanMoodToneClass,
@@ -334,8 +333,12 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
             <StatPill label="W–L" value={`${standing?.wins ?? 0}–${standing?.losses ?? 0}`} />
             <StatPill label="PF" value={standing?.pointsFor ?? 0} />
             <StatPill label="PA" value={standing?.pointsAgainst ?? 0} />
-            <StatPill label={t.teamOffense} value={ratings.offense} />
-            <StatPill label={t.teamDefense} value={ratings.defense} />
+            {isOwnClub && (
+              <>
+                <StatPill label={t.teamOffense} value={ratings.offense} />
+                <StatPill label={t.teamDefense} value={ratings.defense} />
+              </>
+            )}
             {teamForm != null && (
               <StatPill
                 label={t.form}
@@ -353,21 +356,21 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
             {teamReputation != null && (
               <StatPill
                 label={t.reputation}
-                value={teamReputation}
+                value={reputationLabel(teamReputation, lang)}
                 valueClassName={reputationToneClass(teamReputation)}
               />
             )}
             {teamFans != null && (
               <StatPill
                 label={t.fans}
-                value={formatFanSize(teamFans.size, lang)}
+                value={fanSizeLabel(teamFans.size, lang)}
                 valueClassName="text-ufa-accent"
               />
             )}
             {teamFans != null && (
               <StatPill
                 label={t.fanMood}
-                value={teamFans.mood}
+                value={fanMoodLabel(teamFans.mood, lang)}
                 valueClassName={fanMoodToneClass(teamFans.mood)}
               />
             )}
