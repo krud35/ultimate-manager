@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { demoAwayTeam, demoHomeTeam } from '../data/demoMatchTeams'
 import { teamById, teamForMatchEngine } from '../data/ufaLeagueTeams.js'
 import {
@@ -223,12 +223,15 @@ export default function MatchView({
   const matchTactics = matchTacticsBundle.tactics ?? homeTactics
   matchTacticsRef.current = matchTactics
 
-  function handleMatchTacticsChange(nextTactics) {
-    setMatchTacticsBundle((prev) => ({
-      key: prev.key ?? matchTacticsKey,
-      tactics: normalizeTactics(nextTactics),
-    }))
-  }
+  const handleMatchTacticsChange = useCallback(
+    (nextTactics) => {
+      setMatchTacticsBundle((prev) => ({
+        key: prev.key ?? matchTacticsKey,
+        tactics: normalizeTactics(nextTactics),
+      }))
+    },
+    [matchTacticsKey],
+  )
 
   const homeTeam = useMemo(() => {
     if (homeTeamProp) return homeTeamProp

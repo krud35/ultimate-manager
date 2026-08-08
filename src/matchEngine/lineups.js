@@ -10,8 +10,6 @@ import { normalizeLineCoachDirectives } from './coachDirectives.js'
 import { normalizePlayerInstructionsMap } from './playerInstructions.js'
 import {
   normalizePlayerSubRolesMap,
-  isHandlerSubRole,
-  isCutterSubRole,
   defaultSubRoleForSlot,
 } from './playerSubRoles.js'
 import { offenseLineSlotsForAttackStyle } from './offenseLineSlots.js'
@@ -49,12 +47,10 @@ function fillSubRolesFromOffenseLine(tactics) {
     const pid = oLine[i]
     if (pid == null) continue
     const key = String(pid)
+    // Tylko brakujące — nie nadpisuj (gracz może mieć inną rodzinę na D-Line).
+    if (map[key]) continue
     const slot = slots[i]
-    const stored = map[key]
-    const fits =
-      (slot.role === 'handler' && isHandlerSubRole(stored)) ||
-      (slot.role === 'cutter' && isCutterSubRole(stored))
-    if (!fits && slot.defaultSubRole) map[key] = slot.defaultSubRole
+    if (slot?.defaultSubRole) map[key] = slot.defaultSubRole
   }
   return map
 }

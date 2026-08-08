@@ -21,11 +21,6 @@ import PlayerProfileModal from './PlayerProfileModal'
 import {
   isPlayerTakenOnLine,
   lineSlotIndexOf,
-  resolvePlayerSubRole,
-  setPlayerSubRoleInTactics,
-  storedSubRoleForPlayer,
-  isHandlerSubRole,
-  isCutterSubRole,
 } from '../matchEngine'
 
 const SORT_KEYS = [
@@ -265,28 +260,8 @@ export default function PlayerSlotPicker({
     setInstrOpen(false)
   }
 
-  useEffect(() => {
-    if (!canEditInstr) return
-    if (slotRole !== 'handler' && slotRole !== 'cutter') return
-    if (playerId == null) return
-    const stored = storedSubRoleForPlayer(tactics, playerId)
-    const fits =
-      (slotRole === 'handler' && isHandlerSubRole(stored)) ||
-      (slotRole === 'cutter' && isCutterSubRole(stored))
-    if (fits) return
-    const def = resolvePlayerSubRole(tactics, playerId, {
-      role: slotRole,
-      roleIndex: slotRoleIndex,
-    })
-    onTacticsChange(setPlayerSubRoleInTactics(tactics, playerId, def))
-  }, [
-    canEditInstr,
-    playerId,
-    slotRole,
-    slotRoleIndex,
-    tactics,
-    onTacticsChange,
-  ])
+  // Podrole ustawiane przy wstawieniu / swapie (updateLineupSlot) — bez auto-effectu,
+  // który walczył z normalizeTactics (O-Line vs D-Line) i blokował UI meczu.
 
   return (
     <div
