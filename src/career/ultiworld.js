@@ -469,13 +469,15 @@ function interestingMatchArticle(career, league, fixture, namesPl, namesEn, rng)
   }
 }
 
-function roundReviewArticles(career, league, round, names, rng) {
+function roundReviewArticles(career, league, round, namesPl, namesEn, rng) {
   const fixtures = fixturesForRound(league, round).filter((f) => f.status === 'completed')
   if (!fixtures.length) return []
 
   const out = []
   const roundStats = league.roundPlayerStats?.[String(round)] ?? {}
   const top7 = topRoundPlayers(roundStats, 7)
+  const publishDate =
+    roundAwardsPublishDate(league, round) ?? career.league?.currentDate
 
   // Match of the round
   let best = null
@@ -490,18 +492,20 @@ function roundReviewArticles(career, league, round, names, rng) {
     }
   }
   if (best) {
-    const home = names[best.homeTeamId]
-    const away = names[best.awayTeamId]
+    const home = namesPl[best.homeTeamId]
+    const away = namesPl[best.awayTeamId]
+    const homeEn = namesEn[best.homeTeamId] ?? home
+    const awayEn = namesEn[best.awayTeamId] ?? away
     out.push(
       makeArticle({
         category: 'round',
         headline: `Kolejka ${round}: mecz wieczoru — ${home} ${best.homeScore}–${best.awayScore} ${away}`,
-        headlineEn: `Round ${round}: match of the night — ${home} ${best.homeScore}–${best.awayScore} ${away}`,
+        headlineEn: `Round ${round}: match of the night — ${homeEn} ${best.homeScore}–${best.awayScore} ${awayEn}`,
         dek: 'Redakcja Ultiworld wybiera hit weekendu ligowego.',
         dekEn: 'Ultiworld editors pick the league weekend’s highlight.',
         body: `Spośród ${fixtures.length} spotkań kolejki ${round} to właśnie ten pojedynek najbardziej rozgrzał komentatorów. Tempo, emocje i wynik ${best.homeScore}–${best.awayScore} — przepis na materiał, który będzie krążył w feedach do środy.`,
         bodyEn: `Among ${fixtures.length} fixtures in round ${round}, this was the one that lit up the desks. Pace, emotion and a ${best.homeScore}–${best.awayScore} scoreline — feed fuel through Wednesday.`,
-        date: best.date ?? career.league?.currentDate,
+        date: best.date ?? publishDate,
         career,
         tags: ['kolejka', `runda-${round}`, 'mecz-wieczoru'],
         relatedTeamIds: [best.homeTeamId, best.awayTeamId],
@@ -514,7 +518,7 @@ function roundReviewArticles(career, league, round, names, rng) {
       .map((r, i) => {
         const to = r.turnovers ?? 0
         const toBit = to ? ` / ${to}TO` : ''
-        return `${i + 1}. ${playerDisplay(r, names)} — ${r.goals ?? 0}G / ${r.assists ?? 0}A / ${r.blocks ?? 0}B${toBit}`
+        return `${i + 1}. ${playerDisplay(r, namesPl)} — ${r.goals ?? 0}G / ${r.assists ?? 0}A / ${r.blocks ?? 0}B${toBit}`
       })
       .join('\n')
     out.push(
@@ -526,7 +530,7 @@ function roundReviewArticles(career, league, round, names, rng) {
         dekEn: 'Monday seven — after the full league weekend is in the books.',
         body: `Redakcja czeka do poniedziałku, aż domkną się wszystkie mecze kolejki ${round}. Algorytm (gole ×3, asysty ×2, bloki ×2.5, turnovery −2) wyłonił formę weekendu:\n\n${lines}\n\n„Liczby nie kłamią, ale turnovery potrafią zepsuć highlight” — żartuje nasz analityk. Lista nie jest rankingiem OVR; to zdjęcie z konkretnej kolejki.`,
         bodyEn: `We wait until Monday so every round ${round} fixture is final. The formula (goals ×3, assists ×2, blocks ×2.5, turnovers −2) picked the weekend’s form:\n\n${lines}\n\n“Numbers don’t lie — turnovers just ruin the highlight,” jokes our analyst. Not an OVR ranking; a snapshot of one round.`,
-        date: career.league?.currentDate,
+        date: publishDate,
         career,
         tags: ['top7', `runda-${round}`, 'liderzy', 'poniedziałek'],
         relatedPlayerIds: top7.map((r) => r.playerId),
@@ -543,36 +547,77 @@ function roundReviewArticles(career, league, round, names, rng) {
       ((a.pointsFor ?? 0) - (a.pointsAgainst ?? 0))
     )
   })[0]
-  const leaderName = leader ? names[leader.teamId] : null
-  const blurbs = [
-    `Po ${round}. kolejce tabela zaczyna mówić ludzkim głosem. ${leaderName ? `Na czele ${leaderName}.` : ''} Ultiworld przypomina: w UFA sezon jest maratonem, nie sprintem po jednym weekendu.`,
-    `Kolejka ${round} w liczbach: ${fixtures.length} meczów, masa turnowerów i kilka historii, które jeszcze wrócą w playoffowych podsumowaniach.`,
-    `Z perspektywy szatni: ktoś złapał rytm, ktoś zgubił timing. ${leaderName ? `${leaderName} zbiera punkty systematycznie.` : ''} My zbieramy cytaty.`,
-    `Weekend nr ${round} zostawił po sobie trzy smaki: euforię, niedosyt i „co jeśli”. Ultiworld tipuje, że najciekawsze historie dopiero się rozkręcają.`,
-    `Gdyby kolejka ${round} była playlistą: połowa tracków to bangers, reszta — deep cuty dla prawdziwych fanów. ${leaderName ? `Na topie charts: ${leaderName}.` : ''}`,
-    `Analitycy mówią o „kontroli tempa”, zawodnicy o „flow”, trenerzy o „detalach”. My mówimy: kolejka ${round} dostarczyła materiału na tydzień felietonów.`,
-    `W ${fixtures.length} meczach zmieniło się więcej niż tylko kolumny W-L. Relacje w szatniach, pewność handlerów, spokój w strefe — to też wynik.`,
+  const leaderName = leader ? namesPl[leader.teamId] : null
+  const leaderNameEn = leader ? namesEn[leader.teamId] ?? leaderName : null
+  const reviewPool = [
+    {
+      headline: `Przegląd kolejki ${round}: co zostaje w pamięci`,
+      headlineEn: `Round ${round} review: what sticks`,
+      dek: 'Krótki felieton zamiast długiego box score.',
+      dekEn: 'A short column instead of a long box score.',
+      body: `Po ${round}. kolejce tabela zaczyna mówić ludzkim głosem. ${leaderName ? `Na czele ${leaderName}.` : ''} Ultiworld przypomina: w UFA sezon jest maratonem, nie sprintem po jednym weekendu.`,
+      bodyEn: `After round ${round} the table starts speaking in human. ${leaderNameEn ? `${leaderNameEn} sit on top.` : ''} Ultiworld reminder: in UFA the season is a marathon, not a one-weekend sprint.`,
+    },
+    {
+      headline: `Kolejka ${round} okiem Ultiworld`,
+      headlineEn: `Round ${round} through Ultiworld’s lens`,
+      dek: 'Trzy akapity, zero lania wody.',
+      dekEn: 'Three paragraphs, zero filler.',
+      body: `Kolejka ${round} w liczbach: ${fixtures.length} meczów, masa turnowerów i kilka historii, które jeszcze wrócą w playoffowych podsumowaniach.`,
+      bodyEn: `Round ${round} in numbers: ${fixtures.length} matches, a pile of turnovers, and a few stories that will resurface in playoff wrap-ups.`,
+    },
+    {
+      headline: `Po weekendzie #${round}: szybki debrief`,
+      headlineEn: `After weekend #${round}: quick debrief`,
+      dek: 'Dla tych, co nie obejrzeli wszystkich meczów.',
+      dekEn: 'For anyone who didn’t catch every game.',
+      body: `Z perspektywy szatni: ktoś złapał rytm, ktoś zgubił timing. ${leaderName ? `${leaderName} zbiera punkty systematycznie.` : ''} My zbieramy cytaty.`,
+      bodyEn: `From the locker rooms: someone found rhythm, someone lost timing. ${leaderNameEn ? `${leaderNameEn} keep stacking wins.` : ''} We keep stacking quotes.`,
+    },
+    {
+      headline: `Felieton po kolejce ${round}`,
+      headlineEn: `Column after round ${round}`,
+      dek: 'Krótki felieton zamiast długiego box score.',
+      dekEn: 'A short column instead of a long box score.',
+      body: `Weekend nr ${round} zostawił po sobie trzy smaki: euforię, niedosyt i „co jeśli”. Ultiworld tipuje, że najciekawsze historie dopiero się rozkręcają.`,
+      bodyEn: `Weekend #${round} left three flavors: euphoria, unfinished business, and “what if.” Ultiworld tips that the best stories are still warming up.`,
+    },
+    {
+      headline: `Kolejka ${round} okiem Ultiworld`,
+      headlineEn: `Round ${round} through Ultiworld’s lens`,
+      dek: 'Trzy akapity, zero lania wody.',
+      dekEn: 'Three paragraphs, zero filler.',
+      body: `Gdyby kolejka ${round} była playlistą: połowa tracków to bangers, reszta — deep cuty dla prawdziwych fanów. ${leaderName ? `Na topie charts: ${leaderName}.` : ''}`,
+      bodyEn: `If round ${round} were a playlist: half the tracks are bangers, the rest deep cuts for true fans. ${leaderNameEn ? `Top of the charts: ${leaderNameEn}.` : ''}`,
+    },
+    {
+      headline: `Po weekendzie #${round}: szybki debrief`,
+      headlineEn: `After weekend #${round}: quick debrief`,
+      dek: 'Dla tych, co nie obejrzeli wszystkich meczów.',
+      dekEn: 'For anyone who didn’t catch every game.',
+      body: `Analitycy mówią o „kontroli tempa”, zawodnicy o „flow”, trenerzy o „detalach”. My mówimy: kolejka ${round} dostarczyła materiału na tydzień felietonów.`,
+      bodyEn: `Analysts talk “tempo control,” players talk “flow,” coaches talk “details.” We say: round ${round} supplied a week of column fuel.`,
+    },
+    {
+      headline: `Przegląd kolejki ${round}: co zostaje w pamięci`,
+      headlineEn: `Round ${round} review: what sticks`,
+      dek: 'Krótki felieton zamiast długiego box score.',
+      dekEn: 'A short column instead of a long box score.',
+      body: `W ${fixtures.length} meczach zmieniło się więcej niż tylko kolumny W-L. Relacje w szatniach, pewność handlerów, spokój w strefe — to też wynik.`,
+      bodyEn: `Across ${fixtures.length} matches more changed than the W-L columns. Locker-room vibes, handler confidence, calm in the zone — that counts as result too.`,
+    },
   ]
-  const reviewHeadlines = [
-    `Przegląd kolejki ${round}: co zostaje w pamięci`,
-    `Kolejka ${round} okiem Ultiworld`,
-    `Po weekendzie #${round}: szybki debrief`,
-    `Felieton po kolejce ${round}`,
-  ]
+  const review = pick(reviewPool, rng)
   out.push(
     makeArticle({
       category: 'round',
-      headline: pick(reviewHeadlines, rng),
-      dek: pick(
-        [
-          'Krótki felieton zamiast długiego box score.',
-          'Trzy akapity, zero lania wody.',
-          'Dla tych, co nie obejrzeli wszystkich meczów.',
-        ],
-        rng,
-      ),
-      body: pick(blurbs, rng),
-      date: career.league?.currentDate,
+      headline: review.headline,
+      headlineEn: review.headlineEn,
+      dek: review.dek,
+      dekEn: review.dekEn,
+      body: review.body,
+      bodyEn: review.bodyEn,
+      date: publishDate,
       career,
       tags: ['przegląd', `runda-${round}`],
     }),
@@ -587,13 +632,20 @@ function roundReviewArticles(career, league, round, names, rng) {
     )
     if (blowouts.length && rng() < 0.5) {
       const f = pick(blowouts, rng)
+      const h = namesPl[f.homeTeamId]
+      const a = namesPl[f.awayTeamId]
+      const hEn = namesEn[f.homeTeamId] ?? h
+      const aEn = namesEn[f.awayTeamId] ?? a
       out.push(
         makeArticle({
           category: 'feature',
-          headline: `Statystyczny koszmar weekendu: ${names[f.homeTeamId]} ${f.homeScore}–${f.awayScore} ${names[f.awayTeamId]}`,
+          headline: `Statystyczny koszmar weekendu: ${h} ${f.homeScore}–${f.awayScore} ${a}`,
+          headlineEn: `Weekend’s statistical nightmare: ${hEn} ${f.homeScore}–${f.awayScore} ${aEn}`,
           dek: 'Gdy różnica robi się dwucyfrowa, Twitter robi się bezlitosny.',
+          dekEn: 'When the margin goes double digits, social feeds get merciless.',
           body: `Nie każdy mecz musi być thrillerem. Czasem liga serwuje lekcję pokory w formie wyniku ${f.homeScore}–${f.awayScore}. Ultiworld nie kopie leżących — tylko delikatnie przypomina o resetie w tygodniu.`,
-          date: f.date ?? career.league?.currentDate,
+          bodyEn: `Not every match has to be a thriller. Sometimes the league serves a humility lesson as ${f.homeScore}–${f.awayScore}. Ultiworld doesn’t kick teams while they’re down — just gently mentions the midweek reset.`,
+          date: f.date ?? publishDate,
           career,
           tags: ['statystyka', `runda-${round}`],
           relatedTeamIds: [f.homeTeamId, f.awayTeamId],
@@ -604,9 +656,12 @@ function roundReviewArticles(career, league, round, names, rng) {
         makeArticle({
           category: 'feature',
           headline: `Kolejka ${round} kochała nerwy: ${nailbiters.length} mecz(e/y) zdecydowane „o włos”`,
+          headlineEn: `Round ${round} loved the nerves: ${nailbiters.length} matches decided by a hair`,
           dek: 'Małe marginesy, duże historie.',
+          dekEn: 'Tiny margins, huge stories.',
           body: `Gdy wynik waży się do końca, ultimate pokazuje najlepszą twarz. W kolejce ${round} mieliśmy ${nailbiters.length} takich starć. Kibice dziękują. Fizjoterapeuci — mniej.`,
-          date: career.league?.currentDate,
+          bodyEn: `When the score hangs until the end, ultimate shows its best face. Round ${round} gave us ${nailbiters.length} of those. Fans thank you. Physios — less so.`,
+          date: publishDate,
           career,
           tags: ['nerwy', `runda-${round}`],
         }),
@@ -2441,7 +2496,9 @@ export function processUltiworldTick(career, { date = null } = {}) {
       `${career.id}|${career.seasonIndex}|${simDate}|ultiworld|${ultiworld.articles.length}`,
     ),
   )
-  const names = teamNameMap(league)
+  const namesPl = teamNameMap(league, UI_LANG.PL)
+  const namesEn = teamNameMap(league, UI_LANG.EN)
+  const names = namesPl
   const covered = new Set(ultiworld.coveredFixtureIds)
 
   // Pierwsze uruchomienie na istniejącej karierze — nie zalewaj historii artykułami.
@@ -2472,7 +2529,7 @@ export function processUltiworldTick(career, { date = null } = {}) {
   const matchCandidates = []
   for (const f of freshFixtures) {
     covered.add(f.id)
-    const hit = interestingMatchArticle(career, league, f, names, rng)
+    const hit = interestingMatchArticle(career, league, f, namesPl, namesEn, rng)
     if (hit?.article) matchCandidates.push(hit)
   }
   matchCandidates.sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
@@ -2489,7 +2546,7 @@ export function processUltiworldTick(career, { date = null } = {}) {
   for (let r = lastCovered + 1; r <= maxRound; r += 1) {
     if (!isRoundComplete(league, r)) break
     if (!canPublishRoundAwards(league, r, simDate)) break
-    newArticles.push(...roundReviewArticles(career, league, r, names, rng))
+    newArticles.push(...roundReviewArticles(career, league, r, namesPl, namesEn, rng))
     lastCovered = r
   }
   ultiworld.lastRoundCovered = lastCovered
