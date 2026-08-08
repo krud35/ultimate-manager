@@ -1,5 +1,6 @@
 import { PLAYER_TEAM_ID } from '../data/ufaLeagueTeams.js'
 import { teamFromLeague } from '../career/worldState.js'
+import { resolveTeamName } from '../ui/locale.js'
 import { sortStandings } from './standings.js'
 
 function mapFixtureToSeasonMatch(fixture) {
@@ -46,6 +47,8 @@ export function buildSeasonStateFromLeague(league) {
           ? {
               id: t.id,
               name: t.name,
+              namePl: t.namePl ?? t.name,
+              nameEn: t.nameEn ?? t.namePl ?? t.name,
               shortName: t.shortName,
               primaryColor: t.primaryColor,
               awayColor: t.awayColor,
@@ -86,9 +89,5 @@ export function teamStandingsRank(seasonState, teamId) {
 export function teamDisplayName(seasonState, teamId, lang) {
   const team = seasonState.teamsById?.[teamId]
   if (!team) return teamId
-  if (lang) {
-    if (lang === 'en') return team.nameEn ?? team.name ?? teamId
-    return team.namePl ?? team.name ?? teamId
-  }
-  return team.name ?? teamId
+  return resolveTeamName(team, lang) || team.name || teamId
 }
