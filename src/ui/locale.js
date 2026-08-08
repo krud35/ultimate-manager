@@ -12,7 +12,7 @@ export function readUiLang() {
   } catch {
     /* ignore */
   }
-  return UI_LANG.PL
+  return UI_LANG.EN
 }
 
 export function writeUiLang(lang) {
