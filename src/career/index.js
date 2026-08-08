@@ -35,6 +35,7 @@ export {
   applyDailyDevelopmentDateRangeAsync,
   applyWeeklyDevelopment,
   applyOffseasonDevelopment,
+  ageWorldPlayersOneYear,
   setPlayerTrainingFocus,
   setTeamTrainingFocus,
   initWorldPlayerDevelopment,

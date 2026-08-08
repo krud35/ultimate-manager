@@ -17,6 +17,7 @@ import { buildSeasonLeagueTemplate } from '../data/seasonLeagueBuilder.js'
 import { rollAiCoachProfilesForWorld } from '../matchEngine/aiCoachProfile.js'
 import {
   applyOffseasonDevelopment,
+  ageWorldPlayersOneYear,
   initWorldPlayerDevelopment,
 } from './playerDevelopment.js'
 import { initAllAiTeamTraining, ensureTeamTraining } from './teamTraining.js'
@@ -287,6 +288,11 @@ export function finalizeSeason(career) {
     : applyArchiveToAllTime(career.allTimeStats ?? createAllTimeStats(), archive)
 
   pruneLeagueMemory(career.league)
+
+  // Koniec sezonu → wszyscy +1 rok (przed offseason transferami / startem kolejnego).
+  if (career.world) {
+    ageWorldPlayersOneYear(career.world)
+  }
 
   // Wypłaty sponsorskie na koniec sezonu + wygaśnięcia umów
   let sponsorInbox = []

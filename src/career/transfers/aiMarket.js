@@ -71,7 +71,7 @@ function aiWantsPlayer(buyer, player, seller, ask, budget, rng) {
   const depth = ovr >= buyerAvg - 4 && rank >= 3
   const prospectFit = prospect && ovr >= buyerAvg - (strongProspect ? 9 : 7)
   const veteranFit =
-    (veteranBargain || (veteran && ovr >= buyerAvg - 2)) && ovr >= 70 && age <= 35
+    (veteranBargain || (veteran && ovr >= buyerAvg - 2)) && ovr >= 70 && age <= 36
   if (!upgrade && !prospectFit && !depth && !veteranFit) return false
 
   // Polityka sprzedażowa sprzedającego ułatwia deal.

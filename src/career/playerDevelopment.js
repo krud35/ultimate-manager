@@ -149,12 +149,23 @@ export function performanceScore01(player, leaguePlayerStats = null) {
   return 0.42
 }
 
+export const PLAYER_AGE_MIN = 18
+export const PLAYER_AGE_MAX = 36
+
+/**
+ * Początkowy wiek przy generacji (pas 18–36).
+ * Więcej wagi na mid-20s — typowy peak ultimate.
+ */
 export function rollInitialAge(player) {
-  const r = hash01(player.id, 'age-v1')
-  if (r < 0.14) return 20 + Math.floor(hash01(player.id, 'age-y') * 3) // 20–22
-  if (r < 0.52) return 23 + Math.floor(hash01(player.id, 'age-p') * 5) // 23–27
-  if (r < 0.82) return 28 + Math.floor(hash01(player.id, 'age-m') * 3) // 28–30
-  return 31 + Math.floor(hash01(player.id, 'age-v') * 5) // 31–35
+  const r = hash01(player.id, 'age-v2')
+  let age
+  if (r < 0.1) age = 18 + Math.floor(hash01(player.id, 'age-y') * 2) // 18–19
+  else if (r < 0.28) age = 20 + Math.floor(hash01(player.id, 'age-p') * 3) // 20–22
+  else if (r < 0.62) age = 23 + Math.floor(hash01(player.id, 'age-m') * 5) // 23–27
+  else if (r < 0.82) age = 28 + Math.floor(hash01(player.id, 'age-v') * 3) // 28–30
+  else if (r < 0.94) age = 31 + Math.floor(hash01(player.id, 'age-s') * 3) // 31–33
+  else age = 34 + Math.floor(hash01(player.id, 'age-e') * 3) // 34–36
+  return clamp(age, PLAYER_AGE_MIN, PLAYER_AGE_MAX)
 }
 
 /**
@@ -522,7 +533,24 @@ export function applyWeeklyDevelopment(league, options = {}) {
 }
 
 /**
- * Offseason: +1 rok, większy rozwój/decline, aktualizacja potencjału, regeneracja.
+ * +1 rok dla całego świata (koniec sezonu).
+ * @returns {number} liczba zawodników
+ */
+export function ageWorldPlayersOneYear(world) {
+  let aged = 0
+  for (const team of worldTeamsList(world)) {
+    for (const player of team.players ?? []) {
+      ensurePlayerDevelopment(player)
+      player.age = (player.age ?? 25) + 1
+      aged += 1
+    }
+  }
+  return aged
+}
+
+/**
+ * Offseason: rozwój/decline, aktualizacja potencjału, regeneracja.
+ * Wiek (+1) jest już naliczany w finalizeSeason / ageWorldPlayersOneYear.
  */
 export function applyOffseasonDevelopment(world, options = {}) {
   const rng = mulberry32((options.seed ?? 2025) >>> 0)
@@ -532,7 +560,6 @@ export function applyOffseasonDevelopment(world, options = {}) {
   for (const team of worldTeamsList(world)) {
     for (const player of team.players ?? []) {
       ensurePlayerDevelopment(player, { leaguePlayerStats: stats })
-      player.age = (player.age ?? 25) + 1
       aged += 1
 
       // Kolejny rok w klubie → wyższy cel dryfu lojalności.

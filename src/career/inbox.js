@@ -664,7 +664,7 @@ function aiIncomingInterestChance(buyer, player, seller, rng) {
   if (ovr < 68 && !prospect) return 0
   // Weterani bez poziomu — nie.
   if (veteran && ovr < 70) return 0
-  if (age >= 36) return 0
+  if (age >= 37) return 0
 
   let chance = 0.1
 
