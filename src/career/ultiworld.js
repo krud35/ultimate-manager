@@ -9,11 +9,12 @@ import { ensurePlayerMorale } from '../models/playerMorale.js'
 import { ensurePlayerForm } from '../models/playerForm.js'
 import { noteLoyaltyFromTreatment } from '../models/playerLoyalty.js'
 import { injurePlayer, pickInjuryLabel, rollInjuryDays, injuryLabelEn } from '../models/playerInjury.js'
-import { addDays, formatISODate, parseISODate } from '../league/seasonCalendar.js'
+import { addDays, formatISODate, parseISODate, nextWeekday } from '../league/seasonCalendar.js'
 import { fixturesForRound, isRoundComplete, teamNameMap } from '../league/leagueState.js'
 import { detectSeasonPhase } from '../league/dayEngine.js'
 import { worldTeamById, worldTeamsList } from './worldState.js'
 import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/index.js'
+import { UI_LANG } from '../ui/locale.js'
 
 const ARTICLES_MAX = 80
 const WORLD_EVENT_CHANCE = 0.28
@@ -91,7 +92,12 @@ function monthLabelEn(iso) {
 }
 
 function scoreRow(row) {
-  return (row.goals ?? 0) * 3 + (row.assists ?? 0) * 2 + (row.blocks ?? 0) * 2.5
+  return (
+    (row.goals ?? 0) * 3 +
+    (row.assists ?? 0) * 2 +
+    (row.blocks ?? 0) * 2.5 -
+    (row.turnovers ?? 0) * 2
+  )
 }
 
 function playerDisplay(row, names) {
@@ -106,8 +112,33 @@ function playerDisplay(row, names) {
 function topRoundPlayers(roundStats, limit = 7) {
   return Object.values(roundStats ?? {})
     .filter((r) => scoreRow(r) > 0)
-    .sort((a, b) => scoreRow(b) - scoreRow(a) || (b.goals ?? 0) - (a.goals ?? 0))
+    .sort(
+      (a, b) =>
+        scoreRow(b) - scoreRow(a) ||
+        (a.turnovers ?? 0) - (b.turnovers ?? 0) ||
+        (b.goals ?? 0) - (a.goals ?? 0),
+    )
     .slice(0, limit)
+}
+
+/** Poniedziałek po ostatnim meczu kolejki — dzień publikacji nagród Ultiworld. */
+function roundAwardsPublishDate(league, round) {
+  const fixtures = fixturesForRound(league, round)
+  if (!fixtures.length) return null
+  let last = null
+  for (const f of fixtures) {
+    if (f.date && (!last || f.date > last)) last = f.date
+  }
+  if (!last) return null
+  const dayAfterLast = addDays(parseISODate(last), 1)
+  return formatISODate(nextWeekday(dayAfterLast, 1))
+}
+
+function canPublishRoundAwards(league, round, simDate) {
+  if (!simDate || !isRoundComplete(league, round)) return false
+  const publishDate = roundAwardsPublishDate(league, round)
+  if (!publishDate) return false
+  return simDate >= publishDate
 }
 
 export function ensureUltiworld(career) {
@@ -210,9 +241,11 @@ function standingsPlace(league, teamId) {
   return idx >= 0 ? idx + 1 : null
 }
 
-function interestingMatchArticle(career, league, fixture, names, rng) {
-  const home = names[fixture.homeTeamId] ?? fixture.homeTeamId
-  const away = names[fixture.awayTeamId] ?? fixture.awayTeamId
+function interestingMatchArticle(career, league, fixture, namesPl, namesEn, rng) {
+  const home = namesPl[fixture.homeTeamId] ?? fixture.homeTeamId
+  const away = namesPl[fixture.awayTeamId] ?? fixture.awayTeamId
+  const homeEn = namesEn[fixture.homeTeamId] ?? home
+  const awayEn = namesEn[fixture.awayTeamId] ?? away
   const hs = fixture.homeScore ?? 0
   const as_ = fixture.awayScore ?? 0
   const total = hs + as_
@@ -222,6 +255,8 @@ function interestingMatchArticle(career, league, fixture, names, rng) {
   const isCup = fixture.competition === 'cup'
   const winner = hs > as_ ? home : as_ > hs ? away : null
   const loser = hs > as_ ? away : as_ > hs ? home : null
+  const winnerEn = hs > as_ ? homeEn : as_ > hs ? awayEn : null
+  const loserEn = hs > as_ ? awayEn : as_ > hs ? homeEn : null
 
   let angle = 'solid'
   if (total >= 28) angle = 'shootout'
@@ -244,107 +279,163 @@ function interestingMatchArticle(career, league, fixture, names, rng) {
         headline: isCup
           ? `Pucharowy fajerwerk: ${home} ${hs}–${as_} ${away}`
           : `Deszcz goli: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: isCup
+          ? `Cup fireworks: ${homeEn} ${hs}–${as_} ${awayEn}`
+          : `Goal rain: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: `Razem ${total} punktów — Ultiworld potrzebowało drugiej kartki.`,
+        dekEn: `${total} points combined — Ultiworld needed a second notepad.`,
         body: `Ofensywa nie brała jeńców. „Każdy pull wyglądał jak zaproszenie do highlightu” — mówi obserwator z trybun. Sztaby będą oglądać to video z mieszaniną dumy i strachu.`,
+        bodyEn: `Offense took no prisoners. “Every pull looked like a highlight invitation,” says a sideline observer. Staffs will watch the film with a mix of pride and fear.`,
       },
       {
         headline: `${home} i ${away} urządzili sobie strzelaninę (${hs}–${as_})`,
+        headlineEn: `${homeEn} and ${awayEn} traded fire (${hs}–${as_})`,
         dek: 'Obrona? Była, ale głównie w opowieściach po meczu.',
+        dekEn: 'Defense? It existed — mostly in the postgame stories.',
         body: `Tempo jak na turnieju plażowym, stawka ligowa. ${total} punktów później kibice wychodzili z chrypką, a analitycy z pełnymi notatnikami o cutach i dumpach.`,
+        bodyEn: `Beach-tourney pace, league stakes. ${total} points later fans left hoarse and analysts left with notebooks full of cuts and dumps.`,
       },
     ],
     blowout: [
       {
         headline: `Demolka: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: `Demolition: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: `Różnica ${margin} — jeden rytm, druga bezradność.`,
+        dekEn: `Margin ${margin} — one side in rhythm, the other helpless.`,
         body: `Po przerwie wynik wyglądał jak komunikat prasowy. ${winner} dyktował tempo; ${loser} szukał resetu, którego nie było. Takie wieczory budują pewność… albo kryzys tożsamości.`,
+        bodyEn: `After the break the scoreline looked like a press release. ${winnerEn} dictated tempo; ${loserEn} hunted a reset that never came. Nights like this build belief… or an identity crisis.`,
       },
       {
         headline: `${winner} nie zostawił złudzeń (${hs}–${as_})`,
+        headlineEn: `${winnerEn} left no illusions (${hs}–${as_})`,
         dek: `Margin ${margin} punktów. Ultiworld: „kliniczna skuteczność”.`,
+        dekEn: `Margin of ${margin}. Ultiworld: “clinical finishing.”`,
         body: `${loser} miał momenty, ale każdy błąd był karany. W szatni przegranych panowała cisza głośniejsza niż doping. Liga zapamiętuje takie wyniki dłużej niż chcecie.`,
+        bodyEn: `${loserEn} had moments, but every mistake was punished. The losers’ locker room held a silence louder than the crowd. The league remembers scores like this longer than you’d like.`,
       },
     ],
     upset: [
       {
         headline: `Sensacja! ${winner} przewraca stolik`,
+        headlineEn: `Upset! ${winnerEn} flips the table`,
         dek: `${home} ${hs}–${as_} ${away} — faworyt wziął lekcję pokory.`,
+        dekEn: `${homeEn} ${hs}–${as_} ${awayEn} — the favorite got a humility lesson.`,
         body: `Na papierze układ sił był inny. Na boisku wygrała agresja i zimna krew w endzone. „Czasem wystarczy wierzyć dłużej” — skomentował sztab ${winner}. Datę zapisujemy grubym flamastrem.`,
+        bodyEn: `On paper the power balance looked different. On the field aggression and endzone ice won. “Sometimes you just have to believe longer,” said the ${winnerEn} staff. We’re marking the date in bold.`,
       },
       {
         headline: `Underdog day: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: `Underdog day: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: 'Tabela dostała zawrotu głowy, Twitter — paliwa na tydzień.',
+        dekEn: 'The table got dizzy; social feeds got a week of fuel.',
         body: `${winner} zagrał jak ekipa bez kompleksów. ${loser} będzie oglądał powtórki z zamkniętymi oczami. Ultiworld kocha takie historie — i nie przeprasza za clickbait.`,
+        bodyEn: `${winnerEn} played without complexes. ${loserEn} will watch the replays through closed eyes. Ultiworld loves these stories — and won’t apologize for the clickbait.`,
       },
     ],
     thriller: [
       {
         headline: `Do ostatniego pulla: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: `Down to the last pull: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: 'Serce wraca do normy dopiero na parkingu.',
+        dekEn: 'Heart rates only normalize in the parking lot.',
         body: `Każda wymiana wyglądała na decydującą. Przy ${hs}–${as_} obie strony miały szanse zamknąć mecz wcześniej — i obie je wypuściły. Idealny materiał na loop.`,
+        bodyEn: `Every exchange looked decisive. At ${hs}–${as_} both sides had chances to close it earlier — and both let them slip. Perfect loop material.`,
       },
       {
         headline: `Nerwy ze stali: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: `Nerves of steel: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: 'Jeden punkt różnicy, sto emocji.',
+        dekEn: 'One point between them, a hundred emotions.',
         body: `Trybuny stały. Ławki klęczały. ${winner ?? 'Remisująca atmosfera'}… właściwie cała arena. Ultiworld: jeśli ktoś szukał reklamy ligi, właśnie ją dostał.`,
+        bodyEn: `The stands stood. The benches knelt. ${winnerEn ?? 'A drawn atmosphere'}… honestly the whole arena. Ultiworld: if you wanted a league commercial, you just got one.`,
       },
     ],
     chess: [
       {
         headline: `Szachy na trawie: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: `Chess on grass: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: 'Mało miejsca na błąd, dużo na cierpliwość.',
+        dekEn: 'Little room for error, plenty for patience.',
         body: `To nie był mecz „rzuć i biegaj”. Handlerzy grali tempo jak metronom, defensywa czytała cuty z opóźnieniem pół taktu. Wynik ${hs}–${as_} oddaje charakter spotkania lepiej niż jakikolwiek highlight.`,
+        bodyEn: `This wasn’t throw-and-go. Handlers set tempo like a metronome; defense read cuts half a beat late. The ${hs}–${as_} score captures the character better than any highlight.`,
       },
       {
         headline: `Takieczne arcydzieło: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: `Tactical masterclass: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: 'Zero chaosu, maksimum decyzji.',
+        dekEn: 'Zero chaos, maximum decisions.',
         body: `Obserwatorzy liczyli reset'y, nie dunk'i. ${winner ?? 'Obie strony'} wygrywał(y) detale przy sideline'ach. Ultiworld: mecz dla koneserów — i dla tych, co lubią box score bez fajerwerków.`,
+        bodyEn: `Observers counted resets, not dunks. ${winnerEn ?? 'Both sides'} won the details on the sidelines. Ultiworld: a match for connoisseurs — and for fans of box scores without fireworks.`,
       },
     ],
     draw: [
       {
         headline: `Remis jak thriller: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: `Draw like a thriller: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: 'Nikt nie wygrał — obaj wyszli z pytaniami.',
+        dekEn: 'Nobody won — both left with questions.',
         body: `Po ostatnim gongu oba sztaby mówiły o „straconych okazjach”. Remis ${hs}–${as_} smakuje inaczej w zależności od tabeli. Ultiworld wystawia ocenę: widowisko 8/10, satysfakcja 5/10.`,
+        bodyEn: `After the final whistle both staffs talked about “missed chances.” A ${hs}–${as_} draw tastes different depending on the table. Ultiworld grades it: spectacle 8/10, satisfaction 5/10.`,
       },
       {
         headline: `${home} ${hs}–${as_} ${away}: punkty podzielone`,
+        headlineEn: `${homeEn} ${hs}–${as_} ${awayEn}: points shared`,
         dek: 'Fair, frustrujące, godne powtórki w tygodniu.',
+        dekEn: 'Fair, frustrating, worth a midweek rewatch.',
         body: `Obie drużyny miały swój moment dominacji i obie go oddały. W ultimate remis to rzadki gość — tym bardziej smakuje jak niedopowiedzenie.`,
+        bodyEn: `Both teams had a stretch of dominance and both gave it back. In ultimate a draw is a rare guest — which is why it tastes like an unfinished sentence.`,
       },
       {
         headline: `Remisowa lekcja pokory: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: `A draw’s humility lesson: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: 'Tabela dostała kropkę, nie wykrzyknik.',
+        dekEn: 'The table got a period, not an exclamation mark.',
         body: `Gdy wynik kończy się remisem, narracja sezonu robi pauzę. Ultiworld: ${hs}–${as_} to zaproszenie do rewanżu w kolejnej kolejce — i do dłuższej rozmowy o finishach.`,
+        bodyEn: `When it ends level, the season narrative pauses. Ultiworld: ${hs}–${as_} is an invite to the rematch next round — and a longer chat about finishing.`,
       },
     ],
     cup_edge: [
       {
         headline: `Puchar nie wybacza: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: `The cup doesn’t forgive: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: 'Jeden mecz, zero „odbijemy się w rewanżu”.',
+        dekEn: 'One match, zero “we’ll bounce back in the return leg.”',
         body: `Drabinka lubi dramat. ${winner} przechodzi dalej, ${loser} pakuje się wcześniej niż chciał. Ultiworld: w pucharze historia pisze się grubą kreską.`,
+        bodyEn: `Brackets love drama. ${winnerEn} moves on; ${loserEn} packs up earlier than planned. Ultiworld: in cup play, history is written in thick ink.`,
       },
       {
         headline: `Na krawędzi drabinki: ${home} ${hs}–${as_} ${away}`,
+        headlineEn: `On the bracket’s edge: ${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: 'Pucharowy thriller w skrócie.',
+        dekEn: 'A cup thriller, condensed.',
         body: `${winner} wychodzi z uśmiechem i siniakami mentalnymi. ${loser} zostaje z „co jeśli”. Takie mecze budują legendy klubowe szybciej niż trzy spokojne wygrane w lidze.`,
+        bodyEn: `${winnerEn} leaves smiling with mental bruises. ${loserEn} is stuck on “what if.” Games like this build club legend faster than three quiet league wins.`,
       },
     ],
     solid: [
       {
         headline: `${home} ${hs}–${as_} ${away}`,
+        headlineEn: `${homeEn} ${hs}–${as_} ${awayEn}`,
         dek: isCup ? 'Relacja z drabinki.' : 'Relacja z weekendu ligowego.',
+        dekEn: isCup ? 'Bracket report.' : 'League weekend report.',
         body: `Solidne spotkanie bez zbędnego chaosu. ${winner ?? home} kontrolował kluczowe pointy, ${loser ?? away} szukał odpowiedzi przez handlere. Wynik zasłużony — dyskusja o formie otwarta.`,
+        bodyEn: `A solid match without needless chaos. ${winnerEn ?? homeEn} controlled the key points; ${loserEn ?? awayEn} searched for answers through the handlers. Deserved result — form debate still open.`,
       },
       {
         headline: `Raport z boiska: ${home} pokonał ${away} ${hs}–${as_}`,
+        headlineEn: `Field report: ${homeEn} beat ${awayEn} ${hs}–${as_}`,
         dek: 'Bez fajerwerków, z konkretami.',
+        dekEn: 'No fireworks — just substance.',
         body: `${winner} wygrał detale: mniej turnowerów, lepsze wejścia w endzone. ${loser} miał momenty — za mało, by odwrócić losy. Ultiworld ocenia: rzemiosło 7/10.`,
+        bodyEn: `${winnerEn} won the details: fewer turnovers, cleaner endzone entries. ${loserEn} had moments — not enough to flip it. Ultiworld grades the craft 7/10.`,
       },
       {
         headline: `${home} ${hs}–${as_} ${away} — trzy rzeczy, które zapamiętamy`,
+        headlineEn: `${homeEn} ${hs}–${as_} ${awayEn} — three things we’ll remember`,
         dek: 'Krótki debrief zamiast powieści.',
+        dekEn: 'A short debrief instead of a novel.',
         body: `1) Tempo po pierwszym pullu. 2) Skuteczność w strefie. 3) Reakcja na turnovery. Reszta to już robota sztabów na filmie. Wynik końcowy: ${hs}–${as_}.`,
+        bodyEn: `1) Tempo after the opening pull. 2) Efficiency in the zone. 3) Response to turnovers. The rest is staff film work. Final: ${hs}–${as_}.`,
       },
     ],
   }
@@ -367,15 +458,9 @@ function interestingMatchArticle(career, league, fixture, names, rng) {
       headline: t.headline,
       dek: t.dek,
       body: t.body,
-      headlineEn:
-        t.headlineEn ??
-        (isCup
-          ? `Cup: ${home} ${hs}–${as_} ${away}`
-          : `${home} ${hs}–${as_} ${away}`),
-      dekEn: t.dekEn ?? t.dek,
-      bodyEn:
-        t.bodyEn ??
-        `${winner ?? home} took the result ${hs}–${as_} against ${loser ?? away}. Ultiworld will keep digging into the film.`,
+      headlineEn: t.headlineEn,
+      dekEn: t.dekEn,
+      bodyEn: t.bodyEn,
       date: fixture.date ?? career.league?.currentDate,
       career,
       tags: isCup ? ['puchar', angle] : ['liga', angle],
@@ -426,23 +511,24 @@ function roundReviewArticles(career, league, round, names, rng) {
 
   if (top7.length >= 3) {
     const lines = top7
-      .map(
-        (r, i) =>
-          `${i + 1}. ${playerDisplay(r, names)} — ${r.goals ?? 0}G / ${r.assists ?? 0}A / ${r.blocks ?? 0}B`,
-      )
+      .map((r, i) => {
+        const to = r.turnovers ?? 0
+        const toBit = to ? ` / ${to}TO` : ''
+        return `${i + 1}. ${playerDisplay(r, names)} — ${r.goals ?? 0}G / ${r.assists ?? 0}A / ${r.blocks ?? 0}B${toBit}`
+      })
       .join('\n')
     out.push(
       makeArticle({
         category: 'awards',
         headline: `Siódemka kolejki ${round} według Ultiworld`,
         headlineEn: `Round ${round} seven according to Ultiworld`,
-        dek: 'Siedmiu zawodników, którzy zdominowali statystyki weekendu.',
-        dekEn: 'Seven players who owned the weekend’s box score.',
-        body: `Nasz algorytm (i odrobina redakcyjnego czucia) wyłonił formę kolejki:\n\n${lines}\n\n„Liczby nie kłamią, ale czasem kłamią mniej” — żartuje nasz analityk. Lista nie jest rankingiem OVR; to zdjęcie z konkretnego weekendu.`,
-        bodyEn: `Our algorithm (plus a dash of editorial feel) picked the form of the round:\n\n${lines}\n\n“Numbers don’t lie — they just fib less,” jokes our analyst. Not an OVR ranking; a snapshot of one weekend.`,
+        dek: 'Poniedziałkowa siódemka — po domknięciu całego weekendu ligowego.',
+        dekEn: 'Monday seven — after the full league weekend is in the books.',
+        body: `Redakcja czeka do poniedziałku, aż domkną się wszystkie mecze kolejki ${round}. Algorytm (gole ×3, asysty ×2, bloki ×2.5, turnovery −2) wyłonił formę weekendu:\n\n${lines}\n\n„Liczby nie kłamią, ale turnovery potrafią zepsuć highlight” — żartuje nasz analityk. Lista nie jest rankingiem OVR; to zdjęcie z konkretnej kolejki.`,
+        bodyEn: `We wait until Monday so every round ${round} fixture is final. The formula (goals ×3, assists ×2, blocks ×2.5, turnovers −2) picked the weekend’s form:\n\n${lines}\n\n“Numbers don’t lie — turnovers just ruin the highlight,” jokes our analyst. Not an OVR ranking; a snapshot of one round.`,
         date: career.league?.currentDate,
         career,
-        tags: ['top7', `runda-${round}`, 'liderzy'],
+        tags: ['top7', `runda-${round}`, 'liderzy', 'poniedziałek'],
         relatedPlayerIds: top7.map((r) => r.playerId),
         relatedTeamIds: [...new Set(top7.map((r) => r.teamId).filter(Boolean))],
       }),
@@ -544,7 +630,11 @@ function playerOfMonthArticle(career, league, names, monthIso, rng) {
       const form = player?.form ?? 72
       const ovr = player ? getOverallRating(player.skills) : 70
       const production =
-        (r.goals ?? 0) * 3 + (r.assists ?? 0) * 2 + (r.blocks ?? 0) * 2 + (r.games ?? 0) * 0.3
+        (r.goals ?? 0) * 3 +
+        (r.assists ?? 0) * 2 +
+        (r.blocks ?? 0) * 2 -
+        (r.turnovers ?? 0) * 2 +
+        (r.games ?? 0) * 0.3
       const score = production * (0.7 + form / 200) * (0.85 + ovr / 400)
       return { r, score, form, ovr }
     })
@@ -2362,8 +2452,11 @@ export function processUltiworldTick(career, { date = null } = {}) {
     let maxDone = 0
     const maxRound = league.totalRounds ?? 30
     for (let r = 1; r <= maxRound; r += 1) {
-      if (isRoundComplete(league, r)) maxDone = r
-      else break
+      if (!isRoundComplete(league, r)) break
+      // Pokryj tylko kolejki, które już „powinny” mieć poniedziałkowe nagrody —
+      // bieżący weekend czekający na poniedziałek zostaw do ticka.
+      if (!canPublishRoundAwards(league, r, simDate)) break
+      maxDone = r
     }
     ultiworld.lastRoundCovered = Math.max(ultiworld.lastRoundCovered ?? 0, maxDone)
     ultiworld.lastPomMonth = ultiworld.lastPomMonth ?? monthKey(simDate)
@@ -2390,12 +2483,12 @@ export function processUltiworldTick(career, { date = null } = {}) {
   }
   ultiworld.coveredFixtureIds = [...covered].slice(-400)
 
-  // 2) Zamknięte kolejki → przegląd + top 7
+  // 2) Zamknięte kolejki → przegląd + top 7 (dopiero w poniedziałek po ostatnim meczu)
   const maxRound = league.totalRounds ?? 30
   let lastCovered = ultiworld.lastRoundCovered ?? 0
   for (let r = lastCovered + 1; r <= maxRound; r += 1) {
     if (!isRoundComplete(league, r)) break
-    // Nie generuj przyszłości względem currentRound zbyt agresywnie — tylko domknięte.
+    if (!canPublishRoundAwards(league, r, simDate)) break
     newArticles.push(...roundReviewArticles(career, league, r, names, rng))
     lastCovered = r
   }
