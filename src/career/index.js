@@ -157,6 +157,8 @@ export {
   generateRandomEvents,
   inboxDedupeKey,
   mergeInbox,
+  isImportantInboxMessage,
+  hasImportantInboxMessage,
 } from './inbox.js'
 export {
   RANDOM_EVENT_TEMPLATES,

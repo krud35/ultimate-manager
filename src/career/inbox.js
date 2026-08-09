@@ -67,6 +67,39 @@ export const INBOX_TYPE_META = {
 
 const INBOX_MAX = 80
 
+// club_news payload.kind values that are pure FYI (money/routine notices) — never
+// worth interrupting the "simulate until something needs attention" loop for.
+const SILENT_CLUB_NEWS_KINDS = new Set([
+  'sponsor_payout',
+  'sponsor_expired',
+  'sponsor_expiring_soon',
+  'contract_bonus_paid',
+  'fan_shop',
+])
+
+/**
+ * Czy ta wiadomość powinna przerwać ciągłą symulację kalendarza ("Dalej")?
+ * Raporty treningowe i rutynowe newsy klubowe (wypłaty, wygaśnięcia) są ciche —
+ * kariera leci dalej. Kontuzje, oferty transferowe/sponsorskie, decyzje ze zdarzeń
+ * losowych i alarmy finansowe zatrzymują symulację.
+ */
+export function isImportantInboxMessage(message) {
+  if (!message) return false
+  if (message.type === INBOX_TYPES.TRAINING_REPORT) return false
+  if (message.type === INBOX_TYPES.RANDOM_EVENT) {
+    return message.payload?.kind === 'decision' && message.payload?.status === 'pending'
+  }
+  if (message.type === INBOX_TYPES.CLUB_NEWS) {
+    const kind = message.payload?.kind
+    return !SILENT_CLUB_NEWS_KINDS.has(kind)
+  }
+  return true
+}
+
+export function hasImportantInboxMessage(messages) {
+  return (messages ?? []).some(isImportantInboxMessage)
+}
+
 function newMessageId(prefix = 'msg') {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return `${prefix}-${crypto.randomUUID()}`
