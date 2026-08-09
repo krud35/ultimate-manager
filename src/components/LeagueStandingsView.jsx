@@ -17,7 +17,46 @@ export function LeagueStandingsView({ league, compact = false, topN = 8, onTeamS
           <p className="text-xs text-ufa-muted mt-1">{t.standingsHint}</p>
         )}
       </div>
-      <div className="overflow-x-auto">
+      <div className="divide-y divide-ufa-border/50 sm:hidden">
+        {display.map((row, idx) => {
+          const isPlayer = row.teamId === league.playerTeamId
+          const diff = row.pointsFor - row.pointsAgainst
+          return (
+            <div
+              key={row.teamId}
+              className={`flex items-center justify-between gap-3 px-4 py-2.5 ${isPlayer ? 'bg-ufa-accent/10' : ''}`}
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="w-4 shrink-0 text-xs tabular-nums text-ufa-muted">{idx + 1}</span>
+                {onTeamSelect ? (
+                  <button
+                    type="button"
+                    onClick={() => onTeamSelect(row.teamId)}
+                    className="truncate text-left text-sm font-medium text-ufa-text"
+                  >
+                    {row.teamName}
+                  </button>
+                ) : (
+                  <span className="truncate text-sm font-medium text-ufa-text">{row.teamName}</span>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-2.5 font-mono text-xs">
+                <span className="tabular-nums text-ufa-text">
+                  {row.wins}-{row.losses}
+                </span>
+                <span
+                  className={`w-9 text-right tabular-nums ${diff >= 0 ? 'text-ufa-accent' : 'text-red-400'}`}
+                >
+                  {diff >= 0 ? '+' : ''}
+                  {diff}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-ufa-muted border-b border-ufa-border/60">

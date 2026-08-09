@@ -127,15 +127,20 @@ export default function LeagueHub({
       )}
 
       {inboxUnread > 0 && !seasonDone && (
-        <div className="rounded-xl border border-ufa-accent/40 bg-ufa-accent/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-ufa-accent">{t.inboxTitle(inboxUnread)}</p>
-            <p className="text-xs text-ufa-muted mt-0.5">{t.inboxHint}</p>
+        <div className="flex flex-col gap-3 rounded-md border border-ufa-border border-t-2 border-t-ufa-accent bg-gradient-to-b from-ufa-accent/10 to-transparent px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 inline-flex shrink-0 items-center rounded-full border border-ufa-gold px-2 py-0.5 font-mono text-[11px] font-bold tabular-nums text-ufa-gold">
+              {String(inboxUnread).padStart(2, '0')}
+            </span>
+            <div>
+              <p className="text-sm font-bold text-ufa-text">{t.inboxTitle(inboxUnread)}</p>
+              <p className="text-xs text-ufa-muted mt-0.5">{t.inboxHint}</p>
+            </div>
           </div>
           <button
             type="button"
             onClick={() => onNavigate('inbox')}
-            className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+            className="self-start rounded-sm bg-ufa-accent px-4 py-2 text-xs font-bold uppercase tracking-wide text-ufa-bg hover:opacity-90 sm:self-auto"
           >
             {t.openInbox}
           </button>
@@ -221,7 +226,7 @@ export default function LeagueHub({
                 disabled={simulating}
                 className="rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
               >
-                {t.nextDay}
+                {simulating ? t.simulating : t.nextDay}
               </button>
               {!(playerFix && playerFix.status !== 'completed') && (
                 <button

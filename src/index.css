@@ -1,15 +1,17 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-ufa-bg: #0c1117;
-  --color-ufa-panel: #151c26;
-  --color-ufa-panel-hover: #1a2332;
-  --color-ufa-border: #243044;
-  --color-ufa-accent: #22c55e;
-  --color-ufa-accent-dim: #15803d;
-  --color-ufa-gold: #eab308;
-  --color-ufa-text: #e2e8f0;
-  --color-ufa-muted: #94a3b8;
+  /* Paleta "boiska": zielenie trawy zamiast domyślnego SaaS-emerald,
+     bursztyn krążka/stall-clocka jako drugi akcent. */
+  --color-ufa-bg: #0a120c;
+  --color-ufa-panel: #121c15;
+  --color-ufa-panel-hover: #17251b;
+  --color-ufa-border: #263a2a;
+  --color-ufa-accent: #8fae46;
+  --color-ufa-accent-dim: #526b26;
+  --color-ufa-gold: #e8a23d;
+  --color-ufa-text: #eef2ea;
+  --color-ufa-muted: #93a68a;
   --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 

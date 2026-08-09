@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { playerTeam, teamForMatchEngine } from './data/ufaLeagueTeams'
 import {
@@ -56,6 +56,9 @@ import {
   formatUsd,
   renewPlayerContract,
   isClubBankrupt,
+  processWeeklyFinancialHealth,
+  messagesFromFinancialHealth,
+  hasImportantInboxMessage,
 } from './career'
 import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
 import {
@@ -191,6 +194,347 @@ function findNextPlayerFixture(league) {
   )
 }
 
+function IconHome({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M3 11.5 12 4l9 7.5" />
+      <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
+    </svg>
+  )
+}
+function IconShirt({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M8 4 4 7l2.2 3L8 8.7V20h8V8.7L17.8 10l2.2-3-4-3-1 1.6H9L8 4Z" />
+    </svg>
+  )
+}
+function IconTrophy({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
+      <path d="M7 5H4a3 3 0 0 0 3 4" />
+      <path d="M17 5h3a3 3 0 0 1-3 4" />
+      <path d="M12 13v3" />
+      <path d="M9 20h6" />
+      <path d="M10 16h4l.6 3H9.4L10 16Z" />
+    </svg>
+  )
+}
+function IconNews({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <rect x="3" y="5" width="14" height="14" rx="1" />
+      <path d="M17 8h4v9a2 2 0 0 1-2 2H7" />
+      <path d="M6.5 9h7M6.5 12h7M6.5 15h4" />
+    </svg>
+  )
+}
+function IconDots({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <circle cx="6" cy="6" r="1.7" />
+      <circle cx="12" cy="6" r="1.7" />
+      <circle cx="18" cy="6" r="1.7" />
+      <circle cx="6" cy="12" r="1.7" />
+      <circle cx="12" cy="12" r="1.7" />
+      <circle cx="18" cy="12" r="1.7" />
+    </svg>
+  )
+}
+function IconNextDay({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M6 5l6 7-6 7" />
+      <path d="M13 5l6 7-6 7" />
+    </svg>
+  )
+}
+
+const NAV_ICONS = {
+  home: IconHome,
+  club: IconShirt,
+  season: IconTrophy,
+  ultiworld: IconNews,
+  other: IconDots,
+}
+
+/** Ringed-disc brand mark — replaces the generic gradient monogram badge. */
+function UfaMark({ className }) {
+  return (
+    <svg viewBox="0 0 30 30" className={className} aria-hidden="true">
+      <circle cx="15" cy="15" r="12" fill="none" style={{ stroke: 'var(--color-ufa-border)' }} strokeWidth="2.2" />
+      <circle
+        cx="15"
+        cy="15"
+        r="12"
+        fill="none"
+        style={{ stroke: 'var(--color-ufa-accent)' }}
+        strokeWidth="2.2"
+        strokeDasharray="42 75.4"
+        strokeLinecap="round"
+        transform="rotate(-90 15 15)"
+      />
+      <circle
+        cx="15"
+        cy="15"
+        r="12"
+        fill="none"
+        style={{ stroke: 'var(--color-ufa-gold)' }}
+        strokeWidth="2.2"
+        strokeDasharray="14 75.4"
+        strokeDashoffset="-42"
+        strokeLinecap="round"
+        transform="rotate(-90 15 15)"
+      />
+    </svg>
+  )
+}
+
+/** One segment of the header's scoreboard-style meta strip (desktop). */
+function ScoreCell({ label, value }) {
+  return (
+    <div className="border-r border-ufa-border px-3 py-1.5 last:border-r-0">
+      <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-ufa-muted">{label}</p>
+      <p className="mt-0.5 truncate max-w-[10rem] font-semibold text-ufa-text">{value}</p>
+    </div>
+  )
+}
+
+/** ⌘K / Ctrl+K quick-jump across every nav destination — desktop power-user shortcut. */
+function CommandPalette({ open, items, onNavigate, onClose, placeholder, emptyLabel }) {
+  const [query, setQuery] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return undefined
+    setQuery('')
+    setActiveIndex(0)
+    const id = window.requestAnimationFrame(() => inputRef.current?.focus())
+    return () => window.cancelAnimationFrame(id)
+  }, [open])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return items
+    return items.filter((it) => it.searchLabel.includes(q))
+  }, [items, query])
+
+  useEffect(() => {
+    setActiveIndex(0)
+  }, [query])
+
+  if (!open) return null
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      onClose()
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveIndex((i) => Math.min(i + 1, filtered.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveIndex((i) => Math.max(i - 1, 0))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      const pick = filtered[activeIndex]
+      if (pick) onNavigate(pick.id)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[90] flex items-start justify-center bg-black/60 px-4 pt-[15vh] backdrop-blur-[2px]"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg overflow-hidden rounded-md border border-ufa-border bg-ufa-panel shadow-2xl shadow-black/50"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-2 border-b border-ufa-border px-3.5 py-3">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4 shrink-0 text-ufa-muted"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.2-3.2" />
+          </svg>
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            className="min-w-0 flex-1 bg-transparent text-sm text-ufa-text placeholder:text-ufa-muted focus:outline-none"
+          />
+          <kbd className="hidden shrink-0 rounded border border-ufa-border px-1.5 py-0.5 font-mono text-[10px] text-ufa-muted sm:block">
+            Esc
+          </kbd>
+        </div>
+        <div className="max-h-80 overflow-y-auto py-1.5">
+          {filtered.length === 0 ? (
+            <p className="px-3.5 py-6 text-center text-sm text-ufa-muted">{emptyLabel}</p>
+          ) : (
+            filtered.map((item, idx) => (
+              <button
+                key={item.id}
+                type="button"
+                onMouseEnter={() => setActiveIndex(idx)}
+                onClick={() => onNavigate(item.id)}
+                className={`flex w-full items-center justify-between gap-3 px-3.5 py-2 text-left text-sm transition-colors ${
+                  idx === activeIndex ? 'bg-ufa-accent/15 text-ufa-accent' : 'text-ufa-text'
+                }`}
+              >
+                <span className="font-medium">{item.label}</span>
+                <span className="text-xs text-ufa-muted">{item.categoryLabel}</span>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Oblicza efekty jednego dnia kalendarza (treningi, transfery, sponsorzy, zdarzenia
+ * losowe, kontuzje, Ultiworld) bez zapisu — pozwala na łańcuchowanie wielu dni w pętli
+ * (ciągła symulacja) zanim stan zostanie raz zapisany przez persistCareer.
+ */
+function computeCalendarDayStep(career, nextLeague, { weekTick = false, trainingDate = null } = {}) {
+  const inboxMessages = []
+  if (trainingDate) {
+    const training = processTeamTrainingsForDate(nextLeague, trainingDate, {
+      playerTeamId: career.playerTeamId,
+    })
+    inboxMessages.push(...messagesFromTrainingReports(training.reports, career))
+    inboxMessages.push(...messagesFromTrainingInjuries(training.reports, career))
+    applyDailyDevelopment(nextLeague, {
+      playerTeamId: career.playerTeamId,
+      date: trainingDate,
+      tag: `day-${trainingDate}`,
+    })
+  }
+  if (weekTick) {
+    weeklyTeamTrainingMaintenance(nextLeague, {
+      playerTeamId: career.playerTeamId,
+    })
+    if (career.world) {
+      processWeeklyWages(career.world)
+      const financialHealth = processWeeklyFinancialHealth(career.world, {
+        seasonYear: career.seasonYear,
+      })
+      inboxMessages.push(
+        ...messagesFromFinancialHealth(
+          financialHealth,
+          { ...career, league: nextLeague },
+          { date: trainingDate ?? nextLeague.currentDate, seasonYear: career.seasonYear },
+        ),
+      )
+    }
+  }
+
+  let world = career.world
+  let transferLog = career.transferLog ?? []
+  let aiTransfersLastDate = career.aiTransfersLastDate ?? null
+  const probe = { ...career, league: nextLeague, world }
+  if (
+    isTransferWindowOpen(probe) &&
+    (getTransferWindowState(probe).kind === 'january' ||
+      getTransferWindowState(probe).kind === 'summer')
+  ) {
+    const simDate = trainingDate ?? nextLeague.currentDate
+    if (simDate && aiTransfersLastDate !== simDate) {
+      const ai = simulateAiTransferActivity(
+        { ...probe, transferLog },
+        { mode: 'daily', date: simDate },
+      )
+      world = ai.world ?? world
+      transferLog = ai.transferLog ?? transferLog
+      aiTransfersLastDate = simDate
+    }
+  }
+
+  const offerCareer = { ...career, league: nextLeague, world, transferLog, inbox: career.inbox }
+  const offerDate = trainingDate ?? nextLeague.currentDate
+  if (world && offerDate) {
+    const monthly = processMonthlySponsorPayouts(world, offerDate)
+    inboxMessages.push(
+      ...messagesFromSponsorPayouts(monthly, { ...career, league: nextLeague, world }, {
+        kind: 'monthly',
+        date: offerDate,
+      }),
+    )
+  }
+  let inboxBase = expireStaleTransferOffers(
+    { ...offerCareer, inbox: career.inbox },
+    { date: offerDate },
+  )
+  const delayed = processDelayedTransferReplies(
+    { ...offerCareer, inbox: inboxBase },
+    { date: offerDate },
+  )
+  world = delayed.world ?? world
+  transferLog = delayed.transferLog ?? transferLog
+  inboxBase = delayed.inbox ?? inboxBase
+  if (delayed.resolved > 0) {
+    inboxMessages.push(
+      ...messagesFromNewTransferLogEntries(career.transferLog, transferLog, {
+        ...career,
+        league: nextLeague,
+        world,
+      }),
+    )
+  }
+  const regNotices = spawnPendingRegistrationNotices(
+    { ...offerCareer, world, transferLog, inbox: inboxBase },
+    { date: offerDate },
+  )
+  if (regNotices.length) {
+    inboxBase = markPreAgreedNotified(inboxBase, regNotices)
+    inboxMessages.push(...regNotices)
+  }
+  inboxMessages.push(
+    ...generateIncomingTransferOffers({ ...offerCareer, world, transferLog, inbox: inboxBase }, { date: offerDate }),
+  )
+  inboxMessages.push(...generateRandomEvents(offerCareer, { date: offerDate }))
+  inboxMessages.push(
+    ...messagesFromNewMatchInjuries(
+      offerCareer,
+      career.league?.matchHistory ?? [],
+      nextLeague.matchHistory ?? [],
+      { date: offerDate },
+    ),
+  )
+
+  const uw = processUltiworldTick(
+    { ...career, league: nextLeague, world, ultiworld: career.ultiworld },
+    { date: offerDate },
+  )
+  world = uw.world ?? world
+  const leagueOut = uw.league ?? nextLeague
+  inboxMessages.push(...(uw.inboxMessages ?? []))
+
+  const inbox = mergeInbox({ ...career, inbox: inboxBase }, inboxMessages)
+
+  return {
+    league: leagueOut,
+    world,
+    transferLog,
+    aiTransfersLastDate,
+    inbox,
+    inboxMessages,
+    ultiworld: uw.ultiworld,
+  }
+}
+
 export default function App() {
   const { lang: uiLang, setLang: setUiLang } = useUiLang()
   const tShell = shellStrings(uiLang)
@@ -204,65 +548,36 @@ export default function App() {
   const [matchStamina, setMatchStamina] = useState(null)
   const [teamProfileId, setTeamProfileId] = useState(null)
   const [simProgress, setSimProgress] = useState(null)
-  /** User preference from Show/Hide menu (persisted). Scroll can temporarily collapse when open. */
-  const [navUserOpen, setNavUserOpen] = useState(() => {
-    try {
-      return localStorage.getItem('ufa-nav-open') !== '0'
-    } catch {
-      return true
-    }
-  })
-  /** True after scrolling away from the top — hides nav unless pinned open. */
-  const [navScrollHidden, setNavScrollHidden] = useState(false)
-  /** Manual Show while scrolled down keeps nav visible until back at top. */
-  const [navPinnedOpen, setNavPinnedOpen] = useState(false)
-  const navOpen = navUserOpen && (!navScrollHidden || navPinnedOpen)
-
-  const persistNavUserOpen = useCallback((next) => {
-    try {
-      localStorage.setItem('ufa-nav-open', next ? '1' : '0')
-    } catch {
-      /* ignore */
-    }
-  }, [])
-
-  const toggleNav = useCallback(() => {
-    if (navOpen) {
-      setNavUserOpen(false)
-      setNavPinnedOpen(false)
-      persistNavUserOpen(false)
-      return
-    }
-    setNavUserOpen(true)
-    persistNavUserOpen(true)
-    if (navScrollHidden) setNavPinnedOpen(true)
-  }, [navOpen, navScrollHidden, persistNavUserOpen])
+  const [paletteOpen, setPaletteOpen] = useState(false)
 
   useEffect(() => {
-    const NAV_SCROLL_HIDE_Y = 72
-    let ticking = false
-
-    const updateFromScroll = () => {
-      ticking = false
-      const y = window.scrollY || document.documentElement.scrollTop || 0
-      if (y <= NAV_SCROLL_HIDE_Y) {
-        setNavScrollHidden(false)
-        setNavPinnedOpen(false)
-      } else {
-        setNavScrollHidden(true)
+    const onKeyDown = (e) => {
+      if (screen !== 'play') return
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen((v) => !v)
       }
     }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [screen])
 
-    const onScroll = () => {
-      if (ticking) return
-      ticking = true
-      window.requestAnimationFrame(updateFromScroll)
-    }
-
-    updateFromScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  const paletteItems = useMemo(
+    () =>
+      NAV_CATEGORIES.flatMap((cat) =>
+        cat.items.map((item) => {
+          const label = pickLabel(item, uiLang)
+          const categoryLabel = pickLabel(cat, uiLang)
+          return {
+            id: item.id,
+            label,
+            categoryLabel,
+            searchLabel: `${label} ${categoryLabel}`.toLowerCase(),
+          }
+        }),
+      ),
+    [uiLang],
+  )
 
   const league = career?.league ?? null
   const playerTeamId = career?.playerTeamId ?? null
@@ -337,125 +652,12 @@ export default function App() {
     [career, syncCareer],
   )
 
-  const persistLeagueDay = useCallback(
-    (nextLeague, { weekTick = false, trainingDate = null } = {}) => {
-      if (!career) return
-      const inboxMessages = []
-      if (trainingDate) {
-        const training = processTeamTrainingsForDate(nextLeague, trainingDate, {
-          playerTeamId: career.playerTeamId,
-        })
-        inboxMessages.push(...messagesFromTrainingReports(training.reports, career))
-        inboxMessages.push(...messagesFromTrainingInjuries(training.reports, career))
-        applyDailyDevelopment(nextLeague, {
-          playerTeamId: career.playerTeamId,
-          date: trainingDate,
-          tag: `day-${trainingDate}`,
-        })
-      }
-      if (weekTick) {
-        weeklyTeamTrainingMaintenance(nextLeague, {
-          playerTeamId: career.playerTeamId,
-        })
-        if (career.world) processWeeklyWages(career.world)
-      }
-
-      let world = career.world
-      let transferLog = career.transferLog ?? []
-      let aiTransfersLastDate = career.aiTransfersLastDate ?? null
-      const probe = { ...career, league: nextLeague, world }
-      if (
-        isTransferWindowOpen(probe) &&
-        (getTransferWindowState(probe).kind === 'january' ||
-          getTransferWindowState(probe).kind === 'summer')
-      ) {
-        const simDate = trainingDate ?? nextLeague.currentDate
-        if (simDate && aiTransfersLastDate !== simDate) {
-          const ai = simulateAiTransferActivity(
-            { ...probe, transferLog },
-            { mode: 'daily', date: simDate },
-          )
-          world = ai.world ?? world
-          transferLog = ai.transferLog ?? transferLog
-          aiTransfersLastDate = simDate
-        }
-      }
-
-      const offerCareer = { ...career, league: nextLeague, world, transferLog, inbox: career.inbox }
-      const offerDate = trainingDate ?? nextLeague.currentDate
-      if (world && offerDate) {
-        const monthly = processMonthlySponsorPayouts(world, offerDate)
-        inboxMessages.push(
-          ...messagesFromSponsorPayouts(monthly, { ...career, league: nextLeague, world }, {
-            kind: 'monthly',
-            date: offerDate,
-          }),
-        )
-      }
-      let inboxBase = expireStaleTransferOffers(
-        { ...offerCareer, inbox: career.inbox },
-        { date: offerDate },
-      )
-      const delayed = processDelayedTransferReplies(
-        { ...offerCareer, inbox: inboxBase },
-        { date: offerDate },
-      )
-      world = delayed.world ?? world
-      transferLog = delayed.transferLog ?? transferLog
-      inboxBase = delayed.inbox ?? inboxBase
-      if (delayed.resolved > 0) {
-        inboxMessages.push(
-          ...messagesFromNewTransferLogEntries(career.transferLog, transferLog, {
-            ...career,
-            league: nextLeague,
-            world,
-          }),
-        )
-      }
-      const regNotices = spawnPendingRegistrationNotices(
-        { ...offerCareer, world, transferLog, inbox: inboxBase },
-        { date: offerDate },
-      )
-      if (regNotices.length) {
-        inboxBase = markPreAgreedNotified(inboxBase, regNotices)
-        inboxMessages.push(...regNotices)
-      }
-      inboxMessages.push(
-        ...generateIncomingTransferOffers({ ...offerCareer, world, transferLog, inbox: inboxBase }, { date: offerDate }),
-      )
-      inboxMessages.push(...generateRandomEvents(offerCareer, { date: offerDate }))
-      inboxMessages.push(
-        ...messagesFromNewMatchInjuries(
-          offerCareer,
-          career.league?.matchHistory ?? [],
-          nextLeague.matchHistory ?? [],
-          { date: offerDate },
-        ),
-      )
-
-      const uw = processUltiworldTick(
-        { ...career, league: nextLeague, world, ultiworld: career.ultiworld },
-        { date: offerDate },
-      )
-      world = uw.world ?? world
-      const leagueOut = uw.league ?? nextLeague
-      inboxMessages.push(...(uw.inboxMessages ?? []))
-
-      const next = persistCareer(career, {
-        league: leagueOut,
-        world,
-        transferLog,
-        aiTransfersLastDate,
-        inbox: mergeInbox({ ...career, inbox: inboxBase }, inboxMessages),
-        ultiworld: uw.ultiworld,
-      })
-      syncCareer(next)
-    },
-    [career, syncCareer],
-  )
-
-  const handleAdvanceDay = useCallback(() => {
-    if (!career?.league) return
+  // "Dalej" — symuluje kolejne dni jeden po drugim (jak w typowych grach managerskich),
+  // aż napotka coś wymagającego uwagi gracza: mecz, kontuzję, ofertę transferową/
+  // sponsorską, decyzję ze zdarzenia losowego albo alarm finansowy. Raporty treningowe
+  // i artykuły Ultiworld nie przerywają symulacji — lecą w tle.
+  const handleAdvanceDay = useCallback(async () => {
+    if (!career?.league || simProgress) return
     if (career.phase === 'season_complete') {
       setActiveTab('hub')
       return
@@ -474,20 +676,81 @@ export default function App() {
       return
     }
 
-    const nextLeague = cloneLeague(career.league)
-    const dayBefore = nextLeague.currentDate
-    const result = advanceCalendarDay(nextLeague)
-    if (result.blocked && result.playerFixture) {
-      persistLeagueDay(nextLeague, { weekTick: false, trainingDate: dayBefore })
-      setLeagueFixture(result.playerFixture)
-      setActiveTab('match')
-      return
-    }
-    persistLeagueDay(nextLeague, {
-      weekTick: !!result.weekTick,
-      trainingDate: dayBefore,
+    const startDate = career.league.currentDate
+    let workingCareer = career
+    let dayLeague = cloneLeague(career.league)
+    let blockedFixture = null
+    let daysAdvanced = 0
+    const maxDays = 400
+
+    setSimProgress({
+      label: shellStrings(uiLang).advanceDay,
+      detail: shellStrings(uiLang).simFrom(startDate),
+      current: 0,
+      total: 30,
+      indeterminate: true,
     })
-  }, [career, persistLeagueDay, syncCareer])
+
+    try {
+      while (daysAdvanced < maxDays) {
+        const dayBefore = dayLeague.currentDate
+        const result = advanceCalendarDay(dayLeague)
+        const step = computeCalendarDayStep(workingCareer, dayLeague, {
+          weekTick: !!result.weekTick,
+          trainingDate: dayBefore,
+        })
+        workingCareer = {
+          ...workingCareer,
+          league: step.league,
+          world: step.world,
+          transferLog: step.transferLog,
+          aiTransfersLastDate: step.aiTransfersLastDate,
+          inbox: step.inbox,
+          ultiworld: step.ultiworld,
+        }
+        dayLeague = step.league
+        daysAdvanced += 1
+
+        if (result.blocked && result.playerFixture) {
+          blockedFixture = result.playerFixture
+          break
+        }
+        if (hasImportantInboxMessage(step.inboxMessages)) {
+          break
+        }
+        if (isOfficialSeasonEnded(dayLeague) || dayLeague.status === 'complete') {
+          break
+        }
+
+        if (daysAdvanced % 5 === 0) {
+          setSimProgress({
+            label: shellStrings(uiLang).simCalendar,
+            detail: shellStrings(uiLang).simDay(dayLeague.currentDate),
+            current: daysAdvanced,
+            total: Math.max(daysAdvanced + 5, 30),
+          })
+          await new Promise((r) => setTimeout(r, 0))
+        }
+      }
+    } finally {
+      setSimProgress(null)
+    }
+
+    const next = persistCareer(career, {
+      league: workingCareer.league,
+      world: workingCareer.world,
+      transferLog: workingCareer.transferLog,
+      aiTransfersLastDate: workingCareer.aiTransfersLastDate,
+      inbox: workingCareer.inbox,
+      ultiworld: workingCareer.ultiworld,
+    })
+    syncCareer(next)
+
+    if (blockedFixture) {
+      setLeagueFixture(blockedFixture)
+      setActiveTab('match')
+    }
+  }, [career, simProgress, syncCareer, uiLang])
 
   const applyFastForwardSideEffects = useCallback(
     async (nextLeague, rangeStart, weekTicks, { includeEndDay = false, onProgress } = {}) => {
@@ -556,6 +819,7 @@ export default function App() {
       }
       if (weekTicks > 0 && career.world) {
         processWeeklyWagesTimes(career.world, weekTicks)
+        processWeeklyFinancialHealth(career.world, { seasonYear: career.seasonYear })
       }
       return { reports }
     },
@@ -1442,132 +1706,122 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-ufa-bg">
-      <header className="sticky top-0 z-20 border-b border-ufa-border bg-ufa-panel/95 pt-[env(safe-area-inset-top)] backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1600px] flex-col gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-ufa-accent to-ufa-accent-dim text-base font-black text-ufa-bg shadow-lg shadow-ufa-accent/20 sm:h-10 sm:w-10 sm:text-lg">
-                U
-              </div>
-              <div className="min-w-0">
-                <h1 className="truncate text-base font-bold tracking-tight text-ufa-text sm:text-xl">
-                  Ultimate Manager
-                </h1>
-                <p className="truncate text-[10px] text-ufa-muted sm:text-xs">
-                  {career.managerName} · {displaySeasonLabel(league.seasonLabel, uiLang)} ·{' '}
-                  {league.currentDate} · {userTeam.name}
+    <div className="flex min-h-screen flex-col bg-ufa-bg md:flex-row">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-ufa-border bg-ufa-panel/60 md:flex">
+        <div className="flex items-center gap-2.5 border-b border-ufa-border px-4 py-4">
+          <UfaMark className="h-8 w-8 shrink-0" />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold tracking-tight text-ufa-text">{tShell.appName}</p>
+            <p className="truncate text-[10px] text-ufa-muted">{career.managerName}</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setPaletteOpen(true)}
+          className="mx-2.5 mt-2.5 flex items-center gap-2 rounded-sm border border-ufa-border px-2.5 py-1.5 text-left text-xs text-ufa-muted hover:border-ufa-accent/50 hover:text-ufa-text"
+        >
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.2-3.2" />
+          </svg>
+          <span className="flex-1">{tShell.paletteTrigger}</span>
+          <kbd className="rounded border border-ufa-border px-1 font-mono text-[10px]">Ctrl K</kbd>
+        </button>
+
+        <nav className="flex-1 overflow-y-auto px-2.5 py-3" aria-label={tShell.navAria}>
+          {NAV_CATEGORIES.map((cat) => {
+            const Icon = NAV_ICONS[cat.id]
+            const catBadge = categoryBadge(cat)
+            return (
+              <div key={cat.id} className="mb-4 last:mb-0">
+                <p className="flex items-center gap-1.5 px-2 pb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-ufa-muted">
+                  <Icon className="h-3.5 w-3.5" />
+                  {pickLabel(cat, uiLang)}
+                  {catBadge > 0 ? (
+                    <span className="ml-auto inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-ufa-accent px-1 text-[10px] font-bold text-ufa-bg">
+                      {catBadge > 9 ? '9+' : catBadge}
+                    </span>
+                  ) : null}
                 </p>
+                <div className="space-y-0.5">
+                  {cat.items.map((item) => {
+                    const active = activeTab === item.id
+                    const badgeCount =
+                      item.id === 'inbox' ? inboxUnread : item.id === 'ultiworld' ? ultiworldUnread : 0
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => navigateTo(item.id)}
+                        className={`flex w-full items-center justify-between rounded-sm border-l-2 px-2.5 py-1.5 text-left text-sm transition-colors ${
+                          active
+                            ? 'border-ufa-accent bg-ufa-accent/15 font-semibold text-ufa-accent'
+                            : 'border-transparent text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text'
+                        }`}
+                      >
+                        {pickLabel(item, uiLang)}
+                        {badgeCount > 0 ? (
+                          <span className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-ufa-gold px-1 text-[10px] font-bold text-ufa-bg">
+                            {badgeCount > 9 ? '9+' : badgeCount}
+                          </span>
+                        ) : null}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
+            )
+          })}
+        </nav>
+
+        <div className="flex flex-col gap-2 border-t border-ufa-border p-3">
+          <LangSwitch lang={uiLang} onChange={setUiLang} />
+          <button
+            type="button"
+            onClick={handleExitToSlots}
+            className="rounded-sm border border-ufa-border px-3 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover"
+          >
+            {tShell.saveAndExit}
+          </button>
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-20 border-b border-ufa-border bg-ufa-panel/95 pt-[env(safe-area-inset-top)] backdrop-blur-md md:static md:border-b-0 md:bg-transparent md:pt-0 md:backdrop-blur-none">
+          <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 px-3 py-2.5 sm:px-6 sm:py-3 md:justify-start md:gap-4 md:py-4">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3 md:hidden">
+              <UfaMark className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
+              <h1 className="truncate text-base font-bold tracking-tight text-ufa-text sm:text-lg">
+                {tShell.appName}
+              </h1>
             </div>
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-              {activeTab !== 'match' && (
-                <button
-                  type="button"
-                  onClick={toggleNav}
-                  className="min-h-9 rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover sm:min-h-0 sm:px-3 sm:text-sm"
-                  aria-expanded={navOpen}
-                  aria-controls="main-nav"
-                >
-                  {navOpen ? tShell.navHide : tShell.navShow}
-                </button>
-              )}
+
+            <div className="hidden overflow-hidden rounded-sm border border-ufa-border font-mono text-[11px] md:flex">
+              <ScoreCell label={tShell.scoreManager} value={career.managerName} />
+              <ScoreCell label={tShell.scoreSeason} value={displaySeasonLabel(league.seasonLabel, uiLang)} />
+              <ScoreCell label={tShell.scoreDate} value={league.currentDate} />
+              <ScoreCell label={tShell.scoreTeam} value={userTeam.name} />
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-3 md:hidden">
               <LangSwitch lang={uiLang} onChange={setUiLang} />
               <button
                 type="button"
                 onClick={handleExitToSlots}
-                className="min-h-9 max-w-[7.5rem] truncate rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover sm:min-h-0 sm:max-w-none sm:px-3 sm:text-sm"
+                className="min-h-9 max-w-[7.5rem] truncate rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover"
               >
                 {tShell.saveAndExit}
               </button>
             </div>
           </div>
+          <p className="truncate px-3 pb-2 text-[10px] text-ufa-muted sm:px-6 md:hidden">
+            {career.managerName} · {displaySeasonLabel(league.seasonLabel, uiLang)} · {league.currentDate} ·{' '}
+            {userTeam.name}
+          </p>
+        </header>
 
-          {activeTab !== 'match' && (
-            <nav
-              id="main-nav"
-              className={`flex flex-col gap-1.5 overflow-hidden transition-[max-height,opacity,margin] duration-200 ease-out sm:gap-2 ${
-                navOpen
-                  ? 'mt-0.5 max-h-[28rem] opacity-100'
-                  : 'pointer-events-none mt-0 max-h-0 opacity-0'
-              }`}
-              aria-label={tShell.navAria}
-              aria-hidden={!navOpen}
-            >
-              <div className="flex gap-1 overflow-x-auto overscroll-x-contain rounded-lg bg-ufa-bg p-1 ring-1 ring-ufa-border [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap [&::-webkit-scrollbar]:hidden">
-                {NAV_CATEGORIES.map((cat) => {
-                  const active = cat.id === activeCategoryId
-                  const badge = categoryBadge(cat)
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => navigateTo(cat.items[0].id)}
-                      className={`relative shrink-0 rounded-md px-3 py-2.5 text-sm font-medium transition-all sm:py-2 ${
-                        active
-                          ? 'bg-ufa-accent text-ufa-bg shadow-md'
-                          : 'text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text'
-                      }`}
-                    >
-                      {pickLabel(cat, uiLang)}
-                      {badge > 0 ? (
-                        <span
-                          className={`ml-1 inline-flex min-w-[1.15rem] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
-                            active
-                              ? 'bg-ufa-bg/25 text-ufa-bg'
-                              : 'bg-ufa-accent text-ufa-bg'
-                          }`}
-                        >
-                          {badge > 9 ? '9+' : badge}
-                        </span>
-                      ) : null}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="flex gap-1 overflow-x-auto overscroll-x-contain rounded-lg bg-ufa-bg/60 p-1 ring-1 ring-ufa-border/70 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap [&::-webkit-scrollbar]:hidden">
-                {activeCategory.items.map((item) => {
-                  const active = activeTab === item.id
-                  const badgeCount =
-                    item.id === 'inbox'
-                      ? inboxUnread
-                      : item.id === 'ultiworld'
-                        ? ultiworldUnread
-                        : 0
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => navigateTo(item.id)}
-                      className={`relative shrink-0 rounded-md px-2.5 py-2 text-xs font-medium transition-all sm:py-1.5 sm:text-sm ${
-                        active
-                          ? 'bg-ufa-panel text-ufa-text ring-1 ring-ufa-accent/50 shadow-sm'
-                          : 'text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text'
-                      }`}
-                    >
-                      {pickLabel(item, uiLang)}
-                      {badgeCount > 0 ? (
-                        <span
-                          className={`ml-1 inline-flex min-w-[1.15rem] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
-                            active
-                              ? 'bg-ufa-accent text-ufa-bg'
-                              : 'bg-ufa-accent/80 text-ufa-bg'
-                          }`}
-                        >
-                          {badgeCount > 9 ? '9+' : badgeCount}
-                        </span>
-                      ) : null}
-                    </button>
-                  )
-                })}
-              </div>
-            </nav>
-          )}
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-6 league-fade-in">
+        <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 py-4 pb-28 sm:px-6 sm:py-6 md:pb-6 league-fade-in">
         {activeTab === 'hub' && (
           <LeagueHub
             league={league}
@@ -1733,9 +1987,91 @@ export default function App() {
         {activeTab === 'playbook' && <TacticsGuide />}
       </main>
 
-      <footer className="border-t border-ufa-border py-3 text-center text-xs text-ufa-muted">
-        {tShell.footer(career.slotIndex + 1)}
-      </footer>
+        <footer className="hidden border-t border-ufa-border py-3 text-center text-xs text-ufa-muted md:block">
+          {tShell.footer(career.slotIndex + 1)}
+        </footer>
+      </div>
+
+      {activeTab !== 'match' && (
+        <nav
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-ufa-border bg-ufa-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
+          aria-label={tShell.navAria}
+        >
+          {activeCategory.items.length > 1 && (
+            <div className="flex gap-1 overflow-x-auto overscroll-x-contain border-b border-ufa-border/60 px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {activeCategory.items.map((item) => {
+                const active = activeTab === item.id
+                const badgeCount =
+                  item.id === 'inbox' ? inboxUnread : item.id === 'ultiworld' ? ultiworldUnread : 0
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => navigateTo(item.id)}
+                    className={`relative shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
+                      active ? 'bg-ufa-accent text-ufa-bg' : 'bg-ufa-bg text-ufa-muted'
+                    }`}
+                  >
+                    {pickLabel(item, uiLang)}
+                    {badgeCount > 0 ? (
+                      <span className="ml-1 font-bold">· {badgeCount > 9 ? '9+' : badgeCount}</span>
+                    ) : null}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          <div className="grid grid-cols-5">
+            {NAV_CATEGORIES.map((cat) => {
+              const Icon = NAV_ICONS[cat.id]
+              const active = cat.id === activeCategoryId
+              const badge = categoryBadge(cat)
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => navigateTo(cat.items[0].id)}
+                  className={`relative flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium ${
+                    active ? 'text-ufa-accent' : 'text-ufa-muted'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {pickLabel(cat, uiLang)}
+                  {badge > 0 ? (
+                    <span className="absolute right-[24%] top-1 min-w-[0.9rem] rounded-full bg-ufa-gold px-1 text-center text-[9px] font-bold leading-[1.1] text-ufa-bg">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  ) : null}
+                </button>
+              )
+            })}
+          </div>
+        </nav>
+      )}
+
+      {activeTab !== 'match' && !simProgress && (
+        <button
+          type="button"
+          onClick={handleAdvanceDay}
+          className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-ufa-accent text-ufa-bg shadow-lg shadow-black/40 transition-transform active:scale-95 md:hidden"
+          aria-label={tShell.advanceDay}
+          title={tShell.advanceDay}
+        >
+          <IconNextDay className="h-6 w-6" />
+        </button>
+      )}
+
+      <CommandPalette
+        open={paletteOpen}
+        items={paletteItems}
+        onNavigate={(id) => {
+          navigateTo(id)
+          setPaletteOpen(false)
+        }}
+        onClose={() => setPaletteOpen(false)}
+        placeholder={tShell.palettePlaceholder}
+        emptyLabel={tShell.paletteEmpty}
+      />
 
       <SimulationProgressOverlay progress={simProgress} />
     </div>

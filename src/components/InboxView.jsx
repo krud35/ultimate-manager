@@ -6,7 +6,7 @@ import {
 } from '../career/randomEventCopyEn.js'
 import { randomEventTitleEn } from '../career/randomEvents.js'
 import { inboxStrings } from '../ui/strings/inbox'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   INBOX_TYPES,
   INBOX_TYPE_META,
@@ -1025,6 +1025,63 @@ function MessageDetail({
   )
 }
 
+/** Swipe-left-to-delete on touch devices; a tap always passes through untouched. */
+function SwipeableRow({ onDelete, deleteLabel, children }) {
+  const DELETE_THRESHOLD = -76
+  const MAX_DRAG = -120
+  const [dragX, setDragX] = useState(0)
+  const draggingRef = useRef(false)
+  const startXRef = useRef(0)
+  const startYRef = useRef(0)
+  const axisLockRef = useRef(null) // 'x' | 'y' | null
+
+  const onTouchStart = (e) => {
+    const t = e.touches[0]
+    startXRef.current = t.clientX
+    startYRef.current = t.clientY
+    axisLockRef.current = null
+    draggingRef.current = true
+  }
+  const onTouchMove = (e) => {
+    if (!draggingRef.current) return
+    const t = e.touches[0]
+    const dx = t.clientX - startXRef.current
+    const dy = t.clientY - startYRef.current
+    if (!axisLockRef.current) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return
+      axisLockRef.current = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    }
+    if (axisLockRef.current !== 'x') return
+    e.preventDefault()
+    setDragX(Math.max(Math.min(dx, 0), MAX_DRAG))
+  }
+  const onTouchEnd = () => {
+    draggingRef.current = false
+    if (dragX < DELETE_THRESHOLD) onDelete()
+    setDragX(0)
+  }
+
+  return (
+    <div className="relative overflow-hidden">
+      <div className="absolute inset-y-0 right-0 flex w-20 items-center justify-center bg-red-500/90 px-2 text-center text-[10px] font-bold uppercase tracking-wide text-white">
+        {deleteLabel}
+      </div>
+      <div
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={{
+          transform: `translateX(${dragX}px)`,
+          transition: draggingRef.current ? 'none' : 'transform 200ms ease-out',
+        }}
+        className="relative bg-ufa-panel"
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export default function InboxView({
   career,
   onInboxChange,
@@ -1220,35 +1277,40 @@ export default function InboxView({
                     message.payload?.status === 'pending_confirm')
                 return (
                   <li key={message.id}>
-                    <button
-                      type="button"
-                      onClick={() => selectMessage(message)}
-                      className={`w-full text-left px-4 py-3 transition-colors ${
-                        active ? 'bg-ufa-accent/10' : 'hover:bg-ufa-panel-hover'
-                      } ${!message.read ? 'border-l-2 border-l-ufa-accent' : 'border-l-2 border-l-transparent'}`}
+                    <SwipeableRow
+                      onDelete={() => handleDelete(message.id)}
+                      deleteLabel={lang === UI_LANG.EN ? 'Delete' : 'Usuń'}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <span
-                          className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase ${typeBadgeClass(message.type)}`}
-                        >
-                          {pickLabel(meta, lang) ?? message.type}
-                          {bidPending ? (lang === UI_LANG.EN ? ' · action' : ' · akcja') : ''}
-                        </span>
-                        <span className="shrink-0 text-[11px] text-ufa-muted">
-                          {formatDayLabel(message.date, lang)}
-                        </span>
-                      </div>
-                      <p
-                        className={`mt-1.5 text-sm ${
-                          message.read ? 'text-ufa-muted' : 'font-medium text-ufa-text'
-                        }`}
+                      <button
+                        type="button"
+                        onClick={() => selectMessage(message)}
+                        className={`w-full text-left px-4 py-3 transition-colors ${
+                          active ? 'bg-ufa-accent/10' : 'hover:bg-ufa-panel-hover'
+                        } ${!message.read ? 'border-l-2 border-l-ufa-accent' : 'border-l-2 border-l-transparent'}`}
                       >
-                        {pickCopy(enrichRandomEventMessage(message), 'title', lang)}
-                      </p>
-                      <p className="mt-0.5 line-clamp-2 text-xs text-ufa-muted">
-                        {pickCopy(enrichRandomEventMessage(message), 'body', lang)}
-                      </p>
-                    </button>
+                        <div className="flex items-start justify-between gap-2">
+                          <span
+                            className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase ${typeBadgeClass(message.type)}`}
+                          >
+                            {pickLabel(meta, lang) ?? message.type}
+                            {bidPending ? (lang === UI_LANG.EN ? ' · action' : ' · akcja') : ''}
+                          </span>
+                          <span className="shrink-0 text-[11px] text-ufa-muted">
+                            {formatDayLabel(message.date, lang)}
+                          </span>
+                        </div>
+                        <p
+                          className={`mt-1.5 text-sm ${
+                            message.read ? 'text-ufa-muted' : 'font-medium text-ufa-text'
+                          }`}
+                        >
+                          {pickCopy(enrichRandomEventMessage(message), 'title', lang)}
+                        </p>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-ufa-muted">
+                          {pickCopy(enrichRandomEventMessage(message), 'body', lang)}
+                        </p>
+                      </button>
+                    </SwipeableRow>
                   </li>
                 )
               })}

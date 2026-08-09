@@ -282,8 +282,13 @@ export default function TacticsForm({
   const t = tacticsStrings(lang)
   const [activeSlot, setActiveSlot] = useState(null)
   const [openSlot, setOpenSlot] = useState(null)
-  /** 'o-line' | 'd-line' | 'combined' */
-  const [viewTab, setViewTab] = useState('o-line')
+  /** 'o-line' | 'd-line' | 'combined' — desktop opens with O/D shown side by side
+   *  (there's room), mobile opens on a single line to keep scrolling short. */
+  const [viewTab, setViewTab] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1024px)').matches
+      ? 'combined'
+      : 'o-line',
+  )
 
   const attackOptions = Object.values(ATTACK_STYLES).map((id) => ({
     id,
