@@ -1,7 +1,7 @@
 import { useUiLang } from './UiLangContext'
 import { resolveTeamName, displaySeasonLabel } from './locale'
 import { useMemo, useState } from 'react'
-import { getPlayerFullName } from '../data/mockPlayers'
+import { getPlayerFullName, getOverallRating } from '../data/mockPlayers'
 import { teamDisplayName, teamStandingsRank } from '../seasonEngine/seasonStateFromLeague.js'
 import {
   matchResultForTeam,
@@ -47,10 +47,24 @@ import {
   fanTraitLabel,
   fanTraitBlurb,
   fanTraitToneClass,
+  worldTeamById,
+  getOpponentKnowledge,
+  getOpponentTacticsKnowledge,
+  getPlayerKnowledge,
+  pendingScoutMissions,
+  hasPendingScoutMission,
+  scoutMissionCapacity,
+  scoutMissionCost,
+  queueScoutMission,
+  SCOUT_MISSION_KINDS,
+  isPlayerShortlisted,
+  toggleShortlist,
 } from '../career'
 import PlayerTraitChips from '../components/PlayerTraitChips'
+import PlayerProfileModal from '../components/PlayerProfileModal'
 import { teamProfileStrings } from './strings/teamProfile'
-import { financeStateLabel, financeStateToneClass } from './fogOfWar'
+import { scoutingStrings } from './strings/scouting'
+import { financeStateLabel, financeStateToneClass, scoutedValueDisplay, attributeBandToneClass } from './fogOfWar'
 
 function StatPill({ label, value, valueClassName = 'text-ufa-text' }) {
   return (
@@ -110,6 +124,169 @@ function StartingSevenCard({ player, seasonState, isOwnClub }) {
   )
 }
 
+function ScoutingSection({ career, onChange, playerTeam, opponentTeam, opponentTeamId, lang }) {
+  const ts = scoutingStrings(lang)
+  const [kind, setKind] = useState('tactics')
+  const [targetPlayerId, setTargetPlayerId] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [flash, setFlash] = useState(null)
+
+  if (!playerTeam || !opponentTeam) return null
+
+  const knowledge = getOpponentKnowledge(playerTeam, opponentTeamId)
+  const tacticsKnowledge = getOpponentTacticsKnowledge(playerTeam, opponentTeamId)
+  const allPending = pendingScoutMissions(playerTeam)
+  const opponentPlayerIds = new Set((opponentTeam.players ?? []).map((p) => p.id))
+  const pending = allPending.filter(
+    (m) => m.opponentTeamId === opponentTeamId || opponentPlayerIds.has(m.targetPlayerId),
+  )
+  const capacity = scoutMissionCapacity(playerTeam)
+  const used = allPending.length
+  const cost = scoutMissionCost(kind, playerTeam)
+  const duplicate = hasPendingScoutMission(playerTeam, {
+    kind,
+    opponentTeamId,
+    targetPlayerId: kind === 'player' ? targetPlayerId || null : null,
+  })
+
+  function handleSend() {
+    if (!playerTeam || busy) return
+    if (kind === 'player' && !targetPlayerId) return
+    setBusy(true)
+    const result = queueScoutMission(playerTeam, {
+      kind,
+      opponentTeamId,
+      targetPlayerId: kind === 'player' ? targetPlayerId : null,
+      date: career?.league?.currentDate ?? null,
+    })
+    setBusy(false)
+    if (result.ok) {
+      setFlash({ ok: true })
+      setTargetPlayerId('')
+      onChange?.()
+    } else {
+      setFlash({ ok: false, error: result.error })
+    }
+  }
+
+  const errorText =
+    flash?.error === 'capacity'
+      ? ts.errorCapacity
+      : flash?.error === 'insufficient_funds'
+        ? ts.errorInsufficientFunds
+        : ts.errorGeneric
+
+  const roster = [...(opponentTeam.players ?? [])].sort((a, b) =>
+    getPlayerFullName(a).localeCompare(getPlayerFullName(b)),
+  )
+
+  return (
+    <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+      <h3 className="font-semibold text-ufa-text mb-4">{ts.sectionTitle}</h3>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{ts.knowledgeLabel}</p>
+          <p className={`mt-1 text-xl font-bold tabular-nums ${attributeBandToneClass(knowledge)}`}>
+            {knowledge}%
+          </p>
+        </div>
+        <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{ts.tacticsLabel}</p>
+          <p
+            className={`mt-1 text-xl font-bold tabular-nums ${attributeBandToneClass(tacticsKnowledge)}`}
+          >
+            {tacticsKnowledge}%
+          </p>
+        </div>
+        <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+            {ts.capacityLabel(used, capacity)}
+          </p>
+          <p className="mt-1 text-xl font-bold tabular-nums text-ufa-text">
+            {used}/{capacity}
+          </p>
+        </div>
+        <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{ts.costLabel}</p>
+          <p className="mt-1 text-xl font-bold tabular-nums text-ufa-gold">{formatUsd(cost)}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-end gap-2">
+        <div>
+          <label className="block text-[10px] uppercase tracking-wide text-ufa-muted mb-1">
+            {ts.pickerKindLabel}
+          </label>
+          <select
+            value={kind}
+            onChange={(e) => {
+              setKind(e.target.value)
+              setFlash(null)
+            }}
+            className="rounded-md border border-ufa-border bg-ufa-bg px-2 py-1.5 text-sm text-ufa-text"
+          >
+            {SCOUT_MISSION_KINDS.map((k) => (
+              <option key={k} value={k}>
+                {ts.missionKindLabel(k)}
+              </option>
+            ))}
+          </select>
+        </div>
+        {kind === 'player' && (
+          <div>
+            <label className="block text-[10px] uppercase tracking-wide text-ufa-muted mb-1">
+              {ts.pickerPlayerLabel}
+            </label>
+            <select
+              value={targetPlayerId}
+              onChange={(e) => {
+                setTargetPlayerId(e.target.value)
+                setFlash(null)
+              }}
+              className="rounded-md border border-ufa-border bg-ufa-bg px-2 py-1.5 text-sm text-ufa-text"
+            >
+              <option value="">{ts.pickerPlayerPlaceholder}</option>
+              {roster.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {getPlayerFullName(p)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={busy || used >= capacity || duplicate || (kind === 'player' && !targetPlayerId)}
+          className="rounded-md bg-ufa-accent px-4 py-1.5 text-sm font-semibold text-ufa-bg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-ufa-accent/90"
+        >
+          {ts.sendScoutButton}
+        </button>
+      </div>
+      {flash && !flash.ok && <p className="mt-2 text-xs text-red-400">{errorText}</p>}
+
+      {pending.length > 0 && (
+        <div className="mt-4">
+          <p className="text-[10px] uppercase tracking-wide text-ufa-muted mb-2">
+            {ts.pendingMissionsTitle}
+          </p>
+          <ul className="space-y-1.5">
+            {pending.map((m) => (
+              <li
+                key={m.id}
+                className="flex items-center justify-between rounded-md border border-ufa-border bg-ufa-bg/40 px-3 py-2 text-xs"
+              >
+                <span className="text-ufa-text">{ts.missionKindLabel(m.kind)}</span>
+                <span className="text-ufa-muted">{ts.pendingWaitingForMatch}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  )
+}
+
 function rosterSortKeys(t) {
   return [
     { id: 'name', label: t.player },
@@ -124,18 +301,24 @@ function rosterSortKeys(t) {
   ]
 }
 
-export default function TeamProfileView({ teamId, seasonState, onBack }) {
+export default function TeamProfileView({ teamId, seasonState, onBack, career = null, onChange = null }) {
   const { lang } = useUiLang()
   const t = teamProfileStrings(lang)
+  const ts = scoutingStrings(lang)
   const sortCols = rosterSortKeys(t)
   const [sortKey, setSortKey] = useState('goals')
   const [sortDir, setSortDir] = useState('desc')
+  const [profilePlayer, setProfilePlayer] = useState(null)
 
   const team = seasonState?.teamsById?.[teamId]
   const standing = seasonState?.standings?.[teamId]
   const rank = teamStandingsRank(seasonState, teamId)
   const ratings = useMemo(() => teamOffenseDefenseRatings(team), [team])
   const isOwnClub = Boolean(teamId && teamId === seasonState?.playerTeamId)
+  const playerTeam = useMemo(() => {
+    if (!career?.world || !career?.playerTeamId) return null
+    return worldTeamById(career.world, career.playerTeamId)
+  }, [career])
 
   const finances = useMemo(() => {
     if (!team) return null
@@ -213,6 +396,8 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
       const line = playerSeasonLine(seasonState, p)
       ensurePlayerMorale(p)
       ensurePlayerForm(p)
+      const ovr = getOverallRating(p.skills)
+      const knowledge = isOwnClub ? 100 : getPlayerKnowledge(playerTeam, p.id)
       return {
         player: p,
         line,
@@ -220,6 +405,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
         form: getPlayerForm(p),
         morale: getPlayerMorale(p),
         name: getPlayerFullName(p).toLowerCase(),
+        ovrDisplay: scoutedValueDisplay(ovr, knowledge, lang),
       }
     })
 
@@ -255,7 +441,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
     })
 
     return enriched
-  }, [team?.players, seasonState, sortKey, sortDir])
+  }, [team?.players, seasonState, sortKey, sortDir, isOwnClub, playerTeam, lang])
 
   function toggleSort(key) {
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
@@ -464,6 +650,18 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
         </section>
       )}
 
+      {/* Scouting */}
+      {!isOwnClub && (
+        <ScoutingSection
+          career={career}
+          onChange={onChange}
+          playerTeam={playerTeam}
+          opponentTeam={team}
+          opponentTeamId={teamId}
+          lang={lang}
+        />
+      )}
+
       {/* Starting 7 */}
       <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
         <h3 className="font-semibold text-ufa-text mb-1">{t.bestSeven}</h3>
@@ -571,6 +769,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
                     </button>
                   </th>
                 ))}
+                <th className="px-3 py-3 font-medium text-left">{ts.rosterOvrHeader}</th>
                 <th className="px-3 py-3 font-medium text-left">{t.hand}</th>
                 {isOwnClub && (
                   <th className="px-3 py-3 font-medium text-left min-w-[140px]">{t.traits}</th>
@@ -578,10 +777,20 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-ufa-border">
-              {rosterRows.map(({ player, line, stamina, form, morale }) => (
+              {rosterRows.map(({ player, line, stamina, form, morale, ovrDisplay }) => (
                 <tr key={player.id} className="hover:bg-ufa-panel-hover">
                   <td className="px-3 py-2.5 font-medium whitespace-nowrap">
-                    {getPlayerFullName(player)}
+                    {isOwnClub ? (
+                      getPlayerFullName(player)
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setProfilePlayer(player)}
+                        className="text-ufa-accent hover:underline"
+                      >
+                        {getPlayerFullName(player)}
+                      </button>
+                    )}
                   </td>
                   <td className="px-3 py-2.5 min-w-[100px]">
                     <StaminaBar stamina={stamina} compact />
@@ -599,6 +808,13 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
                   </td>
                   <td className="px-3 py-2.5 tabular-nums text-center">{line.assists}</td>
                   <td className="px-3 py-2.5 tabular-nums text-center">{line.blocks}</td>
+                  <td
+                    className={`px-3 py-2.5 font-semibold tabular-nums ${
+                      ovrDisplay.kind === 'exact' ? 'text-ufa-accent' : ovrDisplay.toneClass
+                    }`}
+                  >
+                    {ovrDisplay.label}
+                  </td>
                   <td className="px-3 py-2.5">
                     <ThrowingHandBadge player={player} />
                     <span className="sr-only">{getDominantHand(player)}</span>
@@ -614,6 +830,36 @@ export default function TeamProfileView({ teamId, seasonState, onBack }) {
           </table>
         </div>
       </section>
+
+      {!isOwnClub && (
+        <PlayerProfileModal
+          player={profilePlayer}
+          onClose={() => setProfilePlayer(null)}
+          teamName={team ? resolveTeamName(team, lang) : null}
+          isOwnPlayer={false}
+          knowledge={profilePlayer ? getPlayerKnowledge(playerTeam, profilePlayer.id) : null}
+          isShortlisted={profilePlayer ? isPlayerShortlisted(playerTeam, profilePlayer.id) : false}
+          scoutPending={
+            profilePlayer
+              ? hasPendingScoutMission(playerTeam, { kind: 'player', targetPlayerId: profilePlayer.id })
+              : false
+          }
+          onToggleShortlist={(playerId) => {
+            toggleShortlist(playerTeam, playerId)
+            onChange?.()
+          }}
+          onScoutPlayer={(playerId) => {
+            const result = queueScoutMission(playerTeam, {
+              kind: 'player',
+              targetPlayerId: playerId,
+              opponentTeamId: teamId,
+              date: career?.league?.currentDate ?? null,
+            })
+            if (result.ok) onChange?.()
+            return result
+          }}
+        />
+      )}
     </div>
   )
 }

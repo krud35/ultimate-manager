@@ -24,6 +24,8 @@ import {
   tickPlayerInjury,
 } from '../models/playerInjury.js'
 import { addDays, formatISODate, parseISODate } from '../league/seasonCalendar.js'
+import { MATCH_STAMINA_CONFIG, currentMatchStamina, matchStaminaCeiling } from '../matchEngine/stamina.js'
+import { medicalRecoveryMult } from './clubFacilities.js'
 
 function worldTeamsList(world) {
   if (!world?.teamsById) return []
@@ -315,6 +317,7 @@ export function ensurePlayerDevelopment(player, options = {}) {
     player.potential = clamp(Math.max(minPot, ovr - (player.age >= 33 ? 4 : 1)), 62, 95)
   }
   if (player.developmentFatigue == null) player.developmentFatigue = 0
+  if (player.matchStamina == null) player.matchStamina = MATCH_STAMINA_CONFIG.default
   if (!player.trainingFocus || !FOCUS_CONFIG[player.trainingFocus]) {
     player.trainingFocus = 'balanced'
   }
@@ -439,6 +442,18 @@ export function applyDailyDevelopment(league, options = {}) {
           100,
         )
       }
+
+      // Regeneracja staminy meczowej — działa też w dniu treningu (mocno wolniej),
+      // ale nigdy powyżej pułapu narzuconego przez zmęczenie ogólne.
+      const matchRecoveryMult = hadTeamTraining
+        ? MATCH_STAMINA_CONFIG.trainingDayRecoveryMult
+        : 1
+      const matchStaminaCeilingValue = matchStaminaCeiling(player)
+      player.matchStamina = Math.min(
+        matchStaminaCeilingValue,
+        currentMatchStamina(player) +
+          MATCH_STAMINA_CONFIG.dailyRecovery * medicalRecoveryMult(team) * matchRecoveryMult,
+      )
 
       tickPlayerInjury(player, {
         restBonus: player.trainingFocus === 'rest',
@@ -595,6 +610,7 @@ export function applyOffseasonDevelopment(world, options = {}) {
       }
 
       player.developmentFatigue = clamp((player.developmentFatigue ?? 0) * 0.25, 0, 40)
+      player.matchStamina = matchStaminaCeiling(player)
       shortenInjuryForOffseason(player)
       if (player.trainingFocus === 'rest') player.trainingFocus = 'balanced'
     }
@@ -602,12 +618,6 @@ export function applyOffseasonDevelopment(world, options = {}) {
 
   assignAiTrainingPlans(world, options.playerTeamId ?? null, rng)
   return { world, aged }
-}
-
-/** Start staminy meczu z uwzględnieniem zmęczenia treningowego. */
-export function matchStaminaPenaltyFromFatigue(player) {
-  const fatigue = player?.developmentFatigue ?? 0
-  return Math.round(fatigue * 0.38)
 }
 
 export function setPlayerTrainingFocus(player, focusId) {

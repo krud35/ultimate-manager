@@ -78,6 +78,19 @@ export function simulatePoint({
   let possession = attackTeamId
   let discPosition = MATCH_CONFIG.field.positionAfterPull
 
+  /**
+   * Zmiana stron co punkt (jak w realnym ultimate) — niezależnie od tego, kto zdobył
+   * poprzedni punkt. `possession`/`stamina`/boxScore/matchStats zostają kluczowane po
+   * realnej drużynie (home/away); `geo()` daje tylko etykietę do funkcji geometrycznych
+   * (kierunek ataku, przeliczenie discPosition ↔ metry boiska), żeby żadna drużyna nie
+   * atakowała cały mecz w tym samym fizycznym kierunku.
+   * Wiatr NIE jest tu odwracany — to osobny, świadomy czynnik (patrz harness Fazy 0).
+   */
+  const sidesSwapped = pointIndex % 2 === 0
+  const geo = (side) => (sidesSwapped ? (side === 'home' ? 'away' : 'home') : side)
+  const geoStaminaMaps = (maps) =>
+    sidesSwapped && maps ? { ...maps, home: maps.away, away: maps.home } : maps
+
   const homePointRole = pointStartRoleForTeam('home', pullTeam)
   const awayPointRole = pointStartRoleForTeam('away', pullTeam)
   const stampLine = (team, role) => ({
@@ -116,6 +129,7 @@ export function simulatePoint({
       homeDefenseStyle: homeLineStyles.defenseStyle,
       awayAttackStyle: awayLineStyles.attackStyle,
       awayDefenseStyle: awayLineStyles.defenseStyle,
+      sidesSwapped,
       staminaSnapshot: stamina ? cloneStaminaMaps(stamina) : null,
     }),
   )
@@ -240,9 +254,9 @@ export function simulatePoint({
     const absX =
       fieldX != null && Number.isFinite(fieldX)
         ? fieldX
-        : discMetersFromState(discPosition, possession)
+        : discMetersFromState(discPosition, geo(possession))
     possession = possession === 'home' ? 'away' : 'home'
-    discPosition = discPositionFromFieldMeters(absX, possession)
+    discPosition = discPositionFromFieldMeters(absX, geo(possession))
     discHolder = null
     holdMs = 0
     stallCount = 0
@@ -343,7 +357,7 @@ export function simulatePoint({
       offenseLineup,
       defenseLineup,
       personMatchups,
-      possessionTeam: possession,
+      possessionTeam: geo(possession),
       discPosition,
       discYMeters,
       stallCount: decisionStallBase,
@@ -351,7 +365,7 @@ export function simulatePoint({
       offenseTeam,
       defenseTeam,
       wind,
-      staminaMaps: simStaminaMaps,
+      staminaMaps: geoStaminaMaps(simStaminaMaps),
       seedStates: liveAgentStates,
       postResetClearout,
       lastThrowerId,
@@ -410,7 +424,7 @@ export function simulatePoint({
           return { abort: true }
         }
 
-        const throwerFieldX = discMetersFromState(discPosition, possession)
+        const throwerFieldX = discMetersFromState(discPosition, geo(possession))
         const catchX = decision.catchX ?? throwerFieldX
         const catchY = decision.catchY ?? discYMeters
         const throwDx = catchX - throwerFieldX
@@ -714,10 +728,10 @@ export function simulatePoint({
 
     throwCount += 1
 
-    const throwerFieldX = discMetersFromState(discPositionBefore, possession)
+    const throwerFieldX = discMetersFromState(discPositionBefore, geo(possession))
     const catchPoint = resolveCatchPointFromMotionTrace(motionTrace, receiver.id, true)
     const forwardProgressM = catchPoint
-      ? (catchPoint.x - throwerFieldX) * attackDirectionX(possession)
+      ? (catchPoint.x - throwerFieldX) * attackDirectionX(geo(possession))
       : null
 
     const discAfter = computeThrowAdvance(discPositionBefore, throwType, {
@@ -828,7 +842,7 @@ export function simulatePoint({
         isBlock: result.isBlock,
       })
       const absFieldX =
-        turnoverPoint?.x ?? discMetersFromState(discPositionBefore, possession)
+        turnoverPoint?.x ?? discMetersFromState(discPositionBefore, geo(possession))
       const absFieldY = turnoverPoint?.y ?? discYMeters
       const turnoverMeters = absFieldX
 

@@ -47,6 +47,7 @@ const pl = {
   individualIntro:
     'Fokus nie jest osobnym treningiem — przyspiesza rozwój wybranych umiejętności na treningach drużynowych (i spowalnia pozostałe). Regeneracja obniża zmęczenie z sesji i szybciej regeneruje w dni bez treningu. Jedyny realny trening to sesje drużynowe.',
   fatigue: 'Zmęczenie',
+  matchFreshness: 'Świeżość mecz.',
   attendance: 'frekwencja',
   engagement: 'zaangażowanie',
   luck: 'szczęście',
@@ -98,6 +99,7 @@ const en = {
   individualIntro:
     'Focus is not a separate session — it speeds selected skills on team trainings (and slows the rest). Recovery lowers session fatigue and regenerates faster on off days. Real training is team sessions only.',
   fatigue: 'Fatigue',
+  matchFreshness: 'Match freshness',
   attendance: 'attendance',
   engagement: 'engagement',
   luck: 'luck',

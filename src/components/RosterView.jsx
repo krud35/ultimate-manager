@@ -31,6 +31,8 @@ import {
 } from '../models/playerInjury.js'
 import { formatUsdCompact, getPlayerMarketValue } from '../career'
 import PlayerTraitChips from './PlayerTraitChips'
+import { fatigueBandLabel, fatigueBandToneClass } from '../ui/fogOfWar'
+import { currentMatchStamina } from '../matchEngine/stamina.js'
 
 const PAGE_SIZE_OPTIONS = [
   { id: 20, label: '20' },
@@ -265,6 +267,7 @@ export default function RosterView({
                 <th className="px-3 py-3 font-medium">{t.value}</th>
                 <th className="px-3 py-3 font-medium">{t.form}</th>
                 <th className="px-3 py-3 font-medium">{t.morale}</th>
+                <th className="px-3 py-3 font-medium">{t.matchFreshnessCol}</th>
                 <th className="px-3 py-3 font-medium min-w-[140px]">{t.traits}</th>
                 {MAIN_COLUMNS.map((col) => (
                   <th key={col.id} className="px-3 py-3 font-medium">
@@ -293,6 +296,7 @@ export default function RosterView({
                 ensurePlayerInjury(player)
                 const morale = getPlayerMorale(player)
                 const form = getPlayerForm(player)
+                const matchFreshness = Math.round(currentMatchStamina(player))
                 const injured = isPlayerInjured(player)
                 return (
                   <tr key={player.id} className="transition-colors hover:bg-ufa-panel-hover">
@@ -343,6 +347,12 @@ export default function RosterView({
                     </td>
                     <td className={`px-3 py-3 font-semibold ${moraleToneClass(morale)}`}>
                       {moraleLabel(morale, lang)}
+                    </td>
+                    <td
+                      className={`px-3 py-3 font-semibold ${fatigueBandToneClass(100 - matchFreshness)}`}
+                      title={`${matchFreshness}/100`}
+                    >
+                      {fatigueBandLabel(100 - matchFreshness, lang)}
                     </td>
                     <td className="px-3 py-3 max-w-[200px]">
                       <PlayerTraitChips player={player} max={2} />

@@ -28,7 +28,12 @@ import {
   pruneLeagueMemory,
 } from './seasonArchive.js'
 import { ensureWorldFinances, rollSeasonBudgets } from './transfers/clubFinances.js'
-import { ensureWorldContracts } from './transfers/playerContracts.js'
+import {
+  ensureWorldContracts,
+  processSeasonEndContractObligations,
+  messagesFromContractBonusPayouts,
+  messagesFromBrokenPromises,
+} from './transfers/playerContracts.js'
 import { simulateAiOffseasonTransferBurst } from './transfers/aiMarket.js'
 import { processAiContractCycle, simulateAiFreeAgentSignings, ensureWorldFreeAgents } from './transfers/freeAgency.js'
 import { processSeasonRetirements } from './retirement.js'
@@ -359,6 +364,27 @@ export function finalizeSeason(career) {
     ]
   }
 
+  // Bonusy kontraktowe zawodników (spełnione warunki) + kara morale za złamane obietnice.
+  let contractObligationInbox = []
+  if (worldAfterCycle) {
+    const obligations = processSeasonEndContractObligations(worldAfterCycle, {
+      league: career.league,
+      seasonYear: career.seasonYear,
+      playerStats: archive.playerStats,
+    })
+    const probe = { ...career, world: worldAfterCycle, league: career.league }
+    contractObligationInbox = [
+      ...messagesFromContractBonusPayouts(obligations.bonusPayouts, probe, {
+        date: career.league?.currentDate,
+        seasonYear: career.seasonYear,
+      }),
+      ...messagesFromBrokenPromises(obligations.brokenPromises, probe, {
+        date: career.league?.currentDate,
+        seasonYear: career.seasonYear,
+      }),
+    ]
+  }
+
   // Off-season: kluby AI robią serię transferów między sobą.
   const ai = simulateAiOffseasonTransferBurst(
     { ...career, phase: 'season_complete', world: worldAfterCycle, transferLog: transferLogAfterCycle },
@@ -379,7 +405,7 @@ export function finalizeSeason(career) {
     aiOffseasonTransferWaves: 1,
     inbox: mergeInbox(
       { ...career, inbox: career.inbox },
-      [...seasonCycleInbox, ...sponsorInbox],
+      [...seasonCycleInbox, ...sponsorInbox, ...contractObligationInbox],
     ),
   })
 }

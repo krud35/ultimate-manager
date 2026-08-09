@@ -38,6 +38,8 @@ export const TRAIT_DEFS = {
     id: 'determined',
     namePl: 'Zdeterminowany',
     nameEn: 'Determined',
+    descPl: 'Rzadko załamuje się po porażkach — wraca silniejszy.',
+    descEn: 'Rarely rattled by defeat — bounces back stronger.',
     polarity: 'positive',
     tags: ['mental', 'skill'],
   },
@@ -45,6 +47,8 @@ export const TRAIT_DEFS = {
     id: 'leader',
     namePl: 'Lider',
     nameEn: 'Leader',
+    descPl: 'Podnosi na duchu kolegów z drużyny.',
+    descEn: 'Lifts the spirits of teammates around him.',
     polarity: 'positive',
     tags: ['mental'],
   },
@@ -52,6 +56,8 @@ export const TRAIT_DEFS = {
     id: 'vocal',
     namePl: 'Głos na boisku',
     nameEn: 'Vocal leader',
+    descPl: 'Dodaje drużynie energii swoją obecnością na boisku.',
+    descEn: 'Energizes the team with his presence on the field.',
     polarity: 'positive',
     tags: ['mental'],
   },
@@ -59,6 +65,8 @@ export const TRAIT_DEFS = {
     id: 'loner',
     namePl: 'Samotnik',
     nameEn: 'Loner',
+    descPl: 'Trzyma się na uboczu — mało wpływa na drużynę i mało z niej czerpie.',
+    descEn: 'Keeps to himself — barely affects, or benefits from, the team around him.',
     polarity: 'negative',
     tags: ['mental'],
   },
@@ -66,6 +74,8 @@ export const TRAIT_DEFS = {
     id: 'confident',
     namePl: 'Pewny siebie',
     nameEn: 'Confident',
+    descPl: 'Nie traci pewności siebie po pojedynczym błędzie.',
+    descEn: 'Doesn\'t lose his self-belief after a single mistake.',
     polarity: 'positive',
     tags: ['mental'],
   },
@@ -73,6 +83,8 @@ export const TRAIT_DEFS = {
     id: 'fragile_ego',
     namePl: 'Krucha pewność siebie',
     nameEn: 'Fragile ego',
+    descPl: 'Ciężko przeżywa błędy i porażki.',
+    descEn: 'Takes mistakes and losses hard.',
     polarity: 'negative',
     tags: ['mental'],
   },
@@ -80,6 +92,8 @@ export const TRAIT_DEFS = {
     id: 'professional',
     namePl: 'Profesjonalista',
     nameEn: 'Professional',
+    descPl: 'Stabilny i konsekwentny — dobrze przygotowany na każdy mecz.',
+    descEn: 'Stable and consistent — well-prepared for every match.',
     polarity: 'positive',
     tags: ['mental', 'skill'],
   },
@@ -87,6 +101,8 @@ export const TRAIT_DEFS = {
     id: 'hot_headed',
     namePl: 'Porywczy',
     nameEn: 'Hot-headed',
+    descPl: 'Traci głowę pod presją, co prowadzi do pochopnych decyzji.',
+    descEn: 'Loses his cool under pressure, leading to rash decisions.',
     polarity: 'negative',
     tags: ['mental', 'throw'],
   },
@@ -94,6 +110,8 @@ export const TRAIT_DEFS = {
     id: 'composed',
     namePl: 'Opanowany',
     nameEn: 'Composed',
+    descPl: 'Zachowuje spokój i celność nawet pod dużą presją.',
+    descEn: 'Stays calm and sharp even under heavy pressure.',
     polarity: 'positive',
     tags: ['mental', 'throw'],
   },
@@ -101,6 +119,8 @@ export const TRAIT_DEFS = {
     id: 'clutch',
     namePl: 'Clutch',
     nameEn: 'Clutch',
+    descPl: 'Rośnie w kluczowych momentach meczu.',
+    descEn: 'Rises to the occasion in the biggest moments.',
     polarity: 'positive',
     tags: ['mental'],
   },
@@ -108,6 +128,8 @@ export const TRAIT_DEFS = {
     id: 'nervous',
     namePl: 'Nerwowy',
     nameEn: 'Nervous',
+    descPl: 'Pod presją traci pewność i częściej się myli.',
+    descEn: 'Gets rattled under pressure and makes more mistakes.',
     polarity: 'negative',
     tags: ['mental'],
   },
@@ -115,6 +137,8 @@ export const TRAIT_DEFS = {
     id: 'team_first',
     namePl: 'Team first',
     nameEn: 'Team first',
+    descPl: 'Stawia bezpieczną, zespołową grę ponad własne statystyki.',
+    descEn: 'Puts safe, team-oriented play above his own stats.',
     polarity: 'positive',
     tags: ['mental'],
   },
@@ -122,6 +146,8 @@ export const TRAIT_DEFS = {
     id: 'glory_hunter',
     namePl: 'Łowca chwały',
     nameEn: 'Glory hunter',
+    descPl: 'Szuka okazji do zdobycia gola lub asysty, nawet kosztem ryzyka.',
+    descEn: 'Chases goals and assists, even at the cost of extra risk.',
     polarity: 'mixed',
     tags: ['mental', 'throw'],
   },
@@ -129,6 +155,8 @@ export const TRAIT_DEFS = {
     id: 'workhorse',
     namePl: 'Pracowity',
     nameEn: 'Workhorse',
+    descPl: 'Nie odpuszcza — dobrze znosi mecze i obciążenie treningowe.',
+    descEn: 'Never lets up — handles match load and training well.',
     polarity: 'positive',
     tags: ['mental'],
   },
@@ -136,6 +164,8 @@ export const TRAIT_DEFS = {
     id: 'lazy',
     namePl: 'Leniwy',
     nameEn: 'Lazy',
+    descPl: 'Unika wysiłku i szybciej się męczy.',
+    descEn: 'Avoids extra effort and tires out faster.',
     polarity: 'negative',
     tags: ['mental', 'defense', 'physical'],
   },
@@ -143,6 +173,8 @@ export const TRAIT_DEFS = {
     id: 'huck_lover',
     namePl: 'Lubi hucki',
     nameEn: 'Huck lover',
+    descPl: 'Chętnie sięga po długie rzuty na bramkę.',
+    descEn: 'Loves to throw long shots at the end zone.',
     polarity: 'positive',
     tags: ['throw'],
   },
@@ -150,6 +182,8 @@ export const TRAIT_DEFS = {
     id: 'dump_guy',
     namePl: 'Dump guy',
     nameEn: 'Dump guy',
+    descPl: 'Preferuje bezpieczne, krótkie zagrania do resetu.',
+    descEn: 'Prefers safe, short resets over risk.',
     polarity: 'positive',
     tags: ['throw'],
   },
@@ -157,6 +191,8 @@ export const TRAIT_DEFS = {
     id: 'safe_hands',
     namePl: 'Safe hands',
     nameEn: 'Safe hands',
+    descPl: 'Gra z dyskiem bardzo bezpiecznie, unikając niepotrzebnego ryzyka.',
+    descEn: 'Plays it very safe with the disc, avoiding unnecessary risk.',
     polarity: 'positive',
     tags: ['throw', 'skill'],
   },
@@ -164,6 +200,8 @@ export const TRAIT_DEFS = {
     id: 'creative_thrower',
     namePl: 'Kreatywny rzucający',
     nameEn: 'Creative thrower',
+    descPl: 'Szuka nietypowych, ryzykownych podań.',
+    descEn: 'Looks for unconventional, high-risk throws.',
     polarity: 'mixed',
     tags: ['throw'],
   },
@@ -171,6 +209,8 @@ export const TRAIT_DEFS = {
     id: 'hammer_happy',
     namePl: 'Hammer happy',
     nameEn: 'Hammer happy',
+    descPl: 'Chętnie sięga po rzuty zza góry (hammer).',
+    descEn: 'Loves reaching for the overhead hammer throw.',
     polarity: 'positive',
     tags: ['throw'],
   },
@@ -178,6 +218,8 @@ export const TRAIT_DEFS = {
     id: 'deep_threat',
     namePl: 'Deep threat',
     nameEn: 'Deep threat',
+    descPl: 'Szuka głębokich wycięć w stronę strefy końcowej.',
+    descEn: 'Looks for deep cuts toward the end zone.',
     polarity: 'positive',
     tags: ['cutter'],
   },
@@ -185,6 +227,8 @@ export const TRAIT_DEFS = {
     id: 'under_cutter',
     namePl: 'Under cutter',
     nameEn: 'Under cutter',
+    descPl: 'Preferuje krótkie, podstawowe wycięcia.',
+    descEn: 'Prefers short, underneath cuts.',
     polarity: 'positive',
     tags: ['cutter'],
   },
@@ -192,6 +236,8 @@ export const TRAIT_DEFS = {
     id: 'layout_machine',
     namePl: 'Layout machine',
     nameEn: 'Layout machine',
+    descPl: 'Bez wahania rzuca się do dysku w powietrzu.',
+    descEn: 'Throws himself at the disc in the air without hesitation.',
     polarity: 'positive',
     tags: ['cutter', 'physical'],
   },
@@ -199,6 +245,8 @@ export const TRAIT_DEFS = {
     id: 'aggressive_cutter',
     namePl: 'Agresywny cutter',
     nameEn: 'Aggressive cutter',
+    descPl: 'Wycina się często i zdecydowanie.',
+    descEn: 'Cuts often and decisively.',
     polarity: 'positive',
     tags: ['cutter'],
   },
@@ -206,6 +254,8 @@ export const TRAIT_DEFS = {
     id: 'hesitant_cutter',
     namePl: 'Wahający się cutter',
     nameEn: 'Hesitant cutter',
+    descPl: 'Waha się przy wycięciach, przez co traci okazje.',
+    descEn: 'Hesitates on his cuts, missing opportunities.',
     polarity: 'negative',
     tags: ['cutter'],
   },
@@ -213,6 +263,8 @@ export const TRAIT_DEFS = {
     id: 'good_timing',
     namePl: 'Dobry timing',
     nameEn: 'Good timing',
+    descPl: 'Świetnie wyczuwa właściwy moment na wycięcie.',
+    descEn: 'Has a great sense for when to cut.',
     polarity: 'positive',
     tags: ['cutter'],
   },
@@ -220,6 +272,8 @@ export const TRAIT_DEFS = {
     id: 'big_man',
     namePl: 'Big man',
     nameEn: 'Big man',
+    descPl: 'Dominuje w pojedynkach powietrznych.',
+    descEn: 'Dominates aerial contests for the disc.',
     polarity: 'positive',
     tags: ['cutter', 'physical'],
   },
@@ -227,6 +281,8 @@ export const TRAIT_DEFS = {
     id: 'wants_the_disc',
     namePl: 'Chce dysk',
     nameEn: 'Wants the disc',
+    descPl: 'Zawsze chce być w centrum akcji z dyskiem.',
+    descEn: 'Always wants to be involved with the disc.',
     polarity: 'mixed',
     tags: ['cutter'],
   },
@@ -234,6 +290,8 @@ export const TRAIT_DEFS = {
     id: 'disciplined',
     namePl: 'Zdyscyplinowany',
     nameEn: 'Disciplined',
+    descPl: 'Trzyma się ustalonej struktury ofensywnej.',
+    descEn: 'Sticks closely to the offensive structure.',
     polarity: 'positive',
     tags: ['cutter', 'mental'],
   },
@@ -241,6 +299,8 @@ export const TRAIT_DEFS = {
     id: 'shutdown',
     namePl: 'Shutdown',
     nameEn: 'Shutdown',
+    descPl: 'Twardo kryje swojego rywala, nie dając mu przestrzeni.',
+    descEn: 'Locks down his matchup, leaving him little room.',
     polarity: 'positive',
     tags: ['defense'],
   },
@@ -248,6 +308,8 @@ export const TRAIT_DEFS = {
     id: 'poacher',
     namePl: 'Poacher',
     nameEn: 'Poacher',
+    descPl: 'Szuka okazji do przechwytu, czasem kosztem swojego podopiecznego.',
+    descEn: 'Hunts for interceptions, sometimes at the cost of his own mark.',
     polarity: 'mixed',
     tags: ['defense'],
   },
@@ -255,6 +317,8 @@ export const TRAIT_DEFS = {
     id: 'physical_mark',
     namePl: 'Fizyczny mark',
     nameEn: 'Physical mark',
+    descPl: 'Wywiera silną presję na markującym rzucającego.',
+    descEn: 'Applies strong physical pressure on the mark.',
     polarity: 'positive',
     tags: ['defense'],
   },
@@ -262,6 +326,8 @@ export const TRAIT_DEFS = {
     id: 'soft_mark',
     namePl: 'Soft mark',
     nameEn: 'Soft mark',
+    descPl: 'Markuje zbyt łagodnie, dając rywalowi zbyt dużo przestrzeni.',
+    descEn: 'Marks too passively, giving the thrower too much room.',
     polarity: 'negative',
     tags: ['defense'],
   },
@@ -269,6 +335,8 @@ export const TRAIT_DEFS = {
     id: 'relentless',
     namePl: 'Nieustępliwy',
     nameEn: 'Relentless',
+    descPl: 'Nie zwalnia tempa nawet przy dużym zmęczeniu.',
+    descEn: 'Doesn\'t slow down even when heavily fatigued.',
     polarity: 'positive',
     tags: ['defense', 'physical'],
   },
@@ -276,6 +344,8 @@ export const TRAIT_DEFS = {
     id: 'elite_huck',
     namePl: 'Elitarny huck',
     nameEn: 'Elite huck',
+    descPl: 'Wybitnie celny w długich rzutach na bramkę.',
+    descEn: 'Exceptionally accurate on long throws.',
     polarity: 'positive',
     tags: ['throw', 'skill'],
   },
@@ -283,6 +353,8 @@ export const TRAIT_DEFS = {
     id: 'glue_hands',
     namePl: 'Klejące ręce',
     nameEn: 'Glue hands',
+    descPl: 'Rzadko gubi dysk przy chwycie.',
+    descEn: 'Rarely drops the disc once he gets a hand on it.',
     polarity: 'positive',
     tags: ['offense', 'skill'],
   },
@@ -290,6 +362,8 @@ export const TRAIT_DEFS = {
     id: 'track_star',
     namePl: 'Sprinter',
     nameEn: 'Track star',
+    descPl: 'Wyjątkowo szybki na otwartym boisku.',
+    descEn: 'Exceptionally fast in open space.',
     polarity: 'positive',
     tags: ['physical', 'skill'],
   },
@@ -297,6 +371,8 @@ export const TRAIT_DEFS = {
     id: 'vertical_threat',
     namePl: 'Vertical threat',
     nameEn: 'Vertical threat',
+    descPl: 'Groźny w powietrzu — wysoko i pewnie skacze po dysk.',
+    descEn: 'A real threat in the air — jumps high and confidently for the disc.',
     polarity: 'positive',
     tags: ['physical', 'skill'],
   },
@@ -304,6 +380,8 @@ export const TRAIT_DEFS = {
     id: 'field_general',
     namePl: 'Generał pola',
     nameEn: 'Field general',
+    descPl: 'Świetnie czyta grę i widzi opcje niedostępne innym.',
+    descEn: 'Reads the game superbly and sees options others miss.',
     polarity: 'positive',
     tags: ['mental', 'skill'],
   },
@@ -311,6 +389,8 @@ export const TRAIT_DEFS = {
     id: 'smart',
     namePl: 'Smart',
     nameEn: 'Smart',
+    descPl: 'Podejmuje przemyślane, trafne decyzje z dyskiem.',
+    descEn: 'Makes smart, well-judged decisions with the disc.',
     polarity: 'positive',
     tags: ['mental', 'skill'],
   },
@@ -318,6 +398,8 @@ export const TRAIT_DEFS = {
     id: 'quick',
     namePl: 'Quick',
     nameEn: 'Quick',
+    descPl: 'Błyskawicznie reaguje i zmienia kierunek biegu.',
+    descEn: 'Reacts fast and changes direction in a flash.',
     polarity: 'positive',
     tags: ['physical', 'skill'],
   },
@@ -325,6 +407,8 @@ export const TRAIT_DEFS = {
     id: 'adaptive',
     namePl: 'Adaptive',
     nameEn: 'Adaptive',
+    descPl: 'Łatwo dostosowuje się do zmieniającej się sytuacji i formy.',
+    descEn: 'Adjusts easily to changing situations and form.',
     polarity: 'positive',
     tags: ['mental', 'skill'],
   },
@@ -332,6 +416,8 @@ export const TRAIT_DEFS = {
     id: 'lockdown',
     namePl: 'Lockdown',
     nameEn: 'Lockdown',
+    descPl: 'Bardzo trudny do ograna w obronie jeden na jeden.',
+    descEn: 'Extremely tough to beat in one-on-one defense.',
     polarity: 'positive',
     tags: ['defense', 'skill'],
   },
@@ -339,6 +425,8 @@ export const TRAIT_DEFS = {
     id: 'turnover_prone',
     namePl: 'Skłonny do błędów',
     nameEn: 'Turnover-prone',
+    descPl: 'Częściej traci dysk przez nieprzemyślane decyzje.',
+    descEn: 'Loses the disc more often through careless decisions.',
     polarity: 'negative',
     tags: ['mental', 'throw'],
   },
@@ -346,6 +434,8 @@ export const TRAIT_DEFS = {
     id: 'showboat',
     namePl: 'Showboat',
     nameEn: 'Showboat',
+    descPl: 'Lubi efektowne, ryzykowne zagrania kosztem skuteczności.',
+    descEn: 'Loves flashy, risky plays at the expense of reliability.',
     polarity: 'negative',
     tags: ['throw'],
   },
@@ -353,6 +443,8 @@ export const TRAIT_DEFS = {
     id: 'quitter',
     namePl: 'Łatwo się poddaje',
     nameEn: 'Quitter',
+    descPl: 'Gdy sprawy idą źle, łatwo traci zaangażowanie.',
+    descEn: 'Loses his edge easily once things start going badly.',
     polarity: 'negative',
     tags: ['mental'],
   },
@@ -361,6 +453,8 @@ export const TRAIT_DEFS = {
     id: 'loyal',
     namePl: 'Lojalny',
     nameEn: 'Loyal',
+    descPl: 'Ceni stabilność i rzadko myśli o odejściu z klubu.',
+    descEn: 'Values stability and rarely thinks about leaving the club.',
     polarity: 'positive',
     tags: ['career', 'contract'],
   },
@@ -368,6 +462,8 @@ export const TRAIT_DEFS = {
     id: 'mercenary',
     namePl: 'Najemnik',
     nameEn: 'Mercenary',
+    descPl: 'Łatwo skuszony lepszą ofertą z innego klubu.',
+    descEn: 'Easily tempted away by a better offer elsewhere.',
     polarity: 'mixed',
     tags: ['career', 'contract'],
   },
@@ -375,6 +471,8 @@ export const TRAIT_DEFS = {
     id: 'modest',
     namePl: 'Skromny',
     nameEn: 'Modest',
+    descPl: 'Ma umiarkowane oczekiwania finansowe.',
+    descEn: 'Keeps his salary expectations modest.',
     polarity: 'positive',
     tags: ['career', 'contract'],
   },
@@ -382,6 +480,8 @@ export const TRAIT_DEFS = {
     id: 'greedy',
     namePl: 'Chciwy',
     nameEn: 'Greedy',
+    descPl: 'Oczekuje wysokiego wynagrodzenia.',
+    descEn: 'Expects a high salary.',
     polarity: 'negative',
     tags: ['career', 'contract'],
   },
@@ -389,6 +489,8 @@ export const TRAIT_DEFS = {
     id: 'homebody',
     namePl: 'Domator',
     nameEn: 'Homebody',
+    descPl: 'Niechętnie zmienia klub i otoczenie.',
+    descEn: 'Reluctant to change clubs or surroundings.',
     polarity: 'positive',
     tags: ['career', 'contract'],
   },
@@ -396,6 +498,8 @@ export const TRAIT_DEFS = {
     id: 'restless',
     namePl: 'Niespokojny',
     nameEn: 'Restless',
+    descPl: 'Szuka nowych wyzwań i częściej myśli o transferze.',
+    descEn: 'Craves new challenges and thinks about moving on more often.',
     polarity: 'negative',
     tags: ['career', 'contract'],
   },
@@ -403,6 +507,8 @@ export const TRAIT_DEFS = {
     id: 'showman',
     namePl: 'Showman',
     nameEn: 'Showman',
+    descPl: 'Kwitnie w blasku fanów, ale też mocniej odczuwa ich nastroje.',
+    descEn: 'Thrives in the spotlight, but also feels the crowd\'s mood more strongly.',
     polarity: 'mixed',
     tags: ['career', 'fans'],
   },
@@ -410,6 +516,8 @@ export const TRAIT_DEFS = {
     id: 'anxious',
     namePl: 'Lękliwy pod presją',
     nameEn: 'Anxious under pressure',
+    descPl: 'Presja oczekiwań fanów ciąży mu bardziej niż innym.',
+    descEn: 'Feels the weight of fan expectations more than most.',
     polarity: 'negative',
     tags: ['career', 'fans'],
   },
@@ -417,6 +525,8 @@ export const TRAIT_DEFS = {
     id: 'charismatic',
     namePl: 'Charyzmatyczny',
     nameEn: 'Charismatic',
+    descPl: 'Dobrze wypada w mediach i przed kamerami.',
+    descEn: 'Comes across well in interviews and media.',
     polarity: 'positive',
     tags: ['career', 'media'],
   },
@@ -424,6 +534,8 @@ export const TRAIT_DEFS = {
     id: 'shy',
     namePl: 'Nieśmiały',
     nameEn: 'Shy',
+    descPl: 'Unika mediów i źle znosi publiczną krytykę.',
+    descEn: 'Avoids the spotlight and struggles with public criticism.',
     polarity: 'negative',
     tags: ['career', 'media'],
   },
@@ -431,6 +543,8 @@ export const TRAIT_DEFS = {
     id: 'content',
     namePl: 'Zadowolony ze swojej roli',
     nameEn: 'Content with role',
+    descPl: 'Rzadko narzeka na swoją rolę w drużynie.',
+    descEn: 'Rarely complains about his role on the team.',
     polarity: 'positive',
     tags: ['career', 'contract'],
   },
@@ -438,6 +552,8 @@ export const TRAIT_DEFS = {
     id: 'ambitious',
     namePl: 'Ambitny',
     nameEn: 'Ambitious',
+    descPl: 'Oczekuje więcej minut na boisku i szans na rozwój.',
+    descEn: 'Expects more playing time and room to grow.',
     polarity: 'mixed',
     tags: ['career', 'contract'],
   },
@@ -445,6 +561,8 @@ export const TRAIT_DEFS = {
     id: 'curious',
     namePl: 'Ciekawy',
     nameEn: 'Curious',
+    descPl: 'Chętnie się uczy i ceni możliwości rozwoju.',
+    descEn: 'Eager to learn and values chances to develop.',
     polarity: 'positive',
     tags: ['career', 'skill'],
   },
@@ -452,6 +570,8 @@ export const TRAIT_DEFS = {
     id: 'impatient',
     namePl: 'Niecierpliwy',
     nameEn: 'Impatient',
+    descPl: 'Oczekuje szybkich efektów i szans na boisku.',
+    descEn: 'Expects quick results and opportunities on the field.',
     polarity: 'mixed',
     tags: ['career', 'contract'],
   },
@@ -459,6 +579,8 @@ export const TRAIT_DEFS = {
     id: 'relaxed',
     namePl: 'Wyluzowany',
     nameEn: 'Relaxed',
+    descPl: 'Dobrze się regeneruje mentalnie w wolnym czasie.',
+    descEn: 'Recovers mentally well during downtime.',
     polarity: 'positive',
     tags: ['career'],
   },
@@ -466,6 +588,8 @@ export const TRAIT_DEFS = {
     id: 'stoic',
     namePl: 'Stoicki',
     nameEn: 'Stoic',
+    descPl: 'Niewzruszony — trudno wytrącić go z równowagi.',
+    descEn: 'Unshakeable — hard to knock off balance.',
     polarity: 'positive',
     tags: ['career'],
   },
@@ -474,6 +598,8 @@ export const TRAIT_DEFS = {
     id: 'selfish',
     namePl: 'Samolubny',
     nameEn: 'Selfish',
+    descPl: 'Gra bardziej dla własnych statystyk niż dla drużyny.',
+    descEn: 'Plays more for his own stats than for the team.',
     polarity: 'mixed',
     tags: ['mental'],
   },
@@ -481,6 +607,8 @@ export const TRAIT_DEFS = {
     id: 'stubborn',
     namePl: 'Uparty',
     nameEn: 'Stubborn',
+    descPl: 'Trzyma się swojego stylu gry, trudno go zmienić.',
+    descEn: 'Sticks to his own style of play — hard to change.',
     polarity: 'mixed',
     tags: ['mental', 'throw'],
   },
@@ -488,6 +616,8 @@ export const TRAIT_DEFS = {
     id: 'perfectionist',
     namePl: 'Perfekcjonista',
     nameEn: 'Perfectionist',
+    descPl: 'Dąży do bezbłędnej gry, ale ciężko znosi własne pomyłki.',
+    descEn: 'Chases flawless play, but takes his own mistakes hard.',
     polarity: 'mixed',
     tags: ['mental', 'throw'],
   },
@@ -495,6 +625,8 @@ export const TRAIT_DEFS = {
     id: 'overthinker',
     namePl: 'Przemyślacza',
     nameEn: 'Overthinker',
+    descPl: 'Zbyt długo analizuje sytuację, zanim podejmie decyzję.',
+    descEn: 'Takes too long weighing his options before deciding.',
     polarity: 'mixed',
     tags: ['mental', 'throw'],
   },
@@ -502,6 +634,8 @@ export const TRAIT_DEFS = {
     id: 'tunnel_vision',
     namePl: 'Tunel',
     nameEn: 'Tunnel vision',
+    descPl: 'Skupia się na jednej opcji, nie widząc reszty boiska.',
+    descEn: 'Locks onto one option and misses the rest of the field.',
     polarity: 'negative',
     tags: ['mental', 'throw'],
   },
@@ -509,6 +643,8 @@ export const TRAIT_DEFS = {
     id: 'complacent',
     namePl: 'Samozadowolony',
     nameEn: 'Complacent',
+    descPl: 'Traci mobilizację, gdy sprawy idą dobrze.',
+    descEn: 'Loses his edge once things are going well.',
     polarity: 'negative',
     tags: ['mental'],
   },
@@ -516,6 +652,8 @@ export const TRAIT_DEFS = {
     id: 'diva',
     namePl: 'Diva',
     nameEn: 'Diva',
+    descPl: 'Wymagający wobec klubu, bardzo wrażliwy na swoją rolę.',
+    descEn: 'Demanding toward the club, very sensitive about his role.',
     polarity: 'negative',
     tags: ['career', 'contract'],
   },
@@ -524,12 +662,16 @@ export const TRAIT_DEFS = {
     namePl: 'Kompleks',
     nameEn: 'Chip on shoulder',
     polarity: 'mixed',
+    descPl: 'Gra z pretensją do świata — przeciwności go napędzają, ale i mocno uwierają.',
+    descEn: 'Plays with a grudge against the world — setbacks fuel him but also sting.',
     tags: ['mental'],
   },
   competitor: {
     id: 'competitor',
     namePl: 'Competitor',
     nameEn: 'Competitor',
+    descPl: 'Podnosi poziom gry w najważniejszych meczach, ale ciężko znosi porażki.',
+    descEn: 'Raises his game in the biggest matches, but takes losses hard.',
     polarity: 'mixed',
     tags: ['mental'],
   },
@@ -537,6 +679,8 @@ export const TRAIT_DEFS = {
     id: 'coachable',
     namePl: 'Uczulony na feedback',
     nameEn: 'Coachable',
+    descPl: 'Chłonnie przyjmuje wskazówki i szybciej się rozwija.',
+    descEn: 'Takes coaching well and develops faster because of it.',
     polarity: 'positive',
     tags: ['career', 'skill'],
   },
@@ -544,6 +688,8 @@ export const TRAIT_DEFS = {
     id: 'uncoachable',
     namePl: 'Nieprzyjmujący rad',
     nameEn: 'Uncoachable',
+    descPl: 'Trudno przyjmuje uwagi, co spowalnia jego rozwój.',
+    descEn: 'Resists coaching, which slows his development.',
     polarity: 'negative',
     tags: ['career'],
   },
@@ -551,6 +697,8 @@ export const TRAIT_DEFS = {
     id: 'film_junkie',
     namePl: 'Film junkie',
     nameEn: 'Film junkie',
+    descPl: 'Godzinami analizuje mecze, co przyspiesza jego rozwój.',
+    descEn: 'Studies game film for hours, speeding up his development.',
     polarity: 'positive',
     tags: ['career', 'skill'],
   },
@@ -558,6 +706,8 @@ export const TRAIT_DEFS = {
     id: 'party_animal',
     namePl: 'Imprezowicz',
     nameEn: 'Party animal',
+    descPl: 'Lubi życie towarzyskie, czasem kosztem przygotowania do meczu.',
+    descEn: 'Enjoys the social scene, sometimes at the cost of match prep.',
     polarity: 'mixed',
     tags: ['career', 'fans'],
   },
@@ -566,6 +716,8 @@ export const TRAIT_DEFS = {
     id: 'force_happy',
     namePl: 'Force happy',
     nameEn: 'Force happy',
+    descPl: 'Chętnie szuka podań w stronę force, ryzykując więcej.',
+    descEn: 'Loves attacking the force side, taking on extra risk.',
     polarity: 'mixed',
     tags: ['throw'],
   },
@@ -573,6 +725,8 @@ export const TRAIT_DEFS = {
     id: 'iso_ball',
     namePl: 'Iso ball',
     nameEn: 'Iso ball',
+    descPl: 'Woli rozegrać sytuację jeden na jeden niż czekać na reset.',
+    descEn: 'Prefers to play it one-on-one rather than wait for a reset.',
     polarity: 'mixed',
     tags: ['throw'],
   },
@@ -580,6 +734,8 @@ export const TRAIT_DEFS = {
     id: 'checkdown',
     namePl: 'Check-down',
     nameEn: 'Check-down',
+    descPl: 'Zawsze ma pod ręką bezpieczną opcję zagrania.',
+    descEn: 'Always keeps a safe option close at hand.',
     polarity: 'mixed',
     tags: ['throw'],
   },
@@ -587,6 +743,8 @@ export const TRAIT_DEFS = {
     id: 'sky_baller',
     namePl: 'Sky baller',
     nameEn: 'Sky baller',
+    descPl: 'Rzuca się w powietrze po dysk, ryzykując kontuzję.',
+    descEn: 'Throws himself into the air for the disc, risking injury.',
     polarity: 'mixed',
     tags: ['cutter', 'physical'],
   },
@@ -594,6 +752,8 @@ export const TRAIT_DEFS = {
     id: 'zone_breaker',
     namePl: 'Zone breaker',
     nameEn: 'Zone breaker',
+    descPl: 'Skuteczny w rozbijaniu obrony strefowej.',
+    descEn: 'Effective at breaking down zone defenses.',
     polarity: 'positive',
     tags: ['throw'],
   },
@@ -601,6 +761,8 @@ export const TRAIT_DEFS = {
     id: 'man_d_specialist',
     namePl: 'Man D',
     nameEn: 'Man D',
+    descPl: 'Wyspecjalizowany w obronie jeden na jeden.',
+    descEn: 'Specialized in one-on-one defense.',
     polarity: 'mixed',
     tags: ['defense'],
   },
@@ -608,6 +770,8 @@ export const TRAIT_DEFS = {
     id: 'foul_prone',
     namePl: 'Foulozy',
     nameEn: 'Foul-prone',
+    descPl: 'Często wchodzi w kontakt przy markowaniu, ryzykując faul lub kontuzję.',
+    descEn: 'Often makes contact while marking, risking a foul or an injury.',
     polarity: 'negative',
     tags: ['defense'],
   },
@@ -697,6 +861,13 @@ export function traitLabel(traitId, lang = 'pl') {
   if (!def) return traitId
   if (lang === 'en') return def.nameEn ?? def.namePl ?? traitId
   return def.namePl ?? def.nameEn ?? traitId
+}
+
+export function traitDescription(traitId, lang = 'pl') {
+  const def = TRAIT_DEFS[traitId]
+  if (!def) return ''
+  if (lang === 'en') return def.descEn ?? def.descPl ?? ''
+  return def.descPl ?? def.descEn ?? ''
 }
 
 export function traitToneClass(traitId) {
@@ -978,7 +1149,6 @@ export function getTraitMods(player) {
     zeroPpFormDelta: -1.2,
     formDriftMult: 1,
     lossFormMult: 1,
-    lossMoraleExtra: 0,
     goalAssistMoraleMult: 1,
     goalAssistFormMult: 1,
     teamAuraEmit: 0,
@@ -1053,7 +1223,6 @@ export function getTraitMods(player) {
     timingCutBias: 0,
     structureComplianceBonus: 0,
     layoutAerialMult: 1,
-    layoutStaminaMult: 1,
     // defense
     cushionDeltaM: 0,
     reactionDelayDeltaMs: 0,
@@ -1113,12 +1282,14 @@ export function getTraitMods(player) {
         mods.decisionNoiseMult *= 1.25
         mods.huckWeightMult *= 1.25
         mods.ottWeightMult *= 1.25
+        mods.lowStallAccuracy -= 2
         break
       case 'composed':
         mods.highStallAccuracy += 5
         mods.stall8PlusAccuracy += 3
         mods.badDecisionMult *= 0.7
         mods.decisionNoiseMult *= 0.85
+        mods.lowStallAccuracy += 2
         break
       case 'clutch':
         mods.highStallAccuracy += 4
@@ -1132,6 +1303,7 @@ export function getTraitMods(player) {
         mods.badDecisionMult *= 1.3
         mods.decisionNoiseMult *= 1.2
         mods.turnoverMoraleExtra += 0.35
+        mods.lowStallAccuracy -= 2
         break
       case 'team_first':
         mods.dumpWeightMult *= 1.35
@@ -1142,6 +1314,7 @@ export function getTraitMods(player) {
         mods.huckAcceptanceDelta -= 0.08
         mods.scoringOptionBonus -= 0.12
         mods.goalAssistMoraleMult *= 0.85
+        mods.resetFirstStallBias += 1
         break
       case 'glory_hunter':
         mods.huckWeightMult *= 1.4
@@ -1181,6 +1354,7 @@ export function getTraitMods(player) {
         mods.huckWeightMult *= 0.55
         mods.huckAcceptanceDelta -= 0.1
         mods.scoringOptionBonus -= 0.08
+        mods.resetFirstStallBias += 1.5
         break
       case 'safe_hands':
         mods.acceptanceThresholdDelta += 8
@@ -1193,6 +1367,7 @@ export function getTraitMods(player) {
         mods.badDecisionMult *= 0.75
         mods.huckAccuracy -= 1
         mods.highStallAccuracy += 2
+        mods.standardWeightMult *= 1.15
         break
       case 'creative_thrower':
         mods.acceptanceThresholdDelta -= 7
@@ -1205,6 +1380,7 @@ export function getTraitMods(player) {
         mods.huckBlockRisk += 3
         mods.decisionNoiseMult *= 1.1
         mods.standardAccuracy -= 2
+        mods.standardWeightMult *= 0.85
         break
       case 'hammer_happy':
         mods.ottWeightMult *= 1.6
@@ -1220,7 +1396,6 @@ export function getTraitMods(player) {
         break
       case 'layout_machine':
         mods.layoutAerialMult *= 1.35
-        mods.layoutStaminaMult *= 1.2
         mods.aerialRecvMult *= 1.1
         break
       case 'aggressive_cutter':
@@ -1311,6 +1486,7 @@ export function getTraitMods(player) {
         mods.scanRadiusBonusM += 2
         mods.perceivedOptionsBonus += 1
         mods.highStallAccuracy += 2
+        mods.lowStallAccuracy += 1
         break
       case 'quick':
         mods.speedMult *= 1.04
@@ -1343,6 +1519,7 @@ export function getTraitMods(player) {
         mods.ottWeightMult *= 1.35
         mods.huckAccuracy -= 3
         mods.ottAccuracy -= 3
+        mods.standardWeightMult *= 0.85
         break
       case 'quitter':
         mods.lossMoraleMult *= 1.55
@@ -1538,6 +1715,8 @@ export function getTraitMods(player) {
         mods.deepCutBias -= 0.15
         mods.underCutBias += 0.1
         mods.huckAcceptanceDelta -= 0.12
+        mods.resetFirstStallBias += 1.5
+        mods.standardWeightMult *= 1.1
         break
       case 'sky_baller':
         mods.aerialRecvMult *= 1.25

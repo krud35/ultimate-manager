@@ -1,5 +1,5 @@
 import { MATCH_CONFIG } from './config.js'
-import { ATTACK_STYLES, DEFENSE_STYLES, FORCE_SIDES, TACTICS_MODIFIERS, forceMods } from './tacticsModifiers.js'
+import { ATTACK_STYLES, DEFENSE_STYLES, FORCE_SIDES, TACTICS_MODIFIERS } from './tacticsModifiers.js'
 import { negativeRandomSpread, randomSpread } from './rng.js'
 import {
   staminaPerformancePenalty,
@@ -112,7 +112,6 @@ export function resolveThrow({
   receiver,
   defender,
   rng,
-  attackStyle,
   defenseStyle,
   throwType = THROW_TYPE.STANDARD,
   separation = null,
@@ -129,9 +128,6 @@ export function resolveThrow({
   throwDistanceM = null,
 }) {
   const { skillCheck } = MATCH_CONFIG
-  const atk = attackMods(attackStyle)
-  const def = defenseMods(defenseStyle)
-  const force = forceMods(forceSide)
   const profile = throwProfile(throwType)
   const windMods = windThrowModifiers({
     wind,
@@ -186,13 +182,10 @@ export function resolveThrow({
     compressSkill(throwStat) +
     OFFENSE_BASELINE_EDGE -
     stallComposureAccuracyPenalty(stallCount, thrower) +
-    (atk.throwAccuracyBonus ?? 0) +
     profile.accuracyMod +
     throwTypeAccuracyTraitBonus(thrower, throwType) +
     (!isOpenSide ? throwerTraits.breakSideAccuracy : 0) +
     (receiverTraits.catchBonus ?? 0) +
-    (throwType === THROW_TYPE.HUCK ? (force.huckLaneOpen ?? 0) * 20 : 0) +
-    (force.bothSidesShort && throwType !== THROW_TYPE.HUCK ? force.bothSidesShort * 8 : 0) +
     (separation?.throwBonus ?? 0) -
     (separation?.throwPenalty ?? 0) +
     stallMods.accuracyBonus -
@@ -203,10 +196,6 @@ export function resolveThrow({
   const defenseBase =
     compressSkill(weightedLegacyStat(defender.skills, skillCheck.defenseWeights)) +
     compressSkill(subStat(defender, 'defensive', 'blocking')) * 0.12 +
-    (def.defenseBonus ?? 0) +
-    (def.antiVertBonus && attackStyle === ATTACK_STYLES.VERTICAL_STACK
-      ? def.antiVertBonus * 0.35
-      : 0) +
     profile.blockRiskMod +
     throwTypeBlockRiskTraitBonus(thrower, throwType) +
     (techniqueMods.blockRiskBonus ?? 0) +
@@ -215,7 +204,6 @@ export function resolveThrow({
 
   let throwSpread =
     skillCheck.throwRandomSpread +
-    (atk.throwRandomSpreadBonus ?? 0) +
     profile.randomSpreadBonus +
     stallMods.randomSpreadBonus
   if (throwType === THROW_TYPE.HUCK) throwSpread *= throwerTraits.huckSpreadMult
@@ -227,15 +215,12 @@ export function resolveThrow({
     staminaPerformancePenalty(thrower.currentStamina ?? 100) -
     staminaPerformancePenalty(receiver.currentStamina ?? 100) * 0.35 -
     staminaThrowCollapsePenalty(thrower.currentStamina ?? 100)
-  const zoneBlockBonus =
-    defenseStyle === DEFENSE_STYLES.ZONE_CUP ? (def.blockBonus ?? 0) : 0
   const styleDefMult =
     defenseStyle === DEFENSE_STYLES.ZONE_CUP
       ? (defenderTraits.zoneDefenseBlockMult ?? 1)
       : (defenderTraits.personDefenseBlockMult ?? 1)
   let defenseScore =
     (defenseBase +
-      zoneBlockBonus +
       negativeRandomSpread(rng, skillCheck.defenseRandomSpread) -
       staminaPerformancePenalty(defender.currentStamina ?? 100)) *
     (defenderTraits.blockChanceMult ?? 1) *

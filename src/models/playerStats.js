@@ -48,10 +48,17 @@ export const CATEGORY_STAT_RANGES = {
 
 /** Bump → regeneracja skills przy wczytaniu kariery / szablonu. */
 /** Ile wpływu ma tier UFA vs środek skali (niżej = bardziej wyrównane drużyny). */
-const UFA_TIER_COMPRESS = 0.22
+const UFA_TIER_COMPRESS = 0.4
 /** Mix: większy udział losu → mniej „superteamów” z raw UFA. */
 const ROLL_WEIGHT = 0.55
 const TIER_WEIGHT = 0.45
+/**
+ * Waga ogólnego talentu (spójność między kategoriami) vs specjalizacji per-kategoria
+ * przy losowym generowaniu zawodnika (bez danych UFA). Niżej = więcej specjalistów
+ * (dobry thrower / słaby fizycznie), wyżej = bardziej wyrównani „all-round”.
+ */
+const ARCHETYPE_BASE_WEIGHT = 0.5
+const ARCHETYPE_SPECIALTY_WEIGHT = 0.5
 /** Tryb historyczny: pełniejszy sygnał ze statów Almanac, bez kompresji ligowej. */
 const ROLL_WEIGHT_HISTORICAL = 0.22
 const TIER_WEIGHT_HISTORICAL = 0.78
@@ -284,6 +291,28 @@ export function buildBalancedSubStats(playerId, tierForSub = () => 0.5, weights 
     }
   }
   return nested
+}
+
+/**
+ * Losuje realistyczny profil talentu zawodnika bez danych UFA: wspólny `baseTalent`
+ * (ogólna jakość, żeby elitarny zawodnik nie był przypadkowo fatalny wszędzie) +
+ * niezależna `specialty` per kategoria (throwing/physical/mental/offensive/defensive),
+ * dzięki czemu mogą powstawać specjaliści (np. dobry thrower o przeciętnej fizyczności).
+ * Substaty w obrębie jednej kategorii dostają ten sam tier (spójny „talent rzutowy” itd.),
+ * a ich wzajemne różnice bierze się już z niezależnego rolla w buildBiasedSubStat.
+ * @param {() => number} rng - generator liczb 0..1 (np. mulberry32)
+ */
+export function buildPlayerArchetypeTiers(rng) {
+  const baseTalent = rng()
+  const tiers = {}
+  for (const cat of Object.keys(PLAYER_STAT_CATEGORIES)) {
+    const specialty = rng()
+    tiers[cat] = Math.max(
+      0,
+      Math.min(1, baseTalent * ARCHETYPE_BASE_WEIGHT + specialty * ARCHETYPE_SPECIALTY_WEIGHT),
+    )
+  }
+  return tiers
 }
 
 function normalizeTier(value, max) {

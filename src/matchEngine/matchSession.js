@@ -18,6 +18,7 @@ import {
   updateAiAdaptObservation,
 } from './aiTacticsAdapt.js'
 import {
+  applyPostMatchStaminaWear,
   applyStaminaToTeamPlayers,
   cloneStaminaMaps,
   createStaminaMap,
@@ -92,6 +93,8 @@ function finalizeMatch(session) {
   )
   session.status = 'finished'
   session.winner = winner
+  for (const player of home.players) applyPostMatchStaminaWear(player)
+  for (const player of away.players) applyPostMatchStaminaWear(player)
   applyMoraleForMatchTeams(
     home,
     away,

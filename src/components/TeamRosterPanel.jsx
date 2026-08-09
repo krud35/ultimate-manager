@@ -6,6 +6,7 @@ import { getPlayerFullName, getOverallRating } from '../data/mockPlayers'
 import { MAIN_CATEGORY_SORT_KEYS, readCategorySkill } from '../models/playerStats.js'
 import StaminaBar, { getStaminaForPlayer } from './StaminaBar'
 import PlayerProfileModal from './PlayerProfileModal'
+import PlayerTraitChips from './PlayerTraitChips'
 import { getThrowingHand, throwingHandShortLabel, THROWING_HAND } from '../models/playerProfile.js'
 import { getPlayerMorale } from '../models/playerMorale.js'
 import { getPlayerForm } from '../models/playerForm.js'
@@ -329,6 +330,9 @@ export default function TeamRosterPanel({
                         <SkillBar value={readCategorySkill(p.skills, cat)} />
                       </span>
                     ))}
+                    <div className="hidden xl:flex">
+                      <PlayerTraitChips player={p} max={2} />
+                    </div>
                     <StaminaBar stamina={getSt(p)} compact />
                     {canEditInstructions && (
                       <PlayerInstructionBadges playerId={p.id} tactics={tactics} />

@@ -18,6 +18,7 @@ import PlayerInstructionsPicker, {
 } from './PlayerInstructionsPicker'
 import PlayerSubRolePicker, { PlayerSubRoleBadge } from './PlayerSubRolePicker'
 import PlayerProfileModal from './PlayerProfileModal'
+import PlayerTraitChips from './PlayerTraitChips'
 import {
   isPlayerTakenOnLine,
   lineSlotIndexOf,
@@ -313,6 +314,7 @@ export default function PlayerSlotPicker({
                 dense
                 lang={lang}
               />
+              <PlayerTraitChips player={selectedPlayer} max={2} />
             </div>
           ) : (
             <span className="mt-0.5 block text-sm text-ufa-muted">{t.pickPlayer}</span>
@@ -477,8 +479,9 @@ export default function PlayerSlotPicker({
                           <span className="text-[10px] text-ufa-accent">wybrany</span>
                         ) : null}
                       </div>
-                      <div className="mt-1">
+                      <div className="mt-1 space-y-1">
                         <PlayerStatChips player={p} staminaMap={staminaMap} dense lang={lang} />
+                        <PlayerTraitChips player={p} max={2} />
                       </div>
                     </button>
                     <button

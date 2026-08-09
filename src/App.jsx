@@ -45,6 +45,10 @@ import {
   supersedeSponsorOfferMessages,
   processDelayedTransferReplies,
   processDelayedTransferRepliesForDateRange,
+  processWeeklyFinancialHealth,
+  messagesFromFinancialHealth,
+  firstImportantInboxMessage,
+  isImportantInboxMessage,
   queueIncomingBidCounter,
   queueOutgoingPlayerContract,
   acceptOutgoingClubCounter,
@@ -56,9 +60,11 @@ import {
   formatUsd,
   renewPlayerContract,
   isClubBankrupt,
-  processWeeklyFinancialHealth,
-  messagesFromFinancialHealth,
-  hasImportantInboxMessage,
+  messagesFromScoutMissions,
+  resolveScoutMissions,
+  decayScoutingKnowledge,
+  recordMatchKnowledgeGain,
+  recordMatchKnowledgeGainForNewMatches,
 } from './career'
 import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
 import {
@@ -93,17 +99,20 @@ import NewCareerScreen from './components/NewCareerScreen'
 import TrainingView from './components/TrainingView'
 import ClubBoardView from './components/ClubBoardView'
 import TransfersView from './components/TransfersView'
+import ScoutingCenterView from './components/ScoutingCenterView'
 import CalendarView from './components/CalendarView'
 import InboxView from './components/InboxView'
 import UltiworldView from './components/UltiworldView'
 import PreMatchView, { isFixtureMatchDay } from './components/PreMatchView'
 import SimulationProgressOverlay from './components/SimulationProgressOverlay'
+import CalendarSimOverlay from './components/CalendarSimOverlay'
 import { buildSeasonStateFromLeague } from './seasonEngine/seasonStateFromLeague.js'
 import { displaySeasonLabel, pickLabel, pickCopy } from './ui/locale'
 import { useUiLang } from './ui/UiLangContext'
 import { LangSwitch } from './ui/LangSwitch'
 import { careerFlowStrings } from './ui/strings/careerFlow'
 import { shellStrings } from './ui/strings/shell'
+import { hubStrings } from './ui/strings/hub'
 
 const NAV_CATEGORIES = [
   {
@@ -127,6 +136,7 @@ const NAV_CATEGORIES = [
       { id: 'team-schedule', labelPl: 'Terminarz', labelEn: 'Schedule' },
       { id: 'calendar', labelPl: 'Kalendarz', labelEn: 'Calendar' },
       { id: 'club-transfers', labelPl: 'Transfery', labelEn: 'Transfers' },
+      { id: 'scouting-center', labelPl: 'Centrum skautingu', labelEn: 'Scouting center' },
       { id: 'club-board', labelPl: 'Zarząd', labelEn: 'Club board' },
       { id: 'team-profile', labelPl: 'Profil drużyny', labelEn: 'Team profile' },
     ],
@@ -247,6 +257,15 @@ function IconNextDay({ className }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
       <path d="M6 5l6 7-6 7" />
       <path d="M13 5l6 7-6 7" />
+    </svg>
+  )
+}
+function IconAlert({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M12 9v4" />
+      <path d="M10.3 3.9 2.7 17a1.8 1.8 0 0 0 1.55 2.7h15.5A1.8 1.8 0 0 0 21.3 17L13.7 3.9a1.8 1.8 0 0 0-3.4 0Z" />
+      <path d="M12 16.2h.01" />
     </svg>
   )
 }
@@ -428,6 +447,7 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
     })
     if (career.world) {
       processWeeklyWages(career.world)
+      decayScoutingKnowledge(career.world, career.playerTeamId)
       const financialHealth = processWeeklyFinancialHealth(career.world, {
         seasonYear: career.seasonYear,
       })
@@ -522,6 +542,17 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
   const leagueOut = uw.league ?? nextLeague
   inboxMessages.push(...(uw.inboxMessages ?? []))
 
+  if (world && offerDate) {
+    const resolvedScoutMissions = resolveScoutMissions(world, career.playerTeamId, leagueOut, offerDate)
+    inboxMessages.push(
+      ...messagesFromScoutMissions(
+        resolvedScoutMissions,
+        { ...career, league: leagueOut, world },
+        { date: offerDate },
+      ),
+    )
+  }
+
   const inbox = mergeInbox({ ...career, inbox: inboxBase }, inboxMessages)
 
   return {
@@ -548,6 +579,9 @@ export default function App() {
   const [matchStamina, setMatchStamina] = useState(null)
   const [teamProfileId, setTeamProfileId] = useState(null)
   const [simProgress, setSimProgress] = useState(null)
+  const [calendarSim, setCalendarSim] = useState(null)
+  const [actionRequiredMessageId, setActionRequiredMessageId] = useState(null)
+  const [inboxFocusId, setInboxFocusId] = useState(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
 
   useEffect(() => {
@@ -657,7 +691,7 @@ export default function App() {
   // sponsorską, decyzję ze zdarzenia losowego albo alarm finansowy. Raporty treningowe
   // i artykuły Ultiworld nie przerywają symulacji — lecą w tle.
   const handleAdvanceDay = useCallback(async () => {
-    if (!career?.league || simProgress) return
+    if (!career?.league || simProgress || calendarSim) return
     if (career.phase === 'season_complete') {
       setActiveTab('hub')
       return
@@ -676,20 +710,12 @@ export default function App() {
       return
     }
 
-    const startDate = career.league.currentDate
     let workingCareer = career
     let dayLeague = cloneLeague(career.league)
     let blockedFixture = null
+    let blockingMessageId = null
     let daysAdvanced = 0
     const maxDays = 400
-
-    setSimProgress({
-      label: shellStrings(uiLang).advanceDay,
-      detail: shellStrings(uiLang).simFrom(startDate),
-      current: 0,
-      total: 30,
-      indeterminate: true,
-    })
 
     try {
       while (daysAdvanced < maxDays) {
@@ -711,29 +737,33 @@ export default function App() {
         dayLeague = step.league
         daysAdvanced += 1
 
+        setCalendarSim({
+          currentDate: dayLeague.currentDate,
+          daysAdvanced,
+          recentMessages: step.inbox.slice(0, 3),
+          latestUltiworld: step.ultiworld?.articles?.[0] ?? null,
+        })
+
         if (result.blocked && result.playerFixture) {
           blockedFixture = result.playerFixture
           break
         }
-        if (hasImportantInboxMessage(step.inboxMessages)) {
+        const blocker = firstImportantInboxMessage(step.inboxMessages)
+        if (blocker) {
+          blockingMessageId = blocker.id
           break
         }
         if (isOfficialSeasonEnded(dayLeague) || dayLeague.status === 'complete') {
           break
         }
 
-        if (daysAdvanced % 5 === 0) {
-          setSimProgress({
-            label: shellStrings(uiLang).simCalendar,
-            detail: shellStrings(uiLang).simDay(dayLeague.currentDate),
-            current: daysAdvanced,
-            total: Math.max(daysAdvanced + 5, 30),
-          })
-          await new Promise((r) => setTimeout(r, 0))
-        }
+        // Krótka pauza na dzień, żeby przesuwanie kalendarza było widoczne — im
+        // dłużej leci symulacja, tym szybciej przyspiesza, żeby nie męczyć gracza.
+        const delay = daysAdvanced <= 20 ? 140 : daysAdvanced <= 60 ? 40 : 0
+        await new Promise((r) => setTimeout(r, delay))
       }
     } finally {
-      setSimProgress(null)
+      setCalendarSim(null)
     }
 
     const next = persistCareer(career, {
@@ -747,10 +777,13 @@ export default function App() {
     syncCareer(next)
 
     if (blockedFixture) {
+      setActionRequiredMessageId(null)
       setLeagueFixture(blockedFixture)
       setActiveTab('match')
+    } else {
+      setActionRequiredMessageId(blockingMessageId)
     }
-  }, [career, simProgress, syncCareer, uiLang])
+  }, [career, simProgress, calendarSim, syncCareer])
 
   const applyFastForwardSideEffects = useCallback(
     async (nextLeague, rangeStart, weekTicks, { includeEndDay = false, onProgress } = {}) => {
@@ -900,6 +933,13 @@ export default function App() {
         ? markPreAgreedNotified(inboxBase, regNotices)
         : inboxBase
 
+      recordMatchKnowledgeGainForNewMatches(
+        world,
+        career.playerTeamId,
+        prevMatchHistory,
+        nextLeague.matchHistory,
+      )
+
       const inboxMessages = [
         ...messagesFromTrainingReports(reports, career),
         ...messagesFromTrainingInjuries(reports, career),
@@ -1037,6 +1077,13 @@ export default function App() {
         const inboxAfterReg = regNotices.length
           ? markPreAgreedNotified(inboxBase, regNotices)
           : inboxBase
+
+        recordMatchKnowledgeGainForNewMatches(
+          world,
+          career.playerTeamId,
+          prevMatchHistory,
+          nextLeague.matchHistory,
+        )
 
         const inboxMessages = [
           ...messagesFromTrainingReports(reports, career),
@@ -1484,6 +1531,29 @@ export default function App() {
     [career?.league, leagueFixture],
   )
 
+  // Wiadomość, która zatrzymała ciągłą symulację ("Dalej" → "Wymaga decyzji") —
+  // otwiera skrzynkę i od razu zaznacza tę konkretną wiadomość.
+  const openInboxMessage = useCallback((messageId) => {
+    if (!messageId) return
+    setTeamProfileId(null)
+    setInboxFocusId(messageId)
+    setActiveTab('inbox')
+  }, [])
+
+  const handleActionRequired = useCallback(() => {
+    openInboxMessage(actionRequiredMessageId)
+  }, [openInboxMessage, actionRequiredMessageId])
+
+  // Samoczynnie odblokuj przycisk, gdy blokująca wiadomość zniknie albo przestanie
+  // wymagać decyzji (np. gracz odpowiedział na ofertę transferową w skrzynce).
+  useEffect(() => {
+    if (!actionRequiredMessageId || !career?.inbox) return
+    const msg = career.inbox.find((m) => m.id === actionRequiredMessageId)
+    if (!msg || !isImportantInboxMessage(msg)) {
+      setActionRequiredMessageId(null)
+    }
+  }, [career?.inbox, actionRequiredMessageId])
+
   const handleLeagueMatchComplete = useCallback(
     (result, fixture) => {
       if (!career) return
@@ -1506,6 +1576,9 @@ export default function App() {
           }))
         }
         applyMatchResultToLeague(copy, record)
+        const scoutOpponentId =
+          fixture.homeTeamId === prev.playerTeamId ? fixture.awayTeamId : fixture.homeTeamId
+        recordMatchKnowledgeGain(prev.world, prev.playerTeamId, scoutOpponentId)
         const analysis = messageFromMatchAnalysis(prev, { fixture, record })
         const playerInjuries = (record.injuries ?? []).filter((inj) => {
           if (inj.teamId) return inj.teamId === prev.playerTeamId
@@ -1832,7 +1905,9 @@ export default function App() {
             onStartNextSeason={handleStartNextSeason}
             onAdvanceDay={handleAdvanceDay}
             onSimulateUntilMatch={handleSimulateUntilMatch}
-            simulating={!!simProgress}
+            simulating={!!simProgress || !!calendarSim}
+            actionRequired={!!actionRequiredMessageId}
+            onActionRequired={handleActionRequired}
           />
         )}
 
@@ -1841,6 +1916,7 @@ export default function App() {
             career={career}
             onInboxChange={handleInboxChange}
             onNavigate={navigateTo}
+            onOpenTeam={openTeamProfile}
             onTransferOfferAction={handleTransferOfferAction}
             onResolveDecision={handleResolveDecision}
             onSponsorSign={handleSponsorSign}
@@ -1864,6 +1940,8 @@ export default function App() {
             teamId={teamProfileId ?? playerTeamId}
             seasonState={seasonState}
             onBack={handleTeamProfileBack}
+            career={career}
+            onChange={handleClubBoardChange}
           />
         )}
 
@@ -2049,15 +2127,21 @@ export default function App() {
         </nav>
       )}
 
-      {activeTab !== 'match' && !simProgress && (
+      {activeTab !== 'match' && !simProgress && !calendarSim && (
         <button
           type="button"
-          onClick={handleAdvanceDay}
-          className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-ufa-accent text-ufa-bg shadow-lg shadow-black/40 transition-transform active:scale-95 md:hidden"
-          aria-label={tShell.advanceDay}
-          title={tShell.advanceDay}
+          onClick={actionRequiredMessageId ? handleActionRequired : handleAdvanceDay}
+          className={`fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full text-ufa-bg shadow-lg shadow-black/40 transition-transform active:scale-95 md:hidden ${
+            actionRequiredMessageId ? 'bg-ufa-gold' : 'bg-ufa-accent'
+          }`}
+          aria-label={actionRequiredMessageId ? hubStrings(uiLang).actionRequired : tShell.advanceDay}
+          title={actionRequiredMessageId ? hubStrings(uiLang).actionRequired : tShell.advanceDay}
         >
-          <IconNextDay className="h-6 w-6" />
+          {actionRequiredMessageId ? (
+            <IconAlert className="h-6 w-6" />
+          ) : (
+            <IconNextDay className="h-6 w-6" />
+          )}
         </button>
       )}
 
@@ -2074,6 +2158,7 @@ export default function App() {
       />
 
       <SimulationProgressOverlay progress={simProgress} />
+      <CalendarSimOverlay sim={calendarSim} />
     </div>
   )
 }

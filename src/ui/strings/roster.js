@@ -21,6 +21,7 @@ const pl = {
   playerCount: (n) => (n === 1 ? '1 zawodnik' : `${n} zawodników`),
   ofTotal: (shown, total) => `${shown} z ${total}`,
   matchStamina: ' · stamina z meczu',
+  matchFreshnessCol: 'Świeżość mecz.',
   hand: 'Ręka',
 }
 
@@ -45,6 +46,7 @@ const en = {
   playerCount: (n) => (n === 1 ? '1 player' : `${n} players`),
   ofTotal: (shown, total) => `${shown} of ${total}`,
   matchStamina: ' · match stamina',
+  matchFreshnessCol: 'Match freshness',
   hand: 'Hand',
 }
 

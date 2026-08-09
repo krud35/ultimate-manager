@@ -33,6 +33,7 @@ import { ensureWorldReputation } from '../models/teamReputation.js'
 import { ensureWorldFans } from '../models/teamFans.js'
 import { ensureWorldFacilities } from './clubFacilities.js'
 import { ensureWorldSponsors, refreshSponsorOffers } from './clubSponsors.js'
+import { ensureWorldScouting } from './scouting.js'
 import { officialSeasonEndDate } from '../league/seasonCalendar.js'
 import { areCompetitionsComplete, isOfficialSeasonEnded } from '../league/dayEngine.js'
 import { ensureAiCoachProfiles } from '../matchEngine/aiCoachProfile.js'
@@ -130,6 +131,7 @@ export function createWorldFromTemplate(templateSeasonYear = 2025, options = {})
   ensureWorldReputation(world)
   ensureWorldFans(world, { seed: financeSeed, force: true })
   ensureWorldFacilities(world, { seed: financeSeed, force: true })
+  ensureWorldScouting(world)
   ensureWorldSponsors(world, {
     seed: financeSeed,
     seasonYear: templateSeasonYear,
@@ -151,6 +153,18 @@ export function worldTeamsList(world) {
 export function worldTeamById(world, teamId) {
   if (!world?.teamsById || teamId == null) return null
   return world.teamsById[teamId] ?? null
+}
+
+/** Znajduje zawodnika w świecie — klubowego lub wolnego agenta. */
+export function findWorldPlayerById(world, playerId) {
+  if (playerId == null) return { player: null, teamId: null }
+  for (const team of worldTeamsList(world)) {
+    const player = (team.players ?? []).find((p) => p.id === playerId)
+    if (player) return { player, teamId: team.id }
+  }
+  const freeAgent = (world?.freeAgents ?? []).find((p) => p.id === playerId)
+  if (freeAgent) return { player: freeAgent, teamId: null }
+  return { player: null, teamId: null }
 }
 
 export function initWorldPlayerStats(world, options = {}) {
@@ -256,6 +270,7 @@ export function rehydrateCareerWorld(career) {
   ensureWorldReputation(world)
   ensureWorldFans(world, { seed: financeSeed, force: false })
   ensureWorldFacilities(world, { seed: financeSeed, force: false })
+  ensureWorldScouting(world)
   ensureWorldSponsors(world, {
     seed: financeSeed,
     seasonYear: career.seasonYear ?? world.templateSeasonYear ?? 2025,

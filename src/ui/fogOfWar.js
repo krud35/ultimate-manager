@@ -45,6 +45,47 @@ export function attributeBandToneClass(value) {
   return 'text-red-400'
 }
 
+/**
+ * Znajomość (scouting) 0–100 → jak dokładnie pokazać atrybut.
+ * <20 nieznany, 20–49 pasmo słowne, 50–79 przybliżony zakres, >=80 dokładna wartość.
+ */
+export function scoutKnowledgeTier(knowledge) {
+  const k = Number(knowledge) || 0
+  if (k < 20) return 'unknown'
+  if (k < 50) return 'band'
+  if (k < 80) return 'range'
+  return 'exact'
+}
+
+/**
+ * @param {number} value atrybut 0–99
+ * @param {number} knowledge znajomość 0–100
+ * @param {string} [lang]
+ * @returns {{ kind: 'unknown'|'band'|'range'|'exact', label: string, toneClass: string }}
+ */
+export function scoutedValueDisplay(value, knowledge, lang = 'en') {
+  const tier = scoutKnowledgeTier(knowledge)
+  const v = Number(value) || 0
+  if (tier === 'unknown') {
+    return {
+      kind: 'unknown',
+      label: lang === 'pl' ? 'nieznany' : 'unknown',
+      toneClass: 'text-ufa-muted',
+    }
+  }
+  if (tier === 'band') {
+    return { kind: 'band', label: attributeBandLabel(v, lang), toneClass: attributeBandToneClass(v) }
+  }
+  if (tier === 'range') {
+    const k = Number(knowledge) || 0
+    const spread = Math.round(12 - ((k - 50) / 29) * 8)
+    const lo = Math.max(0, v - spread)
+    const hi = Math.min(99, v + spread)
+    return { kind: 'range', label: `${lo}–${hi}`, toneClass: attributeBandToneClass(v) }
+  }
+  return { kind: 'exact', label: String(v), toneClass: 'text-ufa-accent' }
+}
+
 /** developmentFatigue 0–100 → fresh / slightly tired / tired / exhausted. */
 export function fatigueBandLabel(fatigue, lang = 'en') {
   const f = Math.max(0, Number(fatigue) || 0)

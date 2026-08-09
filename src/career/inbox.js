@@ -8,7 +8,7 @@ import { getOverallRating } from '../models/playerStats.js'
 import { getPlayerForm, formLabel } from '../models/playerForm.js'
 import { getPlayerMorale, moraleLabel } from '../models/playerMorale.js'
 import { focusLabel, intensityLabel } from './teamTraining.js'
-import { worldTeamById, worldTeamsList } from './worldState.js'
+import { worldTeamById, worldTeamsList, findWorldPlayerById } from './worldState.js'
 import { addDays, formatISODate, parseISODate } from '../league/seasonCalendar.js'
 import {
   computeAskPrice,
@@ -22,6 +22,7 @@ import {
   transferTargetMotiveLabelPl,
 } from './transfers/index.js'
 import { pickRandomEventMessage } from './randomEvents.js'
+import { attributeBandLabel } from '../ui/fogOfWar.js'
 
 export const INBOX_TYPES = {
   TRAINING_REPORT: 'training_report',
@@ -30,6 +31,7 @@ export const INBOX_TYPES = {
   RANDOM_EVENT: 'random_event',
   INJURY: 'injury',
   CLUB_NEWS: 'club_news',
+  SCOUT_REPORT: 'scout_report',
 }
 
 export const INBOX_TYPE_META = {
@@ -63,6 +65,11 @@ export const INBOX_TYPE_META = {
     labelEn: 'Club',
     navigateTo: 'club-board',
   },
+  [INBOX_TYPES.SCOUT_REPORT]: {
+    labelPl: 'Scouting',
+    labelEn: 'Scouting',
+    navigateTo: 'team-profile',
+  },
 }
 
 const INBOX_MAX = 80
@@ -77,17 +84,42 @@ const SILENT_CLUB_NEWS_KINDS = new Set([
   'fan_shop',
 ])
 
+// Pure info/report inbox types — never worth interrupting the loop.
+const SILENT_REPORT_TYPES = new Set([INBOX_TYPES.TRAINING_REPORT, INBOX_TYPES.SCOUT_REPORT])
+
+// transfer_offer payload {kind, status} combos that actually need the manager's
+// input right now — mirrors the "bidPending" badge logic in InboxView. Everything
+// else under transfer_offer (awaiting a reply, already resolved, a completed-deal
+// FYI) is informational and shouldn't interrupt the simulation.
+function isActionableTransferOffer(payload) {
+  const kind = payload?.kind
+  const status = payload?.status
+  if (kind === 'incoming_bid') return status === 'pending' || status === 'counter'
+  if (kind === 'outgoing_club_offer') return status === 'counter' || status === 'club_agreed'
+  if (kind === 'outgoing_player_contract') return status === 'counter' || status === 'rejected'
+  if (kind === 'pending_registration') return status === 'pending_confirm'
+  return false
+}
+
 /**
  * Czy ta wiadomość powinna przerwać ciągłą symulację kalendarza ("Dalej")?
- * Raporty treningowe i rutynowe newsy klubowe (wypłaty, wygaśnięcia) są ciche —
- * kariera leci dalej. Kontuzje, oferty transferowe/sponsorskie, decyzje ze zdarzeń
- * losowych i alarmy finansowe zatrzymują symulację.
+ * Raporty (treningowe, scouting) i rutynowe newsy klubowe (wypłaty, wygaśnięcia)
+ * są ciche — kariera leci dalej. Zdarzenia losowe, które oferują opcję "zignoruj",
+ * też nie blokują — gracz świadomie może je pominąć. Kontuzje, aktywne oferty/
+ * odpowiedzi transferowe, decyzje bez opcji zignorowania i alarmy finansowe
+ * zatrzymują symulację.
  */
 export function isImportantInboxMessage(message) {
   if (!message) return false
-  if (message.type === INBOX_TYPES.TRAINING_REPORT) return false
+  if (SILENT_REPORT_TYPES.has(message.type)) return false
   if (message.type === INBOX_TYPES.RANDOM_EVENT) {
-    return message.payload?.kind === 'decision' && message.payload?.status === 'pending'
+    if (message.payload?.kind !== 'decision' || message.payload?.status !== 'pending') return false
+    const choices = message.payload?.choices
+    const canIgnore = Array.isArray(choices) && choices.some((c) => c?.id === 'ignore')
+    return !canIgnore
+  }
+  if (message.type === INBOX_TYPES.TRANSFER_OFFER) {
+    return isActionableTransferOffer(message.payload)
   }
   if (message.type === INBOX_TYPES.CLUB_NEWS) {
     const kind = message.payload?.kind
@@ -98,6 +130,11 @@ export function isImportantInboxMessage(message) {
 
 export function hasImportantInboxMessage(messages) {
   return (messages ?? []).some(isImportantInboxMessage)
+}
+
+/** Pierwsza "blokująca" wiadomość z listy — do podświetlenia w skrzynce po zatrzymaniu symulacji. */
+export function firstImportantInboxMessage(messages) {
+  return (messages ?? []).find(isImportantInboxMessage) ?? null
 }
 
 function newMessageId(prefix = 'msg') {
@@ -995,10 +1032,101 @@ export function generateRandomEvents(career, { date = null } = {}) {
   return msg ? [msg] : []
 }
 
+function scoutedPlayerLine(world, playerId, knowledge, lang) {
+  const { player } = findWorldPlayerById(world, playerId)
+  if (!player) return null
+  const name = getPlayerFullName(player)
+  const ovr = getOverallRating(player.skills)
+  return `${name}: ${attributeBandLabel(ovr, lang)}`
+}
+
+/**
+ * Raport z zakończonej misji skautingowej (`resolveScoutMissions` w career/scouting.js).
+ * @param {object} mission — wynik misji: { kind, opponentTeamId, targetPlayerId, knowledgeGained, tacticsGained, revealedPlayers }
+ */
+export function messageFromScoutMission(mission, career, { date = null } = {}) {
+  if (!mission?.kind) return null
+  const world = career?.world
+  const resolvedDate = date ?? career?.league?.currentDate ?? null
+
+  const basePayload = {
+    kind: mission.kind,
+    missionId: mission.id,
+    opponentTeamId: mission.opponentTeamId ?? null,
+    targetPlayerId: mission.targetPlayerId ?? null,
+    knowledgeGained: mission.knowledgeGained ?? 0,
+    tacticsGained: mission.tacticsGained ?? 0,
+    revealedPlayers: mission.revealedPlayers ?? [],
+  }
+
+  if (mission.kind === 'tactics') {
+    const name = teamName(career, mission.opponentTeamId)
+    return createInboxMessage({
+      type: INBOX_TYPES.SCOUT_REPORT,
+      title: `Scouting · Taktyka: ${name}`,
+      titleEn: `Scouting · ${name} tactics`,
+      body: `Skaut obserwował najbliższy mecz ${name} i przeanalizował sposób gry. Znajomość taktyki +${mission.tacticsGained ?? 0}, ogólna znajomość drużyny +${mission.knowledgeGained ?? 0}.`,
+      bodyEn: `Your scout watched ${name}'s latest match and broke down their playing style. Tactics familiarity +${mission.tacticsGained ?? 0}, overall team knowledge +${mission.knowledgeGained ?? 0}.`,
+      date: resolvedDate,
+      seasonIndex: career?.seasonIndex ?? null,
+      seasonYear: career?.seasonYear ?? null,
+      payload: basePayload,
+    })
+  }
+
+  if (mission.kind === 'keyPlayers') {
+    const name = teamName(career, mission.opponentTeamId)
+    const linesPl = (mission.revealedPlayers ?? [])
+      .map((r) => scoutedPlayerLine(world, r.playerId, r.knowledge, 'pl'))
+      .filter(Boolean)
+    const linesEn = (mission.revealedPlayers ?? [])
+      .map((r) => scoutedPlayerLine(world, r.playerId, r.knowledge, 'en'))
+      .filter(Boolean)
+    return createInboxMessage({
+      type: INBOX_TYPES.SCOUT_REPORT,
+      title: `Scouting · Kluczowi zawodnicy: ${name}`,
+      titleEn: `Scouting · ${name} key players`,
+      body: `Skaut wytypował czołowych zawodników ${name}: ${linesPl.join('; ') || 'brak danych'}.`,
+      bodyEn: `Your scout flagged ${name}'s top players: ${linesEn.join('; ') || 'no data'}.`,
+      date: resolvedDate,
+      seasonIndex: career?.seasonIndex ?? null,
+      seasonYear: career?.seasonYear ?? null,
+      payload: basePayload,
+    })
+  }
+
+  // mission.kind === 'player'
+  const { player, teamId } = findWorldPlayerById(world, mission.targetPlayerId)
+  const playerName = player ? getPlayerFullName(player) : 'zawodnik'
+  const playerNameEn = player ? getPlayerFullName(player) : 'the player'
+  const clubPl = teamId ? teamName(career, teamId) : 'wolny agent'
+  const clubEn = teamId ? teamName(career, teamId) : 'free agent'
+  const bandPl = player ? attributeBandLabel(getOverallRating(player.skills), 'pl') : null
+  const bandEn = player ? attributeBandLabel(getOverallRating(player.skills), 'en') : null
+  return createInboxMessage({
+    type: INBOX_TYPES.SCOUT_REPORT,
+    title: `Dossier skautingowe: ${playerName}`,
+    titleEn: `Scouting dossier: ${playerNameEn}`,
+    body: `Skaut przygotował dossier na ${playerName} (${clubPl}).${bandPl ? ` Ocena: ${bandPl}.` : ''} Znajomość zawodnika +${mission.knowledgeGained ?? 0}.`,
+    bodyEn: `Your scout compiled a dossier on ${playerNameEn} (${clubEn}).${bandEn ? ` Rating: ${bandEn}.` : ''} Player knowledge +${mission.knowledgeGained ?? 0}.`,
+    date: resolvedDate,
+    seasonIndex: career?.seasonIndex ?? null,
+    seasonYear: career?.seasonYear ?? null,
+    payload: basePayload,
+  })
+}
+
+export function messagesFromScoutMissions(missions, career, { date = null } = {}) {
+  return (missions ?? []).map((m) => messageFromScoutMission(m, career, { date })).filter(Boolean)
+}
+
 /** Klucz deduplikacji dla typowych payloadów. */
 export function inboxDedupeKey(message) {
   if (!message) return null
   const p = message.payload ?? {}
+  if (message.type === INBOX_TYPES.SCOUT_REPORT && p.missionId) {
+    return `scout:${p.missionId}`
+  }
   if (message.type === INBOX_TYPES.MATCH_ANALYSIS && p.fixtureId) {
     return `match:${p.fixtureId}`
   }

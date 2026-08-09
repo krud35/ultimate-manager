@@ -30,6 +30,7 @@ import {
   trainingRoomLabel,
   trainingRoomToneClass,
 } from '../ui/fogOfWar'
+import { currentMatchStamina } from '../matchEngine/stamina.js'
 
 function qualityClass(q) {
   if (q >= 78) return 'text-emerald-400'
@@ -433,6 +434,7 @@ export default function TrainingView({
                 <th className="px-3 py-3 font-medium">{t.age}</th>
                 <th className="px-3 py-3 font-medium">OVR</th>
                 <th className="px-3 py-3 font-medium">{t.fatigue}</th>
+                <th className="px-3 py-3 font-medium">{t.matchFreshness}</th>
                 <th className="px-3 py-3 font-medium">{t.status}</th>
                 <th className="px-3 py-3 font-medium">{t.trainingFocus}</th>
               </tr>
@@ -442,6 +444,7 @@ export default function TrainingView({
                 const ovr = getOverallRating(player.skills)
                 const pot = player.potential ?? ovr
                 const fatigue = player.developmentFatigue ?? 0
+                const matchFreshness = Math.round(currentMatchStamina(player))
                 const room = pot - ovr
                 return (
                   <tr key={player.id} className="hover:bg-ufa-panel-hover">
@@ -457,6 +460,12 @@ export default function TrainingView({
                     <td className="px-3 py-3 tabular-nums text-ufa-text">{ovr}</td>
                     <td className={`px-3 py-3 font-medium ${fatigueBandToneClass(fatigue)}`}>
                       {fatigueBandLabel(fatigue, lang)}
+                    </td>
+                    <td
+                      className={`px-3 py-3 font-medium ${fatigueBandToneClass(100 - matchFreshness)}`}
+                      title={`${matchFreshness}/100`}
+                    >
+                      {fatigueBandLabel(100 - matchFreshness, lang)}
                     </td>
                     <td className="px-3 py-3 text-sm">
                       {isPlayerInjured(player) ? (

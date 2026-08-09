@@ -14,6 +14,7 @@ const pl = {
     injuries: 'Kontuzje',
     events: 'Zdarzenia',
     club: 'Klub',
+    scouting: 'Scouting',
   },
   offerStatus: {
     pending: 'Oczekuje',
@@ -109,6 +110,7 @@ const en = {
     injuries: 'Injuries',
     events: 'Events',
     club: 'Club',
+    scouting: 'Scouting',
   },
   offerStatus: {
     pending: 'Pending',

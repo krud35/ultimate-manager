@@ -21,6 +21,14 @@ import {
   previewContractOffer,
   computePlayerContractDemands,
   canBuyPlayers,
+  CONTRACT_BONUS_DEFS,
+  CONTRACT_PROMISE_DEFS,
+  getPlayerKnowledge,
+  isPlayerShortlisted,
+  toggleShortlist,
+  hasPendingScoutMission,
+  queueScoutMission,
+  findPlayerTeamId,
 } from '../career'
 
 function WindowBanner({ windowState }) {
@@ -74,6 +82,22 @@ function NegotiateModal({
     return String(d.minWeeklyWage)
   })
   const [years, setYears] = useState('3')
+  const [selectedBonuses, setSelectedBonuses] = useState(() => new Set())
+  const [selectedPromises, setSelectedPromises] = useState(() => new Set())
+
+  const toggleSet = (setter, id) => {
+    setter((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  const bonusesPayload = [...selectedBonuses].map((id) => {
+    const def = CONTRACT_BONUS_DEFS.find((d) => d.id === id)
+    return { type: id, amount: def?.defaultAmount ?? 5000 }
+  })
+  const promisesPayload = [...selectedPromises].map((id) => ({ type: id }))
 
   if (!row) return null
 
@@ -159,6 +183,46 @@ function NegotiateModal({
             </label>
             <p className="text-xs text-ufa-muted tabular-nums">{formatUsd(preview.totalCost)}</p>
             {faOverBudget && <p className="text-xs text-red-400">{t.overBudgetContract}</p>}
+
+            <div>
+              <p className="text-[10px] uppercase text-ufa-muted mb-1">{t.bonuses}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {CONTRACT_BONUS_DEFS.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => toggleSet(setSelectedBonuses, b.id)}
+                    className={`rounded px-2 py-1 text-[10px] ring-1 ${
+                      selectedBonuses.has(b.id)
+                        ? 'bg-ufa-gold/20 text-ufa-gold ring-ufa-gold/40'
+                        : 'bg-ufa-bg text-ufa-muted ring-ufa-border'
+                    }`}
+                  >
+                    {lang === 'en' ? b.labelEn : b.labelPl} · {formatUsdCompact(b.defaultAmount)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase text-ufa-muted mb-1">{t.promises}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {CONTRACT_PROMISE_DEFS.map((pr) => (
+                  <button
+                    key={pr.id}
+                    type="button"
+                    onClick={() => toggleSet(setSelectedPromises, pr.id)}
+                    className={`rounded px-2 py-1 text-[10px] ring-1 ${
+                      selectedPromises.has(pr.id)
+                        ? 'bg-ufa-accent/20 text-ufa-accent ring-ufa-accent/40'
+                        : 'bg-ufa-bg text-ufa-muted ring-ufa-border'
+                    }`}
+                  >
+                    {lang === 'en' ? pr.labelEn : pr.labelPl}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               type="button"
               disabled={faOverBudget || budget <= 0}
@@ -166,8 +230,8 @@ function NegotiateModal({
                 onSubmitOffer(0, {
                   weeklyWage: Math.round(Number(wage) || 0),
                   years: Math.max(1, Math.min(5, Math.round(Number(years) || 1))),
-                  bonuses: [],
-                  promises: [],
+                  bonuses: bonusesPayload,
+                  promises: promisesPayload,
                 })
               }
               className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
@@ -756,6 +820,28 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
         }}
         teamName={profileTeamName}
         isOwnPlayer={false}
+        knowledge={profilePlayer ? getPlayerKnowledge(buyer, profilePlayer.id) : null}
+        isShortlisted={profilePlayer ? isPlayerShortlisted(buyer, profilePlayer.id) : false}
+        scoutPending={
+          profilePlayer
+            ? hasPendingScoutMission(buyer, { kind: 'player', targetPlayerId: profilePlayer.id })
+            : false
+        }
+        onToggleShortlist={(playerId) => {
+          toggleShortlist(buyer, playerId)
+          onCareerUpdate({ world: career.world })
+        }}
+        onScoutPlayer={(playerId) => {
+          const clubId = findPlayerTeamId(career.world, playerId)
+          const result = queueScoutMission(buyer, {
+            kind: 'player',
+            targetPlayerId: playerId,
+            opponentTeamId: clubId,
+            date: career.league?.currentDate ?? null,
+          })
+          if (result.ok) onCareerUpdate({ world: career.world })
+          return result
+        }}
       />
     </div>
   )

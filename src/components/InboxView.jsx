@@ -16,10 +16,64 @@ import {
   markAllInboxRead,
   deleteInboxMessage,
 } from '../career/inbox.js'
-import { formatUsd, formatUsdCompact, isTransferWindowOpen, previewContractOffer, CONTRACT_BONUS_DEFS, CONTRACT_PROMISE_DEFS, paymentModelLabel, describeSponsorOfferTotals, brandDisplayName, performanceBonusLabel, sponsorSlotLabel } from '../career'
+import { formatUsd, formatUsdCompact, isTransferWindowOpen, previewContractOffer, CONTRACT_BONUS_DEFS, CONTRACT_PROMISE_DEFS, paymentModelLabel, describeSponsorOfferTotals, brandDisplayName, performanceBonusLabel, sponsorSlotLabel, findWorldPlayerById } from '../career'
 import { formLabel } from '../models/playerForm.js'
 import { moraleLabel } from '../models/playerMorale.js'
+import { getPlayerFullName, getOverallRating } from '../data/mockPlayers'
+import { attributeBandLabel, attributeBandToneClass } from '../ui/fogOfWar'
+import { scoutingStrings } from '../ui/strings/scouting'
 import { BoxScoreTable } from './BoxScoreTable'
+
+function findWorldPlayer(world, playerId) {
+  return findWorldPlayerById(world, playerId).player
+}
+
+function ScoutReportPanel({ message, career }) {
+  const { lang } = useUiLang()
+  const ts = scoutingStrings(lang)
+  const p = message.payload ?? {}
+  const world = career?.world
+  const revealed = p.revealedPlayers ?? []
+
+  return (
+    <div className="space-y-3">
+      {(p.knowledgeGained > 0 || p.tacticsGained > 0) && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {p.knowledgeGained > 0 && (
+            <span className="rounded border border-ufa-accent/40 bg-ufa-accent/10 px-2 py-0.5 font-semibold text-ufa-accent">
+              {ts.knowledgeLabel} +{p.knowledgeGained}
+            </span>
+          )}
+          {p.tacticsGained > 0 && (
+            <span className="rounded border border-ufa-gold/40 bg-ufa-gold/10 px-2 py-0.5 font-semibold text-ufa-gold">
+              {ts.tacticsLabel} +{p.tacticsGained}
+            </span>
+          )}
+        </div>
+      )}
+      {revealed.length > 0 && (
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {revealed.map((r) => {
+            const player = findWorldPlayer(world, r.playerId)
+            if (!player) return null
+            const ovr = getOverallRating(player.skills)
+            return (
+              <li
+                key={r.playerId}
+                className="flex items-center justify-between gap-2 rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2 text-sm"
+              >
+                <span className="text-ufa-text">{getPlayerFullName(player)}</span>
+                <span className={`text-xs font-semibold ${attributeBandToneClass(ovr)}`}>
+                  {attributeBandLabel(ovr, lang)}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 function formatDayLabel(iso, lang = UI_LANG.PL) {
   if (!iso) return '—'
@@ -64,6 +118,8 @@ function typeBadgeClass(type) {
       return 'border-red-400/40 bg-red-500/10 text-red-300'
     case INBOX_TYPES.CLUB_NEWS:
       return 'border-sky-400/40 bg-sky-400/10 text-sky-300'
+    case INBOX_TYPES.SCOUT_REPORT:
+      return 'border-teal-400/40 bg-teal-400/10 text-teal-300'
     default:
       return 'border-ufa-border bg-ufa-bg text-ufa-muted'
   }
@@ -770,6 +826,7 @@ function MessageDetail({
   message,
   career,
   onNavigate,
+  onOpenTeam = null,
   onTransferOfferAction,
   offerBusy,
   onResolveDecision,
@@ -898,6 +955,10 @@ function MessageDetail({
         <MatchAnalysisPanel message={message} />
       )}
 
+      {message.type === INBOX_TYPES.SCOUT_REPORT && (
+        <ScoutReportPanel message={message} career={career} />
+      )}
+
       {message.type === INBOX_TYPES.INJURY && (
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 text-sm">
           <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2">
@@ -1012,15 +1073,28 @@ function MessageDetail({
           </p>
         )}
 
-      {meta?.navigateTo && onNavigate && message.type !== INBOX_TYPES.TRANSFER_OFFER && (
+      {meta?.navigateTo && message.type === INBOX_TYPES.SCOUT_REPORT && p.opponentTeamId && onOpenTeam && (
         <button
           type="button"
-          onClick={() => onNavigate(meta.navigateTo)}
+          onClick={() => onOpenTeam(p.opponentTeamId)}
           className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
         >
           {t.goTo}: {pickLabel(meta, lang)}
         </button>
       )}
+
+      {meta?.navigateTo &&
+        onNavigate &&
+        message.type !== INBOX_TYPES.TRANSFER_OFFER &&
+        !(message.type === INBOX_TYPES.SCOUT_REPORT && p.opponentTeamId && onOpenTeam) && (
+          <button
+            type="button"
+            onClick={() => onNavigate(meta.navigateTo)}
+            className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
+          >
+            {t.goTo}: {pickLabel(meta, lang)}
+          </button>
+        )}
     </div>
   )
 }
@@ -1086,6 +1160,7 @@ export default function InboxView({
   career,
   onInboxChange,
   onNavigate,
+  onOpenTeam = null,
   onTransferOfferAction = null,
   onResolveDecision = null,
   onSponsorSign = null,
@@ -1229,6 +1304,7 @@ export default function InboxView({
             { id: INBOX_TYPES.INJURY, label: tInbox.filters.injuries },
             { id: INBOX_TYPES.RANDOM_EVENT, label: tInbox.filters.events },
             { id: INBOX_TYPES.CLUB_NEWS, label: tInbox.filters.club },
+            { id: INBOX_TYPES.SCOUT_REPORT, label: tInbox.filters.scouting },
           ]).map((f) => (
             <button
               key={f.id}
@@ -1324,6 +1400,7 @@ export default function InboxView({
                   message={selected}
                   career={career}
                   onNavigate={onNavigate}
+                  onOpenTeam={onOpenTeam}
                   onTransferOfferAction={handleOfferAction}
                   offerBusy={offerBusy}
                   onResolveDecision={onResolveDecision}

@@ -78,13 +78,21 @@ function newId(prefix) {
 }
 
 /**
+ * Dochody cykliczne (sponsorzy + sklep kibica) były zbyt małe względem funduszu płac —
+ * nawet skromny skład potrafi kosztować więcej rocznie niż oba sloty sponsorskie razem.
+ * Ten mnożnik podnosi całą bazę sponsorską (i analogicznie merch w `clubFacilities.js`)
+ * o ~50%, żeby zarządzanie klubem (reputacja, sponsorzy, sklep) miało realny wpływ na budżet.
+ */
+export const SPONSOR_INCOME_BOOST = 1.5
+
+/**
  * Roczna baza zależna od reputacji i slotu.
  * Main ≈ 1.65× secondary.
  */
 export function sponsorAnnualBase(reputation, slot = 'main') {
   const rep = Math.max(15, Math.min(99, Math.round(reputation ?? 55)))
-  // ~$28k przy rep 30, ~$95k przy 55, ~$180k przy 90 (main)
-  const core = 18_000 + (rep - 25) * 2_400
+  // Bez boosta: ~$28k przy rep 30, ~$95k przy 55, ~$180k przy 90 (main)
+  const core = (18_000 + (rep - 25) * 2_400) * SPONSOR_INCOME_BOOST
   const mult = slot === 'main' ? 1 : 0.55
   return roundMoney(core * mult)
 }

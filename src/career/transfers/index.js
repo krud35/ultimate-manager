@@ -23,6 +23,10 @@ export {
   canBuyPlayers,
   isClubBankrupt,
   FORFEIT_BUDGET_THRESHOLD,
+  FINANCIAL_WARNING_THRESHOLD,
+  financialHealthTier,
+  processWeeklyFinancialHealth,
+  messagesFromFinancialHealth,
   adjustTransferBudget,
   adjustSalaryBudget,
 } from './clubFinances.js'
@@ -52,7 +56,11 @@ export {
   promiseDefById,
   promiseWageRelief,
   bonusWageEquivalent,
+  bonusTargetFor,
   buildContract,
+  processSeasonEndContractObligations,
+  messagesFromContractBonusPayouts,
+  messagesFromBrokenPromises,
 } from './playerContracts.js'
 
 export {

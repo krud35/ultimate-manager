@@ -7,8 +7,12 @@
 import { createRng } from '../../matchEngine/rng.js'
 import { getOverallRating } from '../../models/playerStats.js'
 import { worldTeamsList } from '../worldState.js'
-import { applyDebtMoraleToTeam } from '../../models/playerMorale.js'
-import { getTransferBudget } from './clubFinances.js'
+import { applyDebtMoraleToTeam, ensurePlayerMorale, getPlayerMorale } from '../../models/playerMorale.js'
+import { noteLoyaltyFromTreatment } from '../../models/playerLoyalty.js'
+import { getPlayerFullName } from '../../data/mockPlayers.js'
+import { standingsTable } from '../../league/standings.js'
+import { getTransferBudget, adjustTransferBudget } from './clubFinances.js'
+import { formatUsd } from './moneyFormat.js'
 
 export const WEEKS_PER_CONTRACT_YEAR = 52
 
@@ -21,30 +25,35 @@ export const CONTRACT_BONUS_DEFS = [
     labelPl: 'Bonus za gole (sezon)',
     labelEn: 'Goals bonus (season)',
     defaultAmount: 8000,
+    defaultTarget: 15,
   },
   {
     id: 'assists_season',
     labelPl: 'Bonus za asysty (sezon)',
     labelEn: 'Assists bonus (season)',
     defaultAmount: 6000,
+    defaultTarget: 12,
   },
   {
     id: 'championship',
     labelPl: 'Bonus za mistrzostwo',
     labelEn: 'Championship bonus',
     defaultAmount: 25000,
+    defaultTarget: null,
   },
   {
     id: 'cup_win',
     labelPl: 'Bonus za puchar',
     labelEn: 'Cup win bonus',
     defaultAmount: 15000,
+    defaultTarget: null,
   },
   {
     id: 'appearances',
     labelPl: 'Bonus za występy',
     labelEn: 'Appearances bonus',
     defaultAmount: 5000,
+    defaultTarget: 20,
   },
 ]
 
@@ -54,30 +63,38 @@ export const CONTRACT_PROMISE_DEFS = [
     labelPl: 'Regularny czas gry',
     labelEn: 'Regular playing time',
     wageRelief: 0.06,
+    appearanceShare: 0.5,
+    moralePenaltyIfBroken: -4,
   },
   {
     id: 'key_role',
     labelPl: 'Kluczowa rola w składzie',
     labelEn: 'Key role in the squad',
     wageRelief: 0.04,
+    appearanceShare: 0.65,
+    moralePenaltyIfBroken: -3,
   },
   {
     id: 'title_challenge',
     labelPl: 'Walka o tytuł',
     labelEn: 'Title challenge',
     wageRelief: 0.05,
+    moralePenaltyIfBroken: -3,
   },
   {
     id: 'development',
     labelPl: 'Ścieżka rozwoju',
     labelEn: 'Development path',
     wageRelief: 0.03,
+    moralePenaltyIfBroken: -2,
   },
   {
     id: 'no_bench',
     labelPl: 'Nie będę rezerwowym',
     labelEn: 'Not a bench player',
     wageRelief: 0.05,
+    appearanceShare: 0.85,
+    moralePenaltyIfBroken: -5,
   },
 ]
 
@@ -199,6 +216,14 @@ export function buildContract(player, terms) {
     signedDate: terms.signedDate ?? null,
     bonuses: Array.isArray(terms.bonuses) ? terms.bonuses.map(normalizeBonus) : [],
     promises: Array.isArray(terms.promises) ? terms.promises.map(normalizePromise) : [],
+    // Baza do obietnicy „development” — porównywana z aktualnym OVR na koniec sezonu.
+    ovrCheckpoint: Number.isFinite(terms.ovrCheckpoint)
+      ? terms.ovrCheckpoint
+      : getOverallRating(player?.skills),
+    bonusesPaidSeasons:
+      terms.bonusesPaidSeasons && typeof terms.bonusesPaidSeasons === 'object'
+        ? { ...terms.bonusesPaidSeasons }
+        : {},
   }
 }
 
@@ -263,6 +288,13 @@ export function ensurePlayerContract(player, options = {}) {
       signedDate: c.signedDate ?? null,
       bonuses: Array.isArray(c.bonuses) ? c.bonuses.map(normalizeBonus).filter(Boolean) : [],
       promises: Array.isArray(c.promises) ? c.promises.map(normalizePromise).filter(Boolean) : [],
+      ovrCheckpoint: Number.isFinite(c.ovrCheckpoint)
+        ? c.ovrCheckpoint
+        : getOverallRating(player?.skills),
+      bonusesPaidSeasons:
+        c.bonusesPaidSeasons && typeof c.bonusesPaidSeasons === 'object'
+          ? { ...c.bonusesPaidSeasons }
+          : {},
     }
     return player
   }
@@ -483,4 +515,188 @@ export function bonusWageEquivalent(bonuses, weeks) {
   }
   // Bonusy nie gwarantowane — liczą się ~35% wartości rozłożonej na kontrakt.
   return roundWage((sum * 0.35) / w)
+}
+
+/** Próg bonusu, gdy oferta nie podała własnego `target`. */
+export function bonusTargetFor(bonus) {
+  if (bonus?.target != null) return bonus.target
+  return bonusDefById(bonus?.type)?.defaultTarget ?? null
+}
+
+function newContractEventId(prefix) {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return `${prefix}-${crypto.randomUUID()}`
+  }
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
+}
+
+/** Czy bonus kontraktowy zawodnika został spełniony w danym sezonie. */
+function bonusConditionMet({ type, target, statsRow, teamPlace, cupChampionTeamId, teamId }) {
+  if (type === 'goals_season') return (statsRow?.goals ?? 0) >= (target ?? Infinity)
+  if (type === 'assists_season') return (statsRow?.assists ?? 0) >= (target ?? Infinity)
+  if (type === 'appearances') return (statsRow?.games ?? 0) >= (target ?? Infinity)
+  if (type === 'championship') return teamPlace === 1
+  if (type === 'cup_win') return !!cupChampionTeamId && cupChampionTeamId === teamId
+  return false
+}
+
+/** Czy obietnica kontraktowa została dotrzymana w danym sezonie. */
+function promiseConditionMet({ type, def, playerGames, teamGames, teamPlace, teamCount, ovrNow, ovrCheckpoint }) {
+  if (def?.appearanceShare != null) {
+    if (!teamGames) return true // brak rozegranych meczów drużyny — nie karz
+    return playerGames / teamGames >= def.appearanceShare
+  }
+  if (type === 'title_challenge') {
+    if (!teamPlace || !teamCount) return true
+    return teamPlace <= Math.max(1, Math.ceil(teamCount * 0.25))
+  }
+  if (type === 'development') {
+    return ovrNow > ovrCheckpoint
+  }
+  return true
+}
+
+/**
+ * Rozliczenie kontraktów na koniec sezonu: wypłaca spełnione bonusy za osiągnięcia
+ * i obniża morale za obietnice, których klub nie dotrzymał (czas gry, walka o tytuł, rozwój...).
+ * Bez tego bonusy/obietnice były tylko rabatem na negocjacjach, bez żadnej konsekwencji.
+ *
+ * @param {import('../worldState.js').WorldState} world
+ * @param {{ league?: object|null, seasonYear?: number|string, playerStats?: object }} [options]
+ * @returns {{
+ *   bonusPayouts: { teamId: string, playerId: string|number, playerName: string, type: string, amount: number }[],
+ *   brokenPromises: { teamId: string, playerId: string|number, playerName: string, type: string, moraleDelta: number }[],
+ * }}
+ */
+export function processSeasonEndContractObligations(world, options = {}) {
+  const bonusPayouts = []
+  const brokenPromises = []
+  if (!world?.teamsById) return { bonusPayouts, brokenPromises }
+
+  const league = options.league ?? null
+  const seasonKey = String(options.seasonYear ?? '')
+  const statsMap = options.playerStats?.byPlayer ?? options.playerStats ?? {}
+  const table = league?.standings ? standingsTable(league.standings) : []
+  const placeByTeam = Object.fromEntries(table.map((row, i) => [row.teamId, i + 1]))
+  const teamCount = table.length
+  const cupChampionTeamId = league?.cup?.championTeamId ?? null
+
+  for (const team of worldTeamsList(world)) {
+    const standing = league?.standings?.[team.id]
+    const teamGames = Math.max(0, (standing?.wins ?? 0) + (standing?.losses ?? 0))
+    const teamPlace = placeByTeam[team.id] ?? null
+
+    for (const player of team.players ?? []) {
+      ensurePlayerContract(player)
+      const contract = player.contract
+      if (!contract) continue
+      const statsRow = statsMap[player.id] ?? null
+
+      for (const bonus of contract.bonuses ?? []) {
+        if (!bonus?.type || !(bonus.amount > 0)) continue
+        const paidKey = `${bonus.type}:${seasonKey}`
+        if (contract.bonusesPaidSeasons?.[paidKey]) continue
+        const met = bonusConditionMet({
+          type: bonus.type,
+          target: bonusTargetFor(bonus),
+          statsRow,
+          teamPlace,
+          cupChampionTeamId,
+          teamId: team.id,
+        })
+        if (!met) continue
+        adjustTransferBudget(team, bonus.amount)
+        if (!contract.bonusesPaidSeasons) contract.bonusesPaidSeasons = {}
+        contract.bonusesPaidSeasons[paidKey] = bonus.amount
+        bonusPayouts.push({
+          teamId: team.id,
+          playerId: player.id,
+          playerName: getPlayerFullName(player),
+          type: bonus.type,
+          amount: bonus.amount,
+        })
+      }
+
+      const ovrNow = getOverallRating(player.skills)
+      for (const promise of contract.promises ?? []) {
+        const def = promiseDefById(promise?.type)
+        if (!def) continue
+        const met = promiseConditionMet({
+          type: def.id,
+          def,
+          playerGames: statsRow?.games ?? 0,
+          teamGames,
+          teamPlace,
+          teamCount,
+          ovrNow,
+          ovrCheckpoint: Number.isFinite(contract.ovrCheckpoint) ? contract.ovrCheckpoint : ovrNow,
+        })
+        if (met) continue
+        const penalty = def.moralePenaltyIfBroken ?? -3
+        ensurePlayerMorale(player)
+        const nextMorale = Math.max(25, Math.min(99, Math.round(getPlayerMorale(player) + penalty)))
+        player.morale = nextMorale
+        noteLoyaltyFromTreatment(player, penalty)
+        brokenPromises.push({
+          teamId: team.id,
+          playerId: player.id,
+          playerName: getPlayerFullName(player),
+          type: def.id,
+          moraleDelta: penalty,
+        })
+      }
+
+      contract.ovrCheckpoint = ovrNow
+    }
+  }
+
+  return { bonusPayouts, brokenPromises }
+}
+
+/** Wiadomości do skrzynki gracza o wypłaconych bonusach kontraktowych zawodników. */
+export function messagesFromContractBonusPayouts(bonusPayouts, career, { date = null, seasonYear = null } = {}) {
+  if (!bonusPayouts?.length || !career?.playerTeamId) return []
+  const mine = bonusPayouts.filter((p) => p.teamId === career.playerTeamId)
+  if (!mine.length) return []
+  return mine.map((p) => {
+    const def = bonusDefById(p.type)
+    return {
+      id: newContractEventId('msg-cbonus'),
+      type: 'club_news',
+      createdAt: new Date().toISOString(),
+      date: date ?? career.league?.currentDate ?? null,
+      seasonIndex: career.seasonIndex ?? null,
+      seasonYear: seasonYear ?? career.seasonYear ?? null,
+      read: false,
+      title: `Bonus kontraktowy · ${p.playerName}`,
+      titleEn: `Contract bonus · ${p.playerName}`,
+      body: `${p.playerName} spełnił warunki bonusu „${def?.labelPl ?? p.type}”. Klub wypłacił ${formatUsd(p.amount)}.`,
+      bodyEn: `${p.playerName} hit the “${def?.labelEn ?? p.type}” bonus condition. The club paid out ${formatUsd(p.amount)}.`,
+      payload: { kind: 'contract_bonus_paid', playerId: p.playerId, bonusType: p.type, amount: p.amount },
+    }
+  })
+}
+
+/** Wiadomości do skrzynki gracza o złamanych obietnicach kontraktowych. */
+export function messagesFromBrokenPromises(brokenPromises, career, { date = null, seasonYear = null } = {}) {
+  if (!brokenPromises?.length || !career?.playerTeamId) return []
+  const mine = brokenPromises.filter((p) => p.teamId === career.playerTeamId)
+  if (!mine.length) return []
+  return mine.map((p) => {
+    const def = promiseDefById(p.type)
+    return {
+      id: newContractEventId('msg-promisebroken'),
+      type: 'club_news',
+      createdAt: new Date().toISOString(),
+      date: date ?? career.league?.currentDate ?? null,
+      seasonIndex: career.seasonIndex ?? null,
+      seasonYear: seasonYear ?? career.seasonYear ?? null,
+      read: false,
+      title: `Złamana obietnica · ${p.playerName}`,
+      titleEn: `Broken promise · ${p.playerName}`,
+      body: `${p.playerName} uważa, że nie dotrzymałeś obietnicy „${def?.labelPl ?? p.type}” z kontraktu. Morale ${p.moraleDelta}.`,
+      bodyEn: `${p.playerName} feels you broke the contract promise “${def?.labelEn ?? p.type}”. Morale ${p.moraleDelta}.`,
+      payload: { kind: 'promise_broken', playerId: p.playerId, promiseType: p.type, moraleDelta: p.moraleDelta },
+    }
+  })
 }

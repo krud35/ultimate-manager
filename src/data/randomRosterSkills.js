@@ -5,6 +5,7 @@
 import {
   SKILLS_GEN_VERSION,
   buildBalancedSubStats,
+  buildPlayerArchetypeTiers,
   getOverallRating,
   normalizePlayerSkills,
 } from '../models/playerStats.js'
@@ -67,8 +68,8 @@ function scaleSkillsToTargetOvr(skills, targetOvr) {
 export function rollRandomSkillsForRoster(players, seedKey) {
   const rng = mulberry32(hashSeed(seedKey, 'skills'))
   for (const p of players) {
-    const tierNoise = rng()
-    p.skills = buildBalancedSubStats(hashSeed(seedKey, p.id), () => tierNoise)
+    const tiers = buildPlayerArchetypeTiers(rng)
+    p.skills = buildBalancedSubStats(hashSeed(seedKey, p.id), (cat) => tiers[cat])
     p.skillsGen = SKILLS_GEN_VERSION
     // Clear UFA anchor so regeneration later doesn't re-pull historical
     p.ufaReference = {

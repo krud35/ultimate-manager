@@ -346,16 +346,16 @@ export function coachDirectiveMods(tactics, player, role = 'offense', lineRole =
     denyUnderBias: -e.coverageShade * 0.35,
     helpDeepBias: e.coverageShade * 0.35,
     underCutDenyMult: 1 - e.coverageShade * 0.2,
-    huckWeightMult: 1 + e.huckAppetite * 0.45,
-    dumpWeightMult: 1 - e.huckAppetite * 0.18,
-    huckAcceptanceDelta: e.huckAppetite * 0.1,
+    huckWeightMult: 1 + e.huckAppetite * 0.25,
+    dumpWeightMult: 1 - e.huckAppetite * 0.1,
+    huckAcceptanceDelta: e.huckAppetite * 0.06,
     // −1 = tylko otwarte (wyższy próg), +1 = luźniej (niższy próg).
-    separationReqDeltaM: -e.passSelectivity * 1.15,
+    separationReqDeltaM: -e.passSelectivity * 0.6,
     openLookBias: Math.max(0, -e.passSelectivity),
     breakSideOptionBonus: e.breakAppetite * 0.22,
     breakSideWeightMult: 1 + e.breakAppetite * 0.35,
-    releaseGateMult: 1 - e.possessionTempo * 0.22,
-    dumpEarlyBias: e.possessionTempo * 0.15,
+    releaseGateMult: 1 - e.possessionTempo * 0.1,
+    dumpEarlyBias: e.possessionTempo * 0.08,
   }
 }
 

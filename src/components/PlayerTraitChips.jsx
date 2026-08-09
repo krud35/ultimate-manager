@@ -2,6 +2,7 @@ import {
   ensurePlayerTraits,
   getPlayerTraits,
   traitLabel,
+  traitDescription,
   traitToneClass,
   traitDef,
 } from '../models/playerTraits.js'
@@ -36,11 +37,12 @@ export default function PlayerTraitChips({ player, max = null, className = '' })
                 ? 'ring-ufa-gold/40'
                 : 'ring-ufa-border'
         const label = traitLabel(id, lang)
+        const desc = traitDescription(id, lang)
         return (
           <span
             key={id}
             className={`rounded bg-ufa-bg px-1.5 py-0.5 text-[11px] font-medium ring-1 ${ring} ${traitToneClass(id)}`}
-            title={label}
+            title={desc ? `${label} — ${desc}` : label}
           >
             {label}
           </span>
@@ -51,8 +53,12 @@ export default function PlayerTraitChips({ player, max = null, className = '' })
           className="rounded bg-ufa-bg px-1.5 py-0.5 text-[11px] text-ufa-muted ring-1 ring-ufa-border"
           title={traits
             .slice(max)
-            .map((id) => traitLabel(id, lang))
-            .join(', ')}
+            .map((id) => {
+              const desc = traitDescription(id, lang)
+              const label = traitLabel(id, lang)
+              return desc ? `${label} — ${desc}` : label
+            })
+            .join('\n')}
         >
           +{rest}
         </span>

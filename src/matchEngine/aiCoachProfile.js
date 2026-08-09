@@ -171,8 +171,15 @@ function clampBias(v) {
   return Math.max(-1, Math.min(1, n))
 }
 
+/**
+ * Właściwe uśrednienie ważone (współczynniki sumują się do 1) — poprzednia wersja
+ * sumowała `base*(1-weight*0.35) + bias*weight` (razem ~1.55 przy weight=0.85), więc
+ * gdy tożsamość drużyny i wylosowany archetyp trenera zgadzały się kierunkiem
+ * (częste — archetypy jak "patient"/"tempo" pokrywają się z gotowymi tożsamościami),
+ * efekty się wzmacniały zamiast uśredniać i suwak lądował przy granicy ±1.
+ */
 function blendDirective(base, bias, weight = 0.85) {
-  return clampBias((base ?? 0) * (1 - weight * 0.35) + (bias ?? 0) * weight)
+  return clampBias((base ?? 0) * (1 - weight) + (bias ?? 0) * weight)
 }
 
 /** Deterministyczny wybór archetypu z seeda (teamId + saveSeed). */

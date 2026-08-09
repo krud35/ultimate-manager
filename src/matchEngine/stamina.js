@@ -48,6 +48,26 @@ export const STAMINA_CONFIG = {
   lowFatigueThreshold: 30,
 }
 
+/**
+ * Stamina meczowa: warstwa pośrednia między zmęczeniem ogólnym (`developmentFatigue`,
+ * tygodnie/sezon) a energią w meczu (`currentStamina`, punkt po punkcie).
+ * Persystuje na `player.matchStamina` między meczami, opada z zagęszczeniem terminarza,
+ * regeneruje się w dniach odpoczynku — ale nigdy powyżej pułapu ze staminy ogólnej.
+ */
+export const MATCH_STAMINA_CONFIG = {
+  default: 100,
+  perPointDrainMin: 0.9,
+  perPointDrainMax: 2.6,
+  /** Jaka część drenażu meczowego "przecieka" do zmęczenia ogólnego (developmentFatigue). */
+  fatigueContributionMult: 0.35,
+  /** Regeneracja/dzień w pełnym dniu odpoczynku (bez treningu drużynowego). */
+  dailyRecovery: 13,
+  /** Mnożnik regeneracji w dniu z treningiem drużynowym (nadal wysiłek). */
+  trainingDayRecoveryMult: 0.4,
+  /** Jak mocno zmęczenie ogólne obniża pułap staminy meczowej. */
+  generalFatigueCeilingMult: 0.5,
+}
+
 /** Ile staminy ubyło między dwoma snapshotami mapy. */
 export function staminaSpentBetween(beforeMap, afterMap, playerId) {
   return Math.max(0, getStamina(beforeMap, playerId) - getStamina(afterMap, playerId))
@@ -206,10 +226,54 @@ export function createStaminaMap(players, initial = STAMINA_CONFIG.default) {
   return map
 }
 
-/** Start meczu: zmęczenie treningowe (`developmentFatigue`) obniża staminę początkową. */
-export function initialStaminaForPlayer(player, base = STAMINA_CONFIG.default) {
+/**
+ * Pułap staminy meczowej narzucony przez zmęczenie ogólne — długoterminowo przeciążony
+ * zawodnik nie może odzyskać pełnej świeżości meczowej nawet w dniach odpoczynku.
+ */
+export function matchStaminaCeiling(player) {
   const fatigue = player?.developmentFatigue ?? 0
-  return clampStamina(base - fatigue * 0.38)
+  return clampStamina(
+    MATCH_STAMINA_CONFIG.default - fatigue * MATCH_STAMINA_CONFIG.generalFatigueCeilingMult,
+  )
+}
+
+/** Bieżąca stamina meczowa gracza, zawsze przycięta do aktualnego pułapu ogólnego. */
+export function currentMatchStamina(player) {
+  const ceiling = matchStaminaCeiling(player)
+  const raw = player?.matchStamina ?? ceiling
+  return clampStamina(Math.min(raw, ceiling))
+}
+
+/** Start meczu: energia startowa = bieżąca stamina meczowa (już capowana przez zmęczenie ogólne). */
+export function initialStaminaForPlayer(player, base = STAMINA_CONFIG.default) {
+  void base
+  return currentMatchStamina(player)
+}
+
+/**
+ * Drenaż staminy meczowej po zakończonym meczu — na bazie realnie odegranych punktów.
+ * Część kosztu przecieka też do zmęczenia ogólnego (`developmentFatigue`), tak by
+ * zagęszczony terminarz kumulował się w dłuższym horyzoncie, nie tylko w tygodniu treningów.
+ */
+export function applyPostMatchStaminaWear(player) {
+  if (!player) return
+  const pointsPlayed = player.stats?.pointsPlayedMatch ?? 0
+  if (pointsPlayed <= 0) return
+
+  const enduranceT = Math.max(0, Math.min(1, playerEndurance(player) / 100))
+  const perPointCost =
+    MATCH_STAMINA_CONFIG.perPointDrainMax -
+    (MATCH_STAMINA_CONFIG.perPointDrainMax - MATCH_STAMINA_CONFIG.perPointDrainMin) * enduranceT
+  const drain = Math.round(pointsPlayed * perPointCost)
+
+  const current = currentMatchStamina(player)
+  player.matchStamina = clampStamina(current - drain)
+
+  const fatigueGain = drain * MATCH_STAMINA_CONFIG.fatigueContributionMult
+  player.developmentFatigue = Math.max(
+    0,
+    Math.min(100, (player.developmentFatigue ?? 0) + fatigueGain),
+  )
 }
 
 export function getStamina(staminaMap, playerId) {
@@ -335,7 +399,10 @@ export function applyTickStaminaDrain(
     ) *
     (dtSec / 0.2)
   const recovery = tickStaminaRecovery(velocity, isDefense, endurance, dtSec)
-  const next = clampStamina(currentStamina - cost + recovery)
+  // Regeneracja nie może podnieść energii powyżej pułapu ze staminy meczowej —
+  // przeciążony w tygodniu/meczach zawodnik nie odzyska pełnej dyspozycji "magicznie".
+  const ceiling = currentMatchStamina(player)
+  const next = clampStamina(Math.min(currentStamina - cost + recovery, ceiling))
   map[player.id] = next
   player.currentStamina = next
   if (velocity >= SPRINT_SPEED_MPS) {
@@ -538,12 +605,12 @@ export function applyStaminaToTeamPlayers(team, staminaMap) {
   }))
 }
 
-/** Regeneracja zawodników poza boiskiem (między punktami). */
+/** Regeneracja zawodników poza boiskiem (między punktami), capowana staminą meczową. */
 export function regenBenchStamina(staminaMap, teamPlayers, onFieldIds, rng = null) {
   for (const p of teamPlayers) {
     if (onFieldIds.has(p.id)) continue
-    staminaMap[p.id] = clampStamina(
-      getStamina(staminaMap, p.id) + benchRegenForPlayer(p, rng),
-    )
+    const ceiling = currentMatchStamina(p)
+    const raw = getStamina(staminaMap, p.id) + benchRegenForPlayer(p, rng)
+    staminaMap[p.id] = clampStamina(Math.min(raw, ceiling))
   }
 }

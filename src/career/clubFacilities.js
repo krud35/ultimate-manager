@@ -13,13 +13,14 @@ import {
   getFanMood,
   getFanTraits,
 } from '../models/teamFans.js'
+import { SPONSOR_INCOME_BOOST } from './clubSponsors.js'
 
 export const FACILITY_LEVEL_MIN = 1
 export const FACILITY_LEVEL_MAX = 10
 export const FACILITY_BASELINE_LEVEL = 5
 export const FACILITIES_GEN_VERSION = 1
 
-/** @typedef {'stadium'|'trainingCenter'|'medicalCenter'|'chillRoom'|'fanShop'} FacilityId */
+/** @typedef {'stadium'|'trainingCenter'|'medicalCenter'|'chillRoom'|'fanShop'|'scoutingDept'} FacilityId */
 
 /**
  * @typedef {object} FacilityDef
@@ -284,6 +285,56 @@ export const FACILITY_DEFS = {
       },
     },
   },
+  scoutingDept: {
+    id: 'scoutingDept',
+    namePl: 'Dział skautingu',
+    nameEn: 'Scouting department',
+    effectPl: 'Limit równoległych misji i koszt wysłania skauta',
+    effectEn: 'Concurrent mission limit and scout mission cost',
+    alwaysPositive: false,
+    levelBlurbs: {
+      1: {
+        pl: 'Jeden wolontariusz z zeszytem i dobrym okiem, ale bez biletu na wyjazdowy sektor.',
+        en: 'One volunteer with a notebook and a good eye, but no ticket for the away section.',
+      },
+      2: {
+        pl: 'Skaut ogląda mecze z transmisji o fatalnej jakości i zgaduje resztę.',
+        en: 'The scout watches a low-quality stream and guesses the rest.',
+      },
+      3: {
+        pl: 'Arkusz Excela z kolumnami "chyba dobry" i "raczej nie". Metodologia: intuicja.',
+        en: 'A spreadsheet with columns "probably good" and "probably not." Methodology: gut feeling.',
+      },
+      4: {
+        pl: 'Prawie system — tylko notatki giną między kubkami po kawie.',
+        en: 'Almost a system — except notes keep vanishing between coffee cups.',
+      },
+      5: {
+        pl: 'Standardowy dział: dwóch skautów, kalendarz wyjazdów, raporty po każdym meczu.',
+        en: 'A standard setup: two scouts, a travel calendar, reports after every match.',
+      },
+      6: {
+        pl: 'Nowy laptop i baza danych, która faktycznie się nie crashuje w trakcie meczu.',
+        en: 'A new laptop and a database that doesn’t crash mid-match.',
+      },
+      7: {
+        pl: 'Skauci mają kontakty w innych klubach. Plotki docierają szybciej niż oficjalne komunikaty.',
+        en: 'Scouts have contacts around the league. Gossip travels faster than press releases.',
+      },
+      8: {
+        pl: 'Analiza wideo klatka po klatce i raporty, które trener faktycznie czyta do końca.',
+        en: 'Frame-by-frame video analysis and reports the coach actually reads to the end.',
+      },
+      9: {
+        pl: 'Prawie wywiad. Zna się skład rywala lepiej niż jego własny trener przed sezonem.',
+        en: 'Nearly an intelligence unit. Knows the rival roster better than their own coach does preseason.',
+      },
+      10: {
+        pl: 'Legendarny dział skautingu. Raporty przychodzą przed meczem, nie po nim — plotka głosi, że wiedzą, zanim rywal sam się zdecyduje.',
+        en: 'A legendary scouting department. Reports arrive before the match, not after — rumor says they know before the rival even decides.',
+      },
+    },
+  },
 }
 
 export const FACILITY_IDS = /** @type {FacilityId[]} */ (Object.keys(FACILITY_DEFS))
@@ -322,6 +373,7 @@ export function facilityUpgradeCost(facilityId, level) {
     medicalCenter: 1.1,
     chillRoom: 0.85,
     fanShop: 0.95,
+    scoutingDept: 1.0,
   }[facilityId] ?? 1
   const raw = 16_000 * tier * 1.52 ** (lv - 1)
   return Math.round(raw / 1000) * 1000
@@ -459,6 +511,12 @@ export function medicalInjuryChanceMult(team) {
   return Math.max(0.72, Math.min(1.28, 1 - delta * 0.045))
 }
 
+/** Mnożnik dziennej regeneracji staminy meczowej (1 = baseline; wyższy poziom → szybszy powrót do formy). */
+export function medicalRecoveryMult(team) {
+  const delta = facilityLevelDelta(getFacilityLevel(team, 'medicalCenter'))
+  return Math.max(0.75, Math.min(1.35, 1 + delta * 0.06))
+}
+
 /** Lekka zmiana morale po treningu (dla obecnych). */
 export function chillRoomMoraleDelta(team) {
   const delta = facilityLevelDelta(getFacilityLevel(team, 'chillRoom'))
@@ -491,8 +549,8 @@ export function computeFanShopMatchRevenue(team, { won = false, isHome = true } 
   }
   const avgForm = formN ? formSum / formN : 70
 
-  // Bazowo ~$120–$900 zależnie od poziomu sklepu.
-  let amount = 90 + level * 70
+  // Bazowo ~$120–$900 zależnie od poziomu sklepu (× SPONSOR_INCOME_BOOST — patrz clubSponsors.js).
+  let amount = (90 + level * 70) * SPONSOR_INCOME_BOOST
   amount *= 0.55 + Math.min(1.35, size / 9_000)
   amount *= 0.7 + (avgForm / 100) * 0.55
   amount *= 0.72 + (rep / 100) * 0.5
@@ -511,7 +569,7 @@ export function computeFanShopMatchRevenue(team, { won = false, isHome = true } 
 
   amount = Math.max(40, Math.round(amount / 10) * 10)
   // Cap — „nie kosmiczne”
-  amount = Math.min(amount, 4_500)
+  amount = Math.min(amount, Math.round(4_500 * SPONSOR_INCOME_BOOST))
 
   return {
     amount,
@@ -631,7 +689,7 @@ export function facilityEffectSummary(facilityId, level, lang = 'pl') {
       : `Morale po treningu ${sign}${(delta * 0.15).toFixed(1)}`
   }
   if (facilityId === 'fanShop') {
-    const est = 90 + lv * 70
+    const est = Math.round((90 + lv * 70) * SPONSOR_INCOME_BOOST)
     return lang === 'en'
       ? `Merch ~$${est}+ / match (fans/form/rep)`
       : `Merch ~$${est}+ / mecz (kibice/forma/rep)`

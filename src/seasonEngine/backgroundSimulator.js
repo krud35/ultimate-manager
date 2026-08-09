@@ -11,6 +11,7 @@ import { lineStylesForPointStart } from '../matchEngine/lineups.js'
 import { coachDirectivesForLine } from '../matchEngine/coachDirectives.js'
 import { autoRotateTacticsForTeam, tacticsForTeam } from '../matchEngine/aiLineup.js'
 import {
+  applyPostMatchStaminaWear,
   createStaminaMap,
   getStamina,
   clampStamina,
@@ -355,6 +356,8 @@ export function simulateBackgroundMatch(homeTeam, awayTeam, options = {}) {
   applyMoraleForMatchTeams(homeTeam, awayTeam, homeScore, awayScore, moraleBox)
   applyFormForMatchTeams(homeTeam, awayTeam, moraleBox, homeScore, awayScore)
   applyLoyaltyForMatchTeams(homeTeam, awayTeam, homeScore, awayScore, moraleBox)
+  for (const player of homeTeam.players ?? []) applyPostMatchStaminaWear(player)
+  for (const player of awayTeam.players ?? []) applyPostMatchStaminaWear(player)
 
   const injuries = []
   const rngFn = () => rng.float()

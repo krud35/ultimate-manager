@@ -5,6 +5,7 @@
 import {
   SKILLS_GEN_VERSION,
   buildBalancedSubStats,
+  buildPlayerArchetypeTiers,
   getOverallRating,
   normalizePlayerSkills,
 } from '../models/playerStats.js'
@@ -92,7 +93,8 @@ function createYouthPlayer(rng, seasonYear, index) {
   const id = `youth-${seasonYear}-${hashSeed(seasonYear, index, rng())}`
   const { min, max, tier } = rollYouthTier(rng)
   const targetOvr = min + Math.floor(rng() * (max - min + 1))
-  let skills = buildBalancedSubStats(hashSeed(id, 'skills'), () => rng())
+  const tiers = buildPlayerArchetypeTiers(rng)
+  let skills = buildBalancedSubStats(hashSeed(id, 'skills'), (cat) => tiers[cat])
   skills = scaleSkillsToTargetOvr(skills, targetOvr)
   const ovr = getOverallRating(skills)
   const age = rng() < 0.55 ? 18 : 19

@@ -40,8 +40,8 @@ export const TACTICS_MODIFIERS = {
         'Linia cuttersów w środku — dwa pasy (open/break). Wyższa celność, izolowane 1-na-1, mniej big plays.',
       descriptionEn:
         'Cutters in a line down the middle — open and break lanes. Higher completion rate, isolated 1v1s, fewer big plays.',
-      throwAccuracyBonus: 10,
-      throwRandomSpreadBonus: -4,
+      throwAccuracyBonus: 3,
+      throwRandomSpreadBonus: -2,
       advanceMultiplier: 0.82,
       throwDepthBias: -0.15,
       resetPriority: 0.15,
@@ -56,8 +56,8 @@ export const TACTICS_MODIFIERS = {
         '3 handlerów + 4 cuttersów w poprzek. Więcej under+deep naraz, wyższe tempo i ryzyko.',
       descriptionEn:
         '3 handlers + 4 cutters across the field. More under+deep looks at once, higher tempo and risk.',
-      throwAccuracyBonus: -6,
-      throwRandomSpreadBonus: 6,
+      throwAccuracyBonus: -2,
+      throwRandomSpreadBonus: 3,
       advanceMultiplier: 1.22,
       throwDepthBias: 0.35,
       resetPriority: -0.05,
@@ -72,8 +72,8 @@ export const TACTICS_MODIFIERS = {
         'Cuttersi na obu stronach (2–2). Silne iso / flood, dobre pull plays.',
       descriptionEn:
         'Cutters on both sides (2–2). Strong iso/flood looks, good for pull plays.',
-      throwAccuracyBonus: 2,
-      throwRandomSpreadBonus: 2,
+      throwAccuracyBonus: 1,
+      throwRandomSpreadBonus: 1,
       advanceMultiplier: 1.12,
       throwDepthBias: 0.2,
       resetPriority: 0,
@@ -89,8 +89,8 @@ export const TACTICS_MODIFIERS = {
         'Flood jednej sideline + izolowany cutter w wolnej połowie. Klasyczne iso.',
       descriptionEn:
         'Flood one sideline + isolated cutter in the open half. Classic iso offense.',
-      throwAccuracyBonus: -2,
-      throwRandomSpreadBonus: 4,
+      throwAccuracyBonus: -1,
+      throwRandomSpreadBonus: 2,
       advanceMultiplier: 1.18,
       throwDepthBias: 0.25,
       resetPriority: 0.05,
@@ -106,8 +106,8 @@ export const TACTICS_MODIFIERS = {
         'Point-five mentality: dysk w ruchu, bliskie podania, minimalny standing stack.',
       descriptionEn:
         'Point-five mentality: disc in motion, short throws, minimal standing stack.',
-      throwAccuracyBonus: -4,
-      throwRandomSpreadBonus: 4,
+      throwAccuracyBonus: -1,
+      throwRandomSpreadBonus: 2,
       advanceMultiplier: 1.05,
       throwDepthBias: -0.05,
       resetPriority: -0.2,
@@ -123,7 +123,7 @@ export const TACTICS_MODIFIERS = {
       descriptionEn:
         'Hexagon shape around the disc; quick short throws, interchangeable roles.',
       throwAccuracyBonus: 0,
-      throwRandomSpreadBonus: 2,
+      throwRandomSpreadBonus: 1,
       advanceMultiplier: 0.95,
       throwDepthBias: -0.2,
       resetPriority: -0.15,
@@ -138,7 +138,7 @@ export const TACTICS_MODIFIERS = {
         '3 flat handlerów + poppers/wings. Around / through / over przeciw zone D.',
       descriptionEn:
         '3 flat handlers + poppers/wings. Around / through / over against zone D.',
-      throwAccuracyBonus: 4,
+      throwAccuracyBonus: 1,
       throwRandomSpreadBonus: 0,
       advanceMultiplier: 0.88,
       throwDepthBias: -0.1,

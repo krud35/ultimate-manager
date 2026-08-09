@@ -45,46 +45,46 @@ import PlayerTraitChips from './PlayerTraitChips'
 import { useUiLang } from '../ui/UiLangContext'
 import { UI_LANG } from '../ui/locale'
 import { playerProfileStrings } from '../ui/strings/playerProfile'
+import { scoutingStrings } from '../ui/strings/scouting'
 import { resolveTeamName } from '../ui/locale'
 import {
-  attributeBandLabel,
-  attributeBandToneClass,
+  scoutedValueDisplay,
   fatigueBandLabel,
   fatigueBandToneClass,
 } from '../ui/fogOfWar'
+import { currentMatchStamina } from '../matchEngine/stamina.js'
 
-function CategoryBlock({ category, skills, fogged }) {
+/** @param {{ knowledge: number }} props — znajomość zawodnika 0–100 (100 = własny zawodnik, dokładne wartości) */
+function CategoryBlock({ category, skills, knowledge = 100 }) {
   const { lang } = useUiLang()
   const overall = Math.round(getCategoryOverall(skills, category))
   const keys = PLAYER_STAT_CATEGORIES[category]
   const labels = SUB_STAT_LABELS[category] ?? {}
+  const overallDisplay = scoutedValueDisplay(overall, knowledge, lang)
 
   return (
     <section className="rounded-lg border border-ufa-border bg-ufa-bg/50 p-3">
       <div className="flex items-center justify-between gap-2 mb-3">
         <h3 className="text-sm font-semibold text-ufa-text">{CATEGORY_LABELS[category]}</h3>
-        {fogged ? (
-          <span className={`text-xs font-bold ${attributeBandToneClass(overall)}`}>
-            {attributeBandLabel(overall, lang)}
-          </span>
+        {overallDisplay.kind === 'exact' ? (
+          <span className="text-xs font-bold tabular-nums text-ufa-accent">{overallDisplay.label}</span>
         ) : (
-          <span className="text-xs font-bold tabular-nums text-ufa-accent">{overall}</span>
+          <span className={`text-xs font-bold ${overallDisplay.toneClass}`}>{overallDisplay.label}</span>
         )}
       </div>
       <ul className="space-y-2">
         {keys.map((key) => {
           const value = getSubStat(skills, category, key)
+          const display = scoutedValueDisplay(value, knowledge, lang)
           return (
             <li key={key} className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
               <span className="text-xs text-ufa-muted sm:w-[9.5rem] shrink-0">
                 {labels[key] ?? key}
               </span>
-              {fogged ? (
-                <span className={`text-xs font-semibold ${attributeBandToneClass(value)}`}>
-                  {attributeBandLabel(value, lang)}
-                </span>
-              ) : (
+              {display.kind === 'exact' ? (
                 <SkillBar value={value} />
+              ) : (
+                <span className={`text-xs font-semibold ${display.toneClass}`}>{display.label}</span>
               )}
             </li>
           )
@@ -101,15 +101,24 @@ export default function PlayerProfileModal({
   leaguePlayerStats = null,
   teamName = null,
   isOwnPlayer = true,
+  knowledge = null,
   onExtendContract = null,
+  isShortlisted = false,
+  onToggleShortlist = null,
+  onScoutPlayer = null,
+  scoutPending = false,
 }) {
+  const effectiveKnowledge = knowledge ?? (isOwnPlayer ? 100 : 40)
   const { lang } = useUiLang()
   const t = playerProfileStrings(lang)
+  const ts = scoutingStrings(lang)
   const [extendOpen, setExtendOpen] = useState(false)
   const [extendWage, setExtendWage] = useState('')
   const [extendYears, setExtendYears] = useState('3')
   const [extendBusy, setExtendBusy] = useState(false)
   const [extendFlash, setExtendFlash] = useState(null)
+  const [scoutFlash, setScoutFlash] = useState(null)
+  const [scoutBusy, setScoutBusy] = useState(false)
 
   useEffect(() => {
     if (!player) return undefined
@@ -179,6 +188,25 @@ export default function PlayerProfileModal({
     }
   }
 
+  const handleScoutClick = () => {
+    if (!onScoutPlayer || scoutBusy || scoutPending) return
+    setScoutBusy(true)
+    const result = onScoutPlayer(player.id)
+    setScoutBusy(false)
+    if (result?.ok) {
+      setScoutFlash({ ok: true, text: ts.scoutQueued })
+    } else {
+      const errorKey = result?.error
+      const text =
+        errorKey === 'capacity'
+          ? ts.errorCapacity
+          : errorKey === 'insufficient_funds'
+            ? ts.errorInsufficientFunds
+            : ts.errorGeneric
+      setScoutFlash({ ok: false, text })
+    }
+  }
+
   const extendPreview = previewContractOffer(
     Math.round(Number(extendWage) || 0),
     Math.max(1, Math.min(5, Math.round(Number(extendYears) || 1))),
@@ -198,6 +226,7 @@ export default function PlayerProfileModal({
     player.team ||
     '—'
   const fatigue = player.developmentFatigue ?? 0
+  const matchFreshness = Math.round(currentMatchStamina(player))
 
   return createPortal(
     <div
@@ -231,6 +260,15 @@ export default function PlayerProfileModal({
                   className={`rounded bg-ufa-bg px-2 py-0.5 text-xs ring-1 ring-ufa-border ${fatigueBandToneClass(fatigue)}`}
                 >
                   {t.fatigue} <span className="font-semibold">{fatigueBandLabel(fatigue, lang)}</span>
+                </span>
+              )}
+              {isOwnPlayer && (
+                <span
+                  className={`rounded bg-ufa-bg px-2 py-0.5 text-xs ring-1 ring-ufa-border ${fatigueBandToneClass(100 - matchFreshness)}`}
+                  title={`${matchFreshness}/100`}
+                >
+                  {t.matchFreshness}{' '}
+                  <span className="font-semibold">{fatigueBandLabel(100 - matchFreshness, lang)}</span>
                 </span>
               )}
               {injured ? (
@@ -306,6 +344,39 @@ export default function PlayerProfileModal({
             {t.close}
           </button>
         </div>
+
+        {!isOwnPlayer && (onToggleShortlist || onScoutPlayer) && (
+          <div className="px-5 py-3 border-b border-ufa-border/80 flex flex-wrap items-center gap-2">
+            {onToggleShortlist && (
+              <button
+                type="button"
+                onClick={() => onToggleShortlist(player.id)}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium ring-1 ${
+                  isShortlisted
+                    ? 'bg-ufa-gold/15 text-ufa-gold ring-ufa-gold/40'
+                    : 'text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover'
+                }`}
+              >
+                {isShortlisted ? ts.removeFromShortlist : ts.addToShortlist}
+              </button>
+            )}
+            {onScoutPlayer && (
+              <button
+                type="button"
+                onClick={handleScoutClick}
+                disabled={scoutBusy || scoutPending}
+                className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+              >
+                {scoutPending ? ts.scoutPlayerPending : ts.scoutPlayerButton}
+              </button>
+            )}
+            {scoutFlash && (
+              <span className={`text-xs ${scoutFlash.ok ? 'text-ufa-accent' : 'text-red-400'}`}>
+                {scoutFlash.text}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="px-5 py-4 border-b border-ufa-border/80 text-sm">
           <p className="text-xs uppercase tracking-wide text-ufa-muted mb-2">{t.contractSection}</p>
@@ -433,7 +504,7 @@ export default function PlayerProfileModal({
 
         <div className="p-5 grid gap-4 sm:grid-cols-2">
           {Object.keys(PLAYER_STAT_CATEGORIES).map((cat) => (
-            <CategoryBlock key={cat} category={cat} skills={skills} fogged={!isOwnPlayer} />
+            <CategoryBlock key={cat} category={cat} skills={skills} knowledge={effectiveKnowledge} />
           ))}
         </div>
       </div>
