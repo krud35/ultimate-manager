@@ -6,7 +6,7 @@ import {
 } from '../career/randomEventCopyEn.js'
 import { randomEventTitleEn } from '../career/randomEvents.js'
 import { inboxStrings } from '../ui/strings/inbox'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   INBOX_TYPES,
   INBOX_TYPE_META,
@@ -1164,15 +1164,24 @@ export default function InboxView({
   onTransferOfferAction = null,
   onResolveDecision = null,
   onSponsorSign = null,
+  initialSelectedId = null,
+  onConsumeFocus = null,
 }) {
   const { lang } = useUiLang()
   const tInbox = inboxStrings(lang)
   const inbox = ensureInbox(career)
   const unread = unreadInboxCount(career)
   const [filter, setFilter] = useState('all')
-  const [selectedId, setSelectedId] = useState(null)
+  const [selectedId, setSelectedId] = useState(initialSelectedId)
   const [offerBusy, setOfferBusy] = useState(false)
   const [flash, setFlash] = useState(null)
+
+  // Consume the focus id once, on mount only.
+  useEffect(() => {
+    if (!initialSelectedId) return
+    onConsumeFocus?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const filtered = useMemo(() => {
     let list = inbox

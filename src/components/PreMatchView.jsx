@@ -5,8 +5,12 @@ import {
   parseISODate,
   pointDifferential,
 } from '../league'
+import { worldTeamById, getOpponentTacticsKnowledge } from '../career'
 import { useUiLang } from '../ui/UiLangContext'
 import { preMatchStrings } from '../ui/strings/preMatch'
+import { scoutingStrings } from '../ui/strings/scouting'
+import { scoutKnowledgeTier } from '../ui/fogOfWar'
+import { TACTICS_MODIFIERS } from '../matchEngine/tacticsModifiers.js'
 
 function daysBetweenIso(fromIso, toIso) {
   if (!fromIso || !toIso) return null
@@ -42,6 +46,113 @@ function teamLeaders(playerStats, teamId, limit = 5) {
       return (b.assists ?? 0) - (a.assists ?? 0)
     })
     .slice(0, limit)
+}
+
+function LeadersList({ leaders, emptyLabel }) {
+  if (leaders.length === 0) {
+    return <p className="text-xs text-ufa-muted">{emptyLabel}</p>
+  }
+  return (
+    <ul className="space-y-1.5">
+      {leaders.map((row, i) => (
+        <li
+          key={row.playerId ?? i}
+          className="flex items-center justify-between gap-2 rounded-md border border-ufa-border/70 bg-ufa-bg/40 px-2.5 py-1.5 text-sm"
+        >
+          <span className="min-w-0 truncate text-ufa-text">
+            <span className="text-ufa-muted tabular-nums mr-1.5">{i + 1}.</span>
+            {row.firstName} {row.lastName}
+          </span>
+          <span className="shrink-0 tabular-nums text-xs text-ufa-muted">
+            <span className="text-ufa-accent font-medium">{row.goals ?? 0}</span>G
+            {' · '}
+            <span className="text-ufa-gold font-medium">{row.assists ?? 0}</span>A
+            {' · '}
+            <span className="font-medium text-ufa-text">{row.blocks ?? 0}</span>B
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function styleLabel(id, dict) {
+  return dict?.[id]?.label ?? id ?? '—'
+}
+
+function ScoutingReportSection({ opponentTeam, opponentLeaders, tacticsKnowledge, t, ts, onOpenTeam }) {
+  const tier = scoutKnowledgeTier(tacticsKnowledge)
+  const showExact = tier === 'range' || tier === 'exact'
+  const tactics = opponentTeam?.tacticalIdentity ?? {}
+  const forceSide = tactics.oLineCoachDirectives?.forceSide ?? tactics.dLineCoachDirectives?.forceSide
+
+  return (
+    <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-accent mb-3">
+        {ts.scoutReportTitle}
+      </p>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted mb-2">
+            {ts.bestSevenTitle}
+          </p>
+          <LeadersList leaders={opponentLeaders} emptyLabel={t.noPlayerStats} />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">
+              {ts.expectedStyleTitle}
+            </p>
+            <span className="text-xs text-ufa-muted tabular-nums">
+              {ts.tacticsKnowledgeLabel}: {tacticsKnowledge}%
+            </span>
+          </div>
+          {showExact ? (
+            <dl className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <dt className="text-[10px] uppercase text-ufa-muted">O-Line</dt>
+                <dd className="text-ufa-text">
+                  {styleLabel(tactics.oLineAttackStyle ?? tactics.attackStyle, TACTICS_MODIFIERS.attack)}
+                  {' / '}
+                  {styleLabel(tactics.oLineDefenseStyle ?? tactics.defenseStyle, TACTICS_MODIFIERS.defense)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[10px] uppercase text-ufa-muted">D-Line</dt>
+                <dd className="text-ufa-text">
+                  {styleLabel(tactics.dLineAttackStyle ?? tactics.attackStyle, TACTICS_MODIFIERS.attack)}
+                  {' / '}
+                  {styleLabel(tactics.dLineDefenseStyle ?? tactics.defenseStyle, TACTICS_MODIFIERS.defense)}
+                </dd>
+              </div>
+              {forceSide && (
+                <div className="col-span-2">
+                  <dt className="text-[10px] uppercase text-ufa-muted">{ts.forceLabel}</dt>
+                  <dd className="text-ufa-text">{styleLabel(forceSide, TACTICS_MODIFIERS.force)}</dd>
+                </div>
+              )}
+            </dl>
+          ) : (
+            <div>
+              <p className="text-sm text-ufa-text">{opponentTeam?.aiCoachProfile?.label ?? '—'}</p>
+              <p className="mt-1 text-xs text-ufa-muted">{ts.styleUnknownHint}</p>
+            </div>
+          )}
+          {onOpenTeam && (
+            <button
+              type="button"
+              onClick={() => onOpenTeam(opponentTeam.id)}
+              className="mt-3 rounded-md border border-ufa-border px-3 py-1.5 text-xs text-ufa-text hover:bg-ufa-panel-hover"
+            >
+              {t.teamProfile}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function TeamCard({
@@ -114,30 +225,7 @@ function TeamCard({
         <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted mb-2">
           {t.topPlayers}
         </p>
-        {leaders.length === 0 ? (
-          <p className="text-xs text-ufa-muted">{t.noPlayerStats}</p>
-        ) : (
-          <ul className="space-y-1.5">
-            {leaders.map((row, i) => (
-              <li
-                key={row.playerId ?? i}
-                className="flex items-center justify-between gap-2 rounded-md border border-ufa-border/70 bg-ufa-bg/40 px-2.5 py-1.5 text-sm"
-              >
-                <span className="min-w-0 truncate text-ufa-text">
-                  <span className="text-ufa-muted tabular-nums mr-1.5">{i + 1}.</span>
-                  {row.firstName} {row.lastName}
-                </span>
-                <span className="shrink-0 tabular-nums text-xs text-ufa-muted">
-                  <span className="text-ufa-accent font-medium">{row.goals ?? 0}</span>G
-                  {' · '}
-                  <span className="text-ufa-gold font-medium">{row.assists ?? 0}</span>A
-                  {' · '}
-                  <span className="font-medium text-ufa-text">{row.blocks ?? 0}</span>B
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <LeadersList leaders={leaders} emptyLabel={t.noPlayerStats} />
       </div>
     </div>
   )
@@ -149,6 +237,7 @@ function TeamCard({
 export default function PreMatchView({
   fixture,
   league,
+  world = null,
   onNavigate,
   onOpenTeam = null,
   onSimulateUntilMatch = null,
@@ -156,6 +245,7 @@ export default function PreMatchView({
 }) {
   const { lang } = useUiLang()
   const t = preMatchStrings(lang)
+  const ts = scoutingStrings(lang)
   const names = useMemo(() => teamNameMap(league), [league])
   const table = useMemo(
     () => standingsTable(league.standings ?? {}, (id) => names[id] ?? id),
@@ -185,6 +275,17 @@ export default function PreMatchView({
   const daysLeft = daysBetweenIso(league.currentDate, fixture.date)
   const canPlayNow = isFixtureMatchDay(fixture, league)
   const isCup = fixture.competition === 'cup'
+
+  const opponentId = homeHighlight ? awayId : awayHighlight ? homeId : null
+  const playerTeam = worldTeamById(world, playerId)
+  const opponentTeam = worldTeamById(world, opponentId)
+  const opponentLeaders7 = useMemo(
+    () => teamLeaders(league.playerStats, opponentId, 7),
+    [league.playerStats, opponentId],
+  )
+  const tacticsKnowledge = playerTeam && opponentId
+    ? getOpponentTacticsKnowledge(playerTeam, opponentId)
+    : 0
 
   return (
     <div className="space-y-5 league-fade-in">
@@ -253,6 +354,17 @@ export default function PreMatchView({
           onOpenTeam={onOpenTeam}
         />
       </div>
+
+      {world && opponentTeam && (
+        <ScoutingReportSection
+          opponentTeam={opponentTeam}
+          opponentLeaders={opponentLeaders7}
+          tacticsKnowledge={tacticsKnowledge}
+          t={t}
+          ts={ts}
+          onOpenTeam={onOpenTeam}
+        />
+      )}
 
       <div className="flex flex-wrap gap-2">
         <button

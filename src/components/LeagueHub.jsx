@@ -64,6 +64,8 @@ export default function LeagueHub({
   onAdvanceDay = null,
   onSimulateUntilMatch = null,
   simulating = false,
+  actionRequired = false,
+  onActionRequired = null,
 }) {
   const { lang } = useUiLang()
   const t = hubStrings(lang)
@@ -222,11 +224,13 @@ export default function LeagueHub({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={onAdvanceDay}
+                onClick={actionRequired ? onActionRequired : onAdvanceDay}
                 disabled={simulating}
-                className="rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                className={`rounded-md px-5 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-40 ${
+                  actionRequired ? 'bg-ufa-gold text-ufa-bg' : 'bg-ufa-accent text-ufa-bg'
+                }`}
               >
-                {simulating ? t.simulating : t.nextDay}
+                {simulating ? t.simulating : actionRequired ? t.actionRequired : t.nextDay}
               </button>
               {!(playerFix && playerFix.status !== 'completed') && (
                 <button
