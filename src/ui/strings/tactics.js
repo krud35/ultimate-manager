@@ -94,6 +94,9 @@ const pl = {
   formationAttackDefenseSeparate:
     'Formacja ataku i styl obrony osobno dla O-Line i D-Line.',
   tacticsViewAria: 'Widok taktyki',
+  forceMark: 'Force (markowanie)',
+  selected: 'wybrany',
+  formationAria: (label) => `Formacja ${label}`,
 }
 
 const en = {
@@ -189,6 +192,9 @@ const en = {
   formationAttackDefenseSeparate:
     'Attack formation and defense style separately for O-Line and D-Line.',
   tacticsViewAria: 'Tactics view',
+  forceMark: 'Force mark',
+  selected: 'selected',
+  formationAria: (label) => `Formation ${label}`,
 }
 
 export function tacticsStrings(lang = UI_LANG.PL) {

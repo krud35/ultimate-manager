@@ -98,6 +98,10 @@ const pl = {
   emptyField: 'Brak danych boiska',
   discPossession: (meters, team) =>
     `Dysk: ${meters} m · ${team} w posiadaniu`,
+  matchupSubtitle: (homeName, homeCount, awayName, awayCount, pts) =>
+    `${homeName} (${homeCount} zaw.) vs ${awayName} (${awayCount} zaw.) · do ${pts} pkt`,
+  seedOptional: 'Seed (opcjonalnie)',
+  seedRandomPlaceholder: 'losowo',
 }
 
 const en = {
@@ -198,6 +202,10 @@ const en = {
   emptyField: 'No field data',
   discPossession: (meters, team) =>
     `Disc: ${meters} m · ${team} in possession`,
+  matchupSubtitle: (homeName, homeCount, awayName, awayCount, pts) =>
+    `${homeName} (${homeCount} players) vs ${awayName} (${awayCount} players) · to ${pts} pts`,
+  seedOptional: 'Seed (optional)',
+  seedRandomPlaceholder: 'random',
 }
 
 export function matchStrings(lang = UI_LANG.PL) {

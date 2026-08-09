@@ -29,15 +29,68 @@ import { windThrowModifiers } from './wind.js'
  */
 const STAT_SENSITIVITY = 0.65
 
-/**
- * Stała przewaga ataku: w ultimate podanie do wolnego odbiorcy jest domyślnie
- * skuteczne, obrona wygrywa dopiero przy realnej presji. Bez tego completion%
- * całej ligi schodzi poniżej 85%, gdy realnie wynosi ~90%.
- */
-const OFFENSE_BASELINE_EDGE = 12
-
 function compressSkill(value) {
   return 50 + (value - 50) * STAT_SENSITIVITY
+}
+
+/**
+ * Kategorie dystansu rzutu — determinują bazową trudność niezależnie od typu rzutu
+ * (dystans sam w sobie nie wpływał wcześniej na completion%, tylko wiatr; teraz
+ * jest jawną osią trudności, tak jak strona (open/break) i separacja odbiorcy).
+ */
+const THROW_DISTANCE_CATEGORY = {
+  DUMP: 'dump',
+  SHORT: 'short',
+  MEDIUM: 'medium',
+  LONG: 'long',
+  HUCK: 'huck',
+}
+
+export function throwDistanceCategory(distanceM) {
+  const d = Number(distanceM) || 0
+  if (d < 5) return THROW_DISTANCE_CATEGORY.DUMP
+  if (d < 15) return THROW_DISTANCE_CATEGORY.SHORT
+  if (d < 25) return THROW_DISTANCE_CATEGORY.MEDIUM
+  if (d < 40) return THROW_DISTANCE_CATEGORY.LONG
+  return THROW_DISTANCE_CATEGORY.HUCK
+}
+
+/**
+ * Docelowy gap (throwBase − defenseBase) skalibrowany binary-search NA PRAWDZIWYM
+ * resolveThrow() (tmp-calibrate-real.mjs, __debugGapOverride) przy stallCount=2 (typowy,
+ * niewymuszony rzut) i przeciętnym (60) rzucającym/odbiorcy/obrońcy — łapie realne
+ * efekty uboczne (stallMods niskiego stallu, skillAdjustment, technikę rzutu), których
+ * nie widziała czysto abstrakcyjna kalibracja szumu. Klucz = strona (open/break) +
+ * separacja odbiorcy (Open/Contested/Tight — margines z resolveSeparation).
+ */
+const DISTANCE_GAP_TABLE = {
+  dump: { openOpen: 9.3, openContested: 8.9, openTight: 0.6, breakOpen: 12.4, breakContested: 5.7, breakTight: -2.6 },
+  short: { openOpen: 5.9, openContested: 4.6, openTight: -4.4, breakOpen: 10.1, breakContested: 3.5, breakTight: -6.7 },
+  medium: { openOpen: 4.7, openContested: 3.2, openTight: -7.0, breakOpen: 8.7, breakContested: 2.5, breakTight: -8.6 },
+  long: { openOpen: 3.2, openContested: 0.3, openTight: -10.6, breakOpen: 7.7, breakContested: 1.4, breakTight: -10.6 },
+  huck: { openOpen: 0.3, openContested: -1.4, openTight: -17.9, breakOpen: 3.5, breakContested: -0.7, breakTight: -17.9 },
+}
+
+/** Waga wpływu umiejętności rzucającego wokół bazy kategorii — mocniej na break-side/huck. */
+const SKILL_ADJUST_WEIGHT = {
+  dump: { open: 2, break: 4 },
+  short: { open: 3, break: 6 },
+  medium: { open: 4, break: 8 },
+  long: { open: 5, break: 10 },
+  huck: { open: 8, break: 15 },
+}
+
+function distanceGapFor(category, isOpenSide, separationOutcome) {
+  const row = DISTANCE_GAP_TABLE[category] ?? DISTANCE_GAP_TABLE.medium
+  const sepKey = separationOutcome === 'open' ? 'Open' : separationOutcome === 'tight' ? 'Tight' : 'Contested'
+  const sideKey = isOpenSide ? 'open' : 'break'
+  return row[`${sideKey}${sepKey}`] ?? row.openContested
+}
+
+function skillAdjustment(throwStat, category, isOpenSide) {
+  const weights = SKILL_ADJUST_WEIGHT[category] ?? SKILL_ADJUST_WEIGHT.medium
+  const w = isOpenSide ? weights.open : weights.break
+  return ((throwStat - 50) / 50) * w
 }
 
 function attackMods(attackStyle) {
@@ -126,6 +179,8 @@ export function resolveThrow({
   throwDx = 0,
   throwDy = 0,
   throwDistanceM = null,
+  /** Tylko do kalibracji (tmp-calibrate-*.mjs) — pomija tabelę DISTANCE_GAP_TABLE. */
+  __debugGapOverride = null,
 }) {
   const { skillCheck } = MATCH_CONFIG
   const profile = throwProfile(throwType)
@@ -178,25 +233,28 @@ export function resolveThrow({
   const receiverTraits = getTraitMods(receiver)
   const defenderTraits = getTraitMods(defender)
 
+  const distanceM = throwDistanceM ?? Math.hypot(throwDx, throwDy)
+  const distanceCategory = throwDistanceCategory(distanceM)
+  const baseGap =
+    __debugGapOverride ?? distanceGapFor(distanceCategory, isOpenSide, separation?.outcome)
+
   const throwBase =
-    compressSkill(throwStat) +
-    OFFENSE_BASELINE_EDGE -
+    baseGap +
+    skillAdjustment(throwStat, distanceCategory, isOpenSide) -
     stallComposureAccuracyPenalty(stallCount, thrower) +
-    profile.accuracyMod +
     throwTypeAccuracyTraitBonus(thrower, throwType) +
     (!isOpenSide ? throwerTraits.breakSideAccuracy : 0) +
     (receiverTraits.catchBonus ?? 0) +
-    (separation?.throwBonus ?? 0) -
-    (separation?.throwPenalty ?? 0) +
     stallMods.accuracyBonus -
     stallMods.accuracyPenalty -
     throwerFatigue.throwAccuracyPenalty +
     (windMods.accuracyDelta ?? 0)
 
+  // Obrońca wpływa na rzut głównie przez separację (resolveSeparation, wcześniej w
+  // pipeline) — tu zostaje tylko wąski "hands" skill (D w momencie rzutu), wyśrodkowany
+  // wokół 0 przy przeciętnej umiejętności, żeby nie przesuwać skalibrowanego baseGap.
   const defenseBase =
-    compressSkill(weightedLegacyStat(defender.skills, skillCheck.defenseWeights)) +
-    compressSkill(subStat(defender, 'defensive', 'blocking')) * 0.12 +
-    profile.blockRiskMod +
+    (compressSkill(subStat(defender, 'defensive', 'blocking')) - 50) * 0.12 +
     throwTypeBlockRiskTraitBonus(thrower, throwType) +
     (techniqueMods.blockRiskBonus ?? 0) +
     (forcedContested || stallMods.forcedContested ? 4 : 0) +

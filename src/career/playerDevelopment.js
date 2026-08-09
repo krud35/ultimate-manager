@@ -260,7 +260,7 @@ export function applyAgingDecline(player, strength, rng = Math.random) {
 }
 
 /** Obóz offseason — wzrost wg fokusu (bez osobnego treningu indywidualnego w sezonie). */
-function applyOffseasonCampGrowth(player, rng) {
+export function applyOffseasonCampGrowth(player, rng) {
   const mods = getIndividualFocusMods(player)
   if (mods.isRest) {
     player.developmentFatigue = clamp((player.developmentFatigue ?? 0) - 8, 0, 100)

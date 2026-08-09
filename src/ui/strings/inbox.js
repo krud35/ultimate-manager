@@ -94,6 +94,11 @@ const pl = {
   attendance: 'Frekwencja',
   skillBumps: 'Skoki skilli',
   injuryLabel: 'Uraz',
+  scoreLabel: 'Wynik',
+  yardsYou: 'Metry (Ty)',
+  yardsOpp: 'Metry (rywal)',
+  odYou: 'Punkty O / D (Ty)',
+  odOpp: 'Punkty O / D (rywal)',
 }
 
 const en = {
@@ -189,6 +194,11 @@ const en = {
   attendance: 'Attendance',
   skillBumps: 'Skill bumps',
   injuryLabel: 'Injury',
+  scoreLabel: 'Score',
+  yardsYou: 'Yards (you)',
+  yardsOpp: 'Yards (opp.)',
+  odYou: 'O / D points (you)',
+  odOpp: 'O / D points (opp.)',
 }
 
 export function inboxStrings(lang = UI_LANG.PL) {

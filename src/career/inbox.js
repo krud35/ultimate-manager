@@ -21,7 +21,11 @@ import {
   classifyTransferTarget,
   transferTargetMotiveLabelPl,
 } from './transfers/index.js'
-import { pickRandomEventMessage, pickPostMatchEventMessage } from './randomEvents.js'
+import {
+  pickRandomEventMessage,
+  pickPostMatchEventMessage,
+  buildAcademyProspectMessage,
+} from './randomEvents.js'
 import { attributeBandLabel } from '../ui/fogOfWar.js'
 import { holdPct, breakPct, pressureCompletionRate } from '../matchEngine'
 
@@ -1021,6 +1025,7 @@ export function expireStaleTransferOffers(career, { date = null } = {}) {
           ...m,
           read: m.read,
           body: `${m.body} · Oferta wygasła.`,
+          bodyEn: `${m.bodyEn ?? m.body} · Offer expired.`,
           payload: { ...p, status: 'expired' },
         }
       }
@@ -1033,6 +1038,7 @@ export function expireStaleTransferOffers(career, { date = null } = {}) {
       return {
         ...m,
         body: `${m.body} · Okno się zamknęło — rejestracja nieważna.`,
+        bodyEn: `${m.bodyEn ?? m.body} · The window closed — registration void.`,
         payload: { ...p, status: 'expired' },
       }
     }
@@ -1043,6 +1049,7 @@ export function expireStaleTransferOffers(career, { date = null } = {}) {
       return {
         ...m,
         body: `${m.body} · Nie potwierdzono rejestracji przed zamknięciem okna — umowa wygasła.`,
+        bodyEn: `${m.bodyEn ?? m.body} · Registration wasn't confirmed before the window closed — the deal expired.`,
         payload: { ...p, status: 'expired' },
       }
     }
@@ -1076,6 +1083,10 @@ export function messageFromScoutMission(mission, career, { date = null } = {}) {
   if (!mission?.kind) return null
   const world = career?.world
   const resolvedDate = date ?? career?.league?.currentDate ?? null
+
+  if (mission.kind === 'academyProspect') {
+    return buildAcademyProspectMessage(career, { mission, prospect: mission.prospect })
+  }
 
   const basePayload = {
     kind: mission.kind,
@@ -1148,6 +1159,26 @@ export function messagesFromScoutMissions(missions, career, { date = null } = {}
   return (missions ?? []).map((m) => messageFromScoutMission(m, career, { date })).filter(Boolean)
 }
 
+/** FYI (nie decyzja) — prospekt akademii skończył 21 lat i został zwolniony na wolny rynek. */
+export function messagesFromAcademyAgedOut(players, career, { date = null } = {}) {
+  if (!players?.length) return []
+  const resolvedDate = date ?? career?.league?.currentDate ?? null
+  return players.map((player) => {
+    const name = getPlayerFullName(player)
+    return createInboxMessage({
+      type: INBOX_TYPES.CLUB_NEWS,
+      title: `Akademia · ${name} odszedł na wolny rynek`,
+      titleEn: `Academy · ${name} released to free agency`,
+      body: `${name} skończył 21 lat w akademii i nie został awansowany do seniorów przed terminem — trafił na wolny rynek. Wciąż możesz spróbować go podpisać.`,
+      bodyEn: `${name} turned 21 in the academy and wasn't promoted to the senior squad in time — he's been released to the free agent pool. You can still try to re-sign him.`,
+      date: resolvedDate,
+      seasonIndex: career?.seasonIndex ?? null,
+      seasonYear: career?.seasonYear ?? null,
+      payload: { kind: 'academy_aged_out', playerId: player.id, playerName: name },
+    })
+  })
+}
+
 /** Klucz deduplikacji dla typowych payloadów. */
 export function inboxDedupeKey(message) {
   if (!message) return null
@@ -1203,6 +1234,13 @@ export function inboxDedupeKey(message) {
     message.date
   ) {
     return `reg:${message.date}:${p.playerId}:${p.sourceMessageId ?? ''}`
+  }
+  if (
+    message.type === INBOX_TYPES.RANDOM_EVENT &&
+    p.templateId === 'academy_prospect_found' &&
+    p.missionId
+  ) {
+    return `academy_prospect:${p.missionId}`
   }
   if (
     message.type === INBOX_TYPES.RANDOM_EVENT &&

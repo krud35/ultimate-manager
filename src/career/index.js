@@ -162,6 +162,7 @@ export {
   messagesFromNewPlayerMatches,
   messageFromScoutMission,
   messagesFromScoutMissions,
+  messagesFromAcademyAgedOut,
   messageFromTransferDeal,
   messagesFromNewTransferLogEntries,
   generateIncomingTransferOffers,
@@ -244,6 +245,7 @@ export {
   trainingCenterQualityMult,
   medicalInjuryChanceMult,
   chillRoomMoraleDelta,
+  academyIntakeMult,
 } from './clubFacilities.js'
 export {
   SPONSOR_SLOTS,
@@ -315,3 +317,20 @@ export {
   queueScoutMission,
   resolveScoutMissions,
 } from './scouting.js'
+export {
+  ACADEMY_JOIN_AGE_MIN,
+  ACADEMY_JOIN_AGE_MAX,
+  ACADEMY_AGE_OUT,
+  ACADEMY_SCOUT_REGIONS,
+  academyRegionLabel,
+  ensureTeamAcademy,
+  ensureWorldAcademy,
+  worldAcademyPlayersList,
+  createAcademyProspect,
+  runAcademyIntake,
+  sweepAgedOutAcademyPlayers,
+  runAiAcademyPromotionPass,
+  promoteAcademyPlayer,
+  releaseAcademyPlayer,
+  applyAcademyOffseasonDevelopment,
+} from './academy.js'

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { EVENT, TACTICS_MODIFIERS, DEFENSE_STYLES } from '../matchEngine'
 import { useUiLang } from '../ui/UiLangContext'
 import { pickCopy, UI_LANG } from '../ui/locale'
@@ -66,7 +67,7 @@ function eventRowClass(event) {
   return 'text-ufa-muted'
 }
 
-export default function PointHistory({
+const PointHistory = memo(function PointHistory({
   events,
   pointIndex,
   pointIndices,
@@ -154,4 +155,6 @@ export default function PointHistory({
       </p>
     </div>
   )
-}
+})
+
+export default PointHistory

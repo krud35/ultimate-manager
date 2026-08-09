@@ -7,6 +7,9 @@ export const STALL_MAX = 10
 /** Jedna jednostka stalla = 1 sekunda krycia. */
 export const STALL_SECOND_MS = 1000
 
+/** Skala kary do celności za presję stall (tier medium/high) — patrz stallThrowModifiers. */
+const HIGH_STALL_PENALTY_SCALE = 0.48
+
 /**
  * Stall z czasu posiadania dysku: 1 s → 1, 2 s → 2, …, 10 s → 10 (stall-out).
  * Przed upływem pierwszej sekundy zwraca 0 (brak wyświetlenia).
@@ -94,7 +97,9 @@ export function stallThrowModifiers({
     accuracyBonus += 5 + mental.decisionMaking * 0.05 - pressure * 0.15
     accuracyBonus += traitMods.lowStallAccuracy
   } else if (tier === 'medium') {
-    accuracyPenalty += 3 + pressure * 0.25 + (stallCount - 4) * 0.8
+    // Kara stall-presji przycięta ~0.48x — stall 9 miał zbijać completion do ~40%,
+    // docelowo ~75% (presja realna, ale nie decydująca sama z siebie).
+    accuracyPenalty += (3 + pressure * 0.25 + (stallCount - 4) * 0.8) * HIGH_STALL_PENALTY_SCALE
     if (stallCount >= 5) accuracyPenalty -= traitMods.highStallAccuracy * 0.35
     const composureDrain = fatigueComposurePenalty ?? 0
     const badChance =
@@ -103,7 +108,9 @@ export function stallThrowModifiers({
     badDecision = rng.float() < clamp(badChance, 0.05, 0.55)
   } else if (tier === 'high') {
     forcedContested = true
-    accuracyPenalty += 6 + (10 - stallCount) * -0.5 + pressure * 0.2 + (fatigueComposurePenalty ?? 0) * 0.25
+    accuracyPenalty +=
+      (6 + (10 - stallCount) * -0.5 + pressure * 0.2 + (fatigueComposurePenalty ?? 0) * 0.25) *
+      HIGH_STALL_PENALTY_SCALE
     accuracyPenalty -= traitMods.highStallAccuracy
     if (stallCount >= 8) accuracyBonus += traitMods.stall8PlusAccuracy
     randomSpreadBonus += 12 - mental.composure * 0.06

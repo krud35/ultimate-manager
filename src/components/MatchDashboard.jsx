@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import {
   completionRate,
   huckRate,
@@ -80,7 +81,7 @@ function StatTile({ label, homeVal, awayVal, title = null }) {
 /**
  * Wynik + kluczowe statystyki meczu — wynik i wyśrodkowane kafelki.
  */
-export default function MatchDashboard({
+const MatchDashboard = memo(function MatchDashboard({
   matchStats,
   homeName,
   awayName,
@@ -210,4 +211,6 @@ export default function MatchDashboard({
       </div>
     </div>
   )
-}
+})
+
+export default MatchDashboard

@@ -913,6 +913,10 @@ export default function MatchView({
     return roster.filter((p) => ids.has(p.id))
   }, [session?.away?.players, awayTeam.players, reviewLineupIds.awayLineupIds])
 
+  // Panel staminy nie musi być klatka-idealny — throttle do ~10x/s zamiast przeliczania
+  // (z klonowaniem map + replayem eventów punktu) na każdym ticku RAF (60-144+/s).
+  const staminaClipElapsedBucket = Math.round((clipElapsed ?? 0) / 100) * 100
+
   const playbackStaminaMaps = useMemo(() => {
     if (!reviewPointEvents.length) {
       return session?.stamina ?? result?.stamina ?? null
@@ -922,7 +926,7 @@ export default function MatchView({
     }
     const progress =
       fieldPlaying && actionClip
-        ? clipProgress01(clipElapsed, actionClip, playbackSpeed)
+        ? clipProgress01(staminaClipElapsedBucket, actionClip, playbackSpeed)
         : 0
     return (
       computeStaminaDuringPointPlayback({
@@ -942,7 +946,7 @@ export default function MatchView({
     fastSim?.active,
     fieldPlaying,
     actionClip,
-    clipElapsed,
+    staminaClipElapsedBucket,
     playbackSpeed,
     playbackStep,
     reviewHomeLineup,
@@ -1049,20 +1053,25 @@ export default function MatchView({
               {isLeagueMatch ? t.leagueMatch : t.simMatch}
             </h2>
             <p className="mt-1 text-sm text-ufa-muted">
-              {homeTeam.name} ({homeTeam.players.length} zaw.) vs {awayTeam.name} (
-              {awayTeam.players.length} zaw.) · do {MATCH_CONFIG.pointsToWin} pkt · O:{' '}
-              {oAttackLabel}/{oDefenseLabel} · D: {dAttackLabel}/{dDefenseLabel}
+              {t.matchupSubtitle(
+                homeTeam.name,
+                homeTeam.players.length,
+                awayTeam.name,
+                awayTeam.players.length,
+                MATCH_CONFIG.pointsToWin,
+              )}{' '}
+              · O: {oAttackLabel}/{oDefenseLabel} · D: {dAttackLabel}/{dDefenseLabel}
             </p>
           </div>
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-xs text-ufa-muted">
-              Seed (opcjonalnie)
+              {t.seedOptional}
               <input
                 type="text"
                 inputMode="numeric"
                 value={seedInput}
                 onChange={(e) => setSeedInput(e.target.value)}
-                placeholder="losowo"
+                placeholder={t.seedRandomPlaceholder}
                 disabled={!!session}
                 className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-sm text-ufa-text w-28 disabled:opacity-50"
               />

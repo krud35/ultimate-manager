@@ -105,7 +105,7 @@ function ForcePicker({ value, onChange, compact }) {
   return (
     <div className="space-y-2">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-ufa-muted">
-        Force mark
+        {t.forceMark}
       </p>
       <div className="flex flex-wrap gap-1.5">
         {COACH_FORCE_PRIMARY.map((id) => {

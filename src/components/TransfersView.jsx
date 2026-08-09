@@ -1,6 +1,7 @@
 import { useUiLang } from '../ui/UiLangContext'
 import { pickLabel } from '../ui/locale'
 import { transfersStrings } from '../ui/strings/transfers'
+import { translateTransferError } from '../ui/strings/transferErrors'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getOverallRating } from '../data/mockPlayers'
 import PlayerProfileModal from './PlayerProfileModal'
@@ -430,7 +431,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
         contract: terms,
       })
       if (!result.ok) {
-        setFlash({ type: 'error', text: result.error ?? t.transferError })
+        setFlash({ type: 'error', text: translateTransferError(result.error, lang) ?? t.transferError })
         return
       }
       onCareerUpdate({

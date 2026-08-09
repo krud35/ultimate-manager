@@ -24,7 +24,8 @@ export function applyPartialMotionTraceStamina(
   progress01,
 ) {
   if (!staminaMaps || !motionTrace?.frames?.length || !baselineMaps) return staminaMaps
-  const frames = [...motionTrace.frames].sort((a, b) => a.ms - b.ms)
+  // Klatki symulacji powstają w kolejności tick-ów (ms rosnąco) — bez sortowania co klatkę odtwarzania.
+  const frames = motionTrace.frames
   const lastMs = frames[frames.length - 1]?.ms ?? 1
   const targetMs = lastMs * Math.min(1, Math.max(0, progress01))
   const subset = frames.filter((f) => f.ms <= targetMs)

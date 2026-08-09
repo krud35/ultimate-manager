@@ -89,7 +89,7 @@ export default function FormationPreview({
           viewBox={`0 0 ${LENGTH_M} ${WIDTH_M}`}
           preserveAspectRatio="xMidYMid meet"
           role="img"
-          aria-label={`Formacja ${styleLabel}`}
+          aria-label={t.formationAria(styleLabel)}
         >
           <rect className="field-grass" x={0} y={0} width={LENGTH_M} height={WIDTH_M} />
           <rect className="field-endzone field-endzone--left" x={0} y={0} width={ENDZONE_M} height={WIDTH_M} />

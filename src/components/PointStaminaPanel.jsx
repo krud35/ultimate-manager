@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import StaminaBar, { getStaminaForPlayer } from './StaminaBar.jsx'
 import { buildPointLineStats, completionPct } from '../matchEngine/pointLineStats.js'
 import { useUiLang } from '../ui/UiLangContext'
@@ -156,7 +157,7 @@ function TeamBlock({
 /**
  * Stamina + statystyki punktu dla 7 na boisku — pełna szerokość pod boiskiem.
  */
-export default function PointStaminaPanel({
+const PointStaminaPanel = memo(function PointStaminaPanel({
   homeName,
   awayName,
   homePlayers,
@@ -221,4 +222,6 @@ export default function PointStaminaPanel({
       </div>
     </div>
   )
-}
+})
+
+export default PointStaminaPanel

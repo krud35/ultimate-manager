@@ -476,7 +476,7 @@ export default function PlayerSlotPicker({
                           defenseLineIds={defenseLineIds}
                         />
                         {isCurrent ? (
-                          <span className="text-[10px] text-ufa-accent">wybrany</span>
+                          <span className="text-[10px] text-ufa-accent">{t.selected}</span>
                         ) : null}
                       </div>
                       <div className="mt-1 space-y-1">

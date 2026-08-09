@@ -60,10 +60,13 @@ export function decisionNoiseAmplitude(player, stallCount = 1) {
 }
 
 /** Kara celności za stall > 4 (punkty score) — composure chroni pod presją. */
+/** Skala kary composure za presję stall — patrz HIGH_STALL_PENALTY_SCALE w stall.js. */
+const HIGH_STALL_COMPOSURE_PENALTY_SCALE = 0.12
+
 export function stallComposureAccuracyPenalty(stallCount, player) {
   if (stallCount <= 4) return 0
   const comp = subStat(player, 'mental', 'composure') / 100
-  return (stallCount - 4) * (1 - comp) * 9
+  return (stallCount - 4) * (1 - comp) * 9 * HIGH_STALL_COMPOSURE_PENALTY_SCALE
 }
 
 /** Cushion krycia cuttera: 2.5 - (defensiveCutterMovement / 100) * 1.8 m */

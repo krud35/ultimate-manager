@@ -31,6 +31,7 @@ export const PLAYER_STATUS = {
   ACTIVE: 'active',
   FREE_AGENT: 'free_agent',
   RETIRED: 'retired',
+  ACADEMY: 'academy',
 }
 
 export function ensureWorldFreeAgents(world) {

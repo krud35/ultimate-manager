@@ -6,6 +6,7 @@ import {
 } from '../career/randomEventCopyEn.js'
 import { randomEventTitleEn } from '../career/randomEvents.js'
 import { inboxStrings } from '../ui/strings/inbox'
+import { translateTransferError, translateSponsorSignError } from '../ui/strings/transferErrors'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   INBOX_TYPES,
@@ -668,7 +669,7 @@ function MatchAnalysisPanel({ message }) {
           </p>
           <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 text-sm">
             <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2">
-              <dt className="text-[10px] uppercase text-ufa-muted">Wynik</dt>
+              <dt className="text-[10px] uppercase text-ufa-muted">{t.scoreLabel}</dt>
               <dd className="font-semibold tabular-nums text-ufa-text">
                 {ts.ourPoints ?? p.ourScore ?? '—'}–{ts.theirPoints ?? p.theirScore ?? '—'}
               </dd>
@@ -682,19 +683,19 @@ function MatchAnalysisPanel({ message }) {
               <dd className="font-semibold tabular-nums text-ufa-text">{fmtTeamCompletion(theirs)}</dd>
             </div>
             <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2">
-              <dt className="text-[10px] uppercase text-ufa-muted">Metry (Ty)</dt>
+              <dt className="text-[10px] uppercase text-ufa-muted">{t.yardsYou}</dt>
               <dd className="font-semibold tabular-nums text-ufa-text">
                 {ours?.totalYards != null ? `${ours.totalYards} m` : '—'}
               </dd>
             </div>
             <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2">
-              <dt className="text-[10px] uppercase text-ufa-muted">Metry (rywal)</dt>
+              <dt className="text-[10px] uppercase text-ufa-muted">{t.yardsOpp}</dt>
               <dd className="font-semibold tabular-nums text-ufa-text">
                 {theirs?.totalYards != null ? `${theirs.totalYards} m` : '—'}
               </dd>
             </div>
             <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2">
-              <dt className="text-[10px] uppercase text-ufa-muted">Punkty O / D (Ty)</dt>
+              <dt className="text-[10px] uppercase text-ufa-muted">{t.odYou}</dt>
               <dd className="font-semibold tabular-nums text-ufa-text">
                 {ourLine
                   ? `${ourLine.offense ?? 0} / ${ourLine.defense ?? 0}`
@@ -703,7 +704,7 @@ function MatchAnalysisPanel({ message }) {
             </div>
             {theirLine ? (
               <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2 sm:col-span-2">
-                <dt className="text-[10px] uppercase text-ufa-muted">Punkty O / D (rywal)</dt>
+                <dt className="text-[10px] uppercase text-ufa-muted">{t.odOpp}</dt>
                 <dd className="font-semibold tabular-nums text-ufa-text">
                   {theirLine.offense ?? 0} / {theirLine.defense ?? 0}
                 </dd>
@@ -1220,7 +1221,7 @@ export default function InboxView({
     try {
       const result = onTransferOfferAction(opts)
       if (result?.ok === false) {
-        setFlash({ type: 'error', text: result.error ?? tInbox.negotiateError })
+        setFlash({ type: 'error', text: translateTransferError(result.error, lang) ?? tInbox.negotiateError })
       } else if (result?.message) {
         setFlash({
           type: result.completed ? 'ok' : result.rejected ? 'warn' : 'ok',
@@ -1242,7 +1243,7 @@ export default function InboxView({
       if (result?.ok === false) {
         setFlash({
           type: 'error',
-          text: result.error ?? (lang === 'en' ? 'Could not sign' : 'Nie udało się podpisać'),
+          text: translateSponsorSignError(result.error, lang) ?? (lang === 'en' ? 'Could not sign' : 'Nie udało się podpisać'),
         })
       } else if (result?.ok) {
         setFlash({

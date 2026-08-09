@@ -1,0 +1,71 @@
+import { pickDict, UI_LANG } from '../locale'
+
+const pl = {
+  title: 'Akademia U21',
+  intro:
+    'Pula własnych prospektów. Poziom obiektu Akademia (Zarząd) steruje naborem organicznym co sezon — wyślij też skauta w konkretny region, żeby poszukać kogoś celowo.',
+  academyLevelLabel: (level) => `Poziom akademii: ${level}/10`,
+  prospectsTitle: 'Prospekty',
+  prospectsEmpty: 'Akademia jest pusta — nabór organiczny pojawi się na koniec sezonu, albo wyślij skauta poniżej.',
+  colPlayer: 'Zawodnik',
+  colAge: 'Wiek',
+  colOvr: 'OVR',
+  colPotential: 'Potencjał',
+  colSource: 'Źródło',
+  colJoined: 'Sezon naboru',
+  sourceIntake: 'Nabór',
+  sourceScouted: 'Skauting',
+  ageOutWarning: (age) => (age >= 20 ? `Uwaga: ${age} lat — niedługo wygaśnie termin` : null),
+  promoteAction: 'Awansuj do seniorów',
+  releaseAction: 'Zwolnij',
+  promoteConfirmError: 'Nie udało się awansować zawodnika (brak budżetu lub warunków kontraktu).',
+  sendScoutTitle: 'Wyślij skauta za granicę',
+  regionLabel: 'Region',
+  regionPlaceholder: 'Wybierz region…',
+  sendScoutButton: 'Wyślij skauta',
+  scoutQueued: 'Skaut wysłany — kandydat trafi do skrzynki po powrocie.',
+  errorMissingRegion: 'Wybierz region przed wysłaniem skauta.',
+  errorCapacity: 'Brak wolnych slotów skautingu — rozbuduj dział skautingu albo poczekaj na zakończenie misji.',
+  errorInsufficientFunds: 'Za mało środków w budżecie transferowym.',
+  errorGeneric: 'Nie udało się wysłać skauta.',
+  pendingMissionsTitle: 'Wyjazdy w toku',
+  pendingWaiting: 'Skaut w drodze…',
+  noPendingMissions: 'Brak aktywnych wyjazdów skautingowych po prospektów.',
+}
+
+const en = {
+  title: 'U21 Academy',
+  intro:
+    'Your own pool of prospects. The Academy facility level (Club Board) drives organic intake each season — you can also send a scout to a specific region to look for someone on purpose.',
+  academyLevelLabel: (level) => `Academy level: ${level}/10`,
+  prospectsTitle: 'Prospects',
+  prospectsEmpty: 'The academy is empty — organic intake lands at season end, or send a scout below.',
+  colPlayer: 'Player',
+  colAge: 'Age',
+  colOvr: 'OVR',
+  colPotential: 'Potential',
+  colSource: 'Source',
+  colJoined: 'Intake season',
+  sourceIntake: 'Intake',
+  sourceScouted: 'Scouted',
+  ageOutWarning: (age) => (age >= 20 ? `Heads up: age ${age} — deadline approaching` : null),
+  promoteAction: 'Promote to first team',
+  releaseAction: 'Release',
+  promoteConfirmError: 'Could not promote the player (budget or contract terms failed).',
+  sendScoutTitle: 'Send a scout abroad',
+  regionLabel: 'Region',
+  regionPlaceholder: 'Choose a region…',
+  sendScoutButton: 'Send scout',
+  scoutQueued: 'Scout sent — a candidate will land in your inbox on return.',
+  errorMissingRegion: 'Pick a region before sending the scout.',
+  errorCapacity: 'No free scouting slots — upgrade the scouting department or wait for a mission to finish.',
+  errorInsufficientFunds: 'Not enough transfer budget.',
+  errorGeneric: 'Could not send the scout.',
+  pendingMissionsTitle: 'Trips in progress',
+  pendingWaiting: 'Scout is traveling…',
+  noPendingMissions: 'No active academy scouting trips.',
+}
+
+export function academyStrings(lang = UI_LANG.PL) {
+  return pickDict({ pl, en }, lang)
+}

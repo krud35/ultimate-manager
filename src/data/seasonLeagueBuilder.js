@@ -227,6 +227,7 @@ export function rollTeamTacticalIdentity(teamId, seed) {
       possessionTempo: rng() * 1.2 - 0.6,
     },
     blurb: 'Wylosowany charakter drużyny na start kariery.',
+    blurbEn: 'Randomly rolled team identity at career start.',
   }
 }
 

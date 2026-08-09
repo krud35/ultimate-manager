@@ -7,6 +7,7 @@ import {
 } from '../league'
 import { worldTeamById, getOpponentTacticsKnowledge } from '../career'
 import { useUiLang } from '../ui/UiLangContext'
+import { pickLabel } from '../ui/locale'
 import { preMatchStrings } from '../ui/strings/preMatch'
 import { scoutingStrings } from '../ui/strings/scouting'
 import { scoutKnowledgeTier } from '../ui/fogOfWar'
@@ -80,7 +81,7 @@ function styleLabel(id, dict) {
   return dict?.[id]?.label ?? id ?? '—'
 }
 
-function ScoutingReportSection({ opponentTeam, opponentLeaders, tacticsKnowledge, t, ts, onOpenTeam }) {
+function ScoutingReportSection({ opponentTeam, opponentLeaders, tacticsKnowledge, t, ts, lang, onOpenTeam }) {
   const tier = scoutKnowledgeTier(tacticsKnowledge)
   const showExact = tier === 'range' || tier === 'exact'
   const tactics = opponentTeam?.tacticalIdentity ?? {}
@@ -136,7 +137,9 @@ function ScoutingReportSection({ opponentTeam, opponentLeaders, tacticsKnowledge
             </dl>
           ) : (
             <div>
-              <p className="text-sm text-ufa-text">{opponentTeam?.aiCoachProfile?.label ?? '—'}</p>
+              <p className="text-sm text-ufa-text">
+                {opponentTeam?.aiCoachProfile ? pickLabel(opponentTeam.aiCoachProfile, lang) : '—'}
+              </p>
               <p className="mt-1 text-xs text-ufa-muted">{ts.styleUnknownHint}</p>
             </div>
           )}
@@ -362,6 +365,7 @@ export default function PreMatchView({
           tacticsKnowledge={tacticsKnowledge}
           t={t}
           ts={ts}
+          lang={lang}
           onOpenTeam={onOpenTeam}
         />
       )}

@@ -25,6 +25,7 @@ import { worldTeamById } from './worldState.js'
 import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/index.js'
 import { randomEventBodyEn, localizeEventChoices } from './randomEventCopyEn.js'
 import { hasActiveSponsor, getActiveSponsors, brandDisplayName } from './clubSponsors.js'
+import { ensureTeamAcademy, academyRegionLabel } from './academy.js'
 
 /** Zgodne z INBOX_TYPES.RANDOM_EVENT — bez importu inbox (unikamy cyklu). */
 export const RANDOM_EVENT_TYPE = 'random_event'
@@ -179,6 +180,12 @@ function applyEffects(team, effects) {
       const sign = fx.delta >= 0 ? '+' : ''
       bits.push(`fanbase ${sign}${fx.delta}`)
       bitsEn.push(`fanbase ${sign}${fx.delta}`)
+    } else if (fx.type === 'addAcademyProspect') {
+      ensureTeamAcademy(team)
+      team.academyPlayers.push(fx.prospect)
+      const name = playerName(fx.prospect)
+      bits.push(`${name} dołączył do akademii`)
+      bitsEn.push(`${name} joined the academy`)
     }
   }
 
@@ -837,17 +844,23 @@ export const RANDOM_EVENT_TEMPLATES = [
       {
         id: 'full',
         label: 'Pełny pakiet PR',
+        labelEn: 'Full PR package',
         hint: 'Budżet +, morale drużyny −2, reputacja +2',
+        hintEn: 'Budget +, team morale −2, reputation +2',
       },
       {
         id: 'soft',
         label: 'Miękki wariant',
+        labelEn: 'Soft option',
         hint: 'Mniejszy budżet, morale −0',
+        hintEn: 'Smaller budget, morale unchanged',
       },
       {
         id: 'refuse',
         label: 'Odmów — chronisz szatnię',
+        labelEn: 'Refuse — protect the locker room',
         hint: 'Reputacja −1 u sponsora (lekko)',
+        hintEn: 'Reputation −1 with the sponsor (slight)',
       },
     ],
     resolve(_ctx, choiceId, rng) {
@@ -907,17 +920,23 @@ export const RANDOM_EVENT_TEMPLATES = [
       {
         id: 'apologize',
         label: 'Publiczne przeprosiny',
+        labelEn: 'Public apology',
         hint: 'Morale zawodnika −3, reputacja +1, budżet lekko −',
+        hintEn: 'Player morale −3, reputation +1, budget slightly −',
       },
       {
         id: 'defend',
         label: `Broń ${ctx.playerName}`,
+        labelEn: `Defend ${ctx.playerName}`,
         hint: 'Morale +4, reputacja −2, sponsor chłodniejszy',
+        hintEn: 'Morale +4, reputation −2, sponsor cooler',
       },
       {
         id: 'fine',
         label: 'Grzywna wewnętrzna',
+        labelEn: 'Internal fine',
         hint: 'Budżet +, morale −5, reputacja 0',
+        hintEn: 'Budget +, morale −5, reputation 0',
       },
     ],
     resolve(ctx, choiceId, rng) {
@@ -977,17 +996,23 @@ export const RANDOM_EVENT_TEMPLATES = [
       {
         id: 'take',
         label: 'Bierz kasę',
+        labelEn: 'Take the money',
         hint: 'Budżet +, reputacja +1, morale drużyny −1 (presja obietnicy)',
+        hintEn: 'Budget +, reputation +1, team morale −1 (pressure of the promise)',
       },
       {
         id: 'negotiate',
         label: 'Negocjuj wyżej',
+        labelEn: 'Negotiate higher',
         hint: '55%: duży zastrzyk / inaczej nic',
+        hintEn: '55%: big cash injection / otherwise nothing',
       },
       {
         id: 'pass',
         label: 'Podziękuj i odmów',
+        labelEn: 'Thank them and decline',
         hint: 'Morale drużyny +1 (zero presji)',
+        hintEn: 'Team morale +1 (zero pressure)',
       },
     ],
     resolve(_ctx, choiceId, rng) {
@@ -3614,14 +3639,27 @@ export const POST_MATCH_EVENT_TEMPLATES = [
     bodyEn: (ctx) =>
       `${ctx.playerName} had a rough game (${ctx.turnovers} turnovers, ${ctx.goals}G/${ctx.assists}A) in a match that finished ${ctx.ourScore}-${ctx.theirScore}. How do you handle it after the game?`,
     choices: () => [
-      { id: 'support', label: 'Wesprzyj go', labelEn: 'Back him up', hint: 'Morale +, forma +' },
+      {
+        id: 'support',
+        label: 'Wesprzyj go',
+        labelEn: 'Back him up',
+        hint: 'Morale +, forma +',
+        hintEn: 'Morale +, form +',
+      },
       {
         id: 'challenge',
         label: 'Podnieś poprzeczkę wprost',
         labelEn: 'Challenge him directly',
         hint: 'Forma +, morale −',
+        hintEn: 'Form +, morale −',
       },
-      { id: 'ignore', label: 'Nic nie mów', labelEn: 'Say nothing', hint: 'Morale wyraźnie −' },
+      {
+        id: 'ignore',
+        label: 'Nic nie mów',
+        labelEn: 'Say nothing',
+        hint: 'Morale wyraźnie −',
+        hintEn: 'Morale clearly −',
+      },
     ],
     resolve(ctx, choiceId) {
       if (choiceId === 'support') {
@@ -3685,18 +3723,21 @@ export const POST_MATCH_EVENT_TEMPLATES = [
         label: 'Pochwal publicznie (media)',
         labelEn: 'Praise him publicly (media)',
         hint: 'Morale wyraźnie +, rozgłos',
+        hintEn: 'Morale clearly +, buzz',
       },
       {
         id: 'praise_private',
         label: 'Pogratuluj prywatnie',
         labelEn: 'Congratulate him privately',
         hint: 'Morale +, stabilnie',
+        hintEn: 'Morale +, steady',
       },
       {
         id: 'stay_grounded',
         label: 'Każ trzymać nogi na ziemi',
         labelEn: 'Tell him to stay grounded',
         hint: 'Forma +, mniejszy skok morale',
+        hintEn: 'Form +, smaller morale bump',
       },
     ],
     resolve(ctx, choiceId) {
@@ -3755,18 +3796,21 @@ export const POST_MATCH_EVENT_TEMPLATES = [
         label: 'Obiecaj więcej minut następnym razem',
         labelEn: 'Promise more minutes next time',
         hint: 'Morale +, zobowiązanie na przyszłość',
+        hintEn: 'Morale +, a commitment for later',
       },
       {
         id: 'be_honest',
         label: 'Bądź szczery ws. decyzji taktycznych',
         labelEn: 'Be honest about the tactical call',
         hint: 'Morale lekko −',
+        hintEn: 'Morale slightly −',
       },
       {
         id: 'ignore',
         label: 'Zbagatelizuj sprawę',
         labelEn: 'Brush it off',
         hint: 'Morale wyraźnie −',
+        hintEn: 'Morale clearly −',
       },
     ],
     resolve(ctx, choiceId) {
@@ -3813,18 +3857,21 @@ export const POST_MATCH_EVENT_TEMPLATES = [
         label: 'Zbierz drużynę i zmobilizuj',
         labelEn: 'Rally the team',
         hint: 'Morale drużyny +',
+        hintEn: 'Team morale +',
       },
       {
         id: 'move_on',
         label: 'Nie roztrząsaj, kolejny mecz',
         labelEn: "Move on, next match",
         hint: 'Morale drużyny lekko +',
+        hintEn: 'Team morale slightly +',
       },
       {
         id: 'blame_tactics',
         label: 'Weź winę na siebie / taktykę',
         labelEn: 'Take the blame yourself / tactics',
         hint: 'Morale drużyny wyraźnie +, reputacja −',
+        hintEn: 'Team morale clearly +, reputation −',
       },
     ],
     resolve(_ctx, choiceId) {
@@ -3898,12 +3945,97 @@ function buildPostMatchCtx(career, record, fixture) {
   }
 }
 
+/**
+ * Zdarzenia decyzyjne zbudowane bezpośrednio przez wywołujący kod (np. wynik misji
+ * skautingowej w inbox.js), nie przez żaden z pickerów powyżej — `ctx` jest budowany
+ * ręcznie przez wywołującego i przekazywany prosto do title/body/choices, więc
+ * `pickContext` tu nie jest wywoływane (zostaje tylko dla zgodności kształtu EventTemplate).
+ * @type {EventTemplate[]}
+ */
+export const SCOUT_DECISION_TEMPLATES = [
+  {
+    id: 'academy_prospect_found',
+    weight: 1,
+    pickContext: () => null,
+    title: (ctx) => `Skaut znalazł prospekta: ${ctx.playerName}`,
+    titleEn: (ctx) => `Scout found a prospect: ${ctx.playerName}`,
+    body: (ctx) =>
+      `Skaut wrócił z wyjazdu (${academyRegionLabel(ctx.region, 'pl')}) z propozycją: ${ctx.playerName}, ${ctx.age} lat, ${ctx.ovr} OVR. Podpisać do akademii?`,
+    bodyEn: (ctx) =>
+      `Your scout is back from ${academyRegionLabel(ctx.region, 'en')} with a proposal: ${ctx.playerName}, age ${ctx.age}, ${ctx.ovr} OVR. Sign him to the academy?`,
+    choices: () => [
+      { id: 'accept', label: 'Podpisz do akademii', labelEn: 'Sign to academy' },
+      { id: 'decline', label: 'Odrzuć', labelEn: 'Decline' },
+    ],
+    resolve(ctx, choiceId) {
+      if (choiceId === 'accept') {
+        return {
+          effects: [{ type: 'addAcademyProspect', prospect: ctx.prospect }],
+          summary: `${ctx.playerName} dołączył do akademii.`,
+          summaryEn: `${ctx.playerName} joined the academy.`,
+        }
+      }
+      return {
+        effects: [],
+        summary: `Podziękowałeś skautowi — ${ctx.playerName} szuka szczęścia gdzie indziej.`,
+        summaryEn: `You thanked the scout — ${ctx.playerName} looks for a chance elsewhere.`,
+      }
+    },
+  },
+]
+
 function templateById(id) {
   return (
     RANDOM_EVENT_TEMPLATES.find((t) => t.id === id) ??
     POST_MATCH_EVENT_TEMPLATES.find((t) => t.id === id) ??
+    SCOUT_DECISION_TEMPLATES.find((t) => t.id === id) ??
     null
   )
+}
+
+/**
+ * Buduje wiadomość decyzyjną z wyniku rozwiązanej misji `academyProspect`
+ * (patrz `scouting.js#resolveScoutMissions` → `result.prospect`). W przeciwieństwie
+ * do `pickRandomEventMessage`/`pickPostMatchEventMessage` nic tu nie jest losowane —
+ * mecz/misja już się rozstrzygnęły, tu tylko pakujemy wynik w wiadomość skrzynki.
+ */
+export function buildAcademyProspectMessage(career, { mission, prospect } = {}) {
+  if (!mission || !prospect) return null
+  const template = templateById('academy_prospect_found')
+  if (!template) return null
+
+  const ctx = {
+    playerName: playerName(prospect),
+    age: prospect.age,
+    ovr: getOverallRating(prospect.skills),
+    region: mission.region ?? null,
+    prospect,
+  }
+  const choices = localizeEventChoices(template.id, template.choices(ctx))
+  if (!choices?.length) return null
+  const bodyEn = typeof template.bodyEn === 'function' ? template.bodyEn(ctx) : null
+
+  return {
+    id: newMessageId(RANDOM_EVENT_TYPE),
+    type: RANDOM_EVENT_TYPE,
+    createdAt: new Date().toISOString(),
+    date: career?.league?.currentDate ?? null,
+    seasonIndex: career?.seasonIndex ?? null,
+    seasonYear: career?.seasonYear ?? null,
+    read: false,
+    title: template.title(ctx),
+    body: template.body(ctx),
+    ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
+    ...(bodyEn ? { bodyEn } : {}),
+    payload: {
+      kind: 'decision',
+      templateId: template.id,
+      missionId: mission.id,
+      status: 'pending',
+      context: ctx,
+      choices,
+    },
+  }
 }
 
 /** Runtime EN title for saved messages that lack titleEn. */

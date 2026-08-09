@@ -37,7 +37,13 @@ import {
 import { simulateAiOffseasonTransferBurst } from './transfers/aiMarket.js'
 import { processAiContractCycle, simulateAiFreeAgentSignings, ensureWorldFreeAgents } from './transfers/freeAgency.js'
 import { processSeasonRetirements } from './retirement.js'
-import { spawnYouthFreeAgents } from './youthIntake.js'
+import {
+  ensureWorldAcademy,
+  runAcademyIntake,
+  sweepAgedOutAcademyPlayers,
+  runAiAcademyPromotionPass,
+  applyAcademyOffseasonDevelopment,
+} from './academy.js'
 import { resetWorldSeasonInjuryCounts } from '../models/playerInjury.js'
 import {
   processSeasonEndSponsorPayouts,
@@ -50,7 +56,7 @@ import {
   messagesFromSponsorPayouts,
 } from './clubSponsors.js'
 import { ensureTeamFacilities } from './clubFacilities.js'
-import { mergeInbox } from './inbox.js'
+import { mergeInbox, messagesFromAcademyAgedOut } from './inbox.js'
 
 function newId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -316,10 +322,29 @@ export function finalizeSeason(career) {
       },
     )
     seasonCycleInbox = [...(retire.inboxMessages ?? [])]
-    spawnYouthFreeAgents(career.world, retire.retired?.length ?? 0, {
+
+    ensureWorldAcademy(career.world)
+    runAcademyIntake(career.world, {
       seasonYear: (career.seasonYear ?? 2025) + 1,
       seed: (career.seasonYear ?? 2025) * 13331 + (career.seasonIndex ?? 1),
     })
+    const academySweep = sweepAgedOutAcademyPlayers(career.world, {
+      playerTeamId: career.playerTeamId,
+    })
+    runAiAcademyPromotionPass(career.world, {
+      playerTeamId: career.playerTeamId,
+      seed: (career.seasonYear ?? 2025) * 8081 + (career.seasonIndex ?? 1),
+      league: career.league,
+    })
+    if (academySweep.releasedToFreeAgency?.length) {
+      seasonCycleInbox = [
+        ...seasonCycleInbox,
+        ...messagesFromAcademyAgedOut(academySweep.releasedToFreeAgency, career, {
+          date: career.league?.currentDate,
+        }),
+      ]
+    }
+
     processAiContractCycle(career.world, {
       playerTeamId: career.playerTeamId,
       seed: (career.seasonYear ?? 2025) * 4243,
@@ -424,6 +449,9 @@ export function startNextSeason(career) {
       ?? base.league?.playerStats
       ?? null,
     playerTeamId: base.playerTeamId,
+    seed: nextYear * 1000 + base.slotIndex * 17 + nextIndex * 31,
+  })
+  applyAcademyOffseasonDevelopment(world, {
     seed: nextYear * 1000 + base.slotIndex * 17 + nextIndex * 31,
   })
   initAllAiTeamTraining(world, base.playerTeamId)

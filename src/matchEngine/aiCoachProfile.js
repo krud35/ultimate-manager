@@ -18,6 +18,7 @@ import { createRng } from './rng.js'
  * @typedef {object} AiCoachProfile
  * @property {string} id
  * @property {string} label
+ * @property {string} labelEn
  * @property {AttackMindset} attackMindset
  * @property {DefenseMindset} defenseMindset
  * @property {string[]} preferredAttackStyles
@@ -33,6 +34,7 @@ export const AI_COACH_ARCHETYPES = [
   {
     id: 'patient_controller',
     label: 'Cierpliwy kontroler',
+    labelEn: 'Patient controller',
     attackMindset: 'patient',
     defenseMindset: 'contain',
     preferredAttackStyles: [ATTACK_STYLES.VERTICAL_STACK, ATTACK_STYLES.HEX_OFFENSE],
@@ -52,6 +54,7 @@ export const AI_COACH_ARCHETYPES = [
   {
     id: 'tempo_pusher',
     label: 'Tempo / flow',
+    labelEn: 'Tempo / flow',
     attackMindset: 'tempo',
     defenseMindset: 'pressure',
     preferredAttackStyles: [ATTACK_STYLES.HORIZONTAL_STACK, ATTACK_STYLES.MOTION_OFFENSE],
@@ -71,6 +74,7 @@ export const AI_COACH_ARCHETYPES = [
   {
     id: 'huck_gambler',
     label: 'Deep gambler',
+    labelEn: 'Deep gambler',
     attackMindset: 'aggressive',
     defenseMindset: 'pressure',
     preferredAttackStyles: [ATTACK_STYLES.SPLIT_STACK, ATTACK_STYLES.HORIZONTAL_STACK],
@@ -90,6 +94,7 @@ export const AI_COACH_ARCHETYPES = [
   {
     id: 'zone_architect',
     label: 'Architekt strefy',
+    labelEn: 'Zone architect',
     attackMindset: 'patient',
     defenseMindset: 'zone',
     preferredAttackStyles: [ATTACK_STYLES.ZONE_OFFENSE, ATTACK_STYLES.VERTICAL_STACK],
@@ -109,6 +114,7 @@ export const AI_COACH_ARCHETYPES = [
   {
     id: 'creative_iso',
     label: 'Kreatywne iso',
+    labelEn: 'Creative iso',
     attackMindset: 'creative',
     defenseMindset: 'balanced',
     preferredAttackStyles: [ATTACK_STYLES.SIDE_STACK, ATTACK_STYLES.SPLIT_STACK],
@@ -128,6 +134,7 @@ export const AI_COACH_ARCHETYPES = [
   {
     id: 'balanced_pro',
     label: 'Zrównoważony pro',
+    labelEn: 'Balanced pro',
     attackMindset: 'balanced',
     defenseMindset: 'balanced',
     preferredAttackStyles: [ATTACK_STYLES.VERTICAL_STACK, ATTACK_STYLES.HORIZONTAL_STACK],
@@ -147,6 +154,7 @@ export const AI_COACH_ARCHETYPES = [
   {
     id: 'grind_defense',
     label: 'Grind D-first',
+    labelEn: 'Grind D-first',
     attackMindset: 'patient',
     defenseMindset: 'pressure',
     preferredAttackStyles: [ATTACK_STYLES.VERTICAL_STACK, ATTACK_STYLES.HEX_OFFENSE],

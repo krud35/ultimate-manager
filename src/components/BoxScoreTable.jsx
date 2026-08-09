@@ -1,7 +1,8 @@
+import { memo } from 'react'
 import { useUiLang } from '../ui/UiLangContext'
 import { matchStrings } from '../ui/strings/match'
 
-export function BoxScoreTable({ rows, homeTeamName, awayTeamName, variant = 'full' }) {
+export const BoxScoreTable = memo(function BoxScoreTable({ rows, homeTeamName, awayTeamName, variant = 'full' }) {
   const { lang } = useUiLang()
   const t = matchStrings(lang)
 
@@ -81,4 +82,4 @@ export function BoxScoreTable({ rows, homeTeamName, awayTeamName, variant = 'ful
       </div>
     </div>
   )
-}
+})

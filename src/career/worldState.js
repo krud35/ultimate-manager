@@ -34,6 +34,7 @@ import { ensureWorldFans } from '../models/teamFans.js'
 import { ensureWorldFacilities } from './clubFacilities.js'
 import { ensureWorldSponsors, refreshSponsorOffers } from './clubSponsors.js'
 import { ensureWorldScouting } from './scouting.js'
+import { ensureWorldAcademy } from './academy.js'
 import { officialSeasonEndDate } from '../league/seasonCalendar.js'
 import { areCompetitionsComplete, isOfficialSeasonEnded } from '../league/dayEngine.js'
 import { ensureAiCoachProfiles } from '../matchEngine/aiCoachProfile.js'
@@ -132,6 +133,7 @@ export function createWorldFromTemplate(templateSeasonYear = 2025, options = {})
   ensureWorldFans(world, { seed: financeSeed, force: true })
   ensureWorldFacilities(world, { seed: financeSeed, force: true })
   ensureWorldScouting(world)
+  ensureWorldAcademy(world)
   ensureWorldSponsors(world, {
     seed: financeSeed,
     seasonYear: templateSeasonYear,
@@ -155,12 +157,16 @@ export function worldTeamById(world, teamId) {
   return world.teamsById[teamId] ?? null
 }
 
-/** Znajduje zawodnika w świecie — klubowego lub wolnego agenta. */
+/** Znajduje zawodnika w świecie — klubowego, prospekta akademii, lub wolnego agenta. */
 export function findWorldPlayerById(world, playerId) {
   if (playerId == null) return { player: null, teamId: null }
   for (const team of worldTeamsList(world)) {
     const player = (team.players ?? []).find((p) => p.id === playerId)
     if (player) return { player, teamId: team.id }
+  }
+  for (const team of worldTeamsList(world)) {
+    const prospect = (team.academyPlayers ?? []).find((p) => p.id === playerId)
+    if (prospect) return { player: prospect, teamId: team.id, inAcademy: true }
   }
   const freeAgent = (world?.freeAgents ?? []).find((p) => p.id === playerId)
   if (freeAgent) return { player: freeAgent, teamId: null }
@@ -271,6 +277,7 @@ export function rehydrateCareerWorld(career) {
   ensureWorldFans(world, { seed: financeSeed, force: false })
   ensureWorldFacilities(world, { seed: financeSeed, force: false })
   ensureWorldScouting(world)
+  ensureWorldAcademy(world)
   ensureWorldSponsors(world, {
     seed: financeSeed,
     seasonYear: career.seasonYear ?? world.templateSeasonYear ?? 2025,

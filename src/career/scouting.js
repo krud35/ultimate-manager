@@ -13,6 +13,30 @@ import { getFacilityLevel } from './clubFacilities.js'
 import { adjustTransferBudget, getTransferBudget } from './transfers/clubFinances.js'
 import { getOverallRating } from '../models/playerStats.js'
 import { worldTeamById, worldTeamsList } from './worldState.js'
+import { createAcademyProspect } from './academy.js'
+
+function mulberry32(seed) {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function hashSeed(...parts) {
+  let h = 2166136261
+  for (const part of parts) {
+    const s = String(part)
+    for (let i = 0; i < s.length; i += 1) {
+      h ^= s.charCodeAt(i)
+      h = Math.imul(h, 16777619)
+    }
+  }
+  return h >>> 0
+}
 
 export const SCOUTING_GEN_VERSION = 1
 
@@ -28,7 +52,7 @@ export const SCOUT_MATCH_GAIN_TACTICS = 8
 export const SCOUT_MATCH_GAIN_PLAYER = 10
 export const SCOUT_MATCH_TOP_PLAYERS = 3
 
-export const SCOUT_MISSION_KINDS = ['tactics', 'keyPlayers', 'player']
+export const SCOUT_MISSION_KINDS = ['tactics', 'keyPlayers', 'player', 'academyProspect']
 
 export const SCOUT_MISSION_GAIN = {
   tactics: { tacticsKnowledge: 30, knowledge: 10 },
@@ -40,6 +64,7 @@ export const SCOUT_MISSION_BASE_COST = {
   tactics: 8_000,
   keyPlayers: 11_000,
   player: 13_000,
+  academyProspect: 20_000,
 }
 
 /** Bezpiecznik: misja bez pasującego meczu (offseason) rozwiązuje się po tylu dniach. */
@@ -254,9 +279,9 @@ function newMissionId() {
 
 /**
  * @param {object} team
- * @param {{ kind: 'tactics'|'keyPlayers'|'player', opponentTeamId?: string|null, targetPlayerId?: string|null, date: string }} params
+ * @param {{ kind: 'tactics'|'keyPlayers'|'player'|'academyProspect', opponentTeamId?: string|null, targetPlayerId?: string|null, region?: string|null, date: string }} params
  */
-export function queueScoutMission(team, { kind, opponentTeamId = null, targetPlayerId = null, date }) {
+export function queueScoutMission(team, { kind, opponentTeamId = null, targetPlayerId = null, region = null, date }) {
   if (!team || !SCOUT_MISSION_KINDS.includes(kind)) {
     return { ok: false, error: 'invalid_kind' }
   }
@@ -265,6 +290,9 @@ export function queueScoutMission(team, { kind, opponentTeamId = null, targetPla
   }
   if (kind === 'player' && !targetPlayerId) {
     return { ok: false, error: 'missing_target' }
+  }
+  if (kind === 'academyProspect' && !region) {
+    return { ok: false, error: 'missing_region' }
   }
   const scouting = ensureTeamScouting(team)
   if (scouting.pendingMissions.length >= scoutMissionCapacity(team)) {
@@ -281,6 +309,7 @@ export function queueScoutMission(team, { kind, opponentTeamId = null, targetPla
     kind,
     opponentTeamId,
     targetPlayerId,
+    region,
     queuedAtDate: date ?? null,
     expiresAtDate: date ? addDaysIso(date, SCOUT_MISSION_EXPIRY_DAYS) : null,
   }
@@ -329,6 +358,14 @@ function applyMissionResult(team, world, mission) {
       playerId: mission.targetPlayerId,
       knowledge: getPlayerKnowledge(team, mission.targetPlayerId),
     })
+  } else if (mission.kind === 'academyProspect') {
+    const rng = mulberry32(hashSeed(mission.id, 'academy-scout-resolve'))
+    result.prospect = createAcademyProspect(rng, {
+      seasonYear: mission.queuedAtDate ? Number(String(mission.queuedAtDate).slice(0, 4)) : null,
+      teamId: team.id,
+      source: 'scouted',
+      region: mission.region ?? null,
+    })
   }
   return result
 }
@@ -352,7 +389,12 @@ export function resolveScoutMissions(world, playerTeamId, league, date) {
     let ready = expired
 
     if (!ready) {
-      if (mission.kind === 'player') {
+      if (mission.kind === 'academyProspect') {
+        const readyAt = mission.queuedAtDate
+          ? addDaysIso(mission.queuedAtDate, SCOUT_MISSION_DOSSIER_DAYS)
+          : date
+        ready = date >= readyAt
+      } else if (mission.kind === 'player') {
         const clubId = findPlayerTeamId(world, mission.targetPlayerId)
         if (!clubId) {
           const readyAt = mission.queuedAtDate

@@ -20,7 +20,7 @@ export const FACILITY_LEVEL_MAX = 10
 export const FACILITY_BASELINE_LEVEL = 5
 export const FACILITIES_GEN_VERSION = 1
 
-/** @typedef {'stadium'|'trainingCenter'|'medicalCenter'|'chillRoom'|'fanShop'|'scoutingDept'} FacilityId */
+/** @typedef {'stadium'|'trainingCenter'|'medicalCenter'|'chillRoom'|'fanShop'|'scoutingDept'|'academy'} FacilityId */
 
 /**
  * @typedef {object} FacilityDef
@@ -335,6 +335,56 @@ export const FACILITY_DEFS = {
       },
     },
   },
+  academy: {
+    id: 'academy',
+    namePl: 'Akademia',
+    nameEn: 'Academy',
+    effectPl: 'Jakość naboru młodzieżowego',
+    effectEn: 'Youth intake quality',
+    alwaysPositive: false,
+    levelBlurbs: {
+      1: {
+        pl: 'Nabór to jeden telefon do rodzica: "wasz syn/córka ma dobrą rękę, niech przyjdzie w sobotę".',
+        en: 'Intake is one phone call to a parent: "your kid has a good arm, send them Saturday."',
+      },
+      2: {
+        pl: 'Trening młodzieżowy na tym samym boisku co seniorzy, dwadzieścia minut przed ich rozgrzewką.',
+        en: 'Youth training shares the senior pitch — twenty minutes before the first team warms up.',
+      },
+      3: {
+        pl: 'Jeden trener na trzy roczniki. Program: "biegajcie, rzucajcie, uczcie się od starszych".',
+        en: 'One coach covering three age groups. The program: "run, throw, learn from the older kids."',
+      },
+      4: {
+        pl: 'Prawie struktura — tylko rodzice wciąż sami dowożą dzieciaki na turnieje.',
+        en: 'Almost a real structure — parents still drive the kids to tournaments themselves.',
+      },
+      5: {
+        pl: 'Standardowa akademia: regularne treningi, jeden turniej rozwojowy na sezon.',
+        en: 'A standard academy: regular sessions, one development tournament a season.',
+      },
+      6: {
+        pl: 'Własny trener młodzieżowy i plan treningowy dopasowany do wieku, nie tylko "mniejsze boisko".',
+        en: 'A dedicated youth coach and an age-appropriate plan, not just "smaller field, same drills."',
+      },
+      7: {
+        pl: 'Współpraca ze szkołami w mieście — najlepsi z lokalnych lig trafiają prosto do akademii.',
+        en: 'Partnerships with local schools — the best local-league talent funnels straight into the academy.',
+      },
+      8: {
+        pl: 'Analiza wideo dla nastolatków i indywidualny plan rozwoju dla każdego prospekta.',
+        en: 'Video analysis for teenagers and an individual development plan for every prospect.',
+      },
+      9: {
+        pl: 'Regionalna marka — rodziny przeprowadzają się bliżej klubu, żeby dziecko trenowało właśnie tu.',
+        en: 'A regional name — families relocate closer to the club just so their kid can train here.',
+      },
+      10: {
+        pl: 'Fabryka talentów. Absolwenci akademii grają w całej lidze i wspominają to miejsce jak drugi dom.',
+        en: 'A talent factory. Academy graduates play across the whole league and talk about the place like a second home.',
+      },
+    },
+  },
 }
 
 export const FACILITY_IDS = /** @type {FacilityId[]} */ (Object.keys(FACILITY_DEFS))
@@ -374,6 +424,7 @@ export function facilityUpgradeCost(facilityId, level) {
     chillRoom: 0.85,
     fanShop: 0.95,
     scoutingDept: 1.0,
+    academy: 1.05,
   }[facilityId] ?? 1
   const raw = 16_000 * tier * 1.52 ** (lv - 1)
   return Math.round(raw / 1000) * 1000
@@ -523,6 +574,15 @@ export function chillRoomMoraleDelta(team) {
   if (delta === 0) return 0
   // −0.6 … +0.75 za sesję (zaokrąglane przy aplikacji)
   return delta * 0.15
+}
+
+/**
+ * Mnożnik naboru młodzieżowego (1 = baseline poziom 5).
+ * Steruje zarówno liczbą prospektów co sezon, jak i skew jakości — patrz academy.js.
+ */
+export function academyIntakeMult(team) {
+  const delta = facilityLevelDelta(getFacilityLevel(team, 'academy'))
+  return Math.max(0.3, 1 + delta * 0.16)
 }
 
 /**

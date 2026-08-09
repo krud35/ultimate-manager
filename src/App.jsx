@@ -101,6 +101,7 @@ import TrainingView from './components/TrainingView'
 import ClubBoardView from './components/ClubBoardView'
 import TransfersView from './components/TransfersView'
 import ScoutingCenterView from './components/ScoutingCenterView'
+import AcademyView from './components/AcademyView'
 import CalendarView from './components/CalendarView'
 import InboxView from './components/InboxView'
 import UltiworldView from './components/UltiworldView'
@@ -139,6 +140,7 @@ const NAV_CATEGORIES = [
       { id: 'club-transfers', labelPl: 'Transfery', labelEn: 'Transfers' },
       { id: 'scouting-center', labelPl: 'Centrum skautingu', labelEn: 'Scouting center' },
       { id: 'club-board', labelPl: 'Zarząd', labelEn: 'Club board' },
+      { id: 'academy', labelPl: 'Akademia', labelEn: 'Academy' },
       { id: 'team-profile', labelPl: 'Profil drużyny', labelEn: 'Team profile' },
     ],
   },
@@ -2010,6 +2012,10 @@ export default function App() {
 
         {activeTab === 'club-board' && (
           <ClubBoardView career={career} onChange={handleClubBoardChange} />
+        )}
+
+        {activeTab === 'academy' && (
+          <AcademyView career={career} onCareerUpdate={handleTransfersUpdate} />
         )}
 
         {activeTab === 'match' &&
