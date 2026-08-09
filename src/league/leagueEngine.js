@@ -1,4 +1,3 @@
-import { simulateBackgroundMatch } from '../seasonEngine/backgroundSimulator.js'
 import { teamForMatchEngine } from '../data/ufaLeagueTeams.js'
 import { simulateMatch } from '../matchEngine/index.js'
 import {
@@ -8,12 +7,7 @@ import {
 } from '../matchEngine/matchStats.js'
 import { tacticsForTeam } from '../matchEngine/aiLineup.js'
 import { applyGameToStandings } from './standings.js'
-import {
-  buildBoxScoreRowsFromStatDelta,
-  createLeaguePlayerStats,
-  mergeMatchBoxScore,
-  snapshotRosterStats,
-} from './leagueStats.js'
+import { createLeaguePlayerStats, mergeMatchBoxScore } from './leagueStats.js'
 import { ensurePlayerStats } from '../models/playerStats.js'
 import { teamFromLeague } from '../career/worldState.js'
 import { applyReputationForMatchTeams } from '../models/teamReputation.js'
@@ -22,7 +16,6 @@ import { applyPostMatchFinances } from '../career/clubFacilities.js'
 import { isClubBankrupt } from '../career/transfers/clubFinances.js'
 import {
   findFixture,
-  isNeutralVenue,
   isRoundComplete,
   pendingFixturesInRound,
 } from './leagueState.js'
@@ -97,7 +90,12 @@ export function tryForfeitMatchRecord(league, fixture) {
   }
 }
 
-/** Symuluje pojedynczy mecz AI (szybki silnik tła + statystyki indywidualne). */
+/**
+ * Symuluje pojedynczy mecz AI — ten sam silnik co mecz gracza (simulateMatch),
+ * w trybie fastMode (bez klatkowania ruchu, patrz point.js: simulatePointFast).
+ * Ujednolica ligę z meczem gracza: te same resolveThrow/resolveSeparation/
+ * pickThrowType, ten sam kształt wyniku (leagueRecordFromEngineResult).
+ */
 export function simulateFixtureMatch(league, fixture) {
   const forfeit = tryForfeitMatchRecord(league, fixture)
   if (forfeit) return forfeit
@@ -105,27 +103,19 @@ export function simulateFixtureMatch(league, fixture) {
   const home = resolveTeam(league, fixture.homeTeamId)
   const away = resolveTeam(league, fixture.awayTeamId)
 
-  const before = snapshotRosterStats([...home.players, ...away.players])
-  const sim = simulateBackgroundMatch(home, away, {
-    seed: fixtureSeed(league, fixture.id),
-    homeAdvantage: !isNeutralVenue(fixture),
-  })
-  const boxScore = buildBoxScoreRowsFromStatDelta(before, home.players, away.players)
+  const homeTactics = tacticsForResolvedTeam(home)
+  const awayTactics = tacticsForResolvedTeam(away)
 
-  return {
-    fixtureId: fixture.id,
-    round: fixture.round,
-    homeTeamId: fixture.homeTeamId,
-    awayTeamId: fixture.awayTeamId,
-    homeScore: sim.homeScore,
-    awayScore: sim.awayScore,
-    winner:
-      sim.homeScore > sim.awayScore ? fixture.homeTeamId : fixture.awayTeamId,
-    boxScore,
-    playedByPlayer: false,
-    competition: fixture.competition ?? 'league',
-    injuries: sim.injuries ?? [],
-  }
+  const engineResult = simulateMatch({
+    homeTeam: { ...teamForMatchEngine(home), tactics: homeTactics },
+    awayTeam: { ...teamForMatchEngine(away), tactics: awayTactics },
+    homeTactics,
+    awayTactics,
+    seed: fixtureSeed(league, fixture.id),
+    fastMode: true,
+  })
+
+  return leagueRecordFromEngineResult(fixture, engineResult, false)
 }
 
 /** Zapis wyniku meczu gracza lub AI do stanu ligi (mutuje league). */
@@ -168,9 +158,9 @@ export function applyMatchResultToLeague(league, matchRecord) {
       matchRecord.awayTeamId,
     )
 
-    if (matchRecord.playedByPlayer) {
-      applyEngineBoxScoreToRoster(league, matchRecord.homeTeamId, matchRecord.awayTeamId, boxWithTeams)
-    }
+    // Wszystkie mecze (gracza i AI) idą teraz przez ten sam silnik — box score
+    // zawsze trzeba doliczyć do player.stats (silnik go tam sam nie wpisuje).
+    applyEngineBoxScoreToRoster(league, matchRecord.homeTeamId, matchRecord.awayTeamId, boxWithTeams)
 
     // Statystyki per kolejka — źródło dla Ultiworld (Top 7, przeglądy).
     if (!isCup && matchRecord.round != null) {

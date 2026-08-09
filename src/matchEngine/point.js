@@ -8,6 +8,8 @@ import {
   isPersonDefense,
   personMatchupPairs,
   pickDefender,
+  pickDumpReceiver,
+  pickReceiver,
   pickThrower,
 } from './participants.js'
 import {
@@ -58,6 +60,10 @@ import {
   lineStylesForPointStart,
   pointStartRoleForTeam,
 } from './lineups.js'
+
+function playerLabel(p) {
+  return `${p.firstName} ${p.lastName}`
+}
 
 /**
  * Symuluje jeden punkt (pull → wymiany aż punkt lub limit rzutów).
@@ -175,10 +181,6 @@ export function simulatePoint({
       homeName: homeTeam.name,
       awayName: awayTeam.name,
     }
-  }
-
-  function playerLabel(p) {
-    return `${p.firstName} ${p.lastName}`
   }
 
   function defendingTeamId() {
@@ -924,6 +926,331 @@ export function simulatePoint({
       scoringTeam,
       throws: throwCount,
       staminaSnapshot: stamina ? cloneStaminaMaps(stamina) : null,
+    }),
+  )
+
+  return {
+    scoringTeam,
+    nextPullTeam: scoringTeam,
+    events,
+    throwCount,
+  }
+}
+
+/**
+ * Statystyczny stall (bez klatkowania ruchu) — rozkład przechylony w stronę niskiego
+ * stalla (większość rzutów leci szybko), z rzadkim ogonem do stall-outu.
+ */
+function sampleFastStallCount(rng) {
+  const roll = rng.float()
+  if (roll < 0.98) {
+    // Trójkątny-ish rozkład 1..9 wyśrodkowany nisko, zgodny z kalibracją resolveThrow
+    // (stallCount=2 = "typowy, niewymuszony rzut").
+    const r = (rng.float() + rng.float()) / 2
+    return Math.max(1, Math.min(9, Math.round(1 + r * 6)))
+  }
+  return STALL_MAX
+}
+
+/**
+ * Lekka symulacja punktu bez klatkowania ruchu (bez `runThrowMotionSimulation`) —
+ * do trybu "symuluj resztę meczu" / silnika ligowego, gdzie boisko nie jest renderowane.
+ * Używa TYCH SAMYCH funkcji rdzenia (resolveSeparation, pickThrowType, resolveThrow,
+ * computeThrowAdvance) co pełny silnik — różni się tylko tym, JAK dochodzi do inputów
+ * (stall/receiver/side statystycznie zamiast z klatkowej symulacji ruchu 14 agentów).
+ * Stamina: celowo NIE aktualizuje `stamina.sprintM` per rzut — `applyFatigueAfterPoint`
+ * (rotation.js) ma wbudowany fallback na lekki model kosztu per punkt, gdy sprintM
+ * jest puste (dokładnie ten sam używany przez dawny backgroundSimulator.js).
+ */
+export function simulatePointFast({
+  homeTeam,
+  awayTeam,
+  pullTeam,
+  pointIndex,
+  rng,
+  boxScore = null,
+  matchStats = null,
+  wind = null,
+}) {
+  const events = []
+  const attackTeamId = pullTeam === 'home' ? 'away' : 'home'
+  let possession = attackTeamId
+  let discPosition = MATCH_CONFIG.field.positionAfterPull
+
+  const homePointRole = pointStartRoleForTeam('home', pullTeam)
+  const awayPointRole = pointStartRoleForTeam('away', pullTeam)
+  const stampLine = (team, role) => ({
+    ...team,
+    _pointStartRole: role,
+    tactics: team?.tactics
+      ? { ...team.tactics, _pointStartRole: role }
+      : { _pointStartRole: role },
+  })
+  const homeTeamOnPoint = stampLine(homeTeam, homePointRole)
+  const awayTeamOnPoint = stampLine(awayTeam, awayPointRole)
+
+  const teamById = (id) => (id === 'home' ? homeTeamOnPoint : awayTeamOnPoint)
+  const stylesForTeam = (teamId) =>
+    lineStylesForPointStart(
+      teamById(teamId).tactics,
+      teamId === 'home' ? homePointRole : awayPointRole,
+    )
+  const pointLineups = buildPointLineups(homeTeamOnPoint, awayTeamOnPoint, attackTeamId)
+
+  events.push(
+    createEvent(EVENT.POINT_START, {
+      pointIndex,
+      pullTeam,
+      attackTeam: attackTeamId,
+      homeLineupIds: pointLineups.home.map((p) => p.id),
+      awayLineupIds: pointLineups.away.map((p) => p.id),
+      homePointStartRole: homePointRole,
+      awayPointStartRole: awayPointRole,
+      fastMode: true,
+    }),
+  )
+  events.push(createEvent(EVENT.PULL, { team: pullTeam, teamName: teamById(pullTeam).name }))
+  events.push(
+    createEvent(EVENT.POSSESSION, {
+      team: possession,
+      teamName: teamById(possession).name,
+      discPosition,
+    }),
+  )
+
+  let throwCount = 0
+  let scoringTeam = null
+  let lastScoringThrowerId = null
+  let lastScoringReceiverId = null
+  let personMatchups = null
+
+  function defendingTeamId() {
+    return possession === 'home' ? 'away' : 'home'
+  }
+
+  function setupPersonMatchupsForPossession() {
+    personMatchups = null
+    const defId = defendingTeamId()
+    const defStyle = stylesForTeam(defId).defenseStyle
+    if (!isPersonDefense(defStyle)) return
+    personMatchups = createPersonMatchups(
+      rng,
+      getLineupForTeam(pointLineups, possession),
+      getLineupForTeam(pointLineups, defId),
+    )
+  }
+  setupPersonMatchupsForPossession()
+
+  function applyTurnoverAtPosition(turnoverThrowerId) {
+    if (boxScore && turnoverThrowerId) recordTurnover(boxScore, turnoverThrowerId)
+    const absX = discMetersFromState(discPosition, possession)
+    possession = possession === 'home' ? 'away' : 'home'
+    discPosition = discPositionFromFieldMeters(absX, possession)
+    events.push(
+      createEvent(EVENT.TURNOVER, {
+        newPossession: possession,
+        teamName: teamById(possession).name,
+        discPosition,
+      }),
+    )
+    setupPersonMatchupsForPossession()
+  }
+
+  while (throwCount < MATCH_CONFIG.maxThrowsPerPoint && !scoringTeam) {
+    const offenseTeam = teamById(possession)
+    const defenseTeam = teamById(defendingTeamId())
+    const offenseLineup = getLineupForTeam(pointLineups, possession)
+    const defenseLineup = getLineupForTeam(pointLineups, defendingTeamId())
+    const attackStyle = stylesForTeam(possession).attackStyle
+    const defenseStyle = stylesForTeam(defendingTeamId()).defenseStyle
+
+    const thrower = pickThrower(rng, offenseLineup, offenseTeam.tactics)
+    const stallCount = sampleFastStallCount(rng)
+
+    if (stallCount >= STALL_MAX) {
+      events.push(
+        createEvent(EVENT.STALL_OUT, {
+          stallCount: STALL_MAX,
+          throwerId: thrower.id,
+          throwerName: playerLabel(thrower),
+          possessionTeam: possession,
+          discPosition,
+        }),
+      )
+      applyTurnoverAtPosition(thrower.id)
+      continue
+    }
+
+    const markerDefender = isPersonDefense(defenseStyle)
+      ? defenderForPersonMark(personMatchups, thrower, defenseLineup, rng)
+      : pickDefender(rng, defenseLineup)
+
+    const throwType = pickThrowType({
+      rng,
+      thrower,
+      discPosition,
+      stallCount,
+      defenseStyle,
+      attackStyle,
+      defender: markerDefender,
+      separation: null,
+      tactics: offenseTeam.tactics,
+    })
+
+    const receiver =
+      throwType === THROW_TYPE.DUMP_SWING
+        ? pickDumpReceiver(rng, offenseLineup, thrower)
+        : pickReceiver(rng, offenseLineup, thrower)
+
+    const defender = isPersonDefense(defenseStyle)
+      ? defenderForPersonMark(personMatchups, receiver, defenseLineup, rng)
+      : pickDefender(rng, defenseLineup)
+
+    const separation = resolveSeparation({ receiver, defender, rng })
+    // Bez geometrii markera: rozkład open/break-side zbliżony do realnego (~70/30).
+    const isOpenSide = rng.float() > 0.3
+
+    const profile = throwProfile(throwType)
+    const estDistanceM = Math.max(3, Math.abs(profile.baseYards()))
+
+    const result = resolveThrow({
+      thrower,
+      receiver,
+      defender,
+      rng,
+      defenseStyle,
+      throwType,
+      separation,
+      stallCount,
+      forceSide: resolveMarkForceSide(defenseTeam, null),
+      isOpenSide,
+      wind,
+      throwDx: estDistanceM,
+      throwDy: 0,
+      throwDistanceM: estDistanceM,
+    })
+
+    throwCount += 1
+    const discPositionBefore = discPosition
+
+    events.push(
+      createEvent(EVENT.THROW_ATTEMPT, {
+        throwerId: thrower.id,
+        throwerName: playerLabel(thrower),
+        receiverId: receiver.id,
+        receiverName: playerLabel(receiver),
+        defenderId: defender.id,
+        defenderName: playerLabel(defender),
+        discPosition,
+        discPositionBefore,
+        possessionTeam: possession,
+        defenseStyle,
+        attackStyle,
+        throwType,
+        stallCount,
+        separationOutcome: separation.outcome,
+        isOpenSide,
+      }),
+    )
+
+    if (result.success) {
+      const discAfter = computeThrowAdvance(discPositionBefore, throwType, {
+        attackStyle,
+        defenseStyle,
+        rng,
+        forwardProgressM: null,
+        wind,
+        thrower,
+      })
+      discPosition = discAfter
+      const yardsGained = yardsFromPositions(discPositionBefore, discPosition)
+      const isHuck = isHuckType(throwType, yardsGained)
+
+      if (matchStats) {
+        recordThrowAttempt(matchStats, possession, { success: true, yardsGained, isHuck })
+      }
+
+      events.push(
+        createEvent(EVENT.THROW_SUCCESS, {
+          discPosition,
+          discPositionBefore,
+          possessionTeam: possession,
+          receiverId: receiver.id,
+          receiverName: playerLabel(receiver),
+          yardsGained,
+          isHuck,
+          throwType,
+          throwScore: result.throwScore,
+          defenseScore: result.defenseScore,
+        }),
+      )
+
+      if (isInEndzone(discPosition, possession)) {
+        scoringTeam = possession
+        lastScoringThrowerId = thrower.id
+        lastScoringReceiverId = receiver.id
+        events.push(
+          createEvent(EVENT.SCORE, {
+            team: scoringTeam,
+            teamName: teamById(scoringTeam).name,
+            throwerId: thrower.id,
+            receiverId: receiver.id,
+          }),
+        )
+      }
+    } else {
+      if (boxScore && result.isBlock) recordBlock(boxScore, defender.id)
+
+      const isHuck = isHuckType(throwType, 0)
+      if (matchStats) {
+        recordThrowAttempt(matchStats, possession, {
+          success: false,
+          isHuck,
+          turnoverMeters: discPositionBefore,
+        })
+      }
+
+      events.push(
+        createEvent(EVENT.THROW_FAIL, {
+          throwerId: thrower.id,
+          throwerName: playerLabel(thrower),
+          defenderId: defender.id,
+          defenderName: playerLabel(defender),
+          receiverId: receiver.id,
+          receiverName: playerLabel(receiver),
+          possessionTeam: possession,
+          discPositionBefore,
+          isHuck,
+          throwType,
+          isBlock: result.isBlock,
+          throwScore: result.throwScore,
+          defenseScore: result.defenseScore,
+        }),
+      )
+      applyTurnoverAtPosition(thrower.id)
+    }
+  }
+
+  if (!scoringTeam) {
+    scoringTeam = discPosition >= 50 ? possession : possession === 'home' ? 'away' : 'home'
+    events.push(
+      createEvent(EVENT.SCORE, {
+        team: scoringTeam,
+        teamName: teamById(scoringTeam).name,
+        reason: 'throw_limit',
+      }),
+    )
+  } else if (boxScore && lastScoringThrowerId != null && lastScoringReceiverId != null) {
+    recordGoal(boxScore, lastScoringThrowerId, lastScoringReceiverId)
+  }
+
+  recordPointPlayedForPlayers([...pointLineups.home, ...pointLineups.away], boxScore)
+
+  events.push(
+    createEvent(EVENT.POINT_END, {
+      pointIndex,
+      scoringTeam,
+      throws: throwCount,
     }),
   )
 

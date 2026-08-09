@@ -102,6 +102,40 @@ export function scorePlayerForDefense(player, staminaMap) {
 }
 
 /**
+ * Ranking "kogo trener CHCE grać" — czyste umiejętności + morale, BEZ bieżącej
+ * staminy. To jest domyślna siódemka O/D; stamina decyduje tylko o tym, czy dany
+ * zawodnik z tej siódemki jest w danym momencie zdolny zagrać (patrz pickDefaultLine).
+ */
+function offenseDefaultScore(player) {
+  return offenseSkillScore(player) * moraleSkillMultiplier(getPlayerMorale(player))
+}
+
+function defenseDefaultScore(player) {
+  return defenseSkillScore(player) * moraleSkillMultiplier(getPlayerMorale(player))
+}
+
+/**
+ * Siódemka: najlepsi wg czystych umiejętności, pomijając tylko tych bez dostępnej
+ * staminy (exhausted) — a nie przeliczając całego rankingu wagą staminy co punkt.
+ * Gdy brakuje świeżych do 7, dobiera kolejnych najlepszych mimo zmęczenia (lepsze
+ * niż pusty slot).
+ */
+function pickDefaultLine(pool, scoreFn, staminaMap) {
+  const bySkill = [...pool].sort((a, b) => scoreFn(b) - scoreFn(a))
+  const fresh = bySkill.filter(
+    (p) => getStamina(staminaMap, p.id) >= STAMINA_CONFIG.exhaustedThreshold,
+  )
+  const chosen = fresh.slice(0, LINE_SIZE)
+  if (chosen.length < LINE_SIZE) {
+    for (const p of bySkill) {
+      if (chosen.length >= LINE_SIZE) break
+      if (!chosen.some((c) => c.id === p.id)) chosen.push(p)
+    }
+  }
+  return chosen
+}
+
+/**
  * Tożsamość ligowa + ukryty profil trenera AI (jeśli drużyna nie jest gracza).
  * `aiCoachProfile === null` = drużyna gracza — bez archetypu.
  */
@@ -194,34 +228,20 @@ export function tacticsForTeam(team, options = {}) {
  * Zmęczeni (< exhausted) spadają na ławkę, jeśli jest rezerwa.
  */
 export function autoRotateTacticsForTeam(team, staminaMap, rng = null) {
+  void rng // zachowany w sygnaturze dla kompatybilności wywołań; nie steruje już losową rotacją.
   const identity = resolveAiTeamIdentity(team)
   const existing = normalizeTactics(team.tactics ?? tacticsForTeam(team, { staminaMap }))
 
   const players = availablePlayers(team.players)
-  const fallback = players.length ? players : team.players ?? []
-  const freshEnough = fallback.filter(
-    (p) =>
-      isPlayerAvailable(p) &&
-      getStamina(staminaMap, p.id) >= STAMINA_CONFIG.exhaustedThreshold,
-  )
-  const pool = freshEnough.length >= LINE_SIZE ? freshEnough : fallback
+  const pool = players.length ? players : team.players ?? []
 
-  const oCandidates = [...pool].sort(
-    (a, b) => scorePlayerForOffense(b, staminaMap) - scorePlayerForOffense(a, staminaMap),
-  )
-  const dCandidates = [...pool].sort(
-    (a, b) => scorePlayerForDefense(b, staminaMap) - scorePlayerForDefense(a, staminaMap),
-  )
-
-  // Lekka rotacja 6–7 slotu, żeby nie palić tych samych nóg co punkt
-  if (rng && typeof rng.float === 'function' && pool.length > LINE_SIZE && rng.float() > 0.55) {
-    const bench = pool
-      .filter((p) => !oCandidates.slice(0, LINE_SIZE).some((x) => x.id === p.id))
-      .sort((a, b) => scorePlayerForOffense(b, staminaMap) - scorePlayerForOffense(a, staminaMap))
-    if (bench[0] && oCandidates[LINE_SIZE - 1]) {
-      oCandidates[LINE_SIZE - 1] = bench[0]
-    }
-  }
+  // Domyślna siódemka = najlepsi wg czystych umiejętności (nie wg bieżącej staminy).
+  // Zamiana slotu następuje tylko gdy dany zawodnik jest niedostępny/wyczerpany —
+  // patrz pickDefaultLine — a nie co punkt losowo, jak wcześniej.
+  const oCandidates = pickDefaultLine(pool, offenseDefaultScore, staminaMap)
+  const dCandidates = pickDefaultLine(pool, defenseDefaultScore, staminaMap)
+  const oSortedFull = [...pool].sort((a, b) => offenseDefaultScore(b) - offenseDefaultScore(a))
+  const dSortedFull = [...pool].sort((a, b) => defenseDefaultScore(b) - defenseDefaultScore(a))
 
   const oLine = fillLineFromCandidates(oCandidates)
   const attackStyle = existing.oLineAttackStyle ?? identity.oLineAttackStyle
@@ -257,7 +277,7 @@ export function autoRotateTacticsForTeam(team, staminaMap, rng = null) {
     playerInstructions:
       existing.playerInstructions && Object.keys(existing.playerInstructions).length
         ? existing.playerInstructions
-        : suggestAiPlayerInstructions(identity, oCandidates, dCandidates, pool),
+        : suggestAiPlayerInstructions(identity, oSortedFull, dSortedFull, pool),
     playerSubRoles: normalizePlayerSubRolesMap(mergedSubs),
     lineupWhenOffenseStartPlayerIds: oLine,
     lineupWhenDefenseStartPlayerIds: fillLineFromCandidates(dCandidates),

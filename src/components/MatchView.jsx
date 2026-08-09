@@ -7,6 +7,7 @@ import {
   listPointIndices,
   MATCH_CONFIG,
   playNextPoint,
+  runRemainingMatch,
   sessionToResult,
   simulateMatch,
   slicePointEvents,
@@ -40,12 +41,11 @@ import {
 import { BoxScoreTable } from './BoxScoreTable'
 import PointHistory from './PointHistory'
 import LineupSelector from './LineupSelector'
+import TacticsForm from './TacticsForm'
 import PointStaminaPanel from './PointStaminaPanel'
 import FieldView2D from './FieldView2D'
 import { resolveMatchColors } from '../data/teamColors.js'
 import MatchDashboard from './MatchDashboard'
-import MatchFastSimPanel, { fastSimDelayMs } from './MatchFastSimPanel'
-import { yieldToUi } from './SimulationProgressOverlay'
 import { useUiLang } from '../ui/UiLangContext'
 import { matchStrings } from '../ui/strings/match'
 import { pickCopy, UI_LANG } from '../ui/locale'
@@ -189,12 +189,9 @@ export default function MatchView({
   const playbackPointRef = useRef(null)
   const leagueSubmittedRef = useRef(false)
   const fastForwardSkipRef = useRef(false)
-  /** Sterowanie pętlą szybkiej symulacji (mutowalne — sprawdzane między punktami). */
-  const fastSimControlRef = useRef({ running: false, paused: false, abort: false })
-  const [fastSim, setFastSim] = useState(null)
-  const [fastSimSpeed, setFastSimSpeed] = useState(2)
-  const fastSimSpeedRef = useRef(2)
-  fastSimSpeedRef.current = fastSimSpeed
+  /** Tryb "punkt po punkcie": bez animacji boiska, ręczne tempo (gracz klika kolejny punkt). */
+  const [pointByPointMode, setPointByPointMode] = useState(false)
+  const [showTacticsInPointByPoint, setShowTacticsInPointByPoint] = useState(false)
   const [returnPulse, setReturnPulse] = useState(false)
   const [pointPlaybackComplete, setPointPlaybackComplete] = useState(true)
   /** Taktyka / składy tylko na ten mecz (nie zapisują się do career.homeTactics). */
@@ -418,17 +415,8 @@ export default function MatchView({
     bump()
   }
 
-  function handleFastForwardPoint() {
-    if (fieldPlaying || (!pointPlaybackComplete && reviewPointEvents.length > 0)) {
-      fastForwardSkipRef.current = true
-      setFieldPlaying(false)
-      setClipElapsed(0)
-      setHoldPose(null)
-      setPlaybackStep(Math.max(0, reviewPointEvents.length - 1))
-      setPointPlaybackComplete(true)
-      publishStamina(sessionRef.current)
-      return
-    }
+  /** Punkt po punkcie, bez animacji: symuluje 1 punkt (fastMode) i zatrzymuje się. */
+  function handleSimulateNextPoint() {
     if (!sessionRef.current || sessionRef.current.status === 'finished') return
     const lineupCheck = validatePlayerLineup()
     if (!lineupCheck.ok) return
@@ -438,22 +426,33 @@ export default function MatchView({
     setFieldPlaying(false)
     setPointPlaybackComplete(true)
     try {
-      playNextPoint(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions())
+      playNextPoint(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions({ fastMode: true }))
     } catch (err) {
-      console.error('[MatchView] fast-forward point failed:', err)
+      console.error('[MatchView] simulate next point failed:', err)
       fastForwardSkipRef.current = false
       return
     }
     scrubInjuredFromPlayerTactics()
     const played = sessionRef.current.pointIndex - 1
     setReviewPointIndex(played)
+    publishStamina(sessionRef.current)
     bump()
+  }
+
+  function handleEnterPointByPoint() {
+    setPointByPointMode(true)
+    setShowTacticsInPointByPoint(false)
+  }
+
+  function handleExitPointByPoint() {
+    setPointByPointMode(false)
+    setShowTacticsInPointByPoint(false)
   }
 
   function handleSimulateAll() {
     const finished = simulateMatch({
       ...matchOptions(),
-      ...pointAiOptions({ rotateHome: true, rotateAway: true }),
+      ...pointAiOptions({ rotateHome: true, rotateAway: true, fastMode: true }),
     })
     setInstantResult(finished)
     publishStamina(finished)
@@ -462,119 +461,27 @@ export default function MatchView({
     bump()
   }
 
-  function handleSimulateRest() {
+  /** Symuluje wszystkie pozostałe punkty naraz (fastMode) i skacze od razu do wyniku. */
+  function handleSimulateToEnd() {
     if (!sessionRef.current || sessionRef.current.status === 'finished') return
-    if (fastSimControlRef.current.running) return
-    const lineupCheckStart = validatePlayerLineup()
-    if (!lineupCheckStart.ok) return
-
-    void runFastSimRest()
-  }
-
-  async function runFastSimRest() {
-    const control = { running: true, paused: false, abort: false }
-    fastSimControlRef.current = control
-
-    setInstantResult(null)
-    setFieldPlaying(false)
+    const lineupCheck = validatePlayerLineup()
+    if (!lineupCheck.ok) return
+    fastForwardSkipRef.current = true
+    lastRenderedPositionsRef.current = null
     setHoldPose(null)
+    setFieldPlaying(false)
     setPointPlaybackComplete(true)
-    setFastSim({
-      active: true,
-      paused: false,
-      finished: false,
-      lastPoint: sessionRef.current?.lastPoint ?? null,
-    })
-
-    const delayMs = () => fastSimDelayMs(fastSimSpeedRef.current)
-
     try {
-      while (
-        sessionRef.current &&
-        sessionRef.current.status !== 'finished' &&
-        !control.abort
-      ) {
-        while (control.paused && !control.abort) {
-          await new Promise((r) => setTimeout(r, 40))
-        }
-        if (control.abort || !sessionRef.current) break
-        if (sessionRef.current.status === 'finished') break
-
-        fastForwardSkipRef.current = true
-        lastRenderedPositionsRef.current = null
-        setHoldPose(null)
-        setFieldPlaying(false)
-        setPointPlaybackComplete(true)
-
-        try {
-          playNextPoint(
-            sessionRef.current,
-            tacticsUpdateForPoint(),
-            pointAiOptions({ rotateHome: true, rotateAway: true }),
-          )
-        } catch (err) {
-          console.error('[MatchView] fast sim point failed:', err)
-          break
-        }
-
-        const sideTactics = sessionRef.current?.[playerSideRef.current]?.tactics
-        if (sideTactics) handleMatchTacticsChange(sideTactics)
-        scrubInjuredFromPlayerTactics()
-        const played = sessionRef.current.pointIndex - 1
-        setReviewPointIndex(played)
-        publishStamina(sessionRef.current)
-        setFastSim({
-          active: true,
-          paused: control.paused,
-          finished: sessionRef.current.status === 'finished',
-          lastPoint: sessionRef.current.lastPoint,
-        })
-        bump()
-        await yieldToUi()
-        await new Promise((r) => setTimeout(r, delayMs()))
-      }
-    } finally {
-      const finished = sessionRef.current?.status === 'finished'
-      control.running = false
-      if (finished) {
-        setFastSim((prev) =>
-          prev
-            ? {
-                ...prev,
-                active: true,
-                paused: false,
-                finished: true,
-                lastPoint: sessionRef.current?.lastPoint ?? prev.lastPoint,
-              }
-            : null,
-        )
-        // Krótko pokaż finał, potem zdejmij panel (wynik zostaje w sesji / box score).
-        window.setTimeout(() => {
-          setFastSim(null)
-        }, 900)
-      } else if (control.abort) {
-        setFastSim(null)
-        setPointPlaybackComplete(true)
-        bump()
-      } else {
-        setFastSim(null)
-      }
+      runRemainingMatch(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions({ fastMode: true }))
+    } catch (err) {
+      console.error('[MatchView] simulate to end failed:', err)
+      fastForwardSkipRef.current = false
+      return
     }
-  }
-
-  function handleFastSimPause() {
-    fastSimControlRef.current.paused = true
-    setFastSim((prev) => (prev ? { ...prev, paused: true } : prev))
-  }
-
-  function handleFastSimResume() {
-    fastSimControlRef.current.paused = false
-    setFastSim((prev) => (prev ? { ...prev, paused: false } : prev))
-  }
-
-  function handleFastSimStop() {
-    fastSimControlRef.current.abort = true
-    fastSimControlRef.current.paused = false
+    scrubInjuredFromPlayerTactics()
+    setReviewPointIndex(sessionRef.current.pointIndex - 1)
+    publishStamina(sessionRef.current)
+    bump()
   }
 
   const oAttackLabel =
@@ -600,8 +507,8 @@ export default function MatchView({
     result?.status === 'finished' || session?.status === 'finished'
 
   function resetMatch() {
-    fastSimControlRef.current = { running: false, paused: false, abort: true }
-    setFastSim(null)
+    setPointByPointMode(false)
+    setShowTacticsInPointByPoint(false)
     sessionRef.current = null
     setInstantResult(null)
     setReviewPointIndex(null)
@@ -627,8 +534,8 @@ export default function MatchView({
 
   useEffect(() => {
     leagueSubmittedRef.current = false
-    fastSimControlRef.current = { running: false, paused: false, abort: true }
-    setFastSim(null)
+    setPointByPointMode(false)
+    setShowTacticsInPointByPoint(false)
     if (!isLeagueMatch || leagueFixture.status === 'completed') return
     setInstantResult(null)
     setReviewPointIndex(null)
@@ -664,7 +571,7 @@ export default function MatchView({
 
   useEffect(() => {
     if (!reviewPointEvents.length) return
-    if (fastSimControlRef.current.running || fastForwardSkipRef.current) {
+    if (fastForwardSkipRef.current) {
       fastForwardSkipRef.current = false
       playbackPointRef.current = activeReviewPoint
       setPlaybackStep(Math.max(0, reviewPointEvents.length - 1))
@@ -855,7 +762,7 @@ export default function MatchView({
   }, [renderFrame, fieldPlaying, reviewLineupIds])
 
   const displayedScore = useMemo(() => {
-    if (fastSim?.active || !result?.events?.length || activeReviewPoint == null || !reviewPointEvents.length) {
+    if (pointByPointMode || !result?.events?.length || activeReviewPoint == null || !reviewPointEvents.length) {
       return {
         home: session?.homeScore ?? result?.homeScore ?? 0,
         away: session?.awayScore ?? result?.awayScore ?? 0,
@@ -869,7 +776,7 @@ export default function MatchView({
       { fieldPlaying, clipElapsed, actionClip, playbackSpeed },
     )
   }, [
-    fastSim?.active,
+    pointByPointMode,
     result?.events,
     result?.homeScore,
     result?.awayScore,
@@ -921,7 +828,7 @@ export default function MatchView({
     if (!reviewPointEvents.length) {
       return session?.stamina ?? result?.stamina ?? null
     }
-    if (pointPlaybackComplete || fastSim?.active) {
+    if (pointPlaybackComplete || pointByPointMode) {
       return session?.stamina ?? result?.stamina ?? null
     }
     const progress =
@@ -943,7 +850,7 @@ export default function MatchView({
   }, [
     reviewPointEvents,
     pointPlaybackComplete,
-    fastSim?.active,
+    pointByPointMode,
     fieldPlaying,
     actionClip,
     staminaClipElapsedBucket,
@@ -961,14 +868,14 @@ export default function MatchView({
 
   const pointStatsEvents = useMemo(() => {
     if (!reviewPointEvents.length) return []
-    if (pointPlaybackComplete || fastSim?.active) return reviewPointEvents
+    if (pointPlaybackComplete || pointByPointMode) return reviewPointEvents
     const end = Math.min(reviewPointEvents.length, Math.max(1, playbackStep + 1))
     return reviewPointEvents.slice(0, end)
-  }, [reviewPointEvents, pointPlaybackComplete, fastSim?.active, playbackStep])
+  }, [reviewPointEvents, pointPlaybackComplete, pointByPointMode, playbackStep])
 
   const pointStatsComplete =
     pointPlaybackComplete ||
-    !!fastSim?.active ||
+    pointByPointMode ||
     pointStatsEvents.some((e) => e.type === EVENT.POINT_END || e.type === EVENT.SCORE)
 
   useEffect(() => {
@@ -984,7 +891,7 @@ export default function MatchView({
     canPlayPoint &&
     pointPlaybackComplete &&
     !fieldPlaying &&
-    (!fastSim?.active || !!fastSim?.paused)
+    !pointByPointMode
 
   const homeNextPointRole = session
     ? pointStartRoleForTeam(playerSide, session.pullTeam)
@@ -1034,8 +941,6 @@ export default function MatchView({
   ])
 
   const lineupSubmitError = lineupValidationMessage(lineupCheck)
-
-  const pointAnimating = fieldPlaying || (!pointPlaybackComplete && reviewPointEvents.length > 0)
 
   return (
     <div className={`space-y-6 ${returnPulse ? 'opacity-0 transition-opacity duration-300' : ''}`}>
@@ -1118,22 +1023,51 @@ export default function MatchView({
             />
 
             <div className="space-y-3">
-              {fastSim?.active ? (
-                <MatchFastSimPanel
-                  homeName={homeTeam.name}
-                  awayName={awayTeam.name}
-                  homeScore={session?.homeScore ?? result?.homeScore ?? 0}
-                  awayScore={session?.awayScore ?? result?.awayScore ?? 0}
-                  pointsToWin={MATCH_CONFIG.pointsToWin}
-                  lastPoint={fastSim.lastPoint}
-                  paused={!!fastSim.paused}
-                  finished={!!fastSim.finished}
-                  speed={fastSimSpeed}
-                  onSpeedChange={setFastSimSpeed}
-                  onPause={handleFastSimPause}
-                  onResume={handleFastSimResume}
-                  onStop={handleFastSimStop}
-                />
+              {pointByPointMode ? (
+                <div className="rounded-xl border border-ufa-border bg-ufa-panel/80 p-5">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={!canPlayPoint || !lineupCheck.ok}
+                      onClick={handleSimulateNextPoint}
+                      className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                    >
+                      {t.simNextPoint}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowTacticsInPointByPoint((v) => !v)}
+                      className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
+                    >
+                      {showTacticsInPointByPoint ? t.hideTactics : t.changeTactics}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExitPointByPoint}
+                      className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-muted hover:bg-ufa-panel-hover"
+                    >
+                      {t.exitPointByPoint}
+                    </button>
+                  </div>
+                  {lineupSubmitError ? (
+                    <p className="mt-3 text-sm text-red-400">{lineupSubmitError}</p>
+                  ) : null}
+                  {showTacticsInPointByPoint && session && (
+                    <div className="mt-4">
+                      <TacticsForm
+                        roster={session?.[playerSide]?.players ?? playerTeamObj?.players ?? []}
+                        tactics={matchTactics}
+                        onTacticsChange={handleMatchTacticsChange}
+                        staminaMap={playerStaminaMap}
+                        lineupMode={beforeFirstPoint ? 'dual' : 'single'}
+                        pointStartRole={homeNextPointRole}
+                        teamName={playerTeamObj?.name}
+                        leaguePlayerStats={leaguePlayerStats}
+                        compact
+                      />
+                    </div>
+                  )}
+                </div>
               ) : (
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1154,15 +1088,6 @@ export default function MatchView({
                         </button>
                       ))}
                     </div>
-                    {pointAnimating && (
-                      <button
-                        type="button"
-                        onClick={handleFastForwardPoint}
-                        className="rounded-md border border-ufa-accent/50 bg-ufa-accent/10 px-3 py-1.5 text-xs font-semibold text-ufa-accent hover:bg-ufa-accent/20"
-                      >
-                        {t.finishPoint}
-                      </button>
-                    )}
                   </div>
                   <FieldView2D
                     fieldState={fieldState}
@@ -1193,7 +1118,7 @@ export default function MatchView({
           </div>
         )}
 
-        {session && session.lastPoint && !fastSim?.active && (
+        {session && session.lastPoint && (
           <p className="mt-4 text-center text-sm text-ufa-muted">
             {t.pointN(session.lastPoint.pointIndex)}{' '}
             <span className="text-ufa-text font-medium">
@@ -1216,15 +1141,14 @@ export default function MatchView({
           tactics={matchTactics}
           onTacticsChange={handleMatchTacticsChange}
           staminaMap={playerStaminaMap}
-          onPlayPoint={canPlayPoint && !fastSim?.active ? handlePlayNextPoint : null}
-          onFastForwardPoint={canPlayPoint && !fastSim?.active ? handleFastForwardPoint : null}
+          onPlayPoint={canPlayPoint ? handlePlayNextPoint : null}
+          onEnterPointByPoint={canPlayPoint ? handleEnterPointByPoint : null}
           lineupError={lineupSubmitError}
           playDisabled={!lineupCheck.ok}
           playLabel={
             beforeFirstPoint ? t.playPoint1 : t.playPoint(session.pointIndex)
           }
-          showSimRest={!fastSim?.active}
-          onSimulateRest={handleSimulateRest}
+          onSimulateToEnd={canPlayPoint ? handleSimulateToEnd : null}
           editDefaultLines={!!beforeFirstPoint}
           leaguePlayerStats={leaguePlayerStats}
         />

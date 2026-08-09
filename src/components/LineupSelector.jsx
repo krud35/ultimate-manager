@@ -16,12 +16,11 @@ export default function LineupSelector({
   onTacticsChange,
   staminaMap,
   onPlayPoint,
-  onFastForwardPoint,
+  onEnterPointByPoint,
   lineupError,
   playDisabled = false,
   playLabel,
-  showSimRest = false,
-  onSimulateRest,
+  onSimulateToEnd,
   /** Przed 1. punktem: edycja obu domyślnych siódemek O/D. */
   editDefaultLines = false,
   leaguePlayerStats = null,
@@ -65,24 +64,23 @@ export default function LineupSelector({
         >
           {playLabel}
         </button>
-        {onFastForwardPoint ? (
+        {onEnterPointByPoint ? (
           <button
             type="button"
-            disabled={playDisabled}
-            onClick={onFastForwardPoint}
-            className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover disabled:opacity-40"
+            onClick={onEnterPointByPoint}
+            className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
           >
-            {tm.ffPoint}
+            {tm.switchPointByPoint}
           </button>
         ) : null}
-        {showSimRest && onSimulateRest ? (
+        {onSimulateToEnd ? (
           <button
             type="button"
             disabled={playDisabled}
-            onClick={onSimulateRest}
+            onClick={onSimulateToEnd}
             className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover disabled:opacity-40"
           >
-            {tm.simRest}
+            {tm.simToEnd}
           </button>
         ) : null}
       </div>

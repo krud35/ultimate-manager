@@ -2,7 +2,7 @@ import { MATCH_CONFIG } from './config.js'
 import { boxScoreRows, createBoxScore } from './boxScore.js'
 import { createEvent, EVENT, resetEventIds } from './events.js'
 import { createRng } from './rng.js'
-import { simulatePoint } from './point.js'
+import { simulatePoint, simulatePointFast } from './point.js'
 import { attachTacticsToTeam } from './tacticsModifiers.js'
 import {
   applyFatigueAfterPoint,
@@ -283,17 +283,32 @@ export function playNextPoint(session, tacticsUpdate = {}, options = {}) {
   const staminaBeforePoint = cloneStaminaMaps(session.stamina)
   resetSprintMeters(session.stamina)
 
-  const pointResult = simulatePoint({
-    homeTeam: session.home,
-    awayTeam: session.away,
-    pullTeam: session.pullTeam,
-    pointIndex: session.pointIndex,
-    rng: session.rng,
-    boxScore: session.boxScore,
-    matchStats: session.matchStats,
-    stamina: session.stamina,
-    wind: session.wind,
-  })
+  // fastMode: symulacja bez klatkowania ruchu 14 agentów (patrz simulatePointFast w
+  // point.js) — do trybu "symuluj resztę meczu" / lig, gdzie boisko się nie renderuje.
+  // Świadomie NIE przekazuje `stamina` do simulatePointFast — applyFatigueAfterPoint
+  // ma wbudowany lekki fallback, gdy sprintM per rzut nie zostało nabite.
+  const pointResult = options.fastMode
+    ? simulatePointFast({
+        homeTeam: session.home,
+        awayTeam: session.away,
+        pullTeam: session.pullTeam,
+        pointIndex: session.pointIndex,
+        rng: session.rng,
+        boxScore: session.boxScore,
+        matchStats: session.matchStats,
+        wind: session.wind,
+      })
+    : simulatePoint({
+        homeTeam: session.home,
+        awayTeam: session.away,
+        pullTeam: session.pullTeam,
+        pointIndex: session.pointIndex,
+        rng: session.rng,
+        boxScore: session.boxScore,
+        matchStats: session.matchStats,
+        stamina: session.stamina,
+        wind: session.wind,
+      })
 
   session.events.push(...pointResult.events)
 
@@ -457,7 +472,7 @@ export function simulateMatch(options) {
         homeTactics: session.home.tactics,
         awayTactics: session.away.tactics,
       },
-      { rotateHome, rotateAway, aiHome, aiAway },
+      { rotateHome, rotateAway, aiHome, aiAway, fastMode: options.fastMode },
     )
   }
   return sessionToResult(session)
@@ -470,7 +485,11 @@ export function runRemainingMatch(session, tacticsUpdate = {}, options = {}) {
   const aiHome = options.aiHome ?? rotateHome
   const aiAway = options.aiAway ?? rotateAway
   while (session.status !== 'finished') {
-    session = playNextPoint(session, {}, { rotateHome, rotateAway, aiHome, aiAway })
+    session = playNextPoint(
+      session,
+      {},
+      { rotateHome, rotateAway, aiHome, aiAway, fastMode: options.fastMode },
+    )
   }
   return sessionToResult(session)
 }

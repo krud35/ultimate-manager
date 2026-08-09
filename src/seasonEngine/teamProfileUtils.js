@@ -1,6 +1,6 @@
 import { MATCH_CONFIG } from '../matchEngine/config.js'
 import { getOverallRating } from '../data/mockPlayers.js'
-import { resolveTeamRatings } from './backgroundSimulator.js'
+import { resolveTeamRatings } from './teamRatings.js'
 import { seasonStatsForPlayer } from '../league/leagueStats.js'
 
 const LINE_SIZE = MATCH_CONFIG.lineupSize
