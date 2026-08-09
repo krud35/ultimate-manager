@@ -21,8 +21,9 @@ import {
   classifyTransferTarget,
   transferTargetMotiveLabelPl,
 } from './transfers/index.js'
-import { pickRandomEventMessage } from './randomEvents.js'
+import { pickRandomEventMessage, pickPostMatchEventMessage } from './randomEvents.js'
 import { attributeBandLabel } from '../ui/fogOfWar.js'
+import { holdPct, breakPct, pressureCompletionRate } from '../matchEngine'
 
 export const INBOX_TYPES = {
   TRAINING_REPORT: 'training_report',
@@ -575,12 +576,35 @@ export function messageFromMatchAnalysis(career, { fixture, record, autoSimulate
       `Your stats: ${fmtCompletion(ourStats)} completions, ${ourStats.totalYards ?? 0} m.`,
     )
   }
+  const ourHoldPct = holdPct(ourLine)
+  const ourBreakPct = breakPct(ourLine)
   if (ourLine) {
+    const holdBit =
+      ourHoldPct == null
+        ? `${ourLine.offense ?? 0} z O-line`
+        : `Hold ${Math.round(ourHoldPct)}% (${ourLine.offense}/${ourLine.offensePoints})`
+    const breakBit =
+      ourBreakPct == null
+        ? `${ourLine.defense ?? 0} z D-line`
+        : `Break ${Math.round(ourBreakPct)}% (${ourLine.defense}/${ourLine.defensePoints})`
+    const holdBitEn =
+      ourHoldPct == null
+        ? `${ourLine.offense ?? 0} from O-line`
+        : `Hold ${Math.round(ourHoldPct)}% (${ourLine.offense}/${ourLine.offensePoints})`
+    const breakBitEn =
+      ourBreakPct == null
+        ? `${ourLine.defense ?? 0} from D-line`
+        : `Break ${Math.round(ourBreakPct)}% (${ourLine.defense}/${ourLine.defensePoints})`
+    bodyParts.push(`${holdBit}, ${breakBit}.`)
+    bodyPartsEn.push(`${holdBitEn}, ${breakBitEn}.`)
+  }
+  const ourPressureRate = pressureCompletionRate(ourStats)
+  if (ourPressureRate != null) {
     bodyParts.push(
-      `Punkty z O-line ${ourLine.offense ?? 0}, z D-line ${ourLine.defense ?? 0}.`,
+      `Pod presją (wysoki stall): ${ourStats.pressureCompletions}/${ourStats.pressureAttempts} (${Math.round(ourPressureRate)}%).`,
     )
     bodyPartsEn.push(
-      `Points from O-line ${ourLine.offense ?? 0}, from D-line ${ourLine.defense ?? 0}.`,
+      `Under pressure (high stall count): ${ourStats.pressureCompletions}/${ourStats.pressureAttempts} (${Math.round(ourPressureRate)}%).`,
     )
   }
   if (bestText) {
@@ -639,6 +663,9 @@ export function messageFromMatchAnalysis(career, { fixture, record, autoSimulate
         theirPoints: theirScore,
         ourLinePoints: ourLine,
         theirLinePoints: theirLine,
+        ourHoldPct,
+        ourBreakPct,
+        ourPressureCompletionPct: ourPressureRate == null ? null : Math.round(ourPressureRate * 10) / 10,
       },
       boxScore: payloadBox,
       hasBoxScore: payloadBox.length > 0,
@@ -666,6 +693,7 @@ export function messagesFromNewPlayerMatches(career, prevHistory, nextHistory, l
         autoSimulated: true,
       }),
     )
+    out.push(pickPostMatchEventMessage(career, { fixture, record: entry }))
   }
   return out.filter(Boolean)
 }

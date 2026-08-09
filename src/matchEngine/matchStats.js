@@ -3,6 +3,14 @@ import { EVENT } from './events.js'
 
 export const HUCK_MIN_YARDS = 40
 
+/**
+ * Rzut liczy się jako "pod presją", gdy pada przy tym lub wyższym stall foulcount.
+ * W praktyce silnik rzadko przekracza stall 5 (gracze rzucają wcześnie, żeby uniknąć
+ * kary za skład — patrz stallComposureAccuracyPenalty), więc próg 4 łapie ok. górne
+ * ~9% rzutów, czyli realny "późny" moment decyzji, a nie martwy próg blisko STALL_MAX.
+ */
+export const PRESSURE_STALL_THRESHOLD = 4
+
 export function createTeamMatchStats() {
   return {
     totalYards: 0,
@@ -10,6 +18,8 @@ export function createTeamMatchStats() {
     completions: 0,
     huckAttempts: 0,
     huckCompletions: 0,
+    pressureAttempts: 0,
+    pressureCompletions: 0,
     turnovers: [],
   }
 }
@@ -31,6 +41,12 @@ export function huckRate(teamStats) {
   return (teamStats.huckCompletions / teamStats.huckAttempts) * 100
 }
 
+/** Procent skuteczności rzutów oddanych przy stallCount >= PRESSURE_STALL_THRESHOLD, albo null gdy brak próbek. */
+export function pressureCompletionRate(teamStats) {
+  if (!teamStats || !teamStats.pressureAttempts) return null
+  return (teamStats.pressureCompletions / teamStats.pressureAttempts) * 100
+}
+
 /**
  * Kompaktowe team stats do zapisu (bez mapy strat).
  * @param {ReturnType<typeof createTeamMatchStats>|null|undefined} teamStats
@@ -44,8 +60,12 @@ export function compactTeamMatchStats(teamStats) {
       huckAttempts: 0,
       huckCompletions: 0,
       completionPct: 0,
+      pressureAttempts: 0,
+      pressureCompletions: 0,
+      pressureCompletionPct: null,
     }
   }
+  const pressureRate = pressureCompletionRate(teamStats)
   return {
     totalYards: teamStats.totalYards ?? 0,
     throwAttempts: teamStats.throwAttempts ?? 0,
@@ -53,6 +73,9 @@ export function compactTeamMatchStats(teamStats) {
     huckAttempts: teamStats.huckAttempts ?? 0,
     huckCompletions: teamStats.huckCompletions ?? 0,
     completionPct: Math.round(completionRate(teamStats) * 10) / 10,
+    pressureAttempts: teamStats.pressureAttempts ?? 0,
+    pressureCompletions: teamStats.pressureCompletions ?? 0,
+    pressureCompletionPct: pressureRate == null ? null : Math.round(pressureRate * 10) / 10,
   }
 }
 
@@ -72,8 +95,10 @@ export function compactMatchStats(matchStats) {
  * @returns {{ home: { offense: number, defense: number }, away: { offense: number, defense: number } }}
  */
 export function summarizeLineStartPoints(events) {
-  const home = { offense: 0, defense: 0 }
-  const away = { offense: 0, defense: 0 }
+  // offense/defense = punkty wygrane z danej roli (holdy/breaki).
+  // offensePoints/defensePoints = ile razy dana rola w ogóle wystąpiła (mianownik do Hold%/Break%).
+  const home = { offense: 0, defense: 0, offensePoints: 0, defensePoints: 0 }
+  const away = { offense: 0, defense: 0, offensePoints: 0, defensePoints: 0 }
   let homeRole = null
   let awayRole = null
 
@@ -81,6 +106,10 @@ export function summarizeLineStartPoints(events) {
     if (e?.type === EVENT.POINT_START) {
       homeRole = e.homePointStartRole ?? null
       awayRole = e.awayPointStartRole ?? null
+      if (homeRole === 'offense') home.offensePoints += 1
+      else if (homeRole === 'defense') home.defensePoints += 1
+      if (awayRole === 'offense') away.offensePoints += 1
+      else if (awayRole === 'defense') away.defensePoints += 1
       continue
     }
     if (e?.type !== EVENT.POINT_END || !e.scoringTeam) continue
@@ -96,18 +125,38 @@ export function summarizeLineStartPoints(events) {
   return { home, away }
 }
 
+/** Hold% — odsetek punktów utrzymanych z własnego rozpoczęcia w ataku, albo null gdy brak próbek. */
+export function holdPct(lineStats) {
+  if (!lineStats || !lineStats.offensePoints) return null
+  return (lineStats.offense / lineStats.offensePoints) * 100
+}
+
+/** Break% — odsetek punktów odebranych przeciwnikowi z rozpoczęcia w obronie, albo null gdy brak próbek. */
+export function breakPct(lineStats) {
+  if (!lineStats || !lineStats.defensePoints) return null
+  return (lineStats.defense / lineStats.defensePoints) * 100
+}
+
 /**
  * @param {'home'|'away'} offenseTeamId
  */
-export function recordThrowAttempt(matchStats, offenseTeamId, { success, yardsGained, isHuck, turnoverMeters }) {
+export function recordThrowAttempt(
+  matchStats,
+  offenseTeamId,
+  { success, yardsGained, isHuck, turnoverMeters, stallCount },
+) {
   const s = matchStats[offenseTeamId]
   s.throwAttempts += 1
   if (isHuck) s.huckAttempts += 1
+
+  const underPressure = (stallCount ?? 0) >= PRESSURE_STALL_THRESHOLD
+  if (underPressure) s.pressureAttempts += 1
 
   if (success) {
     s.completions += 1
     s.totalYards += yardsGained
     if (isHuck) s.huckCompletions += 1
+    if (underPressure) s.pressureCompletions += 1
   } else if (turnoverMeters != null) {
     s.turnovers.push({ meters: turnoverMeters, team: offenseTeamId })
   }
@@ -122,6 +171,7 @@ export function buildMatchStatsFromEvents(events) {
         success: true,
         yardsGained: e.yardsGained ?? 0,
         isHuck: !!e.isHuck,
+        stallCount: e.stallCount,
       })
     }
     if (e.type === 'throw_fail') {
@@ -129,6 +179,7 @@ export function buildMatchStatsFromEvents(events) {
         success: false,
         isHuck: !!e.isHuck,
         turnoverMeters: e.turnoverMeters,
+        stallCount: e.stallCount,
       })
     }
   }

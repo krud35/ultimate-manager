@@ -24,6 +24,7 @@ import {
   messagesFromInjuries,
   messagesFromNewMatchInjuries,
   messageFromMatchAnalysis,
+  pickPostMatchEventMessage,
   messagesFromNewPlayerMatches,
   messagesFromNewTransferLogEntries,
   generateIncomingTransferOffers,
@@ -1580,6 +1581,7 @@ export default function App() {
           fixture.homeTeamId === prev.playerTeamId ? fixture.awayTeamId : fixture.homeTeamId
         recordMatchKnowledgeGain(prev.world, prev.playerTeamId, scoutOpponentId)
         const analysis = messageFromMatchAnalysis(prev, { fixture, record })
+        const postMatchEvent = pickPostMatchEventMessage(prev, { fixture, record })
         const playerInjuries = (record.injuries ?? []).filter((inj) => {
           if (inj.teamId) return inj.teamId === prev.playerTeamId
           const team = worldTeamById(prev.world, prev.playerTeamId)
@@ -1589,7 +1591,7 @@ export default function App() {
           date: fixture.date ?? copy.currentDate,
           source: 'match',
         })
-        const inboxMsgs = [analysis, ...injuryMsgs].filter(Boolean)
+        const inboxMsgs = [analysis, postMatchEvent, ...injuryMsgs].filter(Boolean)
         const saved = persistCareer(prev, {
           league: copy,
           inbox: inboxMsgs.length ? mergeInbox(prev, inboxMsgs) : prev.inbox,
@@ -1920,6 +1922,8 @@ export default function App() {
             onTransferOfferAction={handleTransferOfferAction}
             onResolveDecision={handleResolveDecision}
             onSponsorSign={handleSponsorSign}
+            initialSelectedId={inboxFocusId}
+            onConsumeFocus={() => setInboxFocusId(null)}
           />
         )}
 
@@ -1986,6 +1990,14 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'scouting-center' && (
+          <ScoutingCenterView
+            career={career}
+            onCareerUpdate={handleTransfersUpdate}
+            onOpenTeam={openTeamProfile}
+          />
+        )}
+
         {activeTab === 'training' && (
           <TrainingView
             team={userTeam}
@@ -2019,6 +2031,7 @@ export default function App() {
               <PreMatchView
                 fixture={leagueFixture}
                 league={league}
+                world={career.world}
                 onNavigate={navigateTo}
                 onOpenTeam={openTeamProfile}
                 onSimulateUntilMatch={handleSimulateUntilMatch}

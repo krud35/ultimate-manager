@@ -160,9 +160,13 @@ export {
   buildMatchStatsFromEvents,
   completionRate,
   huckRate,
+  pressureCompletionRate,
+  PRESSURE_STALL_THRESHOLD,
   compactMatchStats,
   compactTeamMatchStats,
   summarizeLineStartPoints,
+  holdPct,
+  breakPct,
 } from './matchStats.js'
 export { fieldStateAtEventStep, animatableEventIndices, FIELD_DIMENSIONS, fieldLineupIdsFromPointEvents, filterPlayersToPointLineup, layoutPlayersOnField } from './fieldViz.js'
 export { FIELD_DIMENSIONS as FIELD_DIM, playingLengthM, fieldCenterY } from './fieldDimensions.js'

@@ -175,6 +175,7 @@ export {
 export {
   RANDOM_EVENT_TEMPLATES,
   pickRandomEventMessage,
+  pickPostMatchEventMessage,
   applyRandomEventChoice,
   resolveInboxDecision,
 } from './randomEvents.js'

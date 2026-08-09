@@ -1,4 +1,11 @@
-import { completionRate, huckRate, summarizeLineStartPoints } from '../matchEngine'
+import {
+  completionRate,
+  huckRate,
+  pressureCompletionRate,
+  summarizeLineStartPoints,
+  holdPct,
+  breakPct,
+} from '../matchEngine'
 import { useUiLang } from '../ui/UiLangContext'
 import { matchStrings } from '../ui/strings/match'
 
@@ -9,6 +16,8 @@ function emptySide() {
     completions: 0,
     huckAttempts: 0,
     huckCompletions: 0,
+    pressureAttempts: 0,
+    pressureCompletions: 0,
     turnovers: [],
   }
 }
@@ -96,6 +105,18 @@ export default function MatchDashboard({
     s.huckAttempts === 0
       ? '0'
       : `${s.huckCompletions}/${s.huckAttempts} (${fmtPct(huckRate(s))})`
+  const fmtPressure = (s) => {
+    const rate = pressureCompletionRate(s)
+    return rate == null ? '—' : `${s.pressureCompletions}/${s.pressureAttempts} (${fmtPct(rate)})`
+  }
+  const fmtHold = (lineSide) => {
+    const pct = holdPct(lineSide)
+    return pct == null ? `${lineSide.offense}` : `${lineSide.offense}/${lineSide.offensePoints} (${fmtPct(pct)})`
+  }
+  const fmtBreak = (lineSide) => {
+    const pct = breakPct(lineSide)
+    return pct == null ? `${lineSide.defense}` : `${lineSide.defense}/${lineSide.defensePoints} (${fmtPct(pct)})`
+  }
 
   const tiles = [
     {
@@ -121,15 +142,21 @@ export default function MatchDashboard({
     },
     {
       label: t.hold,
-      homeVal: linePts.home.offense,
-      awayVal: linePts.away.offense,
+      homeVal: fmtHold(linePts.home),
+      awayVal: fmtHold(linePts.away),
       title: t.holdTitle,
     },
     {
       label: t.break,
-      homeVal: linePts.home.defense,
-      awayVal: linePts.away.defense,
+      homeVal: fmtBreak(linePts.home),
+      awayVal: fmtBreak(linePts.away),
       title: t.breakTitle,
+    },
+    {
+      label: t.pressureCompletions,
+      homeVal: fmtPressure(home),
+      awayVal: fmtPressure(away),
+      title: t.pressureCompletionsTitle,
     },
   ]
 

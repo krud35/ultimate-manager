@@ -3577,8 +3577,333 @@ export const RANDOM_EVENT_TEMPLATES = [
   },
 ]
 
+/**
+ * Zdarzenia decyzyjne wyzwalane bezpośrednio po meczu drużyny gracza (nie przez
+ * dzienny SPAWN_CHANCE). Ten sam kształt szablonu i ten sam resolver
+ * (`applyRandomEventChoice` / `templateById`) co RANDOM_EVENT_TEMPLATES —
+ * osobna tablica tylko po to, by dzienny picker (`eligibleTemplates`) ich nie losował.
+ * @type {EventTemplate[]}
+ */
+export const POST_MATCH_EVENT_TEMPLATES = [
+  {
+    id: 'postmatch_star_rough_game',
+    weight: 1,
+    pickContext(roster, _rng, _team, matchCtx) {
+      const candidates = (matchCtx?.ourRows ?? []).filter(
+        (r) => (r.pointsPlayed ?? 0) > 0 && (r.turnovers ?? 0) >= 2,
+      )
+      if (!candidates.length) return null
+      const worst = [...candidates].sort((a, b) => boxImpactScore(a) - boxImpactScore(b))[0]
+      const player = findPlayer(roster, worst.playerId)
+      if (!player) return null
+      return {
+        playerId: player.id,
+        playerName: playerName(player),
+        turnovers: worst.turnovers ?? 0,
+        goals: worst.goals ?? 0,
+        assists: worst.assists ?? 0,
+        won: matchCtx.won,
+        ourScore: matchCtx.ourScore,
+        theirScore: matchCtx.theirScore,
+      }
+    },
+    title: (ctx) => `Ciężki mecz: ${ctx.playerName}`,
+    titleEn: (ctx) => `Rough game: ${ctx.playerName}`,
+    body: (ctx) =>
+      `${ctx.playerName} miał ciężki mecz (${ctx.turnovers} turnoverów, ${ctx.goals}G/${ctx.assists}A) w spotkaniu zakończonym ${ctx.ourScore}:${ctx.theirScore}. Jak reagujesz po meczu?`,
+    bodyEn: (ctx) =>
+      `${ctx.playerName} had a rough game (${ctx.turnovers} turnovers, ${ctx.goals}G/${ctx.assists}A) in a match that finished ${ctx.ourScore}-${ctx.theirScore}. How do you handle it after the game?`,
+    choices: () => [
+      { id: 'support', label: 'Wesprzyj go', labelEn: 'Back him up', hint: 'Morale +, forma +' },
+      {
+        id: 'challenge',
+        label: 'Podnieś poprzeczkę wprost',
+        labelEn: 'Challenge him directly',
+        hint: 'Forma +, morale −',
+      },
+      { id: 'ignore', label: 'Nic nie mów', labelEn: 'Say nothing', hint: 'Morale wyraźnie −' },
+    ],
+    resolve(ctx, choiceId) {
+      if (choiceId === 'support') {
+        return {
+          effects: [
+            { type: 'morale', playerId: ctx.playerId, delta: 5 },
+            { type: 'form', playerId: ctx.playerId, delta: 2 },
+          ],
+          summary: `Wsparłeś ${ctx.playerName} po słabym meczu.`,
+          summaryEn: `You backed ${ctx.playerName} up after a poor game.`,
+        }
+      }
+      if (choiceId === 'challenge') {
+        return {
+          effects: [
+            { type: 'morale', playerId: ctx.playerId, delta: -2 },
+            { type: 'form', playerId: ctx.playerId, delta: 4 },
+          ],
+          summary: `Postawiłeś ${ctx.playerName} przed jasnym wyzwaniem — przyjął to z mieszanymi uczuciami.`,
+          summaryEn: `You challenged ${ctx.playerName} directly — mixed reception.`,
+        }
+      }
+      return {
+        effects: [{ type: 'morale', playerId: ctx.playerId, delta: -4 }],
+        summary: `Nie odezwałeś się do ${ctx.playerName} — poczuł się zignorowany.`,
+        summaryEn: `You said nothing to ${ctx.playerName} — he felt ignored.`,
+      }
+    },
+  },
+  {
+    id: 'postmatch_breakout_performance',
+    weight: 1,
+    pickContext(roster, _rng, _team, matchCtx) {
+      const candidates = (matchCtx?.ourRows ?? []).filter(
+        (r) =>
+          (r.pointsPlayed ?? 0) > 0 &&
+          (r.turnovers ?? 0) <= 1 &&
+          (r.goals ?? 0) + (r.assists ?? 0) + (r.blocks ?? 0) >= 4,
+      )
+      if (!candidates.length) return null
+      const best = [...candidates].sort((a, b) => boxImpactScore(b) - boxImpactScore(a))[0]
+      const player = findPlayer(roster, best.playerId)
+      if (!player) return null
+      return {
+        playerId: player.id,
+        playerName: playerName(player),
+        goals: best.goals ?? 0,
+        assists: best.assists ?? 0,
+        blocks: best.blocks ?? 0,
+      }
+    },
+    title: (ctx) => `Świetny mecz: ${ctx.playerName}`,
+    titleEn: (ctx) => `Standout game: ${ctx.playerName}`,
+    body: (ctx) =>
+      `${ctx.playerName} rozegrał świetny mecz (${ctx.goals}G/${ctx.assists}A/${ctx.blocks}B). Jak to wykorzystasz?`,
+    bodyEn: (ctx) =>
+      `${ctx.playerName} put together a standout game (${ctx.goals}G/${ctx.assists}A/${ctx.blocks}B). How do you play it?`,
+    choices: () => [
+      {
+        id: 'praise_public',
+        label: 'Pochwal publicznie (media)',
+        labelEn: 'Praise him publicly (media)',
+        hint: 'Morale wyraźnie +, rozgłos',
+      },
+      {
+        id: 'praise_private',
+        label: 'Pogratuluj prywatnie',
+        labelEn: 'Congratulate him privately',
+        hint: 'Morale +, stabilnie',
+      },
+      {
+        id: 'stay_grounded',
+        label: 'Każ trzymać nogi na ziemi',
+        labelEn: 'Tell him to stay grounded',
+        hint: 'Forma +, mniejszy skok morale',
+      },
+    ],
+    resolve(ctx, choiceId) {
+      if (choiceId === 'praise_public') {
+        return {
+          effects: [
+            { type: 'morale', playerId: ctx.playerId, delta: 6 },
+            { type: 'fansMood', delta: 1 },
+          ],
+          summary: `Pochwaliłeś ${ctx.playerName} publicznie.`,
+          summaryEn: `You praised ${ctx.playerName} publicly.`,
+        }
+      }
+      if (choiceId === 'stay_grounded') {
+        return {
+          effects: [
+            { type: 'morale', playerId: ctx.playerId, delta: 1 },
+            { type: 'form', playerId: ctx.playerId, delta: 2 },
+          ],
+          summary: `${ctx.playerName} trzyma nogi na ziemi — spokojny, stabilny rozwój.`,
+          summaryEn: `${ctx.playerName} stays grounded — calm, steady development.`,
+        }
+      }
+      return {
+        effects: [{ type: 'morale', playerId: ctx.playerId, delta: 3 }],
+        summary: `Pogratulowałeś ${ctx.playerName} prywatnie.`,
+        summaryEn: `You congratulated ${ctx.playerName} privately.`,
+      }
+    },
+  },
+  {
+    id: 'postmatch_benched_frustration',
+    weight: 1,
+    pickContext(roster, _rng, _team, matchCtx) {
+      const playedIds = new Set(
+        (matchCtx?.ourRows ?? [])
+          .filter((r) => (r.pointsPlayed ?? 0) > 0)
+          .map((r) => r.playerId),
+      )
+      const unused = sortByOvrDesc(
+        (roster ?? []).filter((p) => !playedIds.has(p.id)),
+      )
+      const player = unused[0]
+      if (!player) return null
+      return { playerId: player.id, playerName: playerName(player) }
+    },
+    title: (ctx) => `Rozczarowanie: ${ctx.playerName}`,
+    titleEn: (ctx) => `Frustration: ${ctx.playerName}`,
+    body: (ctx) =>
+      `${ctx.playerName} nie zagrał w ostatnim meczu i nie kryje rozczarowania brakiem minut.`,
+    bodyEn: (ctx) =>
+      `${ctx.playerName} didn't feature in the last match and isn't hiding his frustration about the lack of minutes.`,
+    choices: () => [
+      {
+        id: 'promise_minutes',
+        label: 'Obiecaj więcej minut następnym razem',
+        labelEn: 'Promise more minutes next time',
+        hint: 'Morale +, zobowiązanie na przyszłość',
+      },
+      {
+        id: 'be_honest',
+        label: 'Bądź szczery ws. decyzji taktycznych',
+        labelEn: 'Be honest about the tactical call',
+        hint: 'Morale lekko −',
+      },
+      {
+        id: 'ignore',
+        label: 'Zbagatelizuj sprawę',
+        labelEn: 'Brush it off',
+        hint: 'Morale wyraźnie −',
+      },
+    ],
+    resolve(ctx, choiceId) {
+      if (choiceId === 'promise_minutes') {
+        return {
+          effects: [{ type: 'morale', playerId: ctx.playerId, delta: 4 }],
+          summary: `Obiecałeś ${ctx.playerName} więcej minut.`,
+          summaryEn: `You promised ${ctx.playerName} more minutes.`,
+        }
+      }
+      if (choiceId === 'be_honest') {
+        return {
+          effects: [{ type: 'morale', playerId: ctx.playerId, delta: -1 }],
+          summary: `Byłeś szczery z ${ctx.playerName} — przyjął to chłodno, ale ze zrozumieniem.`,
+          summaryEn: `You were honest with ${ctx.playerName} — a cool but understanding reaction.`,
+        }
+      }
+      return {
+        effects: [{ type: 'morale', playerId: ctx.playerId, delta: -5 }],
+        summary: `Zbagatelizowałeś sprawę — ${ctx.playerName} jest wyraźnie niezadowolony.`,
+        summaryEn: `You brushed it off — ${ctx.playerName} is clearly unhappy.`,
+      }
+    },
+  },
+  {
+    id: 'postmatch_bad_loss_locker_room',
+    weight: 1,
+    pickContext(_roster, _rng, _team, matchCtx) {
+      return {
+        ourScore: matchCtx.ourScore,
+        theirScore: matchCtx.theirScore,
+        margin: matchCtx.margin,
+      }
+    },
+    title: () => 'Ciężka porażka — nastroje w szatni',
+    titleEn: () => 'Heavy loss — mood in the locker room',
+    body: (ctx) =>
+      `Przegraliście wysoko ${ctx.ourScore}:${ctx.theirScore}. Szatnia jest przygnębiona. Co robisz?`,
+    bodyEn: (ctx) =>
+      `You lost heavily ${ctx.ourScore}-${ctx.theirScore}. The locker room is deflated. What do you do?`,
+    choices: () => [
+      {
+        id: 'rally',
+        label: 'Zbierz drużynę i zmobilizuj',
+        labelEn: 'Rally the team',
+        hint: 'Morale drużyny +',
+      },
+      {
+        id: 'move_on',
+        label: 'Nie roztrząsaj, kolejny mecz',
+        labelEn: "Move on, next match",
+        hint: 'Morale drużyny lekko +',
+      },
+      {
+        id: 'blame_tactics',
+        label: 'Weź winę na siebie / taktykę',
+        labelEn: 'Take the blame yourself / tactics',
+        hint: 'Morale drużyny wyraźnie +, reputacja −',
+      },
+    ],
+    resolve(_ctx, choiceId) {
+      if (choiceId === 'rally') {
+        return {
+          effects: [{ type: 'moraleTeam', delta: 3 }],
+          summary: 'Zebrałeś drużynę i zmobilizowałeś ją po porażce.',
+          summaryEn: 'You rallied the team after the loss.',
+        }
+      }
+      if (choiceId === 'blame_tactics') {
+        return {
+          effects: [
+            { type: 'moraleTeam', delta: 5 },
+            { type: 'reputation', delta: -2 },
+          ],
+          summary: 'Wziąłeś winę na siebie — drużyna odetchnęła, ale Twoja reputacja ucierpiała.',
+          summaryEn: 'You took the blame yourself — the squad breathed easier, but your reputation took a hit.',
+        }
+      }
+      return {
+        effects: [{ type: 'moraleTeam', delta: 1 }],
+        summary: 'Przeszliście nad porażką do porządku dziennego.',
+        summaryEn: 'You moved on from the loss without much fuss.',
+      }
+    },
+  },
+]
+
+const POST_MATCH_SPAWN_CHANCE = 0.4
+
+function boxImpactScore(row) {
+  return (
+    (row.goals ?? 0) +
+    (row.assists ?? 0) * 0.7 +
+    (row.blocks ?? 0) * 0.5 -
+    (row.turnovers ?? 0) * 1.2
+  )
+}
+
+/** Kontekst meczowy (wynik, strona, box score gracza) budowany z rekordu ligi. */
+function buildPostMatchCtx(career, record, fixture) {
+  const playerTeamId = career?.playerTeamId
+  const homeTeamId = record?.homeTeamId ?? fixture?.homeTeamId
+  const awayTeamId = record?.awayTeamId ?? fixture?.awayTeamId
+  if (!playerTeamId || !homeTeamId || !awayTeamId) return null
+  if (homeTeamId !== playerTeamId && awayTeamId !== playerTeamId) return null
+
+  const isHome = homeTeamId === playerTeamId
+  const ourSide = isHome ? 'home' : 'away'
+  const homeScore = record?.homeScore ?? 0
+  const awayScore = record?.awayScore ?? 0
+  const ourScore = isHome ? homeScore : awayScore
+  const theirScore = isHome ? awayScore : homeScore
+  const winner = record?.winner ?? record?.winnerTeamId ?? null
+
+  const boxScore = record?.boxScore ?? []
+  const ourRows = boxScore.filter(
+    (row) => row.teamId === ourSide || row.teamId === playerTeamId,
+  )
+
+  return {
+    fixtureId: record?.fixtureId ?? fixture?.id ?? null,
+    ourSide,
+    ourScore,
+    theirScore,
+    won: winner === playerTeamId,
+    draw: homeScore === awayScore,
+    margin: Math.abs(ourScore - theirScore),
+    ourRows,
+  }
+}
+
 function templateById(id) {
-  return RANDOM_EVENT_TEMPLATES.find((t) => t.id === id) ?? null
+  return (
+    RANDOM_EVENT_TEMPLATES.find((t) => t.id === id) ??
+    POST_MATCH_EVENT_TEMPLATES.find((t) => t.id === id) ??
+    null
+  )
 }
 
 /** Runtime EN title for saved messages that lack titleEn. */
@@ -3655,6 +3980,69 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
     type: RANDOM_EVENT_TYPE,
     createdAt: new Date().toISOString(),
     date: simDate,
+    seasonIndex: career.seasonIndex ?? null,
+    seasonYear: career.seasonYear ?? null,
+    read: false,
+    title: template.title(ctx),
+    body: template.body(ctx),
+    ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
+    ...(bodyEn ? { bodyEn } : {}),
+    payload: {
+      kind: 'decision',
+      templateId: template.id,
+      status: 'pending',
+      context: ctx,
+      choices,
+    },
+  }
+}
+
+/**
+ * Zdarzenie decyzyjne wyzwolone bezpośrednio po meczu drużyny gracza (rozmowa
+ * z zawodnikiem / szatnią). Osobny, niezależny od SPAWN_CHANCE rzut kością
+ * (POST_MATCH_SPAWN_CHANCE), tak by nie każdy mecz kończył się dodatkową decyzją.
+ */
+export function pickPostMatchEventMessage(career, { fixture = null, record = null } = {}) {
+  if (!career?.world || !record) return null
+
+  const team = worldTeamById(career.world, career.playerTeamId)
+  if (!team?.players?.length) return null
+
+  const matchCtx = buildPostMatchCtx(career, record, fixture)
+  if (!matchCtx) return null
+
+  const rand = mulberry32(
+    hashSeed(`${career.id}|postmatch|${matchCtx.fixtureId ?? 'unknown'}`),
+  )
+
+  if (rand() > POST_MATCH_SPAWN_CHANCE) return null
+
+  const pool = POST_MATCH_EVENT_TEMPLATES.filter((t) => {
+    try {
+      const ctx = t.pickContext(team.players, rand, team, matchCtx)
+      return !!ctx
+    } catch {
+      return false
+    }
+  })
+  if (!pool.length) return null
+
+  const template = pickWeighted(pool, rand)
+  if (!template) return null
+
+  const ctx = template.pickContext(team.players, rand, team, matchCtx)
+  if (!ctx) return null
+
+  const choices = localizeEventChoices(template.id, template.choices(ctx))
+  if (!choices?.length) return null
+
+  const bodyEn = typeof template.bodyEn === 'function' ? template.bodyEn(ctx) : null
+
+  return {
+    id: newMessageId(RANDOM_EVENT_TYPE),
+    type: RANDOM_EVENT_TYPE,
+    createdAt: new Date().toISOString(),
+    date: record?.date ?? fixture?.date ?? career?.league?.currentDate ?? null,
     seasonIndex: career.seasonIndex ?? null,
     seasonYear: career.seasonYear ?? null,
     read: false,

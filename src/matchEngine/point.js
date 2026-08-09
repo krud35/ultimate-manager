@@ -770,6 +770,7 @@ export function simulatePoint({
           success: true,
           yardsGained,
           isHuck,
+          stallCount: attemptStall,
         })
       }
 
@@ -791,6 +792,7 @@ export function simulatePoint({
           receiverId: receiver.id,
           yardsGained,
           isHuck,
+          stallCount: attemptStall,
           throwType,
           trajectory: profile.trajectory,
           throwScore: result.throwScore,
@@ -851,6 +853,7 @@ export function simulatePoint({
           success: false,
           isHuck,
           turnoverMeters,
+          stallCount: attemptStall,
         })
       }
 
@@ -875,6 +878,7 @@ export function simulatePoint({
           possessionTeam: possession,
           discPositionBefore,
           isHuck,
+          stallCount: attemptStall,
           throwType,
           trajectory: profile.trajectory,
           turnoverMeters,
