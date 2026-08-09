@@ -59,10 +59,16 @@ import {
   SCOUT_MISSION_KINDS,
   isPlayerShortlisted,
   toggleShortlist,
+  buildTransferRowForPlayer,
+  submitTransferOffer,
+  mergeInbox,
 } from '../career'
 import PlayerTraitChips from '../components/PlayerTraitChips'
 import PlayerProfileModal from '../components/PlayerProfileModal'
+import NegotiateModal from '../components/NegotiateModal'
 import { teamProfileStrings } from './strings/teamProfile'
+import { transfersStrings } from './strings/transfers'
+import { translateTransferError } from './strings/transferErrors'
 import { scoutingStrings } from './strings/scouting'
 import { financeStateLabel, financeStateToneClass, scoutedValueDisplay, attributeBandToneClass } from './fogOfWar'
 
@@ -163,7 +169,7 @@ function ScoutingSection({ career, onChange, playerTeam, opponentTeam, opponentT
     if (result.ok) {
       setFlash({ ok: true })
       setTargetPlayerId('')
-      onChange?.()
+      onChange?.({})
     } else {
       setFlash({ ok: false, error: result.error })
     }
@@ -309,6 +315,9 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
   const [sortKey, setSortKey] = useState('goals')
   const [sortDir, setSortDir] = useState('desc')
   const [profilePlayer, setProfilePlayer] = useState(null)
+  const [negotiateRow, setNegotiateRow] = useState(null)
+  const [negotiateFlash, setNegotiateFlash] = useState(null)
+  const tt = transfersStrings(lang)
 
   const team = seasonState?.teamsById?.[teamId]
   const standing = seasonState?.standings?.[teamId]
@@ -846,7 +855,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
           }
           onToggleShortlist={(playerId) => {
             toggleShortlist(playerTeam, playerId)
-            onChange?.()
+            onChange?.({})
           }}
           onScoutPlayer={(playerId) => {
             const result = queueScoutMission(playerTeam, {
@@ -855,10 +864,49 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
               opponentTeamId: teamId,
               date: career?.league?.currentDate ?? null,
             })
-            if (result.ok) onChange?.()
+            if (result.ok) onChange?.({})
             return result
           }}
+          onStartNegotiation={(playerId) => {
+            const row = buildTransferRowForPlayer(career?.world, career?.playerTeamId, playerId)
+            if (!row) return
+            setProfilePlayer(null)
+            setNegotiateFlash(null)
+            setNegotiateRow(row)
+          }}
         />
+      )}
+
+      {negotiateRow && (
+        <NegotiateModal
+          row={negotiateRow}
+          budget={getTransferBudget(playerTeam)}
+          onClose={() => setNegotiateRow(null)}
+          onSubmitOffer={(offerAmount, contractTerms = null) => {
+            const result = submitTransferOffer(career, { row: negotiateRow, offerAmount, contractTerms })
+            if (!result.ok) {
+              const text =
+                result.code === 'negative_budget'
+                  ? tt.negativeBudgetBlock
+                  : translateTransferError(result.error, lang) ?? tt.transferError
+              setNegotiateFlash({ type: 'error', text })
+              return
+            }
+            if (result.kind === 'fa_signed') {
+              onChange?.({ world: result.world, transferLog: result.transferLog })
+              setNegotiateFlash({ type: 'ok', text: tt.faSigned })
+            } else {
+              onChange?.({ inbox: mergeInbox(career, [result.message]) })
+              setNegotiateFlash({ type: 'ok', text: result.flash ?? tt.offerSentFlash })
+            }
+            setNegotiateRow(null)
+          }}
+        />
+      )}
+      {negotiateFlash && (
+        <p className={`mt-2 text-sm ${negotiateFlash.type === 'ok' ? 'text-ufa-accent' : 'text-red-400'}`}>
+          {negotiateFlash.text}
+        </p>
       )}
     </div>
   )

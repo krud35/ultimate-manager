@@ -89,6 +89,7 @@ export {
 export {
   listTransferMarket,
   listTransferMarketWithFreeAgents,
+  buildTransferRowForPlayer,
   negotiateTransfer,
   completeTransfer,
   completeTransferBetweenClubs,

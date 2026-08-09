@@ -107,6 +107,7 @@ export default function PlayerProfileModal({
   onToggleShortlist = null,
   onScoutPlayer = null,
   scoutPending = false,
+  onStartNegotiation = null,
 }) {
   const effectiveKnowledge = knowledge ?? (isOwnPlayer ? 100 : 40)
   const { lang } = useUiLang()
@@ -345,8 +346,17 @@ export default function PlayerProfileModal({
           </button>
         </div>
 
-        {!isOwnPlayer && (onToggleShortlist || onScoutPlayer) && (
+        {!isOwnPlayer && (onToggleShortlist || onScoutPlayer || onStartNegotiation) && (
           <div className="px-5 py-3 border-b border-ufa-border/80 flex flex-wrap items-center gap-2">
+            {onStartNegotiation && (
+              <button
+                type="button"
+                onClick={() => onStartNegotiation(player.id)}
+                className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-bg hover:opacity-90"
+              >
+                {t.startNegotiation}
+              </button>
+            )}
             {onToggleShortlist && (
               <button
                 type="button"

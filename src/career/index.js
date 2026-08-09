@@ -88,6 +88,7 @@ export {
   transferTargetMotiveLabelPl,
   listTransferMarket,
   listTransferMarketWithFreeAgents,
+  buildTransferRowForPlayer,
   negotiateTransfer,
   completeTransfer,
   completeTransferBetweenClubs,
@@ -138,6 +139,7 @@ export {
   confirmPendingRegistration,
   declinePendingRegistration,
   rollNegotiationReplyDate,
+  submitTransferOffer,
 } from './transfers/delayedNegotiation.js'
 export {
   INBOX_TYPES,

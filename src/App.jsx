@@ -1947,7 +1947,7 @@ export default function App() {
             seasonState={seasonState}
             onBack={handleTeamProfileBack}
             career={career}
-            onChange={handleClubBoardChange}
+            onChange={handleTransfersUpdate}
           />
         )}
 
@@ -2020,7 +2020,7 @@ export default function App() {
 
         {activeTab === 'match' &&
           (leagueFixture ? (
-            isFixtureMatchDay(leagueFixture, league) ? (
+            isFixtureMatchDay(leagueFixture, league) || leagueFixture.status === 'completed' ? (
               <MatchView
                 homeTactics={homeTactics}
                 onHomeTacticsChange={handleHomeTacticsChange}

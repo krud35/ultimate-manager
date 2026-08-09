@@ -2,9 +2,12 @@ import { useState } from 'react'
 import { useUiLang } from '../ui/UiLangContext'
 import { resolveTeamName } from '../ui/locale'
 import { scoutingStrings } from '../ui/strings/scouting'
+import { transfersStrings } from '../ui/strings/transfers'
+import { translateTransferError } from '../ui/strings/transferErrors'
 import { scoutedValueDisplay, attributeBandToneClass } from '../ui/fogOfWar'
 import { getPlayerFullName, getOverallRating } from '../data/mockPlayers'
 import PlayerProfileModal from './PlayerProfileModal'
+import NegotiateModal from './NegotiateModal'
 import {
   worldTeamById,
   worldTeamsList,
@@ -12,19 +15,26 @@ import {
   getPlayerKnowledge,
   getOpponentKnowledge,
   getOpponentTacticsKnowledge,
+  getTransferBudget,
   pendingScoutMissions,
   hasPendingScoutMission,
   queueScoutMission,
   isPlayerShortlisted,
   toggleShortlist,
   removeFromShortlist,
+  buildTransferRowForPlayer,
+  submitTransferOffer,
+  mergeInbox,
 } from '../career'
 
 export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam }) {
   const { lang } = useUiLang()
   const ts = scoutingStrings(lang)
+  const tt = transfersStrings(lang)
   const [profilePlayer, setProfilePlayer] = useState(null)
   const [profileTeamName, setProfileTeamName] = useState(null)
+  const [negotiateRow, setNegotiateRow] = useState(null)
+  const [negotiateFlash, setNegotiateFlash] = useState(null)
 
   const buyer = worldTeamById(career.world, career.playerTeamId)
   const shortlist = buyer?.scouting?.shortlist ?? []
@@ -64,6 +74,26 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
   function handleRemove(playerId) {
     removeFromShortlist(buyer, playerId)
     onCareerUpdate({ world: career.world })
+  }
+
+  function handleNegotiateOffer(offerAmount, contractTerms = null) {
+    const result = submitTransferOffer(career, { row: negotiateRow, offerAmount, contractTerms })
+    if (!result.ok) {
+      const text =
+        result.code === 'negative_budget'
+          ? tt.negativeBudgetBlock
+          : translateTransferError(result.error, lang) ?? tt.transferError
+      setNegotiateFlash({ type: 'error', text })
+      return
+    }
+    if (result.kind === 'fa_signed') {
+      onCareerUpdate({ world: result.world, transferLog: result.transferLog })
+      setNegotiateFlash({ type: 'ok', text: tt.faSigned })
+    } else {
+      onCareerUpdate({ inbox: mergeInbox(career, [result.message]) })
+      setNegotiateFlash({ type: 'ok', text: result.flash ?? tt.offerSentFlash })
+    }
+    setNegotiateRow(null)
   }
 
   return (
@@ -214,7 +244,29 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
         onScoutPlayer={(playerId) =>
           handleScout(playerId, findWorldPlayerById(career.world, playerId).teamId)
         }
+        onStartNegotiation={(playerId) => {
+          const row = buildTransferRowForPlayer(career.world, career.playerTeamId, playerId)
+          if (!row) return
+          setProfilePlayer(null)
+          setProfileTeamName(null)
+          setNegotiateFlash(null)
+          setNegotiateRow(row)
+        }}
       />
+
+      {negotiateRow && (
+        <NegotiateModal
+          row={negotiateRow}
+          budget={getTransferBudget(buyer)}
+          onClose={() => setNegotiateRow(null)}
+          onSubmitOffer={handleNegotiateOffer}
+        />
+      )}
+      {negotiateFlash && (
+        <p className={`text-sm ${negotiateFlash.type === 'ok' ? 'text-ufa-accent' : 'text-red-400'}`}>
+          {negotiateFlash.text}
+        </p>
+      )}
     </div>
   )
 }

@@ -135,6 +135,66 @@ export function listTransferMarketWithFreeAgents(world, buyerTeamId) {
 }
 
 /**
+ * Buduje jeden wiersz rynkowy (kształt jak `listTransferMarketWithFreeAgents`) dla
+ * konkretnego zawodnika — używane, gdy negocjacje startują z profilu zawodnika
+ * (widok drużyny, shortlista) zamiast z tabeli rynku.
+ * @returns {object|null} `null` gdy zawodnik jest w drużynie kupującego albo nie istnieje
+ */
+export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
+  ensureWorldFinances(world)
+  const found = findPlayerInWorld(world, playerId)
+  if (found) {
+    if (found.team.id === buyerTeamId) return null
+    refreshTeamMarketValues(found.team)
+    const { team, player } = found
+    const policy = getTransferPolicy(team)
+    ensurePlayerContract(player)
+    return {
+      player,
+      playerId: player.id,
+      name: getPlayerFullName(player),
+      position: player.position ?? '—',
+      ovr: getOverallRating(player.skills),
+      age: player.age ?? null,
+      marketValue: getPlayerMarketValue(player),
+      askPrice: computeAskPrice(player, team),
+      rank: playerOvrRank(team.players, player.id),
+      teamId: team.id,
+      teamName: team.name,
+      teamShort: team.shortName ?? team.name,
+      transferPolicy: policy,
+      sellerBudget: getTransferBudget(team),
+      weeklyWage: player.contract?.weeklyWage ?? 0,
+      contractYears: player.contract?.years ?? null,
+      contractRemaining: getContractRemainingCost(player.contract),
+    }
+  }
+  const freeAgent = (world?.freeAgents ?? []).find((p) => String(p.id) === String(playerId))
+  if (!freeAgent) return null
+  refreshPlayerMarketValue(freeAgent)
+  return {
+    player: freeAgent,
+    playerId: freeAgent.id,
+    name: getPlayerFullName(freeAgent),
+    position: freeAgent.position ?? '—',
+    ovr: getOverallRating(freeAgent.skills),
+    age: freeAgent.age ?? null,
+    marketValue: getPlayerMarketValue(freeAgent),
+    askPrice: 0,
+    rank: 0,
+    teamId: null,
+    teamName: 'Free Agent',
+    teamShort: 'FA',
+    transferPolicy: null,
+    sellerBudget: 0,
+    weeklyWage: null,
+    contractYears: null,
+    contractRemaining: 0,
+    freeAgent: true,
+  }
+}
+
+/**
  * Finalizuje transfer między dowolnymi klubami (gracz lub AI).
  *
  * @param {object} career

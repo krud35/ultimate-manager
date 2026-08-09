@@ -24,6 +24,7 @@ import {
   completeTransfer,
   acceptIncomingBid,
 } from './transferEngine.js'
+import { signFreeAgent } from './freeAgency.js'
 import {
   computePlayerContractDemands,
   evaluatePlayerContractOffer,
@@ -171,6 +172,47 @@ export function queueOutgoingClubOffer(career, { playerId, offerAmount }) {
     flash:
       `Oferta wysłana — ${found.team.name} odpowie w skrzynce (do ${replyDate}).`,
   }
+}
+
+/**
+ * Jedno wejście na "rozpocznij negocjacje" — wolny agent podpisuje od razu
+ * (`signFreeAgent`), zawodnik klubowy dostaje ofertę do skrzynki
+ * (`queueOutgoingClubOffer`). Wzorowane 1:1 na `TransfersView`'s `handleOffer`,
+ * żeby dowolny widok mógł otworzyć negocjacje z profilu zawodnika bez
+ * duplikowania rozgałęzienia FA/klub.
+ * @param {object} career
+ * @param {{ row: object, offerAmount?: number, contractTerms?: object|null }} params
+ *   `row` — kształt z `listTransferMarket`/`buildTransferRowForPlayer` (musi mieć
+ *   `player`, `playerId`, `freeAgent`).
+ */
+export function submitTransferOffer(career, { row, offerAmount = 0, contractTerms = null }) {
+  if (!row) return { ok: false, error: null }
+
+  if (row.freeAgent) {
+    const buyer = worldTeamById(career.world, career.playerTeamId)
+    if (!canBuyPlayers(buyer)) {
+      return { ok: false, code: 'negative_budget' }
+    }
+    const demands = computePlayerContractDemands({
+      player: row.player,
+      sellerTeam: null,
+      buyerTeam: buyer,
+      league: career.league,
+    })
+    const terms = contractTerms ?? {
+      weeklyWage: demands.minWeeklyWage,
+      years: demands.preferredYears,
+      bonuses: [],
+      promises: [],
+    }
+    const result = signFreeAgent(career, { playerId: row.playerId, contract: terms })
+    if (!result.ok) return { ok: false, error: result.error }
+    return { ok: true, kind: 'fa_signed', world: result.world, transferLog: result.transferLog }
+  }
+
+  const result = queueOutgoingClubOffer(career, { playerId: row.playerId, offerAmount })
+  if (!result.ok) return { ok: false, error: result.error }
+  return { ok: true, kind: 'offer_sent', message: result.message, flash: result.flash }
 }
 
 /**
