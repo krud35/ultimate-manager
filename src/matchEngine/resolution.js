@@ -1,5 +1,5 @@
 import { MATCH_CONFIG } from './config.js'
-import { ATTACK_STYLES, DEFENSE_STYLES, FORCE_SIDES, TACTICS_MODIFIERS } from './tacticsModifiers.js'
+import { DEFENSE_STYLES, FORCE_SIDES } from './tacticsModifiers.js'
 import { negativeRandomSpread, randomSpread } from './rng.js'
 import {
   staminaPerformancePenalty,
@@ -113,20 +113,6 @@ function skillAdjustment(throwStat, category, isOpenSide) {
   const weights = SKILL_ADJUST_WEIGHT[category] ?? SKILL_ADJUST_WEIGHT.medium
   const w = isOpenSide ? weights.open : weights.break
   return ((throwStat - 50) / 50) * w
-}
-
-function attackMods(attackStyle) {
-  return (
-    TACTICS_MODIFIERS.attack[attackStyle] ??
-    TACTICS_MODIFIERS.attack[ATTACK_STYLES.VERTICAL_STACK]
-  )
-}
-
-function defenseMods(defenseStyle) {
-  return (
-    TACTICS_MODIFIERS.defense[defenseStyle] ??
-    TACTICS_MODIFIERS.defense[DEFENSE_STYLES.PERSON]
-  )
 }
 
 /**
@@ -360,17 +346,6 @@ export function isInEndzone(discPosition, possessionTeam) {
     return fieldX >= line
   }
   return fieldX <= FIELD_DIMENSIONS.endzoneM
-}
-
-/** @deprecated użyj computeThrowAdvance z throwTypes.js */
-export function advanceDisc(discPosition, { attackStyle, defenseStyle } = {}) {
-  const { advanceOnSuccess, max } = MATCH_CONFIG.field
-  const atk = attackMods(attackStyle)
-  const def = defenseMods(defenseStyle)
-  let advance = advanceOnSuccess
-  advance *= atk.advanceMultiplier ?? 1
-  advance *= def.yardsAllowedMultiplier ?? 1
-  return Math.min(max, discPosition + Math.round(advance))
 }
 
 export { computeThrowAdvance } from './throwTypes.js'

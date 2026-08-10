@@ -183,6 +183,41 @@ export function pickThrowType({
 
   if (skill >= 70) weights[THROW_TYPE.OVER_THE_TOP] += 6
 
+  // Styl ataku: w pełnym silniku (tickowym) te same pola (tacticsBehavior.js,
+  // applyAttackThrowBias/preferredCutKind) kierują wyborem cutu/rzutu; fastMode
+  // pomija symulację przestrzenną, więc bez tego attackStyle nie miał TU żadnego
+  // wpływu (jedyną dźwignią był advanceMultiplier w computeThrowAdvance) — patrz
+  // audyt balansu, tmp-balance-audit.mjs. Lekki, proporcjonalny odpowiednik tej
+  // samej logiki, w przestrzeni wag zamiast oceny pojedynczej opcji.
+  const atk = attackMods(attackStyle)
+  const throwDepthBias = atk.throwDepthBias ?? 0
+  if (throwDepthBias !== 0) {
+    const deepMult = Math.max(0.4, 1 + throwDepthBias * 0.9)
+    weights[THROW_TYPE.HUCK] *= deepMult
+    weights[THROW_TYPE.OVER_THE_TOP] *= deepMult
+    weights[THROW_TYPE.STANDARD] *= Math.max(0.7, 1 - throwDepthBias * 0.25)
+  }
+  const resetPriority = atk.resetPriority ?? 0
+  if (resetPriority !== 0) {
+    weights[THROW_TYPE.DUMP_SWING] *= Math.max(0.5, 1 + resetPriority * 0.8)
+  }
+  const continuationUrgency = atk.continuationUrgency ?? 0
+  if (continuationUrgency > 0.3) {
+    const flowExtra = continuationUrgency - 0.3
+    weights[THROW_TYPE.STANDARD] *= 1 + flowExtra * 0.5
+    weights[THROW_TYPE.HUCK] *= Math.max(0.5, 1 - flowExtra * 0.6)
+  }
+  if ((atk.isoBias ?? 0) > 0) {
+    weights[THROW_TYPE.HUCK] *= 1 + atk.isoBias * 0.35
+  }
+  if (atk.swingBias) {
+    // Zone O jest jedynym stylem z resetPriority + continuationUrgency + swingBias
+    // naraz, wszystkie podbijające DUMP_SWING (który ma ujemny baseYards) — pełna
+    // waga 0.5 kompoundowała do ~1.47x, robiąc zone wyraźnie najsłabszym stylem
+    // (tmp-vertical-matrix-check.mjs: 48.0% vs 53-58% reszty). Przycięte do 0.2.
+    weights[THROW_TYPE.DUMP_SWING] *= 1 + atk.swingBias * 0.2
+  }
+
   weights[THROW_TYPE.HUCK] *= traitMods.huckWeightMult
   weights[THROW_TYPE.DUMP_SWING] *= traitMods.dumpWeightMult * (1 + (traitMods.dumpEarlyBias ?? 0) * 0.35)
   weights[THROW_TYPE.OVER_THE_TOP] *= traitMods.ottWeightMult * (traitMods.heroThrowWeightMult ?? 1)
@@ -207,7 +242,6 @@ export function computeThrowAdvance(
   discPosition,
   throwType,
   {
-    attackStyle,
     defenseStyle,
     rng,
     forwardProgressM = null,
@@ -218,7 +252,6 @@ export function computeThrowAdvance(
   } = {},
 ) {
   const profile = throwProfile(throwType)
-  const atk = attackMods(attackStyle)
   const def = defenseMods(defenseStyle)
   const { min, max } = MATCH_CONFIG.field
   const windMods = windThrowModifiers({
@@ -236,7 +269,6 @@ export function computeThrowAdvance(
   if (Number.isFinite(forwardProgressM)) {
     let geo = forwardProgressM
     if (geo > 0) {
-      geo *= atk.advanceMultiplier ?? 1
       geo *= def.yardsAllowedMultiplier ?? 1
       geo *= windMods.advanceMult ?? 1
     } else if (geo < 0) {
@@ -249,10 +281,8 @@ export function computeThrowAdvance(
 
   let advance = profile.baseYards()
   if (throwType === THROW_TYPE.STANDARD) {
-    advance *= atk.advanceMultiplier ?? 1
     advance *= def.yardsAllowedMultiplier ?? 1
   } else if (throwType === THROW_TYPE.HUCK) {
-    advance *= atk.advanceMultiplier ?? 1
     advance *= (def.yardsAllowedMultiplier ?? 1) * 1.08
     if (rng) advance += Math.round(randomSpread(rng, 8))
   } else if (throwType === THROW_TYPE.OVER_THE_TOP) {

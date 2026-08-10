@@ -1,7 +1,7 @@
 export { MATCH_CONFIG } from './config.js'
 export { simulateMatch, initMatchSession, playNextPoint, sessionToResult, runRemainingMatch } from './match.js'
 export { simulatePoint } from './point.js'
-export { resolveThrow, advanceDisc, isInEndzone, computeThrowAdvance } from './resolution.js'
+export { resolveThrow, isInEndzone, computeThrowAdvance } from './resolution.js'
 export { THROW_TYPE, THROW_TRAJECTORY, pickThrowType, throwProfile } from './throwTypes.js'
 export { resolveSeparation } from './separation.js'
 export { EVENT } from './events.js'

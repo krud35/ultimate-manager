@@ -39,7 +39,7 @@ export function resolveLineupRatings(lineup, tactics, role) {
   const atk = attackMods(styles.attackStyle)
   const def = defenseMods(styles.defenseStyle)
   attack *= 1 + (atk.throwAccuracyBonus ?? 0) * 0.004
-  attack *= 0.92 + (atk.advanceMultiplier ?? 1) * 0.08
+  attack *= 1 + (atk.throwDepthBias ?? 0) * 0.05
   defense *= 1 + ((def.defenseBonus ?? 0) + (def.blockBonus ?? 0)) * 0.0035
   if (def.personMark === false) defense *= 1.02
 
