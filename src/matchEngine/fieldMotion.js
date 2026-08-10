@@ -51,7 +51,7 @@ export const FIELD_TRANSITION_MAX_MS = 2400
 /** Czas przejścia do formacji na początku klipu (ms). */
 export const REPOSITION_PHASE_MS = 700
 
-import { fieldCenterY, clampFieldX, clampFieldY, attackDirectionX, FIELD_DIMENSIONS } from './fieldDimensions.js'
+import { fieldCenterY, clampFieldX, clampFieldY, attackDirectionX, geoTeam, FIELD_DIMENSIONS } from './fieldDimensions.js'
 
 const FIELD_Y_CENTER = fieldCenterY()
 
@@ -1453,8 +1453,9 @@ export function buildThrowActionClip(
 
   const separationOutcome = attemptEv.separationOutcome ?? 'contested'
   const offenseTeamId = attemptEv.possessionTeam ?? stateStart.possessionTeam
+  const sidesSwapped = stateStart.sidesSwapped
   const discMeters = stateStart.discMeters
-  const attackSign = attackDirectionX(offenseTeamId)
+  const attackSign = attackDirectionX(geoTeam(offenseTeamId, sidesSwapped))
 
   const tacticalAll = enrichLayoutRoles(
     layoutsFromState(stateStart),
@@ -1498,7 +1499,7 @@ export function buildThrowActionClip(
     } else {
       discToX =
         resultEv.discPosition != null
-          ? discMetersFromState(resultEv.discPosition, stateEnd.possessionTeam)
+          ? discMetersFromState(resultEv.discPosition, geoTeam(stateEnd.possessionTeam, stateEnd.sidesSwapped))
           : stateEnd.discX
       discToY = resultEv.discYMeters ?? stateEnd.discY
     }
@@ -2068,7 +2069,7 @@ export function buildFieldActionClip(
           state.possessionTeam === 'home' ? awayTeam : homeTeam,
           ev,
         ),
-        attackDirectionX(state.possessionTeam),
+        attackDirectionX(geoTeam(state.possessionTeam, state.sidesSwapped)),
         durationMs,
       )
     }
@@ -2087,7 +2088,7 @@ export function buildFieldActionClip(
             totalMs: durationMs,
             separationOutcome: 'contested',
             stallCount,
-            attackSign: attackDirectionX(state.possessionTeam),
+            attackSign: attackDirectionX(geoTeam(state.possessionTeam, state.sidesSwapped)),
             isActiveMark: false,
             receiverAgilityDelayMs: 0,
             defenderStamina: p.currentStamina ?? 100,
@@ -2107,7 +2108,7 @@ export function buildFieldActionClip(
           state.possessionTeam === 'home' ? awayTeam : homeTeam,
           ev,
         ),
-        attackDirectionX(state.possessionTeam),
+        attackDirectionX(geoTeam(state.possessionTeam, state.sidesSwapped)),
         durationMs,
       )
     }

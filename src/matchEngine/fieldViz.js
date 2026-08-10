@@ -15,9 +15,10 @@ import {
   clampFieldY,
   fieldCenterY,
   attackDirectionX,
+  geoTeam,
 } from './fieldDimensions.js'
 
-export { FIELD_DIMENSIONS, clampFieldX, clampFieldY, fieldCenterY, attackDirectionX } from './fieldDimensions.js'
+export { FIELD_DIMENSIONS, clampFieldX, clampFieldY, fieldCenterY, attackDirectionX, geoTeam } from './fieldDimensions.js'
 
 /** Stałe ID slotów na boisku (7v7) — niezmienne w obrębie punktu i klipów wizualizacji. */
 export const FIELD_LINEUP_SIZE = 7
@@ -801,6 +802,7 @@ function enrichPlayersWithCutting(layout, ctx) {
  * Stan boiska z listy zdarzeń punktu do indeksu kroku (włącznie).
  */
 export function fieldStateAtEventStep(pointEvents, stepIndex, homeTeam, awayTeam, pullTeam) {
+  const sidesSwapped = !!pointEvents?.find((e) => e.type === 'point_start')?.sidesSwapped
   const attackTeamId = pullTeam === 'home' ? 'away' : 'home'
   let possession = attackTeamId
   let discPosition = MATCH_CONFIG.field.positionAfterPull
@@ -912,8 +914,9 @@ export function fieldStateAtEventStep(pointEvents, stepIndex, homeTeam, awayTeam
     awayPlayers = resolveLineup(pointEvents[0].awayLineupIds, awayTeam)
   }
 
-  const discMeters = discMetersFromState(discPosition, possession)
-  const attackSign = attackDirectionX(possession)
+  const geoPossession = geoTeam(possession, sidesSwapped)
+  const discMeters = discMetersFromState(discPosition, geoPossession)
+  const attackSign = attackDirectionX(geoPossession)
 
   const { attackStyle, defenseStyle, personMark } = resolveFieldTactics(
     possession,
@@ -1106,6 +1109,7 @@ export function fieldStateAtEventStep(pointEvents, stepIndex, homeTeam, awayTeam
 
   return {
     possessionTeam: possession,
+    sidesSwapped,
     discMeters,
     discPosition,
     discX,

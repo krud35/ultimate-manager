@@ -12,7 +12,14 @@ import TeamStartPreviewModal, {
   buildTeamStartPreview,
 } from './TeamStartPreviewModal'
 
-export default function NewCareerScreen({ slotIndex, lang, onCancel, onCreate }) {
+export default function NewCareerScreen({
+  slotIndex,
+  lang,
+  onCancel,
+  onCreate,
+  submitting = false,
+  externalError = '',
+}) {
   const t = careerFlowStrings(lang)
   const years = HISTORICAL_YEARS.length ? HISTORICAL_YEARS : [2025]
   const defaultYear = years.includes(2025) ? 2025 : years[years.length - 1]
@@ -111,6 +118,7 @@ export default function NewCareerScreen({ slotIndex, lang, onCancel, onCreate })
 
   function handleSubmit(e) {
     e.preventDefault()
+    if (submitting) return
     const name = managerName.trim()
     if (!name) {
       setError(t.errManager)
@@ -372,18 +380,21 @@ export default function NewCareerScreen({ slotIndex, lang, onCancel, onCreate })
         )}
 
         {error && <p className="text-sm text-red-400">{error}</p>}
+        {externalError && <p className="text-sm text-red-400">{externalError}</p>}
 
         <div className="flex flex-wrap gap-3">
           <button
             type="submit"
-            className="rounded-md bg-ufa-accent px-5 py-2.5 text-sm font-semibold text-ufa-bg hover:opacity-90"
+            disabled={submitting}
+            className="rounded-md bg-ufa-accent px-5 py-2.5 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-50"
           >
-            {t.startCareer}
+            {submitting ? t.startingCareer : t.startCareer}
           </button>
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-ufa-border px-5 py-2.5 text-sm text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text"
+            disabled={submitting}
+            className="rounded-md border border-ufa-border px-5 py-2.5 text-sm text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text disabled:opacity-50"
           >
             {t.cancel}
           </button>

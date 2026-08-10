@@ -108,6 +108,8 @@ import UltiworldView from './components/UltiworldView'
 import PreMatchView, { isFixtureMatchDay } from './components/PreMatchView'
 import SimulationProgressOverlay from './components/SimulationProgressOverlay'
 import CalendarSimOverlay from './components/CalendarSimOverlay'
+import WelcomeModal from './components/WelcomeModal'
+import TutorialGuide from './components/TutorialGuide'
 import { buildSeasonStateFromLeague } from './seasonEngine/seasonStateFromLeague.js'
 import { displaySeasonLabel, pickLabel, pickCopy } from './ui/locale'
 import { useUiLang } from './ui/UiLangContext'
@@ -576,6 +578,8 @@ export default function App() {
   const [slots, setSlots] = useState(() => listSlots())
   const [pendingSlot, setPendingSlot] = useState(null)
   const [career, setCareer] = useState(null)
+  const [creatingCareer, setCreatingCareer] = useState(false)
+  const [careerCreateError, setCareerCreateError] = useState('')
 
   const [activeTab, setActiveTab] = useState('hub')
   const [leagueFixture, setLeagueFixture] = useState(null)
@@ -586,6 +590,8 @@ export default function App() {
   const [actionRequiredMessageId, setActionRequiredMessageId] = useState(null)
   const [inboxFocusId, setInboxFocusId] = useState(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [pendingWelcome, setPendingWelcome] = useState(false)
+  const [tutorialOpen, setTutorialOpen] = useState(false)
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -1691,24 +1697,38 @@ export default function App() {
   )
 
   const handleCreateCareer = useCallback(
-    ({ slotIndex, managerName, playerTeamId: teamId, seasonYear, rosterMode, selectedTeamIds }) => {
-      const created = createCareer(slotIndex, {
-        managerName,
-        playerTeamId: teamId,
-        seasonYear,
-        rosterMode,
-        selectedTeamIds,
-      })
-      setCareer(created)
-      setPendingSlot(null)
-      setLeagueFixture(null)
-      setMatchStamina(null)
-      setTeamProfileId(null)
-      setActiveTab('hub')
-      setScreen('play')
-      refreshSlots()
+    async ({ slotIndex, managerName, playerTeamId: teamId, seasonYear, rosterMode, selectedTeamIds }) => {
+      if (creatingCareer) return
+      setCreatingCareer(true)
+      setCareerCreateError('')
+      // Yield one tick so the "creating career…" overlay actually paints before
+      // the heavy synchronous league/world build (roster gen, finances, AI coach
+      // profiles…) blocks the main thread for a few hundred ms.
+      await new Promise((r) => setTimeout(r, 0))
+      try {
+        const created = createCareer(slotIndex, {
+          managerName,
+          playerTeamId: teamId,
+          seasonYear,
+          rosterMode,
+          selectedTeamIds,
+        })
+        setCareer(created)
+        setPendingSlot(null)
+        setLeagueFixture(null)
+        setMatchStamina(null)
+        setTeamProfileId(null)
+        setActiveTab('hub')
+        setScreen('play')
+        setPendingWelcome(true)
+        refreshSlots()
+      } catch (err) {
+        setCareerCreateError(err?.message || String(err))
+      } finally {
+        setCreatingCareer(false)
+      }
     },
-    [refreshSlots],
+    [refreshSlots, creatingCareer],
   )
 
   const handleStartNextSeason = useCallback(() => {
@@ -1754,10 +1774,20 @@ export default function App() {
           slotIndex={pendingSlot}
           lang={uiLang}
           onCancel={() => {
+            if (creatingCareer) return
             setPendingSlot(null)
             setScreen('slots')
           }}
           onCreate={handleCreateCareer}
+          submitting={creatingCareer}
+          externalError={careerCreateError}
+        />
+        <SimulationProgressOverlay
+          progress={
+            creatingCareer
+              ? { label: careerFlowStrings(uiLang).startingCareer, indeterminate: true }
+              : null
+          }
         />
       </div>
     )
@@ -2178,6 +2208,20 @@ export default function App() {
 
       <SimulationProgressOverlay progress={simProgress} />
       <CalendarSimOverlay sim={calendarSim} />
+
+      {pendingWelcome && (
+        <WelcomeModal
+          managerName={career.managerName}
+          teamName={userTeam.name}
+          lang={uiLang}
+          onYes={() => {
+            setPendingWelcome(false)
+            setTutorialOpen(true)
+          }}
+          onNo={() => setPendingWelcome(false)}
+        />
+      )}
+      <TutorialGuide open={tutorialOpen} onClose={() => setTutorialOpen(false)} lang={uiLang} />
     </div>
   )
 }

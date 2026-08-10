@@ -33,6 +33,19 @@ export function attackDirectionX(possessionTeam) {
   return possessionTeam === 'home' ? 1 : -1
 }
 
+/**
+ * Etykieta drużyny do użytku w funkcjach geometrycznych (attackDirectionX,
+ * discMetersFromState, discPositionFromFieldMeters, opponentGoalLineM) —
+ * gdy punkt ma zamienione strony (`sidesSwapped`, patrz point.js), realna
+ * drużyna musi być traktowana jak przeciwna do wyliczenia fizycznego
+ * kierunku/pozycji na boisku. Poza geometrią (possession, boxScore,
+ * matchStats, stamina) zawsze używana jest realna etykieta.
+ */
+export function geoTeam(team, sidesSwapped) {
+  if (!sidesSwapped || !team) return team
+  return team === 'home' ? 'away' : 'home'
+}
+
 /** Pozycja silnika 0–100 (progress wzdłuż boiska) → metr X na boisku 2D. */
 export function engineDiscXToFieldMeters(discMeters) {
   return clampFieldX(discMeters)

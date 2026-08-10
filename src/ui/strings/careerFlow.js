@@ -69,6 +69,7 @@ const pl = {
   errManager: 'Podaj imię menedżera.',
   errTeam: 'Wybierz drużynę.',
   startCareer: 'Rozpocznij karierę',
+  startingCareer: 'Tworzenie kariery…',
   cancel: 'Anuluj',
   pcHint: 'Przeznaczone do gry na PC — na telefonie może być nieczytelne',
   disclaimer:
@@ -145,6 +146,7 @@ const en = {
   errManager: 'Enter a manager name.',
   errTeam: 'Choose a team.',
   startCareer: 'Start career',
+  startingCareer: 'Creating career…',
   cancel: 'Cancel',
   pcHint: 'Intended to play on PC - might be messy on the phone',
   disclaimer:

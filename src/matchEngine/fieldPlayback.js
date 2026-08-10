@@ -1,6 +1,6 @@
 import { EVENT } from './events.js'
 import { ATTACK_STYLES } from './tacticsModifiers.js'
-import { FIELD_DIMENSIONS, fieldCenterY, opponentGoalLineM, clampFieldY } from './fieldDimensions.js'
+import { FIELD_DIMENSIONS, fieldCenterY, opponentGoalLineM, clampFieldY, geoTeam } from './fieldDimensions.js'
 import { THROW_TYPE } from './throwTypes.js'
 
 /** Deterministic Y (0–37 m) for receiver based on role in offense. */
@@ -80,15 +80,16 @@ function samplePathPoint(points, progress) {
 }
 
 /** Postęp lotu (0–1), przy którym trajektoria przecina linię punktową. */
-function goalLineCrossFlightProgress(points, scoringTeam) {
+function goalLineCrossFlightProgress(points, scoringTeam, sidesSwapped) {
   if (!points?.length) return 0.92
-  const line = opponentGoalLineM(scoringTeam)
+  const geoScoringTeam = geoTeam(scoringTeam, sidesSwapped)
+  const line = opponentGoalLineM(geoScoringTeam)
   for (let step = 0; step <= 24; step += 1) {
     const u = step / 24
     const pt = samplePathPoint(points, u)
     if (!pt) continue
     const crossed =
-      scoringTeam === 'home' ? pt.x >= line : pt.x <= FIELD_DIMENSIONS.endzoneM
+      geoScoringTeam === 'home' ? pt.x >= line : pt.x <= FIELD_DIMENSIONS.endzoneM
     if (crossed) return u
   }
   return 0.92
@@ -141,7 +142,8 @@ export function computeDisplayedMatchScore(
       const flightProgress =
         actionClip.flightMs > 0 ? flightT / actionClip.flightMs : 1
       if (scoringSequence) {
-        const crossAt = goalLineCrossFlightProgress(actionClip.throwPathPoints, e.team)
+        const sidesSwapped = pointEvents[0]?.sidesSwapped
+        const crossAt = goalLineCrossFlightProgress(actionClip.throwPathPoints, e.team, sidesSwapped)
         include = flightProgress >= crossAt
       } else {
         include = simElapsed >= flightStart + actionClip.flightMs * 0.92
@@ -157,4 +159,4 @@ export function computeDisplayedMatchScore(
   return { home, away }
 }
 
-export const PLAYBACK_SPEED_OPTIONS = [0.5, 1, 1.5, 2, 3]
+export const PLAYBACK_SPEED_OPTIONS = [0.5, 1, 2, 4]
