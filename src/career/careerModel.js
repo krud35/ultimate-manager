@@ -12,6 +12,7 @@ import {
   initWorldPlayerStats,
   resetWorldSeasonStats,
   worldTeamById,
+  worldTeamsList,
 } from './worldState.js'
 import { buildSeasonLeagueTemplate } from '../data/seasonLeagueBuilder.js'
 import { rollAiCoachProfilesForWorld } from '../matchEngine/aiCoachProfile.js'
@@ -57,6 +58,9 @@ import {
 } from './clubSponsors.js'
 import { ensureTeamFacilities } from './clubFacilities.js'
 import { mergeInbox, messagesFromAcademyAgedOut } from './inbox.js'
+
+/** Cel łącznej liczby zawodników w lidze (senior roster, 16 drużyn) — utrzymuje pulę graczy w ryzach. */
+const ROSTER_STABILIZE_TARGET = 500
 
 function newId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -350,10 +354,19 @@ export function finalizeSeason(career) {
       seed: (career.seasonYear ?? 2025) * 4243,
       league: career.league,
     })
+    // Liczba podpisań FA skalowana do niedoboru wobec celu ligi — stabilizuje
+    // łączną liczbę zawodników w lidze wokół ROSTER_STABILIZE_TARGET zamiast
+    // pozwalać jej kurczyć się z sezonu na sezon (emerytury > dopływ).
+    const rosterTotalBeforeFa = worldTeamsList(career.world).reduce(
+      (sum, t) => sum + (t.players?.length ?? 0),
+      0,
+    )
+    const rosterDeficit = ROSTER_STABILIZE_TARGET - rosterTotalBeforeFa
+    const dynamicFaMaxDeals = Math.max(10, Math.min(60, 10 + Math.round(rosterDeficit * 0.8)))
     const faSign = simulateAiFreeAgentSignings(
       { ...career, world: career.world, transferLog: transferLogAfterCycle },
       {
-        maxDeals: 6,
+        maxDeals: dynamicFaMaxDeals,
         seed: (career.seasonYear ?? 2025) * 5557,
       },
     )

@@ -27,7 +27,7 @@ import { ensurePlayerMorale } from '../models/playerMorale.js'
 import { ensurePlayerForm } from '../models/playerForm.js'
 import { ensurePlayerLoyalty } from '../models/playerLoyalty.js'
 import { ensurePlayerInjury } from '../models/playerInjury.js'
-import { ensureWorldFreeAgents, PLAYER_STATUS } from './transfers/freeAgency.js'
+import { AI_ROSTER_HARD_CAP, ensureWorldFreeAgents, PLAYER_STATUS } from './transfers/freeAgency.js'
 import { refreshPlayerMarketValue } from './transfers/playerValue.js'
 import { aiAutoPlayerContractTerms } from './transfers/playerNegotiation.js'
 import { signPlayerContract } from './transfers/playerContracts.js'
@@ -212,8 +212,11 @@ export function runAcademyIntake(world, { seasonYear, seed } = {}) {
   for (const team of worldTeamsList(world)) {
     const pool = ensureTeamAcademy(team)
     const mult = academyIntakeMult(team)
-    const baseCount = 1 + Math.floor(getFacilityLevel(team, 'academy') / 4)
-    const count = Math.max(0, Math.round(baseCount * Math.min(1.7, Math.max(0.35, mult))))
+    // Baza podniesiona (dawniej 1 + poziom/4) — nabór organiczny był głównym wąskim
+    // gardłem, przez które liga traciła ~16% zawodników w 5 sezonów (emerytury nie
+    // miały skąd być odbudowywane, patrz ROSTER_STABILIZE_TARGET w careerModel.js).
+    const baseCount = 2 + Math.floor(getFacilityLevel(team, 'academy') / 3)
+    const count = Math.max(0, Math.round(baseCount * Math.min(2, Math.max(0.35, mult))))
     if (count <= 0) continue
 
     const rng = mulberry32(hashSeed(seed ?? seasonYear ?? 0, 'academy-intake', team.id))
@@ -301,9 +304,9 @@ export function runAiAcademyPromotionPass(world, { playerTeamId, seed = 1, leagu
       const roll = (salt % 1000) / 1000
       const ovr = getOverallRating(prospect.skills)
       const agedOut = prospect.age >= ACADEMY_AGE_OUT
-      const rosterHasRoom = (team.players?.length ?? 0) < 28
+      const rosterHasRoom = (team.players?.length ?? 0) < AI_ROSTER_HARD_CAP
       const worthPromoting = (prospect.potential ?? ovr) >= seniorAvg - 4 || ovr >= seniorAvg - 6
-      const promotionChance = agedOut ? 0.7 : 0.18
+      const promotionChance = agedOut ? 0.85 : 0.3
 
       if (rosterHasRoom && worthPromoting && roll < promotionChance) {
         const result = promoteAcademyPlayer(team, prospect.id, { league })

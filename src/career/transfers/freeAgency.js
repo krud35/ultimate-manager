@@ -370,10 +370,19 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
   return { renewed, released }
 }
 
+/** Twardy sufit rozmiaru seniorskiego rosteru dla FA-sign / promocji z akademii. */
+export const AI_ROSTER_HARD_CAP = 32
+
 /**
  * AI podpisuje FA gdy ma budżet i potrzebuje wzmocnienia.
+ * Kluby wyraźnie poniżej `rosterTarget` (np. po fali emerytur) mogą podpisać
+ * więcej niż jednego FA w tym samym przebiegu — inaczej `maxDeals` powyżej
+ * liczby drużyn AI nie miałoby żadnego efektu (dawniej: max 1 deal/drużynę).
  */
-export function simulateAiFreeAgentSignings(career, { maxDeals = 4, seed = 1 } = {}) {
+export function simulateAiFreeAgentSignings(
+  career,
+  { maxDeals = 4, seed = 1, rosterTarget = 31 } = {},
+) {
   const world = career.world
   if (!world || !isTransferWindowOpen(career)) {
     return { deals: 0, transferLog: career.transferLog ?? [] }
@@ -388,16 +397,23 @@ export function simulateAiFreeAgentSignings(career, { maxDeals = 4, seed = 1 } =
   )
 
   for (const team of worldTeamsList(world)) {
+    if (deals >= maxDeals) break
     if (team.id === career.playerTeamId) continue
     if (getTransferBudget(team) <= 0) continue
-    if ((team.players?.length ?? 0) >= 28) continue
-    const avg =
-      (team.players ?? []).reduce((s, p) => s + getOverallRating(p.skills), 0) /
-        Math.max(1, team.players?.length ?? 1)
+    if ((team.players?.length ?? 0) >= AI_ROSTER_HARD_CAP) continue
+
+    // Im dalej pod celem, tym więcej podpisań może zrobić ten klub w tym przebiegu.
+    const roomToTarget = Math.max(0, rosterTarget - (team.players?.length ?? 0))
+    const signsAllowedForTeam = 1 + Math.min(3, roomToTarget)
+    let signedForTeam = 0
 
     for (const player of fas) {
-      if (deals >= maxDeals) break
+      if (deals >= maxDeals || signedForTeam >= signsAllowedForTeam) break
+      if ((team.players?.length ?? 0) >= AI_ROSTER_HARD_CAP) break
       if (!world.freeAgents.includes(player)) continue
+      const avg =
+        (team.players ?? []).reduce((s, p) => s + getOverallRating(p.skills), 0) /
+          Math.max(1, team.players?.length ?? 1)
       const ovr = getOverallRating(player.skills)
       if (ovr < avg - 6) continue
       salt = (Math.imul(salt, 1664525) + 1013904223) >>> 0
@@ -409,8 +425,8 @@ export function simulateAiFreeAgentSignings(career, { maxDeals = 4, seed = 1 } =
       )
       if (result.ok) {
         deals += 1
+        signedForTeam += 1
         transferLog = result.transferLog
-        break
       }
     }
   }
