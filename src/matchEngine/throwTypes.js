@@ -249,6 +249,8 @@ export function computeThrowAdvance(
     throwDx = 0,
     throwDy = 0,
     thrower = null,
+    /** fastMode: nadpisuje profile.baseYards() (np. losowy dystans hucka 40-100m). */
+    explicitYards = null,
   } = {},
 ) {
   const profile = throwProfile(throwType)
@@ -279,7 +281,7 @@ export function computeThrowAdvance(
     return Math.max(min, Math.min(max, discPosition + Math.round(geo)))
   }
 
-  let advance = profile.baseYards()
+  let advance = explicitYards ?? profile.baseYards()
   if (throwType === THROW_TYPE.STANDARD) {
     advance *= def.yardsAllowedMultiplier ?? 1
   } else if (throwType === THROW_TYPE.HUCK) {

@@ -954,6 +954,46 @@ function sampleFastStallCount(rng) {
 }
 
 /**
+ * Dystans hucka w fastMode: 40-100m (prawdziwy głęboki rzut, nie 12-40m tabeli
+ * kategorii dystansu), przycięty do tego, ile realnie zostało do końca boiska.
+ * Wcześniej HUCK miał stały baseYards()=32m, co nigdy nie trafiało w kategorię
+ * "huck" (≥40m) — zawsze liczyło się jako "long".
+ */
+function sampleFastHuckDistanceM(rng, discPosition) {
+  const remainingM = Math.max(3, MATCH_CONFIG.field.max - discPosition)
+  const target = 40 + rng.float() * 60
+  return Math.min(target, remainingM)
+}
+
+/**
+ * pickReceiver/pickDumpReceiver losują JEDNEGO kandydata wg samego skilla, bez
+ * względu na to, kto akurat ma lepszą separację — thrower nigdy "nie rozgląda się"
+ * po opcjach, w przeciwieństwie do pełnego silnika (scanThrowOptions, które realnie
+ * porównuje kandydatów). To główny powód, dla którego fastMode miał completion%
+ * daleko poniżej realnych 92-96% nawet po dodaniu abort-fallbacku (audyt:
+ * tmp-completion-possession-report.mjs). Tu bierzemy kilku kandydatów i wybieramy
+ * tego z najlepszą separacją — liczba kandydatów maleje ze stallem (pod presją
+ * thrower bierze co jest, nie przebiera), analogicznie do acceptanceThresholdForStall
+ * w throwerDecision.js.
+ */
+function pickBestReceiverOption(rng, pickFn, offenseLineup, thrower, defenseLineup, defenseStyle, personMatchups, stallCount) {
+  const candidateCount = stallCount < 4 ? 3 : stallCount < 7 ? 2 : 1
+  let best = null
+  for (let i = 0; i < candidateCount; i += 1) {
+    const candidate = pickFn(rng, offenseLineup, thrower)
+    const candidateDefender = isPersonDefense(defenseStyle)
+      ? defenderForPersonMark(personMatchups, candidate, defenseLineup, rng)
+      : pickDefender(rng, defenseLineup)
+    const separation = resolveSeparation({ receiver: candidate, defender: candidateDefender, rng })
+    if (!best || separation.margin > best.separation.margin) {
+      best = { receiver: candidate, defender: candidateDefender, separation }
+    }
+    if (separation.outcome === 'open') break
+  }
+  return best
+}
+
+/**
  * Lekka symulacja punktu bez klatkowania ruchu (bez `runThrowMotionSimulation`) —
  * do trybu "symuluj resztę meczu" / silnika ligowego, gdzie boisko nie jest renderowane.
  * Używa TYCH SAMYCH funkcji rdzenia (resolveSeparation, pickThrowType, resolveThrow,
@@ -1098,21 +1138,59 @@ export function simulatePointFast({
       tactics: offenseTeam.tactics,
     })
 
-    const receiver =
-      throwType === THROW_TYPE.DUMP_SWING
-        ? pickDumpReceiver(rng, offenseLineup, thrower)
-        : pickReceiver(rng, offenseLineup, thrower)
+    const primaryPickFn = throwType === THROW_TYPE.DUMP_SWING ? pickDumpReceiver : pickReceiver
+    let picked = pickBestReceiverOption(
+      rng,
+      primaryPickFn,
+      offenseLineup,
+      thrower,
+      defenseLineup,
+      defenseStyle,
+      personMatchups,
+      stallCount,
+    )
+    let receiver = picked.receiver
+    let defender = picked.defender
+    let separation = picked.separation
+    let effectiveThrowType = throwType
 
-    const defender = isPersonDefense(defenseStyle)
-      ? defenderForPersonMark(personMatchups, receiver, defenseLineup, rng)
-      : pickDefender(rng, defenseLineup)
+    // Jak w pełnym silniku (simulatePoint, sekcja throwCommit): przy tight separacji
+    // z "abort" thrower rozpoznaje złą okazję i nie forsuje rzutu — resetuje do dumpa
+    // zamiast próbować. fastMode nigdy tego nie sprawdzał (separation.abort był martwym
+    // polem tutaj), więc zawsze rzucał niezależnie od jakości separacji — stąd
+    // nierealistycznie krótkie posiadania i completion% poniżej realnych 92-96%
+    // (audyt: tmp-completion-possession-report.mjs).
+    if (
+      effectiveThrowType !== THROW_TYPE.DUMP_SWING &&
+      separation.outcome === 'tight' &&
+      separation.abort
+    ) {
+      effectiveThrowType = THROW_TYPE.DUMP_SWING
+      picked = pickBestReceiverOption(
+        rng,
+        pickDumpReceiver,
+        offenseLineup,
+        thrower,
+        defenseLineup,
+        defenseStyle,
+        personMatchups,
+        stallCount,
+      )
+      receiver = picked.receiver
+      defender = picked.defender
+      separation = picked.separation
+    }
 
-    const separation = resolveSeparation({ receiver, defender, rng })
     // Bez geometrii markera: rozkład open/break-side zbliżony do realnego (~70/30).
     const isOpenSide = rng.float() > 0.3
 
-    const profile = throwProfile(throwType)
-    const estDistanceM = Math.max(3, Math.abs(profile.baseYards()))
+    const profile = throwProfile(effectiveThrowType)
+    const isHuckThrow = effectiveThrowType === THROW_TYPE.HUCK
+    // Huck to prawdziwy głęboki rzut (40-100m w granicach boiska), nie stałe 32m —
+    // patrz sampleFastHuckDistanceM.
+    const estDistanceM = isHuckThrow
+      ? sampleFastHuckDistanceM(rng, discPosition)
+      : Math.max(3, Math.abs(profile.baseYards()))
     // Bez geometrii toru: throwerY losowo na szerokości boiska (fastMode nie trzyma
     // realnej pozycji Y) — bez tego domyślał się do dokładnie fieldCenterY() (patrz
     // resolveActiveForceGrip's `throwerY ?? cySafe()`), więc `throwerY < cy` było zawsze
@@ -1126,7 +1204,7 @@ export function simulatePointFast({
       defender,
       rng,
       defenseStyle,
-      throwType,
+      throwType: effectiveThrowType,
       separation,
       stallCount,
       forceSide: resolveMarkForceSide(defenseTeam, null),
@@ -1154,7 +1232,7 @@ export function simulatePointFast({
         possessionTeam: possession,
         defenseStyle,
         attackStyle,
-        throwType,
+        throwType: effectiveThrowType,
         stallCount,
         separationOutcome: separation.outcome,
         isOpenSide,
@@ -1162,17 +1240,18 @@ export function simulatePointFast({
     )
 
     if (result.success) {
-      const discAfter = computeThrowAdvance(discPositionBefore, throwType, {
+      const discAfter = computeThrowAdvance(discPositionBefore, effectiveThrowType, {
         attackStyle,
         defenseStyle,
         rng,
         forwardProgressM: null,
         wind,
         thrower,
+        explicitYards: isHuckThrow ? estDistanceM : null,
       })
       discPosition = discAfter
       const yardsGained = yardsFromPositions(discPositionBefore, discPosition)
-      const isHuck = isHuckType(throwType, yardsGained)
+      const isHuck = isHuckType(effectiveThrowType, yardsGained)
 
       if (matchStats) {
         recordThrowAttempt(matchStats, possession, { success: true, yardsGained, isHuck })
@@ -1187,7 +1266,7 @@ export function simulatePointFast({
           receiverName: playerLabel(receiver),
           yardsGained,
           isHuck,
-          throwType,
+          throwType: effectiveThrowType,
           throwScore: result.throwScore,
           defenseScore: result.defenseScore,
         }),
@@ -1209,7 +1288,7 @@ export function simulatePointFast({
     } else {
       if (boxScore && result.isBlock) recordBlock(boxScore, defender.id)
 
-      const isHuck = isHuckType(throwType, 0)
+      const isHuck = isHuckType(effectiveThrowType, 0)
       if (matchStats) {
         recordThrowAttempt(matchStats, possession, {
           success: false,
@@ -1229,7 +1308,7 @@ export function simulatePointFast({
           possessionTeam: possession,
           discPositionBefore,
           isHuck,
-          throwType,
+          throwType: effectiveThrowType,
           isBlock: result.isBlock,
           throwScore: result.throwScore,
           defenseScore: result.defenseScore,

@@ -94,13 +94,36 @@ const SKILL_ADJUST_WEIGHT = {
  * oryginalnych targetów). Jeśli SKILL_SENSITIVITY_SCALE / SEPARATION_SENSITIVITY_SCALE
  * zmienią się ponownie, uruchom tmp-calibrate-real.mjs jeszcze raz.
  */
-const DISTANCE_GAP_TABLE = {
+const DISTANCE_GAP_TABLE_BASE = {
   dump: { openOpen: 9.6, openContested: 9.2, openTight: 0.9, breakOpen: 12.2, breakContested: 5.5, breakTight: -2.9 },
   short: { openOpen: 6.3, openContested: 5.0, openTight: -4.0, breakOpen: 9.7, breakContested: 3.1, breakTight: -7.1 },
   medium: { openOpen: 5.2, openContested: 3.7, openTight: -6.5, breakOpen: 8.1, breakContested: 2.0, breakTight: -9.1 },
   long: { openOpen: 3.9, openContested: 1.0, openTight: -10.0, breakOpen: 7.0, breakContested: 0.7, breakTight: -11.3 },
   huck: { openOpen: 1.3, openContested: -0.4, openTight: -16.9, breakOpen: 2.5, breakContested: -1.7, breakTight: -18.9 },
 }
+
+/**
+ * DISTANCE_GAP_TABLE_BASE powyżej został skalibrowany na IZOLOWANYM pojedynczym
+ * rzucie (skill=60, stallCount=2 stałe, brak wiatru, pełna stamina) — celowo "czyste
+ * laboratorium" bez tarcia, jakie realnie występuje w meczu. Zmierzony completion%
+ * w prawdziwych meczach (fastMode i pełny silnik, po naprawie decyzyjności — patrz
+ * tmp-completion-possession-report.mjs / tmp-fullengine-completion-check.mjs) wyszedł
+ * 83-84% zamiast realnego benchmarku pro/elite ultimate (~92-96%), bo realne mecze
+ * dokładają stall wyższy niż 2, zmienność skilli, zmęczenie, wiatr i karę break-side
+ * techniki — żadnego z tych czynników nie było w izolowanej kalibracji. Ten
+ * dodatek wyrównuje różnicę na poziomie CAŁEGO meczu, nie psując relatywnej trudności
+ * między kategoriami/stronami/separacjami (dodawany jednolicie do każdej komórki).
+ * Wyskalowany empirycznie (tmp-recalibrate-match-completion.mjs) tak, by agregatowe
+ * completion% w realnych meczach wylądowało w środku pasma 92-96%.
+ */
+const MATCH_FRICTION_COMPENSATION = 11
+
+const DISTANCE_GAP_TABLE = Object.fromEntries(
+  Object.entries(DISTANCE_GAP_TABLE_BASE).map(([cat, row]) => [
+    cat,
+    Object.fromEntries(Object.entries(row).map(([key, gap]) => [key, gap + MATCH_FRICTION_COMPENSATION])),
+  ]),
+)
 
 function distanceGapFor(category, isOpenSide, separationOutcome) {
   const row = DISTANCE_GAP_TABLE[category] ?? DISTANCE_GAP_TABLE.medium

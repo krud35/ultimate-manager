@@ -18,7 +18,7 @@ function weighted(skills, weights) {
  * identycznie jak przed kompresją — zmieniamy WYŁĄCZNIE wrażliwość na odchylenie od 60,
  * więc DISTANCE_GAP_TABLE (skalibrowana przy skill=60) nie wymaga korekty.
  */
-const SEPARATION_SENSITIVITY_SCALE = 0.15
+const SEPARATION_SENSITIVITY_SCALE = 0.19
 
 function compressSeparationSkill(value) {
   return 60 + (value - 60) * SEPARATION_SENSITIVITY_SCALE
