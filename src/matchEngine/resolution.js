@@ -56,28 +56,50 @@ export function throwDistanceCategory(distanceM) {
 }
 
 /**
+ * Globalny mnożnik czułości rzutu na skill rzucającego (skillAdjustment poniżej).
+ * Audyt balansu (tmp-balance-audit.mjs, suita D + F) pokazał, że różnica zaledwie
+ * ~5 pkt średniego OVR między rosterami dawała 86%→2% win rate (i analogicznie
+ * 30pp rozstęp win rate w pełnej lidze 16 drużyn UFA) — realna różnica rosterów
+ * (5–10 pkt) powinna dawać raczej 60–75% niż 90–100%. Nieskompresowana
+ * SKILL_ADJUST_WEIGHT (2–15, mocniej na break-side/huck) była głównym winowajcą —
+ * tłumimy ją tu globalnie. Wyskalowane empirycznie (tmp-skill-sensitivity-tune.mjs,
+ * identyczny roster po obu stronach żeby wykluczyć confound realnych rosterów) tak,
+ * by delta +5 OVR dawała ~65-72% win rate rywala, +10 OVR ~77-79%, zamiast dawnych
+ * 98%/99.7%.
+ */
+const SKILL_SENSITIVITY_SCALE = 0.35
+
+/** Waga wpływu umiejętności rzucającego wokół bazy kategorii — mocniej na break-side/huck.
+ * Już przemnożona przez SKILL_SENSITIVITY_SCALE. */
+const SKILL_ADJUST_WEIGHT = {
+  dump: { open: 2 * SKILL_SENSITIVITY_SCALE, break: 4 * SKILL_SENSITIVITY_SCALE },
+  short: { open: 3 * SKILL_SENSITIVITY_SCALE, break: 6 * SKILL_SENSITIVITY_SCALE },
+  medium: { open: 4 * SKILL_SENSITIVITY_SCALE, break: 8 * SKILL_SENSITIVITY_SCALE },
+  long: { open: 5 * SKILL_SENSITIVITY_SCALE, break: 10 * SKILL_SENSITIVITY_SCALE },
+  huck: { open: 8 * SKILL_SENSITIVITY_SCALE, break: 15 * SKILL_SENSITIVITY_SCALE },
+}
+
+/**
  * Docelowy gap (throwBase − defenseBase) skalibrowany binary-search NA PRAWDZIWYM
  * resolveThrow() (tmp-calibrate-real.mjs, __debugGapOverride) przy stallCount=2 (typowy,
  * niewymuszony rzut) i przeciętnym (60) rzucającym/odbiorcy/obrońcy — łapie realne
  * efekty uboczne (stallMods niskiego stallu, skillAdjustment, technikę rzutu), których
  * nie widziała czysto abstrakcyjna kalibracja szumu. Klucz = strona (open/break) +
  * separacja odbiorcy (Open/Contested/Tight — margines z resolveSeparation).
+ *
+ * Rekalibrowane po wprowadzeniu SKILL_SENSITIVITY_SCALE powyżej i
+ * SEPARATION_SENSITIVITY_SCALE (separation.js) — te dwie zmiany wpływają na to, jaki
+ * gap trzeba tu wpisać, żeby completion% przy skill=60 zostało identyczne jak przed
+ * zmianami (zweryfikowane: tmp-verify-baseline-completion.mjs, wszystko ≤1.5pp od
+ * oryginalnych targetów). Jeśli SKILL_SENSITIVITY_SCALE / SEPARATION_SENSITIVITY_SCALE
+ * zmienią się ponownie, uruchom tmp-calibrate-real.mjs jeszcze raz.
  */
 const DISTANCE_GAP_TABLE = {
-  dump: { openOpen: 9.3, openContested: 8.9, openTight: 0.6, breakOpen: 12.4, breakContested: 5.7, breakTight: -2.6 },
-  short: { openOpen: 5.9, openContested: 4.6, openTight: -4.4, breakOpen: 10.1, breakContested: 3.5, breakTight: -6.7 },
-  medium: { openOpen: 4.7, openContested: 3.2, openTight: -7.0, breakOpen: 8.7, breakContested: 2.5, breakTight: -8.6 },
-  long: { openOpen: 3.2, openContested: 0.3, openTight: -10.6, breakOpen: 7.7, breakContested: 1.4, breakTight: -10.6 },
-  huck: { openOpen: 0.3, openContested: -1.4, openTight: -17.9, breakOpen: 3.5, breakContested: -0.7, breakTight: -17.9 },
-}
-
-/** Waga wpływu umiejętności rzucającego wokół bazy kategorii — mocniej na break-side/huck. */
-const SKILL_ADJUST_WEIGHT = {
-  dump: { open: 2, break: 4 },
-  short: { open: 3, break: 6 },
-  medium: { open: 4, break: 8 },
-  long: { open: 5, break: 10 },
-  huck: { open: 8, break: 15 },
+  dump: { openOpen: 9.6, openContested: 9.2, openTight: 0.9, breakOpen: 12.2, breakContested: 5.5, breakTight: -2.9 },
+  short: { openOpen: 6.3, openContested: 5.0, openTight: -4.0, breakOpen: 9.7, breakContested: 3.1, breakTight: -7.1 },
+  medium: { openOpen: 5.2, openContested: 3.7, openTight: -6.5, breakOpen: 8.1, breakContested: 2.0, breakTight: -9.1 },
+  long: { openOpen: 3.9, openContested: 1.0, openTight: -10.0, breakOpen: 7.0, breakContested: 0.7, breakTight: -11.3 },
+  huck: { openOpen: 1.3, openContested: -0.4, openTight: -16.9, breakOpen: 2.5, breakContested: -1.7, breakTight: -18.9 },
 }
 
 function distanceGapFor(category, isOpenSide, separationOutcome) {
