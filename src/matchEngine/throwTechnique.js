@@ -149,32 +149,26 @@ export function resolveThrowTechnique({
   return onOpen ? THROW_TECHNIQUE.FOREHAND : THROW_TECHNIQUE.BACKHAND
 }
 
-/** Kara 35% celności i wyższe ryzyko D-block na break backhand (RH + force forehand). */
-export function throwTechniqueModifiers({
-  technique,
-  dominantHand,
-  forceSide,
-  isOpenSide,
-  throwerY,
-}) {
+/**
+ * Kara 35% celności i wyższe ryzyko D-block na break-side throw — "dookoła marku"
+ * jest trudniejsze niezależnie od tego, czy to akurat forehand czy backhand:
+ * resolveThrowTechnique już zapewnia, że break-side zawsze dostaje "trudniejszą"
+ * technikę dla danego force (RIGHT+force_forehand → break backhand, RIGHT+force_backhand
+ * → break forehand, itd.). Wcześniej kara sprawdzała tylko technique===BACKHAND, więc
+ * trafiała jedynie RIGHT+force_forehand / LEFT+force_backhand — force_backhand,
+ * force_middle i force_sideline nigdy jej nie dostawały, dając atakującemu darmową
+ * celność na break side przeciw tym trzem force (audyt balansu: 96.2% vs 92.1% na
+ * pojedynczym rzucie, kompoundujące do 20-27pp różnicy w win rate — tmp-force-diagnose.mjs).
+ */
+export function throwTechniqueModifiers({ technique, isOpenSide }) {
   const mods = {
     accuracyMult: 1,
     blockRiskBonus: 0,
     technique,
   }
-  if (technique !== THROW_TECHNIQUE.BACKHAND || isOpenSide) return mods
-
-  const hand =
-    dominantHand === DOMINANT_HAND.LEFT ? DOMINANT_HAND.LEFT : DOMINANT_HAND.RIGHT
-  const force = resolveActiveForceGrip(forceSide, { throwerY, dominantHand: hand })
-  const breakBackhandRh =
-    hand === DOMINANT_HAND.RIGHT && force === FORCE_SIDES.FORCE_FOREHAND
-  const breakBackhandLh =
-    hand === DOMINANT_HAND.LEFT && force === FORCE_SIDES.FORCE_BACKHAND
-  if (breakBackhandRh || breakBackhandLh) {
-    mods.accuracyMult = 0.65
-    mods.blockRiskBonus = 10
-  }
+  if (isOpenSide) return mods
+  mods.accuracyMult = 0.65
+  mods.blockRiskBonus = 10
   return mods
 }
 

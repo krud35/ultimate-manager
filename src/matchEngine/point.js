@@ -23,6 +23,7 @@ import {
   yardsFromPositions,
 } from './matchStats.js'
 import { discMetersFromState, discPositionFromFieldMeters, resolveMarkForceSide } from './fieldViz.js'
+import { FIELD_DIMENSIONS } from './fieldDimensions.js'
 import {
   pickThrowType,
   throwProfile,
@@ -1112,6 +1113,12 @@ export function simulatePointFast({
 
     const profile = throwProfile(throwType)
     const estDistanceM = Math.max(3, Math.abs(profile.baseYards()))
+    // Bez geometrii toru: throwerY losowo na szerokości boiska (fastMode nie trzyma
+    // realnej pozycji Y) — bez tego domyślał się do dokładnie fieldCenterY() (patrz
+    // resolveActiveForceGrip's `throwerY ?? cySafe()`), więc `throwerY < cy` było zawsze
+    // false i force_middle/force_sideline zapadały się do stałego chwytu zamiast
+    // naturalnie zmieniać się z połową boiska.
+    const throwerY = rng.float() * FIELD_DIMENSIONS.widthM
 
     const result = resolveThrow({
       thrower,
@@ -1124,6 +1131,7 @@ export function simulatePointFast({
       stallCount,
       forceSide: resolveMarkForceSide(defenseTeam, null),
       isOpenSide,
+      throwerY,
       wind,
       throwDx: estDistanceM,
       throwDy: 0,
