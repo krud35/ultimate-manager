@@ -1064,6 +1064,12 @@ export function simulatePointFast({
   let lastScoringThrowerId = null
   let lastScoringReceiverId = null
   let personMatchups = null
+  /** Zawodnik z dyskiem; po udanym rzucie = odbiorca. Po turnoverze/pullu — null
+   * (pierwszy rzut w posiadaniu losowany). Wcześniej brakowało tego w fastMode: co
+   * rzut na nowo losowano throwera od zera (pickThrower na argmax po skillu), więc
+   * dysk teleportował się do najlepszego handlera niezależnie od tego, kto go
+   * faktycznie złapał — jeden zawodnik zgarniał prawie wszystkie asysty w meczu. */
+  let discHolder = null
 
   function defendingTeamId() {
     return possession === 'home' ? 'away' : 'home'
@@ -1087,6 +1093,7 @@ export function simulatePointFast({
     const absX = discMetersFromState(discPosition, possession)
     possession = possession === 'home' ? 'away' : 'home'
     discPosition = discPositionFromFieldMeters(absX, possession)
+    discHolder = null
     events.push(
       createEvent(EVENT.TURNOVER, {
         newPossession: possession,
@@ -1105,7 +1112,7 @@ export function simulatePointFast({
     const attackStyle = stylesForTeam(possession).attackStyle
     const defenseStyle = stylesForTeam(defendingTeamId()).defenseStyle
 
-    const thrower = pickThrower(rng, offenseLineup, offenseTeam.tactics)
+    const thrower = discHolder ?? pickThrower(rng, offenseLineup, offenseTeam.tactics)
     const stallCount = sampleFastStallCount(rng)
 
     if (stallCount >= STALL_MAX) {
@@ -1284,6 +1291,8 @@ export function simulatePointFast({
             receiverId: receiver.id,
           }),
         )
+      } else {
+        discHolder = receiver
       }
     } else {
       if (boxScore && result.isBlock) recordBlock(boxScore, defender.id)

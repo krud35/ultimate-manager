@@ -7,17 +7,31 @@ import { weightedLegacyStat, readLegacySkill } from '../models/playerStats.js'
 import { getPlayerMorale, moraleSkillMultiplier } from '../models/playerMorale.js'
 import { mergeTraitAndCoachMods } from './coachDirectives.js'
 
+/**
+ * Losowanie ruletkowe ważone skorem, NIE argmax. Wcześniej brało zawsze zawodnika
+ * z najwyższym score (entries.sort + entries[0]) — realny rozstaw skilli w składzie
+ * (zwłaszcza throwing/vision głównego handlera) regularnie przekraczał szum
+ * (rng.float()*15), więc ten sam najlepszy zawodnik wygrywał niemal każdy rzut w
+ * meczu. W fastMode (gdzie throwera losuje się co podanie, patrz simulatePointFast)
+ * to koncentrowało prawie wszystkie asysty drużyny na jednym graczu (10-13/mecz).
+ * Lepszy zawodnik nadal ma WIĘKSZĄ szansę (proporcjonalną do score), ale nie 100%.
+ */
 function weightedScore(rng, players, weights, scoreBoostFn = null) {
   const entries = players.map((p) => {
     let score = weightedLegacyStat(p.skills, weights)
     score *= moraleSkillMultiplier(getPlayerMorale(p))
-    score += rng.float() * 15
     score *= staminaParticipationFactor(p.currentStamina ?? 100)
     if (scoreBoostFn) score *= scoreBoostFn(p) ?? 1
-    return { player: p, score }
+    const weight = Math.max(1, score + rng.float() * 15)
+    return { player: p, weight }
   })
-  entries.sort((a, b) => b.score - a.score)
-  return entries[0]?.player ?? players[0]
+  const total = entries.reduce((sum, e) => sum + e.weight, 0)
+  let roll = rng.float() * total
+  for (const e of entries) {
+    roll -= e.weight
+    if (roll <= 0) return e.player
+  }
+  return entries[entries.length - 1]?.player ?? players[0]
 }
 
 /** Kto rzuca — preferencja handlerów (throwing, vision) + primary_handler. */
