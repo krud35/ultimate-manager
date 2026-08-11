@@ -37,7 +37,7 @@ import { padLine } from './lineups.js'
 
 const LINE_SIZE = MATCH_CONFIG.lineupSize
 
-/** Próg auto-substytucji w symulacji (drużyna gracza): STA poniżej → zmiana. */
+/** Próg auto-substytucji w symulacji (drużyna gracza i AI): STA poniżej → zmiana. */
 export const AUTO_SUB_STAMINA_MIN = 60
 
 function fillLineFromCandidates(candidates, size = LINE_SIZE) {
@@ -115,16 +115,14 @@ function defenseDefaultScore(player) {
 }
 
 /**
- * Siódemka: najlepsi wg czystych umiejętności, pomijając tylko tych bez dostępnej
- * staminy (exhausted) — a nie przeliczając całego rankingu wagą staminy co punkt.
+ * Siódemka: najlepsi wg czystych umiejętności, pomijając tylko tych poniżej progu
+ * staminy (`minStamina`) — a nie przeliczając całego rankingu wagą staminy co punkt.
  * Gdy brakuje świeżych do 7, dobiera kolejnych najlepszych mimo zmęczenia (lepsze
  * niż pusty slot).
  */
-function pickDefaultLine(pool, scoreFn, staminaMap) {
+function pickDefaultLine(pool, scoreFn, staminaMap, minStamina = STAMINA_CONFIG.exhaustedThreshold) {
   const bySkill = [...pool].sort((a, b) => scoreFn(b) - scoreFn(a))
-  const fresh = bySkill.filter(
-    (p) => getStamina(staminaMap, p.id) >= STAMINA_CONFIG.exhaustedThreshold,
-  )
+  const fresh = bySkill.filter((p) => getStamina(staminaMap, p.id) >= minStamina)
   const chosen = fresh.slice(0, LINE_SIZE)
   if (chosen.length < LINE_SIZE) {
     for (const p of bySkill) {
@@ -225,7 +223,7 @@ export function tacticsForTeam(team, options = {}) {
 
 /**
  * AI: zachowuje styl drużyny, przebudowuje siódemki O/D pod skill + świeżość.
- * Zmęczeni (< exhausted) spadają na ławkę, jeśli jest rezerwa.
+ * Zmęczeni (STA < AUTO_SUB_STAMINA_MIN) spadają na ławkę, jeśli jest rezerwa.
  */
 export function autoRotateTacticsForTeam(team, staminaMap, rng = null) {
   void rng // zachowany w sygnaturze dla kompatybilności wywołań; nie steruje już losową rotacją.
@@ -236,10 +234,10 @@ export function autoRotateTacticsForTeam(team, staminaMap, rng = null) {
   const pool = players.length ? players : team.players ?? []
 
   // Domyślna siódemka = najlepsi wg czystych umiejętności (nie wg bieżącej staminy).
-  // Zamiana slotu następuje tylko gdy dany zawodnik jest niedostępny/wyczerpany —
-  // patrz pickDefaultLine — a nie co punkt losowo, jak wcześniej.
-  const oCandidates = pickDefaultLine(pool, offenseDefaultScore, staminaMap)
-  const dCandidates = pickDefaultLine(pool, defenseDefaultScore, staminaMap)
+  // Zamiana slotu następuje tylko gdy dany zawodnik jest niedostępny/zmęczony
+  // (STA < AUTO_SUB_STAMINA_MIN) — patrz pickDefaultLine — a nie co punkt losowo, jak wcześniej.
+  const oCandidates = pickDefaultLine(pool, offenseDefaultScore, staminaMap, AUTO_SUB_STAMINA_MIN)
+  const dCandidates = pickDefaultLine(pool, defenseDefaultScore, staminaMap, AUTO_SUB_STAMINA_MIN)
   const oSortedFull = [...pool].sort((a, b) => offenseDefaultScore(b) - offenseDefaultScore(a))
   const dSortedFull = [...pool].sort((a, b) => defenseDefaultScore(b) - defenseDefaultScore(a))
 
