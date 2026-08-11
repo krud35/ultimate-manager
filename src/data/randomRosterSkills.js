@@ -1,6 +1,8 @@
 /**
  * Losowe skille / pasma OVR przy trybie „losowe składy”.
- * Bulk 74–83, good 84–88, elite 89–94.
+ * Bulk 74–83, good 84–88, elite 89–94 — per zawodnik w składzie, dodatkowo przesunięte
+ * o losową siłę całej drużyny (rollTeamStrengthOffset), żeby drużyny w lidze różniły
+ * się ogólnym poziomem.
  */
 import {
   SKILLS_GEN_VERSION,
@@ -84,10 +86,29 @@ export function rollRandomSkillsForRoster(players, seedKey) {
   return players
 }
 
+/** Maks. przesunięcie OVR między najsłabszą a najsilniejszą drużyną ligi (± od środka). */
+const TEAM_STRENGTH_SPREAD = 6.5
+
 /**
- * Ustawia docelowe OVR: większość 74–83, część 84–88, elita 89–94.
+ * Losuje siłę drużyny w lidze — przesunięcie OVR (rozkład zbliżony do dzwonu, ok. ±6.5),
+ * żeby w trybie losowym drużyny różniły się ogólnym poziomem, a nie tylko tym, KTÓRY
+ * zawodnik trafił na „elitarny” slot w danym składzie. Wywołać raz na drużynę, seedem
+ * bez elementu per-gracz (np. `${seed}:${teamId}`), i przekazać do applyRandomOvrBands.
  */
-export function applyRandomOvrBands(players, seedKey) {
+export function rollTeamStrengthOffset(seedKey) {
+  const rng = mulberry32(hashSeed(seedKey, 'team-strength'))
+  // Średnia z 3 rzutów -> rozkład skupiony wokół środka zamiast płaskiego uniform.
+  const bell = (rng() + rng() + rng()) / 3
+  return (bell - 0.5) * 2 * TEAM_STRENGTH_SPREAD
+}
+
+/**
+ * Ustawia docelowe OVR: większość 74–83, część 84–88, elita 89–94 (bazowe pasma per
+ * zawodnik w składzie), przesunięte dodatkowo o `teamStrengthOffset` — dzięki temu
+ * różne drużyny w tej samej losowej lidze mają różny ogólny poziom, nie tylko inny
+ * rozkład wewnątrz identycznie mocnego składu.
+ */
+export function applyRandomOvrBands(players, seedKey, teamStrengthOffset = 0) {
   if (!players?.length) return players
   const rng = mulberry32(hashSeed(seedKey, 'ovr-bands'))
   const n = players.length
@@ -102,16 +123,17 @@ export function applyRandomOvrBands(players, seedKey) {
     const { p, noise } = order[i]
     let target
     if (i < eliteSlots) {
-      target = Math.round(lerp(OVR_ELITE_MIN, OVR_ELITE_MAX, 0.2 + noise * 0.8))
+      target = lerp(OVR_ELITE_MIN, OVR_ELITE_MAX, 0.2 + noise * 0.8)
     } else if (i < eliteSlots + goodSlots) {
       const t = (i - eliteSlots) / Math.max(1, goodSlots - 1)
-      target = Math.round(lerp(OVR_GOOD_MAX, OVR_GOOD_MIN, t * 0.7 + noise * 0.3))
+      target = lerp(OVR_GOOD_MAX, OVR_GOOD_MIN, t * 0.7 + noise * 0.3)
     } else {
       const bulkI = i - eliteSlots - goodSlots
       const bulkN = Math.max(1, n - eliteSlots - goodSlots)
       const rankT = 1 - bulkI / bulkN
-      target = Math.round(lerp(OVR_BULK_MIN, OVR_BULK_MAX, rankT * 0.85 + noise * 0.15))
+      target = lerp(OVR_BULK_MIN, OVR_BULK_MAX, rankT * 0.85 + noise * 0.15)
     }
+    target = Math.max(60, Math.min(97, Math.round(target + teamStrengthOffset)))
     p.skills = scaleSkillsToTargetOvr(p.skills, target)
     p.skillsGen = SKILLS_GEN_VERSION
   }

@@ -20,6 +20,7 @@ import { buildTeamRoster, isActiveRawRow, teamMaxFromRows } from './playerStatsF
 import {
   applyRandomOvrBands,
   rollRandomSkillsForRoster,
+  rollTeamStrengthOffset,
 } from './randomRosterSkills.js'
 import { rollTraitsForPlayer, TRAITS_GEN_VERSION } from '../models/playerTraits.js'
 import { ATTACK_STYLES, DEFENSE_STYLES, FORCE_SIDES } from '../matchEngine/tacticsModifiers.js'
@@ -274,7 +275,8 @@ export function buildSeasonLeagueTemplate(options) {
 
     if (rosterMode === 'random') {
       players = rollRandomSkillsForRoster(players, `${seed}:${rawTeam.id}`)
-      applyRandomOvrBands(players, `${seed}:${rawTeam.id}:ovr`)
+      const teamStrengthOffset = rollTeamStrengthOffset(`${seed}:${rawTeam.id}`)
+      applyRandomOvrBands(players, `${seed}:${rawTeam.id}:ovr`, teamStrengthOffset)
     }
 
     for (const p of players) {
