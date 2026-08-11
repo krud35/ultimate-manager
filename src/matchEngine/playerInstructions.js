@@ -1,14 +1,14 @@
 /**
- * Indywidualne instrukcje trenera dla zawodnika (tagi, max 3).
+ * Indywidualne instrukcje trenera dla zawodnika (tagi, bez limitu liczby).
+ * Osobny zestaw dla O-Line i D-Line (tactics.oLinePlayerInstructions / dLinePlayerInstructions).
  * Nakładane na trait + coachDirectives z własnym compliance.
  */
 
 import { getPlayerTraits } from '../models/playerTraits.js'
 import { getSubStat, normalizePlayerSkills } from '../models/playerStats.js'
+import { resolveLineRole } from './tacticsModifiers.js'
 
-export const PLAYER_INSTRUCTION_MAX = 3
-
-/** @typedef {'offense'|'defense'|'both'} InstructionSide */
+/** @typedef {'offense'|'defense'} InstructionSide */
 
 /**
  * @typedef {object} PlayerInstructionDef
@@ -21,15 +21,7 @@ export const PLAYER_INSTRUCTION_MAX = 3
 
 /** @type {Record<string, PlayerInstructionDef>} */
 export const PLAYER_INSTRUCTION_DEFS = {
-  cut_deep: {
-    id: 'cut_deep',
-    label: 'Biegaj na hucki',
-    labelEn: 'Cut deep',
-    description: 'Częściej deep cuty i kontynuacje w głąb pola.',
-    descriptionEn: 'More deep cuts and continuations downfield.',
-    side: 'offense',
-    group: 'cut',
-  },
+  // ── Rzut ──
   throw_hucks: {
     id: 'throw_hucks',
     label: 'Rzucaj hucki',
@@ -57,12 +49,70 @@ export const PLAYER_INSTRUCTION_DEFS = {
     side: 'offense',
     group: 'throw',
   },
+  no_break_mark: {
+    id: 'no_break_mark',
+    label: 'Nie przełamuj marka',
+    labelEn: "Don't break the mark",
+    description:
+      'Wyższy wymagany zapas separacji na break side — preferuj open side / bezpieczny dump.',
+    descriptionEn:
+      'Higher required separation on break-side looks — prefer the open side / a safe dump.',
+    side: 'offense',
+    group: 'throw',
+  },
+  dump_first: {
+    id: 'dump_first',
+    label: 'Najpierw reset',
+    labelEn: 'Dump first',
+    description: 'Wcześniej szukaj dumpa / bezpiecznego resetu.',
+    descriptionEn: 'Look earlier for a dump / safe reset.',
+    side: 'offense',
+    group: 'throw',
+  },
+  look_downfield: {
+    id: 'look_downfield',
+    label: 'Patrz w pole',
+    labelEn: 'Look downfield',
+    description: 'Najpierw szukaj zysku terenu — dump dopiero gdy nic innego nie ma.',
+    descriptionEn: 'Look for downfield yardage first — dump only once nothing else is there.',
+    side: 'offense',
+    group: 'throw',
+  },
+  // ── Cut ──
+  cut_deep: {
+    id: 'cut_deep',
+    label: 'Biegaj na hucki',
+    labelEn: 'Cut deep',
+    description: 'Częściej deep cuty i kontynuacje w głąb pola.',
+    descriptionEn: 'More deep cuts and continuations downfield.',
+    side: 'offense',
+    group: 'cut',
+  },
+  cut_under: {
+    id: 'cut_under',
+    label: 'Biegaj under',
+    labelEn: 'Cut under',
+    description: 'Częściej under do dysku, rzadziej deep.',
+    descriptionEn: 'More under cuts to the disc, fewer deeps.',
+    side: 'offense',
+    group: 'cut',
+  },
+  // ── Obrona ──
   tight_mark: {
     id: 'tight_mark',
     label: 'Kryj blisko',
     labelEn: 'Tight mark',
     description: 'Mniejszy cushion — twardy person mark.',
     descriptionEn: 'Smaller cushion — hard person mark.',
+    side: 'defense',
+    group: 'defense',
+  },
+  loose_mark: {
+    id: 'loose_mark',
+    label: 'Kryj luźno',
+    labelEn: 'Loose mark',
+    description: 'Większy cushion — lekki bonus do pomocy w głębi.',
+    descriptionEn: 'Bigger cushion — small bonus to help deep.',
     side: 'defense',
     group: 'defense',
   },
@@ -75,6 +125,34 @@ export const PLAYER_INSTRUCTION_DEFS = {
     side: 'defense',
     group: 'defense',
   },
+  no_poach: {
+    id: 'no_poach',
+    label: 'Nie poachuj',
+    labelEn: 'No poaching',
+    description: 'Trzymaj swojego człowieka — bez lane poach.',
+    descriptionEn: 'Stick with your person — no lane poaches.',
+    side: 'defense',
+    group: 'defense',
+  },
+  shade_deep: {
+    id: 'shade_deep',
+    label: 'Kryj deep',
+    labelEn: 'Shade deep',
+    description: 'Shade deep / help deep — under mniej pilnowany.',
+    descriptionEn: 'Shade / help deep — under less tightly guarded.',
+    side: 'defense',
+    group: 'defense',
+  },
+  shade_under: {
+    id: 'shade_under',
+    label: 'Kryj under',
+    labelEn: 'Shade under',
+    description: 'Shade / help under — deep mniej pilnowany.',
+    descriptionEn: 'Shade / help under — deep less tightly guarded.',
+    side: 'defense',
+    group: 'defense',
+  },
+  // ── Rola ──
   dominate: {
     id: 'dominate',
     label: 'Dominuj grę',
@@ -93,94 +171,40 @@ export const PLAYER_INSTRUCTION_DEFS = {
     side: 'offense',
     group: 'role',
   },
-  dump_first: {
-    id: 'dump_first',
-    label: 'Najpierw reset',
-    labelEn: 'Dump first',
-    description: 'Wcześniej szukaj dumpa / bezpiecznego resetu.',
-    descriptionEn: 'Look earlier for a dump / safe reset.',
-    side: 'offense',
-    group: 'throw',
-  },
-  hold_disc: {
-    id: 'hold_disc',
-    label: 'Trzymaj dysk',
-    labelEn: 'Hold the disc',
-    description: 'Cierpliwość na dysku — dłuższy release gate.',
-    descriptionEn: 'Patience with the disc — longer release gate.',
-    side: 'offense',
-    group: 'throw',
-  },
-  swing_first: {
-    id: 'swing_first',
-    label: 'Szukaj swinga',
-    labelEn: 'Look for swing',
-    description: 'Preferuj lateral flow zamiast early deep.',
-    descriptionEn: 'Prefer lateral flow over early deep.',
-    side: 'offense',
-    group: 'throw',
-  },
-  cut_under: {
-    id: 'cut_under',
-    label: 'Biegaj under',
-    labelEn: 'Cut under',
-    description: 'Częściej under do dysku, rzadziej deep.',
-    descriptionEn: 'More under cuts to the disc, fewer deeps.',
-    side: 'offense',
-    group: 'cut',
-  },
-  clear_hard: {
-    id: 'clear_hard',
-    label: 'Czyść lane agresywnie',
-    labelEn: 'Clear hard',
-    description: 'Szybciej i dalej czyść lane przy clogu.',
-    descriptionEn: 'Clear clogged lanes faster and farther.',
-    side: 'offense',
-    group: 'cut',
-  },
-  shade_deep: {
-    id: 'shade_deep',
-    label: 'Kryj deep',
-    labelEn: 'Shade deep',
-    description: 'Shade deep / help deep — under mniej pilnowany.',
-    descriptionEn: 'Shade / help deep — under less tightly guarded.',
-    side: 'defense',
-    group: 'defense',
-  },
-  no_poach: {
-    id: 'no_poach',
-    label: 'Nie poachuj',
-    labelEn: 'No poaching',
-    description: 'Trzymaj swojego człowieka — bez lane poach.',
-    descriptionEn: 'Stick with your person — no lane poaches.',
-    side: 'defense',
-    group: 'defense',
-  },
-  shutdown: {
-    id: 'shutdown',
-    label: 'Shutdown D',
-    labelEn: 'Shutdown D',
-    description: 'Twardy 1v1: blisko, bez pomocy / poachu.',
-    descriptionEn: 'Hard 1v1: tight, no help / poach.',
-    side: 'defense',
-    group: 'defense',
-  },
-  primary_handler: {
-    id: 'primary_handler',
-    label: 'Główny handler',
-    labelEn: 'Primary handler',
-    description: 'Preferowany punkt startu posiadania / dump target.',
-    descriptionEn: 'Preferred possession start / dump target.',
+  play_fast: {
+    id: 'play_fast',
+    label: 'Graj szybko',
+    labelEn: 'Play fast',
+    description: 'Szybszy release i wcześniejsze wyjścia — wyższe tempo.',
+    descriptionEn: 'Faster release and earlier looks — higher tempo.',
     side: 'offense',
     group: 'role',
   },
-  quiet_role: {
-    id: 'quiet_role',
-    label: 'Cicha rola',
-    labelEn: 'Quiet role',
-    description: 'Mniej opcji i cutów — spokojna, wspierająca gra.',
-    descriptionEn: 'Fewer options and cuts — calm supporting play.',
-    side: 'both',
+  play_slow: {
+    id: 'play_slow',
+    label: 'Graj wolno',
+    labelEn: 'Play slow',
+    description: 'Dłuższy release gate, więcej cierpliwości — niższe tempo.',
+    descriptionEn: 'Longer release gate, more patience — lower tempo.',
+    side: 'offense',
+    group: 'role',
+  },
+  take_space: {
+    id: 'take_space',
+    label: 'Bierz przestrzeń',
+    labelEn: 'Take the space',
+    description: 'Częściej inicjuje cuty.',
+    descriptionEn: 'Initiates cuts more often.',
+    side: 'offense',
+    group: 'role',
+  },
+  wait_your_turn: {
+    id: 'wait_your_turn',
+    label: 'Czekaj na swoją kolej',
+    labelEn: 'Wait for your turn',
+    description: 'Rzadziej inicjuje cuty — oddaje pierwszeństwo innym.',
+    descriptionEn: 'Initiates cuts less often — yields priority to others.',
+    side: 'offense',
     group: 'role',
   },
 }
@@ -188,10 +212,15 @@ export const PLAYER_INSTRUCTION_DEFS = {
 /** Pary wzajemnie wykluczające się. */
 export const PLAYER_INSTRUCTION_CONFLICTS = [
   ['throw_hucks', 'no_hucks'],
+  ['break_mark', 'no_break_mark'],
+  ['dump_first', 'look_downfield'],
   ['cut_deep', 'cut_under'],
+  ['tight_mark', 'loose_mark'],
   ['poach', 'no_poach'],
+  ['shade_deep', 'shade_under'],
   ['dominate', 'give_space'],
-  ['dump_first', 'hold_disc'],
+  ['play_fast', 'play_slow'],
+  ['take_space', 'wait_your_turn'],
 ]
 
 export const PLAYER_INSTRUCTION_IDS = Object.keys(PLAYER_INSTRUCTION_DEFS)
@@ -216,11 +245,10 @@ function conflictPartner(id) {
 }
 
 /**
- * Normalizacja listy tagów: unikalne, znane ID, bez konfliktów, max N.
+ * Normalizacja listy tagów: unikalne, znane ID, bez konfliktów (bez limitu liczby).
  * @param {string[]|null|undefined} ids
- * @param {number} [max]
  */
-export function normalizeInstructionList(ids, max = PLAYER_INSTRUCTION_MAX) {
+export function normalizeInstructionList(ids) {
   if (!Array.isArray(ids)) return []
   const out = []
   const seen = new Set()
@@ -238,7 +266,6 @@ export function normalizeInstructionList(ids, max = PLAYER_INSTRUCTION_MAX) {
     }
     out.push(id)
     seen.add(id)
-    if (out.length >= max) break
   }
   return out
 }
@@ -256,14 +283,48 @@ export function normalizePlayerInstructionsMap(map) {
   return out
 }
 
-export function instructionsForPlayer(tactics, playerId) {
+/**
+ * Znormalizowane mapy instrukcji dla O-Line i D-Line + legacy alias.
+ * Legacy `tactics.playerInstructions` (płaska mapa) zasila O-Line, jeśli
+ * `oLinePlayerInstructions` jeszcze nie istnieje — zgodnie z tym samym wzorcem
+ * co `normalizeLineCoachDirectives` w coachDirectives.js.
+ * @param {object|null|undefined} tactics
+ */
+export function normalizeLinePlayerInstructions(tactics) {
+  const legacy = tactics?.playerInstructions
+
+  const oLinePlayerInstructions = normalizePlayerInstructionsMap(
+    tactics?.oLinePlayerInstructions ?? legacy,
+  )
+  const dLinePlayerInstructions = normalizePlayerInstructionsMap(
+    tactics?.dLinePlayerInstructions,
+  )
+
+  return {
+    oLinePlayerInstructions,
+    dLinePlayerInstructions,
+    /** @deprecated alias = O-Line */
+    playerInstructions: oLinePlayerInstructions,
+  }
+}
+
+/**
+ * Instrukcje zawodnika dla danej linii (jawny lineRole albo _pointStartRole runtime).
+ * @param {object|null|undefined} tactics
+ * @param {string|number|null|undefined} playerId
+ * @param {'offense'|'defense'|null} [lineRole]
+ */
+export function instructionsForPlayer(tactics, playerId, lineRole = null) {
   if (playerId == null) return []
-  const map = normalizePlayerInstructionsMap(tactics?.playerInstructions)
+  const role = resolveLineRole(tactics, lineRole)
+  const { oLinePlayerInstructions, dLinePlayerInstructions } =
+    normalizeLinePlayerInstructions(tactics)
+  const map = role === 'defense' ? dLinePlayerInstructions : oLinePlayerInstructions
   return map[String(playerId)] ?? []
 }
 
 /**
- * Toggle tagu z respektowaniem konfliktów i limitu.
+ * Toggle tagu z respektowaniem konfliktów.
  * @returns {string[]}
  */
 export function togglePlayerInstruction(currentIds, instructionId) {
@@ -276,26 +337,31 @@ export function togglePlayerInstruction(currentIds, instructionId) {
     return cur.filter((x) => x !== id)
   }
   const partner = conflictPartner(id)
-  let next = partner ? cur.filter((x) => x !== partner) : [...cur]
-  if (next.length >= PLAYER_INSTRUCTION_MAX) {
-    next = next.slice(0, PLAYER_INSTRUCTION_MAX - 1)
-  }
+  const next = partner ? cur.filter((x) => x !== partner) : [...cur]
   next.push(id)
   return normalizeInstructionList(next)
 }
 
 /**
- * Zwraca nową mapę taktyki po toggle.
+ * Zwraca nową mapę taktyki po toggle, dla danej linii (O-Line / D-Line).
+ * @param {'offense'|'defense'|null} [lineRole]
  */
-export function toggleInstructionInTactics(tactics, playerId, instructionId) {
+export function toggleInstructionInTactics(tactics, playerId, instructionId, lineRole = null) {
+  const role = resolveLineRole(tactics, lineRole)
+  const key = role === 'defense' ? 'dLinePlayerInstructions' : 'oLinePlayerInstructions'
   const pid = String(playerId)
-  const map = { ...normalizePlayerInstructionsMap(tactics?.playerInstructions) }
+  const { oLinePlayerInstructions, dLinePlayerInstructions } =
+    normalizeLinePlayerInstructions(tactics)
+  const map = { ...(role === 'defense' ? dLinePlayerInstructions : oLinePlayerInstructions) }
   const nextList = togglePlayerInstruction(map[pid] ?? [], instructionId)
   if (nextList.length) map[pid] = nextList
   else delete map[pid]
+
   return {
     ...tactics,
-    playerInstructions: map,
+    oLinePlayerInstructions: role === 'defense' ? oLinePlayerInstructions : map,
+    dLinePlayerInstructions: role === 'defense' ? map : dLinePlayerInstructions,
+    [key]: map,
   }
 }
 
@@ -348,6 +414,7 @@ export function rawInstructionMods(ids) {
     standardWeightMult: 1,
     breakSideOptionBonus: 0,
     breakSideWeightMult: 1,
+    breakSideSepReqDeltaM: 0,
     acceptanceThresholdDelta: 0,
     decisionNoiseMult: 1,
     scanRadiusBonusM: 0,
@@ -378,6 +445,10 @@ export function rawInstructionMods(ids) {
         mods.underCutBias -= 0.15
         mods.cutRollMult *= 1.12
         break
+      case 'cut_under':
+        mods.underCutBias += 0.55
+        mods.deepCutBias -= 0.2
+        break
       case 'throw_hucks':
         // Premia tylko przy czystej sep (egzekwowane w throwerBrain) — tu same wagi.
         mods.huckWeightMult *= 1.65
@@ -395,26 +466,12 @@ export function rawInstructionMods(ids) {
         mods.breakSideOptionBonus += 0.28
         mods.breakSideWeightMult *= 1.45
         break
-      case 'tight_mark':
-        mods.cushionDeltaM -= 0.55
-        mods.denyUnderBias += 0.15
-        break
-      case 'poach':
-        mods.poachChanceMult *= 1.75
-        break
-      case 'dominate':
-        mods.acceptanceThresholdDelta -= 8
-        mods.scanRadiusBonusM += 4
-        mods.perceivedOptionsBonus += 1
-        mods.cutRollMult *= 1.25
-        mods.cutPriorityDelta -= 8
-        mods.throwerPickWeightMult *= 1.35
-        break
-      case 'give_space':
-        mods.cutRollMult *= 0.55
-        mods.cutPriorityDelta += 14
-        mods.clearActiveCutMult *= 1.2
-        mods.clearLaneExtraM += 2
+      case 'no_break_mark':
+        mods.breakSideOptionBonus -= 0.3
+        mods.breakSideWeightMult *= 0.6
+        mods.breakSideSepReqDeltaM += 1.4
+        mods.dumpWeightMult *= 1.15
+        mods.standardWeightMult *= 1.1
         break
       case 'dump_first':
         mods.dumpWeightMult *= 1.45
@@ -422,49 +479,73 @@ export function rawInstructionMods(ids) {
         mods.resetFirstStallBias += 2.5
         mods.huckWeightMult *= 0.8
         break
-      case 'hold_disc':
-        mods.releaseGateMult *= 1.28
-        mods.dumpEarlyBias -= 0.12
-        mods.acceptanceThresholdDelta += 5
+      case 'look_downfield':
+        mods.dumpWeightMult *= 0.7
+        mods.standardWeightMult *= 1.25
+        mods.huckWeightMult *= 1.15
+        mods.resetFirstStallBias -= 2
+        mods.dumpEarlyBias -= 0.2
         break
-      case 'swing_first':
-        mods.dumpWeightMult *= 1.2
-        mods.standardWeightMult *= 1.15
-        mods.huckWeightMult *= 0.75
-        mods.huckAcceptanceDelta -= 0.08
+      case 'tight_mark':
+        mods.cushionDeltaM -= 0.55
+        mods.denyUnderBias += 0.15
         break
-      case 'cut_under':
-        mods.underCutBias += 0.55
-        mods.deepCutBias -= 0.2
+      case 'loose_mark':
+        mods.cushionDeltaM += 0.5
+        mods.denyUnderBias -= 0.15
+        mods.helpDeepBias += 0.15
         break
-      case 'clear_hard':
-        mods.clearActiveCutMult *= 1.35
-        mods.clearLaneExtraM += 3.5
+      case 'poach':
+        mods.poachChanceMult *= 1.75
+        break
+      case 'no_poach':
+        mods.poachChanceMult *= 0.25
         break
       case 'shade_deep':
         mods.cushionDeltaM += 0.45
         mods.helpDeepBias += 0.4
         mods.denyUnderBias -= 0.25
         break
-      case 'no_poach':
-        mods.poachChanceMult *= 0.25
-        break
-      case 'shutdown':
+      case 'shade_under':
         mods.cushionDeltaM -= 0.4
-        mods.poachChanceMult *= 0.35
-        mods.helpDeepBias -= 0.1
+        mods.denyUnderBias += 0.3
+        mods.helpDeepBias -= 0.3
         break
-      case 'primary_handler':
-        mods.primaryHandlerBias += 1
-        mods.throwerPickWeightMult *= 1.5
-        mods.dumpWeightMult *= 1.1
+      case 'dominate':
+        // Rebalans: −8 progu akceptacji generowało niewspółmiernie dużo strat
+        // nawet u dobrych zawodników — złagodzone do −4, reszta lekko przycięta.
+        mods.acceptanceThresholdDelta -= 4
+        mods.scanRadiusBonusM += 3
+        mods.perceivedOptionsBonus += 1
+        mods.cutRollMult *= 1.18
+        mods.cutPriorityDelta -= 6
+        mods.throwerPickWeightMult *= 1.3
         break
-      case 'quiet_role':
-        mods.cutRollMult *= 0.7
-        mods.cutPriorityDelta += 8
-        mods.perceivedOptionsBonus -= 1
-        mods.scanRadiusBonusM -= 2
+      case 'give_space':
+        mods.cutRollMult *= 0.55
+        mods.cutPriorityDelta += 14
+        mods.clearActiveCutMult *= 1.2
+        mods.clearLaneExtraM += 2
+        break
+      case 'play_fast':
+        mods.releaseGateMult *= 0.8
+        mods.dumpEarlyBias += 0.15
+        mods.cutRollMult *= 1.1
+        break
+      case 'play_slow':
+        mods.releaseGateMult *= 1.25
+        mods.dumpEarlyBias -= 0.1
         mods.acceptanceThresholdDelta += 4
+        mods.cutRollMult *= 0.9
+        break
+      case 'take_space':
+        mods.cutRollMult *= 1.2
+        mods.cutPriorityDelta -= 5
+        break
+      case 'wait_your_turn':
+        mods.cutRollMult *= 0.65
+        mods.cutPriorityDelta += 10
+        mods.clearActiveCutMult *= 1.15
         break
       default:
         break
@@ -503,6 +584,7 @@ export function instructionModsForPlayer(ids, player, role = 'offense') {
     standardWeightMult: scaleMult(raw.standardWeightMult),
     breakSideOptionBonus: scaleAdd(raw.breakSideOptionBonus),
     breakSideWeightMult: scaleMult(raw.breakSideWeightMult),
+    breakSideSepReqDeltaM: scaleAdd(raw.breakSideSepReqDeltaM),
     acceptanceThresholdDelta: scaleAdd(raw.acceptanceThresholdDelta),
     decisionNoiseMult: scaleMult(raw.decisionNoiseMult),
     scanRadiusBonusM: scaleAdd(raw.scanRadiusBonusM),
@@ -538,24 +620,26 @@ export function instructionBadges(ids, maxShow = 2, lang = 'pl') {
 
 function shortLabel(id) {
   const map = {
-    cut_deep: 'Deep',
     throw_hucks: 'Huck+',
     no_hucks: 'Huck−',
     break_mark: 'Break',
+    no_break_mark: 'NoBrk',
+    dump_first: 'Dump',
+    look_downfield: 'Field',
+    cut_deep: 'Deep',
+    cut_under: 'Under',
     tight_mark: 'Tight',
+    loose_mark: 'Loose',
     poach: 'Poach',
+    no_poach: 'NoP',
+    shade_deep: 'ShDeep',
+    shade_under: 'ShUnd',
     dominate: 'Dom',
     give_space: 'Space',
-    dump_first: 'Dump',
-    hold_disc: 'Hold',
-    swing_first: 'Swing',
-    cut_under: 'Under',
-    clear_hard: 'Clear',
-    shade_deep: 'Shade',
-    no_poach: 'NoP',
-    shutdown: 'Shut',
-    primary_handler: 'H1',
-    quiet_role: 'Quiet',
+    play_fast: 'Fast',
+    play_slow: 'Slow',
+    take_space: 'Take',
+    wait_your_turn: 'Wait',
   }
   return map[id] ?? id.slice(0, 4)
 }

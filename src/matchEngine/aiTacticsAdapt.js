@@ -245,7 +245,8 @@ export function adaptAiTacticsBetweenPoints({
   const analysis = pointAnalysis ?? {}
   let next = normalizeTactics({ ...tactics })
   let state = { ...(adaptSide ?? createAiAdaptSideState()) }
-  const instr = { ...(next.playerInstructions ?? {}) }
+  // Reakcje poniżej (bench, złe hucki) dotyczą zawodników na O-Line — tylko ta linia rzuca.
+  const instr = { ...(next.oLinePlayerInstructions ?? {}) }
 
   const roll = () => (rng?.float ? rng.float() : Math.random())
   const willing = () => roll() < adapt
@@ -343,8 +344,8 @@ export function adaptAiTacticsBetweenPoints({
     const cur = next.oLineAttackStyle
     const alt = pickAlternate(
       cur,
-      identity?.preferredAttackStyles ?? profile?.preferredAttackStyles,
-      profile?.preferredAttackStyles,
+      identity?.oLineAttackStyles ?? profile?.oLineAttackStyles,
+      profile?.oLineAttackStyles,
       rng,
     )
     if (alt !== cur) {
@@ -365,8 +366,8 @@ export function adaptAiTacticsBetweenPoints({
     const cur = next.dLineDefenseStyle ?? next.oLineDefenseStyle
     const alt = pickAlternate(
       cur,
-      profile?.preferredDefenseStyles,
-      profile?.preferredDefenseStyles,
+      profile?.dLineDefenseStyles,
+      profile?.dLineDefenseStyles,
       rng,
     )
     if (alt !== cur) {
@@ -423,22 +424,33 @@ export function adaptAiTacticsBetweenPoints({
     }
   }
 
-  next.playerInstructions = instr
+  next.oLinePlayerInstructions = instr
   next.coachDirectives = next.oLineCoachDirectives
   return { tactics: normalizeTactics(next), adaptSide: state }
 }
 
 /**
  * Skill-based instrukcje AI (start meczu + odświeżenie).
+ * Zwraca osobne mapy dla O-Line i D-Line (tactics.oLinePlayerInstructions / dLinePlayerInstructions).
+ * „Primary handler” nie jest tu przydzielany jako instrukcja — pokrywa to podrola
+ * formacji (playerSubRoles: HANDLER_SUB_ROLES.PRIMARY), żeby uniknąć podwójnego liczenia.
  */
 export function buildSkillBasedAiInstructions(players, identity, oSorted, dSorted) {
-  const map = {}
+  const oMap = {}
+  const dMap = {}
   const coach = identity?.oLineCoachDirectives ?? identity?.coachDirectives ?? {}
   const dCoach = identity?.dLineCoachDirectives ?? coach
-  const add = (player, tag) => {
+  const addO = (player, tag) => {
     if (!player?.id) return
-    map[String(player.id)] = normalizeInstructionList([
-      ...(map[String(player.id)] ?? []),
+    oMap[String(player.id)] = normalizeInstructionList([
+      ...(oMap[String(player.id)] ?? []),
+      tag,
+    ])
+  }
+  const addD = (player, tag) => {
+    if (!player?.id) return
+    dMap[String(player.id)] = normalizeInstructionList([
+      ...(dMap[String(player.id)] ?? []),
       tag,
     ])
   }
@@ -456,55 +468,51 @@ export function buildSkillBasedAiInstructions(players, identity, oSorted, dSorte
 
     // Słaby thrower — nie hucki, dump first jeśli silny thrower lub słaby rzut
     if (huckSub < 70 || (huckSub < 76 && throwing < 72)) {
-      add(p, 'no_hucks')
-      if (strongThrower || throwing < 68) add(p, 'dump_first')
+      addO(p, 'no_hucks')
+      if (strongThrower || throwing < 68) addO(p, 'dump_first')
     }
 
     // Elita rzucająca + appetite
     if (huckSub >= 86 && throwing >= 80 && (coach.huckAppetite ?? 0) >= 0.15) {
-      add(p, 'throw_hucks')
+      addO(p, 'throw_hucks')
     } else if (huckSub >= 82 && throwing >= 78 && (coach.huckAppetite ?? 0) >= 0.4) {
-      add(p, 'throw_hucks')
+      addO(p, 'throw_hucks')
     }
 
     // Dobry ofensywny — więcej odpowiedzialności
     if (offense >= 84 && mental >= 78) {
-      add(p, 'dominate')
-    } else if (offense >= 80 && strongThrower) {
-      add(p, 'primary_handler')
+      addO(p, 'dominate')
     }
 
     // Deep cutter
     if (strongCutter && offense >= 78 && (coach.huckAppetite ?? 0) >= 0.1) {
-      add(p, 'cut_deep')
+      addO(p, 'cut_deep')
     }
 
     // Słaby / zmęczony ofensywnie — daj przestrzeń
     if (offense < 72 && !strongThrower) {
-      add(p, 'give_space')
+      addO(p, 'give_space')
     }
 
     // Break mark dla dobrych throwerów
     if (strongThrower && throwing >= 80 && (coach.breakAppetite ?? 0) >= 0.25) {
-      add(p, 'break_mark')
+      addO(p, 'break_mark')
     }
 
     // Obrona
     if (defense >= 82) {
-      if ((dCoach.coverageShade ?? 0) >= 0.2) add(p, 'shade_deep')
-      else if ((dCoach.creativity ?? 0) >= 0.25) add(p, 'poach')
-      else add(p, 'tight_mark')
+      if ((dCoach.coverageShade ?? 0) >= 0.2) addD(p, 'shade_deep')
+      else if ((dCoach.creativity ?? 0) >= 0.25) addD(p, 'poach')
+      else addD(p, 'tight_mark')
     }
   }
 
-  // Gwiazdy z sortowania — upewnij się że top handler ma rolę
+  // Gwiazda z sortowania — jeśli trener nie chce hucków, nawet top handler dostaje wodze skrócone.
   const starHandler = oSorted?.[0]
-  if (starHandler && !map[String(starHandler.id)]?.length) {
-    add(starHandler, 'primary_handler')
-  }
   if ((coach.huckAppetite ?? 0) <= -0.35 && starHandler) {
-    add(starHandler, 'no_hucks')
+    addO(starHandler, 'no_hucks')
   }
+  void dSorted
 
-  return map
+  return { offense: oMap, defense: dMap }
 }

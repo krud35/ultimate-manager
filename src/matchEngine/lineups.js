@@ -7,7 +7,10 @@ import {
   defaultTacticsForPlayers,
 } from './tacticsModifiers.js'
 import { normalizeLineCoachDirectives } from './coachDirectives.js'
-import { normalizePlayerInstructionsMap } from './playerInstructions.js'
+import {
+  normalizePlayerInstructionsMap,
+  normalizeLinePlayerInstructions,
+} from './playerInstructions.js'
 import {
   normalizePlayerSubRolesMap,
   defaultSubRoleForSlot,
@@ -101,7 +104,7 @@ export function normalizeTactics(tactics) {
     coachDirectives: coachPair.coachDirectives,
     /** @deprecated alias = O-Line force */
     forceSide: coachPair.forceSide,
-    playerInstructions: normalizePlayerInstructionsMap(tactics?.playerInstructions),
+    ...normalizeLinePlayerInstructions(tactics),
     playerSubRoles: fillSubRolesFromOffenseLine({
       ...tactics,
       oLineAttackStyle,
@@ -183,9 +186,13 @@ export function resolvePlayerDefaultTactics(players, tactics = null) {
     dLineCoachDirectives: mergedCoach.dLineCoachDirectives,
     coachDirectives: mergedCoach.coachDirectives,
     forceSide: mergedCoach.forceSide,
-    playerInstructions: normalizePlayerInstructionsMap({
-      ...(defaults.playerInstructions ?? {}),
-      ...(tactics.playerInstructions ?? {}),
+    oLinePlayerInstructions: normalizePlayerInstructionsMap({
+      ...(defaults.oLinePlayerInstructions ?? defaults.playerInstructions ?? {}),
+      ...(tactics.oLinePlayerInstructions ?? tactics.playerInstructions ?? {}),
+    }),
+    dLinePlayerInstructions: normalizePlayerInstructionsMap({
+      ...(defaults.dLinePlayerInstructions ?? {}),
+      ...(tactics.dLinePlayerInstructions ?? {}),
     }),
     playerSubRoles: normalizePlayerSubRolesMap({
       ...(defaults.playerSubRoles ?? {}),

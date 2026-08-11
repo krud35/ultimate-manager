@@ -24,6 +24,7 @@ import CollapsibleStylePicker from './CollapsibleStylePicker'
 import FormationPreview from './FormationPreview'
 import PlayerSlotPicker from './PlayerSlotPicker'
 import CoachDirectivesPanel from './CoachDirectivesPanel'
+import ZoneDefenseRolesPanel from './ZoneDefenseRolesPanel'
 
 const LINE_SIZE = POINT_LINEUP_SIZE
 
@@ -52,15 +53,35 @@ function PointStartBadge({ role }) {
   )
 }
 
+function InstructionTagList({ tags, lang, toneClass }) {
+  if (!tags?.length) return null
+  return (
+    <span className="flex flex-wrap gap-1">
+      {tags.map((tag) => (
+        <span
+          key={tag}
+          className={`rounded px-1.5 py-0.5 text-[10px] ring-1 ${toneClass}`}
+        >
+          {playerInstructionLabel(tag, lang)}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 function PlayerInstructionsOverview({ roster, tactics }) {
   const { lang } = useUiLang()
   const t = tacticsStrings(lang)
-  const map = normalizePlayerInstructionsMap(tactics?.playerInstructions)
-  const rows = Object.entries(map)
-    .map(([id, tags]) => {
+  const oMap = normalizePlayerInstructionsMap(tactics?.oLinePlayerInstructions)
+  const dMap = normalizePlayerInstructionsMap(tactics?.dLinePlayerInstructions)
+  const ids = new Set([...Object.keys(oMap), ...Object.keys(dMap)])
+  const rows = [...ids]
+    .map((id) => {
       const player = roster.find((p) => String(p.id) === String(id))
-      if (!player || !tags?.length) return null
-      return { player, tags }
+      const oTags = oMap[id] ?? []
+      const dTags = dMap[id] ?? []
+      if (!player || (!oTags.length && !dTags.length)) return null
+      return { player, oTags, dTags }
     })
     .filter(Boolean)
 
@@ -76,24 +97,21 @@ function PlayerInstructionsOverview({ roster, tactics }) {
         </p>
       ) : (
         <ul className="mt-2 divide-y divide-ufa-border/40">
-          {rows.map(({ player, tags }) => (
-            <li
-              key={player.id}
-              className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1.5 text-xs first:pt-0 last:pb-0"
-            >
+          {rows.map(({ player, oTags, dTags }) => (
+            <li key={player.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1.5 text-xs first:pt-0 last:pb-0">
               <span className="min-w-[8rem] font-medium text-ufa-text">
                 {getPlayerFullName(player)}
               </span>
-              <span className="flex flex-wrap gap-1">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded bg-ufa-accent/12 px-1.5 py-0.5 text-[10px] text-ufa-accent ring-1 ring-ufa-accent/25"
-                  >
-                    {playerInstructionLabel(tag, lang)}
-                  </span>
-                ))}
-              </span>
+              <InstructionTagList
+                tags={oTags}
+                lang={lang}
+                toneClass="bg-sky-500/12 text-sky-300 ring-sky-500/25"
+              />
+              <InstructionTagList
+                tags={dTags}
+                lang={lang}
+                toneClass="bg-orange-500/12 text-orange-300 ring-orange-500/25"
+              />
             </li>
           ))}
         </ul>
@@ -119,6 +137,8 @@ function CompactLineupSection({
   offenseLineIds = null,
   defenseLineIds = null,
   dndGroupKey = null,
+  /** 'offense' | 'defense' — który zestaw indywidualnych instrukcji edytować domyślnie. */
+  instrLineRole = 'offense',
 }) {
   const filled = line.filter(Boolean).length
   const slots = positionSlots ?? Array.from({ length: LINE_SIZE }, (_, i) => ({
@@ -174,6 +194,7 @@ function CompactLineupSection({
             defenseLineIds={defenseLineIds}
             positionSlots={slots}
             dndGroupKey={dndGroupKey}
+            lineRole={instrLineRole}
             onChange={(id) => onSlotChange(i, id)}
           />
         ))}
@@ -202,6 +223,8 @@ function RichLineupSection({
   leaguePlayerStats = null,
   offenseLineIds = null,
   defenseLineIds = null,
+  /** 'offense' | 'defense' — który zestaw indywidualnych instrukcji edytować domyślnie. */
+  instrLineRole = 'offense',
 }) {
   const { lang } = useUiLang()
   const t = tacticsStrings(lang)
@@ -261,6 +284,7 @@ function RichLineupSection({
             defenseLineIds={defenseLineIds}
             positionSlots={slots}
             dndGroupKey={lineRole}
+            lineRole={instrLineRole}
           />
         ))}
       </div>
@@ -474,6 +498,22 @@ export default function TacticsForm({
     )
   }
 
+  /** Ręczny przydział slotów strefy (cup/wing/middle/deep) — tylko gdy defenseStyle=zone. */
+  function renderZoneRoles(lineRole, defenseValue, lineIds, label) {
+    if (defenseValue !== DEFENSE_STYLES.ZONE_CUP && defenseValue !== DEFENSE_STYLES.ZONE_WALL) {
+      return null
+    }
+    return (
+      <ZoneDefenseRolesPanel
+        lineIds={lineIds}
+        roster={roster}
+        tactics={tactics}
+        onTacticsChange={onTacticsChange}
+        label={label}
+      />
+    )
+  }
+
   function renderLineup(lineRole) {
     const isD = lineRole === 'defense'
     const line = isD ? defenseLine : offenseLine
@@ -502,6 +542,7 @@ export default function TacticsForm({
           offenseLineIds={offenseLine}
           defenseLineIds={defenseLine}
           dndGroupKey={lineRole}
+          instrLineRole={lineRole}
           onSlotChange={(i, id) =>
             onTacticsChange(updateLineupSlot(tactics, lineRole, i, id))
           }
@@ -525,6 +566,7 @@ export default function TacticsForm({
         leaguePlayerStats={leaguePlayerStats}
         offenseLineIds={offenseLine}
         defenseLineIds={defenseLine}
+        instrLineRole={lineRole}
         activeSlot={activeSlot}
         openSlot={openSlot}
         onSelectSlot={setActiveSlot}
@@ -654,6 +696,13 @@ export default function TacticsForm({
             </label>
           </div>
 
+          {renderZoneRoles(
+            pointStartRole,
+            compactPointStyles.defenseValue,
+            pointLine,
+            compactPointStyles.labelPrefix,
+          )}
+
           <CoachDirectivesPanel
             tactics={tactics}
             onTacticsChange={onTacticsChange}
@@ -687,6 +736,7 @@ export default function TacticsForm({
               offenseLineIds={offenseLine}
               defenseLineIds={defenseLine}
               dndGroupKey="point"
+              instrLineRole={pointStartRole}
               onSlotChange={(i, id) =>
                 onTacticsChange(updateLineupSlot(tactics, pointStartRole, i, id))
               }
@@ -707,6 +757,7 @@ export default function TacticsForm({
               leaguePlayerStats={leaguePlayerStats}
               offenseLineIds={offenseLine}
               defenseLineIds={defenseLine}
+              instrLineRole={pointStartRole}
               activeSlot={activeSlot}
               openSlot={openSlot}
               onSelectSlot={setActiveSlot}
@@ -757,6 +808,26 @@ export default function TacticsForm({
               >
                 {showO && renderLineStyles('offense')}
                 {showD && renderLineStyles('defense')}
+              </div>
+              <div
+                className={
+                  isCombined && !compact ? 'mt-3 grid gap-4 lg:grid-cols-2' : 'mt-3 space-y-3'
+                }
+              >
+                {showO &&
+                  renderZoneRoles(
+                    'offense',
+                    tactics.oLineDefenseStyle ?? tactics.defenseStyle,
+                    offenseLine,
+                    'O-Line',
+                  )}
+                {showD &&
+                  renderZoneRoles(
+                    'defense',
+                    tactics.dLineDefenseStyle ?? tactics.defenseStyle,
+                    defenseLine,
+                    'D-Line',
+                  )}
               </div>
             </section>
           )}

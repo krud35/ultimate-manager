@@ -70,6 +70,9 @@ const pl = {
   playersShort: (n) => `${n} zawodn.`,
   subRole: 'Podrola',
   subRoleTitle: 'Podrola w formacji',
+  zoneRoles: 'Role w strefie',
+  zoneRolesFor: (label) => `${label} · role w strefie`,
+  zoneRolesHint: 'Kto gra w cupie, kto na wingu, middle i deep.',
   lineDotAttack: (label) => `${label} · atak`,
   lineDotDefense: (label) => `${label} · obrona`,
   lineDotStyles: (label) => `${label} · style`,
@@ -84,6 +87,7 @@ const pl = {
   forceMark: 'Force (markowanie)',
   selected: 'wybrany',
   formationAria: (label) => `Formacja ${label}`,
+  close: 'Zamknij',
 }
 
 const en = {
@@ -155,6 +159,9 @@ const en = {
   playersShort: (n) => `${n} players`,
   subRole: 'Sub-role',
   subRoleTitle: 'Formation sub-role',
+  zoneRoles: 'Zone roles',
+  zoneRolesFor: (label) => `${label} · zone roles`,
+  zoneRolesHint: 'Who plays cup, wing, middle, and deep.',
   lineDotAttack: (label) => `${label} · offense`,
   lineDotDefense: (label) => `${label} · defense`,
   lineDotStyles: (label) => `${label} · styles`,
@@ -169,6 +176,7 @@ const en = {
   forceMark: 'Force mark',
   selected: 'selected',
   formationAria: (label) => `Formation ${label}`,
+  close: 'Close',
 }
 
 export function tacticsStrings(lang = UI_LANG.PL) {

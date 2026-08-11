@@ -40,7 +40,6 @@ export {
   coachDirectivePoleWord,
 } from './coachDirectives.js'
 export {
-  PLAYER_INSTRUCTION_MAX,
   PLAYER_INSTRUCTION_DEFS,
   PLAYER_INSTRUCTION_IDS,
   PLAYER_INSTRUCTION_CONFLICTS,
@@ -48,6 +47,7 @@ export {
   playerInstructionLabel,
   normalizeInstructionList,
   normalizePlayerInstructionsMap,
+  normalizeLinePlayerInstructions,
   instructionsForPlayer,
   togglePlayerInstruction,
   toggleInstructionInTactics,
@@ -78,6 +78,22 @@ export {
   subRoleMods,
   subRoleAllowsInitiateCut,
 } from './playerSubRoles.js'
+export {
+  ZONE_DEFENSE_ROLES,
+  ZONE_ROLE_SLOT_LIMITS,
+  ZONE_DEFENSE_ROLE_DEFS,
+  ZONE_DEFENSE_ROLE_IDS,
+  zoneDefenseRoleDef,
+  zoneDefenseRoleLabel,
+  zoneDefenseRoleShortLabel,
+  normalizeZoneRoleId,
+  normalizePlayerZoneRolesMap,
+  storedZoneRoleForPlayer,
+  setPlayerZoneRoleInTactics,
+  resolveTeamZoneSlotRoles,
+  resolveTeamZoneSlotRoleMap,
+  resolveTeamZoneSlots,
+} from './defenseZoneRoles.js'
 export { tacticsForTeam, autoRotateTacticsForTeam, autoSubstituteTacticsForTeam, AUTO_SUB_STAMINA_MIN, suggestAiPlayerInstructions, suggestAiPlayerSubRoles, resolveAiTeamIdentity } from './aiLineup.js'
 export {
   AI_COACH_ARCHETYPES,

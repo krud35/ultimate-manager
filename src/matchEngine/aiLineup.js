@@ -17,6 +17,7 @@ import {
 } from './stamina.js'
 import {
   getCategoryOverall,
+  getSubStat,
   normalizePlayerSkills,
   readLegacySkill,
 } from '../models/playerStats.js'
@@ -133,6 +134,139 @@ function pickDefaultLine(pool, scoreFn, staminaMap, minStamina = STAMINA_CONFIG.
   return chosen
 }
 
+function topBySkill(pool, scoreFn, n = LINE_SIZE) {
+  return [...pool].sort((a, b) => scoreFn(b) - scoreFn(a)).slice(0, n)
+}
+
+function clampNum(v, lo, hi) {
+  return Math.max(lo, Math.min(hi, v))
+}
+
+function weightedFit(skills, entries) {
+  let total = 0
+  let wsum = 0
+  for (const [category, key, w] of entries) {
+    const val = key ? getSubStat(skills, category, key) : getCategoryOverall(skills, category)
+    total += val * w
+    wsum += w
+  }
+  return wsum > 0 ? total / wsum : 50
+}
+
+/** Wyraźny lider 1v1 w puli → wyższe dopasowanie do stylów iso (side/split stack). */
+function starGapScore(pool, scoreFn) {
+  if (pool.length < 2) return 55
+  const sorted = [...pool].sort((a, b) => scoreFn(b) - scoreFn(a))
+  const gap = scoreFn(sorted[0]) - scoreFn(sorted[1])
+  return clampNum(50 + gap * 2.5, 0, 100)
+}
+
+const STAR_GAP = 'star_gap'
+
+/** Profile wymagań per styl ataku — [kategoria, substat|null, waga]; STAR_GAP = wymaga wyraźnego 1v1 lidera. */
+const ATTACK_STYLE_FIT_ENTRIES = {
+  [ATTACK_STYLES.VERTICAL_STACK]: [
+    ['throwing', null, 0.4],
+    ['offensive', 'cutterMovement', 0.3],
+    ['offensive', 'offensiveSystemsKnowledge', 0.3],
+  ],
+  [ATTACK_STYLES.HORIZONTAL_STACK]: [
+    ['offensive', 'handlerMovement', 0.4],
+    ['mental', 'vision', 0.3],
+    ['throwing', null, 0.3],
+  ],
+  [ATTACK_STYLES.SPLIT_STACK]: STAR_GAP,
+  [ATTACK_STYLES.SIDE_STACK]: STAR_GAP,
+  [ATTACK_STYLES.MOTION_OFFENSE]: [
+    ['offensive', 'offensiveSystemsKnowledge', 0.4],
+    ['mental', 'decisionMaking', 0.3],
+    ['offensive', 'catching', 0.3],
+  ],
+  [ATTACK_STYLES.HEX_OFFENSE]: [
+    ['offensive', 'offensiveSystemsKnowledge', 0.4],
+    ['mental', 'decisionMaking', 0.3],
+    ['offensive', 'catching', 0.3],
+  ],
+  [ATTACK_STYLES.ZONE_OFFENSE]: [
+    ['mental', 'vision', 0.35],
+    ['offensive', 'handlerMovement', 0.35],
+    ['throwing', null, 0.3],
+  ],
+}
+
+/** Profile wymagań per styl obrony — patrz ATTACK_STYLE_FIT_ENTRIES. */
+const DEFENSE_STYLE_FIT_ENTRIES = {
+  [DEFENSE_STYLES.PERSON]: [
+    ['defensive', 'defensiveCutterMovement', 0.4],
+    ['physical', 'speed', 0.3],
+    ['defensive', 'defensiveHandlerMovement', 0.3],
+  ],
+  [DEFENSE_STYLES.ALL_PERSON]: [
+    ['defensive', 'defensiveHandlerMovement', 0.35],
+    ['defensive', 'blocking', 0.35],
+    ['mental', 'reactions', 0.3],
+  ],
+  [DEFENSE_STYLES.CLAM]: [
+    ['defensive', 'defensiveSystemsKnowledge', 0.4],
+    ['mental', 'decisionMaking', 0.3],
+    ['defensive', 'blocking', 0.3],
+  ],
+  [DEFENSE_STYLES.ZONE_CUP]: [
+    ['defensive', 'defensiveSystemsKnowledge', 0.5],
+    ['mental', 'decisionMaking', 0.3],
+    ['physical', 'endurance', 0.2],
+  ],
+  [DEFENSE_STYLES.ZONE_WALL]: [
+    ['defensive', 'defensiveSystemsKnowledge', 0.5],
+    ['mental', 'decisionMaking', 0.3],
+    ['physical', 'endurance', 0.2],
+  ],
+}
+
+function styleFitScore(pool, spec, starScoreFn) {
+  if (!pool.length) return 50
+  if (spec === STAR_GAP) return starGapScore(pool, starScoreFn)
+  if (!spec) return 55
+  const scores = pool.map((p) => weightedFit(normalizePlayerSkills(p.skills ?? {}), spec))
+  return scores.reduce((sum, v) => sum + v, 0) / scores.length
+}
+
+function computeAttackStyleFits(pool) {
+  const fits = {}
+  for (const style of Object.values(ATTACK_STYLES)) {
+    fits[style] = styleFitScore(pool, ATTACK_STYLE_FIT_ENTRIES[style], offenseSkillScore)
+  }
+  return fits
+}
+
+function computeDefenseStyleFits(pool) {
+  const fits = {}
+  for (const style of Object.values(DEFENSE_STYLES)) {
+    fits[style] = styleFitScore(pool, DEFENSE_STYLE_FIT_ENTRIES[style], defenseSkillScore)
+  }
+  return fits
+}
+
+/**
+ * Jak dobrze roster pasuje do każdego stylu — 0-100 per styl, osobno dla puli O-line
+ * (top 7 wg czystego skilla ofensywnego) i D-line (top 7 wg skilla defensywnego), bo to
+ * inni zawodnicy z inną siłą w innych aspektach gry. Używane przez pickStyleForSlot
+ * w aiCoachProfile.js do korekty preferencji archetypu pod realny skład.
+ */
+function computeStyleFitForTeam(team) {
+  const pool = availablePlayers(team?.players ?? [])
+  const roster = pool.length ? pool : team?.players ?? []
+  if (!roster.length) return null
+  const oPool = topBySkill(roster, offenseDefaultScore)
+  const dPool = topBySkill(roster, defenseDefaultScore)
+  return {
+    oLineAttack: computeAttackStyleFits(oPool),
+    oLineDefense: computeDefenseStyleFits(oPool),
+    dLineAttack: computeAttackStyleFits(dPool),
+    dLineDefense: computeDefenseStyleFits(dPool),
+  }
+}
+
 /**
  * Tożsamość ligowa + ukryty profil trenera AI (jeśli drużyna nie jest gracza).
  * `aiCoachProfile === null` = drużyna gracza — bez archetypu.
@@ -140,7 +274,8 @@ function pickDefaultLine(pool, scoreFn, staminaMap, minStamina = STAMINA_CONFIG.
 export function resolveAiTeamIdentity(team) {
   const base = teamTacticalIdentity(team?.id, team?.tacticalIdentity ?? null)
   if (team?.aiCoachProfile === null) return base
-  return applyAiCoachProfileToIdentity(base, resolveTeamAiCoachProfile(team))
+  const styleFit = computeStyleFitForTeam(team)
+  return applyAiCoachProfileToIdentity(base, resolveTeamAiCoachProfile(team), { styleFit })
 }
 
 /**
@@ -201,6 +336,9 @@ export function tacticsForTeam(team, options = {}) {
   const oLine = fillLineFromCandidates(oSorted)
   const attackStyle =
     identity.oLineAttackStyle ?? identity.attackStyle ?? ATTACK_STYLES.VERTICAL_STACK
+  const aiInstr = withInstr
+    ? suggestAiPlayerInstructions(identity, oSorted, dSorted, roster)
+    : { offense: {}, defense: {} }
 
   return normalizeTactics({
     oLineAttackStyle: attackStyle,
@@ -212,9 +350,8 @@ export function tacticsForTeam(team, options = {}) {
     coachDirectives: identity.oLineCoachDirectives ?? identity.coachDirectives,
     forceSide: identity.forceSide ?? FORCE_SIDES.FORCE_FOREHAND,
     tacticsFamiliarity: team.teamTraining?.tacticsFamiliarity ?? team.tacticsFamiliarity ?? 38,
-    playerInstructions: withInstr
-      ? suggestAiPlayerInstructions(identity, oSorted, dSorted, roster)
-      : {},
+    oLinePlayerInstructions: aiInstr.offense,
+    dLinePlayerInstructions: aiInstr.defense,
     playerSubRoles: suggestAiPlayerSubRoles(oLine, attackStyle),
     lineupWhenOffenseStartPlayerIds: oLine,
     lineupWhenDefenseStartPlayerIds: fillLineFromCandidates(dSorted),
@@ -253,6 +390,16 @@ export function autoRotateTacticsForTeam(team, staminaMap, rng = null) {
     if (!mergedSubs[key]) mergedSubs[key] = suggestedSubs[key]
   }
 
+  const hasExistingInstr =
+    (existing.oLinePlayerInstructions && Object.keys(existing.oLinePlayerInstructions).length) ||
+    (existing.dLinePlayerInstructions && Object.keys(existing.dLinePlayerInstructions).length)
+  const aiInstr = hasExistingInstr
+    ? {
+        offense: existing.oLinePlayerInstructions ?? {},
+        defense: existing.dLinePlayerInstructions ?? {},
+      }
+    : suggestAiPlayerInstructions(identity, oSortedFull, dSortedFull, pool)
+
   return normalizeTactics({
     ...existing,
     oLineAttackStyle: existing.oLineAttackStyle ?? identity.oLineAttackStyle,
@@ -272,10 +419,8 @@ export function autoRotateTacticsForTeam(team, staminaMap, rng = null) {
       existing.coachDirectives ??
       identity.coachDirectives,
     forceSide: existing.forceSide ?? identity.forceSide,
-    playerInstructions:
-      existing.playerInstructions && Object.keys(existing.playerInstructions).length
-        ? existing.playerInstructions
-        : suggestAiPlayerInstructions(identity, oSortedFull, dSortedFull, pool),
+    oLinePlayerInstructions: aiInstr.offense,
+    dLinePlayerInstructions: aiInstr.defense,
     playerSubRoles: normalizePlayerSubRolesMap(mergedSubs),
     lineupWhenOffenseStartPlayerIds: oLine,
     lineupWhenDefenseStartPlayerIds: fillLineFromCandidates(dCandidates),

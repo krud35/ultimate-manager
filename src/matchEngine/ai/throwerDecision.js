@@ -173,6 +173,8 @@ export function yardageScoreComponent(forwardProgress, stallCount, isDump = fals
  * @param {object} [sepPolicy]
  * @param {number} [sepPolicy.separationReqDeltaM] — z dyrektywy passSelectivity
  * @param {number} [sepPolicy.openLookBias] — 0…1, „tylko otwarte”
+ * @param {number} [sepPolicy.breakSideSepReqDeltaM] — dodatkowy próg tylko na break side (instrukcja „nie przełamuj marka”)
+ * @param {boolean} [isOpenSide] — czy opcja jest po open side (break-side dostaje breakSideSepReqDeltaM)
  */
 export function requiredSeparationMeters(
   stallCount,
@@ -180,6 +182,7 @@ export function requiredSeparationMeters(
   isDump,
   throwDistanceM = null,
   sepPolicy = null,
+  isOpenSide = true,
 ) {
   const fp = forwardProgress ?? 0
   const dist = throwDistanceM ?? Math.max(0, Math.abs(fp))
@@ -204,6 +207,7 @@ export function requiredSeparationMeters(
     req = Math.max(req, 2.6 + openBias * 2.6)
   }
   req += delta
+  if (!isOpenSide) req += sepPolicy?.breakSideSepReqDeltaM ?? 0
 
   // Floor: nawet „luźniej” nie akceptuje totalnie blanketed looków.
   const floor = isDump
@@ -225,10 +229,14 @@ export function optionPassesStallPolicy(
   isDump,
   throwDistanceM = null,
   sepPolicy = null,
+  isOpenSide = true,
 ) {
   const sep = separation ?? 0
   const fp = forwardProgress ?? 0
-  if (sep < requiredSeparationMeters(stallCount, fp, isDump, throwDistanceM, sepPolicy)) {
+  if (
+    sep <
+    requiredSeparationMeters(stallCount, fp, isDump, throwDistanceM, sepPolicy, isOpenSide)
+  ) {
     return false
   }
 

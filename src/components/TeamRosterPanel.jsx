@@ -189,25 +189,8 @@ export default function TeamRosterPanel({
     if (replaceTarget) setOpen(true)
   }, [replaceTarget])
 
-  useEffect(() => {
-    if (instrPlayerId == null) return undefined
-    function onDoc(e) {
-      const host = e.target?.closest?.('[data-instr-player]')
-      if (host && host.getAttribute('data-instr-player') === String(instrPlayerId)) {
-        return
-      }
-      setInstrPlayerId(null)
-    }
-    function onKey(e) {
-      if (e.key === 'Escape') setInstrPlayerId(null)
-    }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [instrPlayerId])
+  // Rozkazy renderują się jako portalowany modal (PlayerInstructionsPicker) — ma
+  // własną obsługę outside-click / Escape, więc nie zamykamy go stąd.
 
   function toggleSort(key) {
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
@@ -358,14 +341,13 @@ export default function TeamRosterPanel({
                       </button>
                     )}
                     {canEditInstructions && instrPlayerId === p.id && (
-                      <div className="w-full basis-full pl-1 pr-1 pb-1">
-                        <PlayerInstructionsPicker
-                          playerId={p.id}
-                          tactics={tactics}
-                          onTacticsChange={onTacticsChange}
-                          compact={compact}
-                        />
-                      </div>
+                      <PlayerInstructionsPicker
+                        playerId={p.id}
+                        tactics={tactics}
+                        onTacticsChange={onTacticsChange}
+                        onClose={() => setInstrPlayerId(null)}
+                        roster={roster}
+                      />
                     )}
                   </li>
                 )

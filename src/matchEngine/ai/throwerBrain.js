@@ -110,6 +110,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
   const sepPolicy = {
     separationReqDeltaM: throwerMods.separationReqDeltaM ?? 0,
     openLookBias: throwerMods.openLookBias ?? 0,
+    breakSideSepReqDeltaM: throwerMods.breakSideSepReqDeltaM ?? 0,
   }
   const continuationWindow =
     postCatchReorg &&
@@ -184,6 +185,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
         isDump,
         distFromThrower,
         sepPolicy,
+        situation.isOpenSide,
       )
     ) {
       continue

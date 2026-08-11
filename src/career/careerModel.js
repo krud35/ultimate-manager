@@ -242,8 +242,10 @@ export function ensureCareerHomeTactics(career) {
       JSON.stringify(resolved.oLineCoachDirectives ?? null) &&
     JSON.stringify(prev.dLineCoachDirectives ?? null) ===
       JSON.stringify(resolved.dLineCoachDirectives ?? null) &&
-    JSON.stringify(prev.playerInstructions ?? {}) ===
-      JSON.stringify(resolved.playerInstructions ?? {}) &&
+    JSON.stringify(prev.oLinePlayerInstructions ?? prev.playerInstructions ?? {}) ===
+      JSON.stringify(resolved.oLinePlayerInstructions ?? {}) &&
+    JSON.stringify(prev.dLinePlayerInstructions ?? {}) ===
+      JSON.stringify(resolved.dLinePlayerInstructions ?? {}) &&
     JSON.stringify(prev.playerSubRoles ?? {}) ===
       JSON.stringify(resolved.playerSubRoles ?? {}) &&
     JSON.stringify(prev.lineupWhenOffenseStartPlayerIds) ===

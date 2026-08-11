@@ -170,6 +170,8 @@ export default function PlayerSlotPicker({
   positionSlots = null,
   /** Zawodnika można przeciągnąć (drag&drop) tylko między slotami tej samej grupy. */
   dndGroupKey = null,
+  /** 'offense' | 'defense' — który zestaw indywidualnych instrukcji edytować domyślnie. */
+  lineRole = 'offense',
 }) {
   const { lang } = useUiLang()
   const t = tacticsStrings(lang)
@@ -219,22 +221,8 @@ export default function PlayerSlotPicker({
       document.removeEventListener('keydown', onKey)
     }
   }, [open, setOpen])
-
-  useEffect(() => {
-    if (!instrOpen || open) return undefined
-    function onDoc(e) {
-      if (rootRef.current && !rootRef.current.contains(e.target)) setInstrOpen(false)
-    }
-    function onKey(e) {
-      if (e.key === 'Escape') setInstrOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [instrOpen, open])
+  // Rozkazy renderują się teraz jako portalowany modal (PlayerInstructionsPicker) —
+  // ma własną obsługę outside-click / Escape, więc nie zamykamy go stąd.
 
   function toggleSort(key) {
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
@@ -369,7 +357,11 @@ export default function PlayerSlotPicker({
                       slotRole={slotRole}
                       slotRoleIndex={slotRoleIndex}
                     />
-                    <PlayerInstructionBadges playerId={playerId} tactics={tactics} />
+                    <PlayerInstructionBadges
+                      playerId={playerId}
+                      tactics={tactics}
+                      lineRole={lineRole}
+                    />
                   </>
                 )}
               </div>
@@ -438,7 +430,9 @@ export default function PlayerSlotPicker({
               playerId={playerId}
               tactics={tactics}
               onTacticsChange={onTacticsChange}
-              compact
+              onClose={() => setInstrOpen(false)}
+              defaultLineRole={lineRole}
+              roster={roster}
             />
           )}
         </div>

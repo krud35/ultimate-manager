@@ -6,7 +6,7 @@
  * Legacy: tactics.coachDirectives → migracja do obu linii (alias = O-Line).
  */
 
-import { FORCE_SIDES } from './tacticsModifiers.js'
+import { FORCE_SIDES, resolveLineRole } from './tacticsModifiers.js'
 import { normalizeForceMark } from './throwTechnique.js'
 import { getPlayerTraits, getTraitMods } from '../models/playerTraits.js'
 import { getSubStat, normalizePlayerSkills } from '../models/playerStats.js'
@@ -176,19 +176,8 @@ export function normalizeCoachDirectives(raw, legacyForceSide = null) {
   }
 }
 
-/**
- * Która linia: jawny lineRole, albo tactics._pointStartRole (runtime), albo O-Line.
- * @param {object|null|undefined} tactics
- * @param {LineRole|null|undefined} lineRole
- * @returns {LineRole}
- */
-export function resolveLineRole(tactics, lineRole = null) {
-  if (lineRole === 'offense' || lineRole === 'defense') return lineRole
-  if (tactics?._pointStartRole === 'offense' || tactics?._pointStartRole === 'defense') {
-    return tactics._pointStartRole
-  }
-  return 'offense'
-}
+/** @deprecated import from tacticsModifiers.js instead — re-exported here for existing callers. */
+export { resolveLineRole }
 
 /**
  * Dyrektywy dla O-Line lub D-Line (z migracją legacy coachDirectives).
@@ -373,6 +362,7 @@ export function mergeTraitAndCoachMods(player, tactics = null, role = 'offense',
     helpDeepBias: 0,
     releaseGateMult: 1,
     breakSideWeightMult: 1,
+    breakSideSepReqDeltaM: 0,
     huckAcceptanceDelta: 0,
     heroThrowWeightMult: 1,
     dumpEarlyBias: 0,
@@ -429,7 +419,7 @@ export function mergeTraitAndCoachMods(player, tactics = null, role = 'offense',
     }
   }
 
-  const instrIds = instructionsForPlayer(tactics, player?.id)
+  const instrIds = instructionsForPlayer(tactics, player?.id, lineRole)
   if (instrIds.length) {
     const instr = instructionModsForPlayer(instrIds, player, role)
     merged = {
@@ -443,6 +433,8 @@ export function mergeTraitAndCoachMods(player, tactics = null, role = 'offense',
         (merged.breakSideOptionBonus ?? 0) + (instr.breakSideOptionBonus ?? 0),
       breakSideWeightMult:
         (merged.breakSideWeightMult ?? 1) * (instr.breakSideWeightMult ?? 1),
+      breakSideSepReqDeltaM:
+        (merged.breakSideSepReqDeltaM ?? 0) + (instr.breakSideSepReqDeltaM ?? 0),
       acceptanceThresholdDelta:
         (merged.acceptanceThresholdDelta ?? 0) + (instr.acceptanceThresholdDelta ?? 0),
       decisionNoiseMult: (merged.decisionNoiseMult ?? 1) * (instr.decisionNoiseMult ?? 1),

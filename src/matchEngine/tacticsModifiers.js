@@ -28,6 +28,23 @@ export const FORCE_SIDES = {
   FORCE_STRAIGHT: 'force_straight',
 }
 
+/** @typedef {'offense'|'defense'} LineRole — O-Line | D-Line (wg startu punktu) */
+
+/**
+ * Która linia: jawny lineRole, albo tactics._pointStartRole (runtime), albo O-Line.
+ * Współdzielone przez coachDirectives.js i playerInstructions.js (bez cyklu importów).
+ * @param {object|null|undefined} tactics
+ * @param {LineRole|null|undefined} lineRole
+ * @returns {LineRole}
+ */
+export function resolveLineRole(tactics, lineRole = null) {
+  if (lineRole === 'offense' || lineRole === 'defense') return lineRole
+  if (tactics?._pointStartRole === 'offense' || tactics?._pointStartRole === 'defense') {
+    return tactics._pointStartRole
+  }
+  return 'offense'
+}
+
 /**
  * Profile behawioralne AI — wagi z kompendium taktyk (tacticsGuide.js).
  * Silnik czyta je przez tacticsBehavior.js.
@@ -363,7 +380,8 @@ export function defaultTacticsForPlayers(players) {
     },
     /** Alias → oLineCoachDirectives.forceSide */
     forceSide: FORCE_SIDES.FORCE_FOREHAND,
-    playerInstructions: {},
+    oLinePlayerInstructions: {},
+    dLinePlayerInstructions: {},
     playerSubRoles: {},
     lineupWhenOffenseStartPlayerIds: fillLine(byThrow.map((p) => p.id)),
     lineupWhenDefenseStartPlayerIds: fillLine(byDef.map((p) => p.id)),
