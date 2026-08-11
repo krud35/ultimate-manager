@@ -26,6 +26,85 @@ export function maxConcurrentCutters(attackStyle) {
   return Math.max(1, Math.min(4, Math.round(m.cutConcurrency ?? 2)))
 }
 
+/** Stałe sloty strefy (7v7): 1 marker, 2 cup, 2 wing, 1 middle, 1 deep. */
+export const ZONE_SLOT_ROLES = new Set([
+  'zone_marker',
+  'zone_cup',
+  'zone_wing',
+  'zone_middle',
+  'zone_deep',
+])
+
+/** Kolejność slotów wg stackIndex (0-6) przy budowie linii strefowej. */
+export const ZONE_SLOT_ORDER = [
+  'zone_marker',
+  'zone_cup',
+  'zone_cup',
+  'zone_wing',
+  'zone_wing',
+  'zone_middle',
+  'zone_deep',
+]
+
+/**
+ * Pozycja slotu strefowego względem AKTUALNEJ pozycji dysku — przeliczana co tick
+ * (patrz ai/defenderBrain.js tickZoneDefenderBrain), nie tylko raz na starcie
+ * posiadania jak wcześniej (layoutDefenseZoneCup dawało tylko seed na klatkę 0,
+ * a późniejszy ruch spadał do "goń najbliższego napastnika" — swarm bug). Marker
+ * ma tu tylko przybliżony seed; realny ruch markera liczy forceMarkPosition
+ * (tickDefenderBrain, isMarkerOnThrower) bo śledzi konkretnie throwera.
+ * `roleSlotIndex` odróżnia lewy/prawy człon cup i wing — 0-based indeks W OBRĘBIE
+ * roli (który z dwóch "zone_cup", nie surowy stackIndex w linii), bo gracz może być
+ * ręcznie przypisany do cupa/winga z dowolnej pozycji w lineup (patrz
+ * defenseZoneRoles.js resolveTeamZoneSlots).
+ * `zoneKind`: 'cup' (3-osobowy cup, ciasny) | 'wall' (junk/arrowhead, płytszy).
+ */
+export function zoneStructuralTarget(
+  fieldRole,
+  roleSlotIndex,
+  { discX = 0, discY = null, attackSign = 1, zoneKind = 'cup' } = {},
+) {
+  const cy = fieldCenterY()
+  const w = FIELD_DIMENSIONS.widthM
+  const dY = discY ?? cy
+  const lateralBias = dY - cy
+
+  const cupOffsetM = zoneKind === 'wall' ? 5.5 : 3
+  const secondLineOffsetM = zoneKind === 'wall' ? 11 : 9
+  const deepOffsetM = 24
+
+  if (fieldRole === 'zone_marker') {
+    return { x: clampFieldX(discX + attackSign * 0.6), y: clampFieldY(dY) }
+  }
+  if (fieldRole === 'zone_cup') {
+    const side = roleSlotIndex === 0 ? -1 : 1
+    return {
+      x: clampFieldX(discX + attackSign * cupOffsetM),
+      y: clampFieldY(cy + side * 5 + lateralBias * 0.35),
+    }
+  }
+  if (fieldRole === 'zone_wing') {
+    const side = roleSlotIndex === 0 ? -1 : 1
+    return {
+      x: clampFieldX(discX + attackSign * secondLineOffsetM),
+      y: clampFieldY(cy + side * w * 0.36 + lateralBias * 0.5),
+    }
+  }
+  if (fieldRole === 'zone_middle') {
+    return {
+      x: clampFieldX(discX + attackSign * secondLineOffsetM),
+      y: clampFieldY(dY),
+    }
+  }
+  if (fieldRole === 'zone_deep') {
+    return {
+      x: clampFieldX(discX + attackSign * deepOffsetM),
+      y: clampFieldY(cy + lateralBias * 0.3),
+    }
+  }
+  return { x: clampFieldX(discX), y: clampFieldY(dY) }
+}
+
 export function throwReleaseGateMultiplier(attackStyle, defenseStyle = null) {
   let m = attackMods(attackStyle).releaseGateMult ?? 1
   if (defenseStyle) {

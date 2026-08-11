@@ -9,6 +9,8 @@ import {
 } from './lineups.js'
 import { forceMarkLayoutSide, normalizeForceMark } from './throwTechnique.js'
 import { forceMarkPosition } from './ai/defenderBrain.js'
+import { zoneStructuralTarget, ZONE_SLOT_ORDER, ZONE_SLOT_ROLES } from './ai/tacticsBehavior.js'
+import { resolveTeamZoneSlots } from './defenseZoneRoles.js'
 import {
   FIELD_DIMENSIONS,
   clampFieldX,
@@ -66,7 +68,6 @@ export function filterPlayersToPointLineup(players, homeLineupIds, awayLineupIds
 }
 
 const STACK_SPACING_M = 4.5
-const CUP_OFFSET_M = 3
 
 function clampM(x) {
   return clampFieldX(x)
@@ -406,7 +407,7 @@ function resyncDefenseMarksToOffense(defenseLayout, offenseLayout, attackSign, f
   const offenseById = new Map(offenseLayout.map((o) => [o.id, o]))
   const layoutSide = forceMarkLayoutSide(forceSide)
   return defenseLayout.map((d) => {
-    if (d.fieldRole === 'zone_cup' || d.fieldRole === 'zone_wall' || d.fieldRole === 'zone') {
+    if (ZONE_SLOT_ROLES.has(d.fieldRole) || d.fieldRole === 'zone_wall' || d.fieldRole === 'zone') {
       return d
     }
     const off = d.markTargetId != null ? offenseById.get(d.markTargetId) : null
@@ -477,53 +478,51 @@ function layoutDefensePerson(players, teamId, discMeters, attackSign = 1) {
   })
 }
 
-function layoutDefenseZoneCup(players, teamId, discMeters, attackSign = 1) {
-  const cupX = clampM(discMeters + attackSign * CUP_OFFSET_M)
-  const cy = fieldCenterY()
-  const cupY = [cy - 6.5, cy, cy + 6.5]
+/**
+ * Zone cup: 1 marker + 2 cup (przed throwerem, utrudniają rzut) + 2 wingi + 1 middle
+ * (druga linia, tnie podania w bok/średni dystans) + 1 deep (ostatnia linia, huck).
+ * Sloty trzymają kształt strefy niezależnie od pozycji zawodników ataku — realny ruch
+ * co tick liczy zoneStructuralTarget (ai/tacticsBehavior.js), to tylko seed na klatkę 0.
+ */
+function layoutDefenseZoneCup(players, teamId, discMeters, attackSign = 1, discYMeters = null, defenseTactics = null) {
+  const slots = resolveTeamZoneSlots(defenseTactics, players.map((p) => p.id))
   return players.map((p, i) => {
-    if (i < 3) {
-      return {
-        ...playerLabelMeta(p, teamId),
-        stackIndex: i,
-        fieldRole: 'zone_cup',
-        x: cupX,
-        y: cupY[i],
-      }
-    }
-    const wingIdx = i - 3
+    const { role: fieldRole, roleSlotIndex } = slots[i] ?? { role: ZONE_SLOT_ORDER[i] ?? 'zone_deep', roleSlotIndex: 0 }
+    const pos = zoneStructuralTarget(fieldRole, roleSlotIndex, {
+      discX: discMeters,
+      discY: discYMeters,
+      attackSign,
+      zoneKind: 'cup',
+    })
     return {
       ...playerLabelMeta(p, teamId),
       stackIndex: i,
-      fieldRole: 'zone',
-      x: clampM(discMeters - attackSign * (4 + (wingIdx % 2) * 3)),
-      y: clampY(3 + wingIdx * 5.5),
+      fieldRole,
+      roleSlotIndex,
+      x: pos.x,
+      y: pos.y,
     }
   })
 }
 
-/** Arrowhead / junk wall — ściana 5–7 m od dysku. */
-function layoutDefenseZoneWall(players, teamId, discMeters, attackSign = 1) {
-  const wallX = clampM(discMeters + attackSign * 6)
-  const cy = fieldCenterY()
-  const wallY = [cy - 7, cy, cy + 7]
+/** Arrowhead / junk wall — te same sloty co cup, płytsza druga linia (zoneKind='wall'). */
+function layoutDefenseZoneWall(players, teamId, discMeters, attackSign = 1, discYMeters = null, defenseTactics = null) {
+  const slots = resolveTeamZoneSlots(defenseTactics, players.map((p) => p.id))
   return players.map((p, i) => {
-    if (i < 3) {
-      return {
-        ...playerLabelMeta(p, teamId),
-        stackIndex: i,
-        fieldRole: 'zone_wall',
-        x: wallX,
-        y: wallY[i],
-      }
-    }
-    const deepIdx = i - 3
+    const { role: fieldRole, roleSlotIndex } = slots[i] ?? { role: ZONE_SLOT_ORDER[i] ?? 'zone_deep', roleSlotIndex: 0 }
+    const pos = zoneStructuralTarget(fieldRole, roleSlotIndex, {
+      discX: discMeters,
+      discY: discYMeters,
+      attackSign,
+      zoneKind: 'wall',
+    })
     return {
       ...playerLabelMeta(p, teamId),
       stackIndex: i,
-      fieldRole: 'zone',
-      x: clampM(discMeters + attackSign * (14 + (deepIdx % 2) * 5)),
-      y: clampY(cy + (deepIdx - 1.5) * 6),
+      fieldRole,
+      roleSlotIndex,
+      x: pos.x,
+      y: pos.y,
     }
   })
 }
@@ -604,6 +603,8 @@ export function layoutPlayersOnField(
     discYMeters = null,
     forceSide = FORCE_SIDES.FORCE_FOREHAND,
     personMatchups = null,
+    /** Taktyka drużyny broniącej — do resolveTeamZoneSlots (kto gra w cupie/na wingu itd.). */
+    defenseTactics = null,
   } = layoutOptions
 
   if (isOffense) {
@@ -631,10 +632,10 @@ export function layoutPlayersOnField(
   }
 
   if (defenseStyle === DEFENSE_STYLES.ZONE_CUP) {
-    return layoutDefenseZoneCup(players, teamId, discMeters, attackSign)
+    return layoutDefenseZoneCup(players, teamId, discMeters, attackSign, discYMeters, defenseTactics)
   }
   if (defenseStyle === DEFENSE_STYLES.ZONE_WALL) {
-    return layoutDefenseZoneWall(players, teamId, discMeters, attackSign)
+    return layoutDefenseZoneWall(players, teamId, discMeters, attackSign, discYMeters, defenseTactics)
   }
   if (personMark && offenseLayout?.length) {
     return layoutDefensePersonMark(
@@ -953,6 +954,7 @@ export function fieldStateAtEventStep(pointEvents, stepIndex, homeTeam, awayTeam
     attackSign,
     discYMeters,
     forceSide: homeOffense ? forceSide : FORCE_SIDES.FORCE_FOREHAND,
+    defenseTactics: defenseTeamObj?.tactics,
   }
   const awayLayoutOpts = {
     attackStyle,
@@ -961,6 +963,7 @@ export function fieldStateAtEventStep(pointEvents, stepIndex, homeTeam, awayTeam
     attackSign,
     discYMeters,
     forceSide: homeOffense ? FORCE_SIDES.FORCE_FOREHAND : forceSide,
+    defenseTactics: defenseTeamObj?.tactics,
   }
 
   let homeLayout
