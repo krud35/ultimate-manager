@@ -118,6 +118,7 @@ function CompactLineupSection({
   leaguePlayerStats = null,
   offenseLineIds = null,
   defenseLineIds = null,
+  dndGroupKey = null,
 }) {
   const filled = line.filter(Boolean).length
   const slots = positionSlots ?? Array.from({ length: LINE_SIZE }, (_, i) => ({
@@ -172,6 +173,7 @@ function CompactLineupSection({
             offenseLineIds={offenseLineIds}
             defenseLineIds={defenseLineIds}
             positionSlots={slots}
+            dndGroupKey={dndGroupKey}
             onChange={(id) => onSlotChange(i, id)}
           />
         ))}
@@ -258,6 +260,7 @@ function RichLineupSection({
             offenseLineIds={offenseLineIds}
             defenseLineIds={defenseLineIds}
             positionSlots={slots}
+            dndGroupKey={lineRole}
           />
         ))}
       </div>
@@ -498,6 +501,7 @@ export default function TacticsForm({
           leaguePlayerStats={leaguePlayerStats}
           offenseLineIds={offenseLine}
           defenseLineIds={defenseLine}
+          dndGroupKey={lineRole}
           onSlotChange={(i, id) =>
             onTacticsChange(updateLineupSlot(tactics, lineRole, i, id))
           }
@@ -682,6 +686,7 @@ export default function TacticsForm({
               leaguePlayerStats={leaguePlayerStats}
               offenseLineIds={offenseLine}
               defenseLineIds={defenseLine}
+              dndGroupKey="point"
               onSlotChange={(i, id) =>
                 onTacticsChange(updateLineupSlot(tactics, pointStartRole, i, id))
               }

@@ -98,7 +98,7 @@ function PlayerStatChips({ player, staminaMap, dense = false, lang = 'pl' }) {
       ))}
       <span title={lang === 'en' ? 'Form' : 'Forma'}>F {form}</span>
       <span title="Morale">M {morale}</span>
-      <span title="Stamina">STA {sta}</span>
+      <StaminaBar stamina={sta} compact className="w-16 shrink-0" />
       {injured ? (
         <span
           className="font-semibold text-red-400"
@@ -168,6 +168,8 @@ export default function PlayerSlotPicker({
   defenseLineIds = null,
   /** Sloty formacji — etykiety „NA LINII · H2” itd. */
   positionSlots = null,
+  /** Zawodnika można przeciągnąć (drag&drop) tylko między slotami tej samej grupy. */
+  dndGroupKey = null,
 }) {
   const { lang } = useUiLang()
   const t = tacticsStrings(lang)
@@ -179,6 +181,8 @@ export default function PlayerSlotPicker({
   const [sortDir, setSortDir] = useState('desc')
   const [instrOpen, setInstrOpen] = useState(false)
   const [profilePlayer, setProfilePlayer] = useState(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
   const rootRef = useRef(null)
 
   const selectedPlayer = roster.find((p) => p.id === playerId) ?? null
@@ -253,23 +257,84 @@ export default function PlayerSlotPicker({
   // Podrole ustawiane przy wstawieniu / swapie (updateLineupSlot) — bez auto-effectu,
   // który walczył z normalizeTactics (O-Line vs D-Line) i blokował UI meczu.
 
+  const dndEnabled = dndGroupKey != null
+
+  function handleDragStart(e) {
+    if (!selectedPlayer) {
+      e.preventDefault()
+      return
+    }
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData(
+      'application/json',
+      JSON.stringify({ playerId, groupKey: dndGroupKey }),
+    )
+    setIsDragging(true)
+  }
+
+  function handleDragEnd() {
+    setIsDragging(false)
+  }
+
+  function handleDragOver(e) {
+    if (!dndEnabled) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (!isDragOver) setIsDragOver(true)
+  }
+
+  function handleDragLeave() {
+    if (isDragOver) setIsDragOver(false)
+  }
+
+  function handleDrop(e) {
+    if (!dndEnabled) return
+    e.preventDefault()
+    setIsDragOver(false)
+    let data = null
+    try {
+      data = JSON.parse(e.dataTransfer.getData('application/json'))
+    } catch {
+      return
+    }
+    if (!data || data.groupKey !== dndGroupKey) return
+    if (data.playerId == null || data.playerId === playerId) return
+    const dragged = roster.find((p) => p.id === data.playerId)
+    if (dragged && isPlayerInjured(dragged)) return
+    onChange(data.playerId)
+  }
+
   return (
     <div
       ref={rootRef}
-      className={`rounded-lg border bg-ufa-bg/50 ${
-        selectedInjured
-          ? 'border-red-500/55 ring-1 ring-red-500/25'
-          : selected || open
-            ? 'border-ufa-accent/60 ring-1 ring-ufa-accent/30'
-            : 'border-ufa-border/80'
-      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`rounded-lg border bg-ufa-bg/50 transition ${
+        isDragOver
+          ? 'border-ufa-accent border-dashed ring-2 ring-ufa-accent/50'
+          : selectedInjured
+            ? 'border-red-500/55 ring-1 ring-red-500/25'
+            : selected || open
+              ? 'border-ufa-accent/60 ring-1 ring-ufa-accent/30'
+              : 'border-ufa-border/80'
+      } ${isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-stretch gap-2 p-2">
         <button
           type="button"
           onClick={() => onSelectSlot?.(index)}
-          className={`flex h-9 min-w-[2.75rem] shrink-0 items-center justify-center rounded-md px-1.5 text-[11px] font-bold ${accentClass}`}
-          title={positionTitle}
+          draggable={dndEnabled && !!selectedPlayer}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          title={
+            selectedPlayer && dndEnabled
+              ? `${positionTitle} · ${t.dragToSwap}`
+              : positionTitle
+          }
+          className={`flex h-9 min-w-[2.75rem] shrink-0 items-center justify-center rounded-md px-1.5 text-[11px] font-bold ${accentClass} ${
+            dndEnabled && selectedPlayer ? 'cursor-grab active:cursor-grabbing' : ''
+          }`}
         >
           {badgeText}
         </button>
