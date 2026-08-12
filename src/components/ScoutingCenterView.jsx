@@ -235,6 +235,7 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
           setProfilePlayer(null)
           setProfileTeamName(null)
         }}
+        leaguePlayerStats={career.league?.playerStats}
         teamName={profileTeamName}
         isOwnPlayer={false}
         knowledge={profilePlayer ? getPlayerKnowledge(buyer, profilePlayer.id) : null}

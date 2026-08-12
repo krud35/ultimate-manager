@@ -146,32 +146,34 @@ export function buildBoxScoreRowsFromStatDelta(beforeSnap, homePlayers, awayPlay
   return rows
 }
 
-function coalesceStat(...values) {
-  let best = 0
-  for (const value of values) {
-    const n = value ?? 0
-    if (typeof n === 'number' && n > best) best = n
-  }
-  return best
-}
-
-/** Statystyki bieżącego sezonu gry (G/A/B/PP) — liga + `player.stats` na składzie. */
+/**
+ * Statystyki bieżącego sezonu gry (G/A/B/PP/+-/...) — jedno spójne źródło.
+ *
+ * `row` (leaguePlayerStats) to TYLKO liga, `player.stats` to liga+puchar razem
+ * (patrz applyEngineBoxScoreToRoster w leagueEngine.js — działa dla każdego meczu,
+ * kiedy `row` dotyczy wyłącznie meczów ligowych). Wcześniej każde pole było
+ * coalesce'owane osobno (bierz wyższą z dwóch wartości) — dla pojedynczych liczb to
+ * nieszkodliwe, ale dla pochodnych metryk jak +/- czy % celności miesza się wtedy
+ * liga-only z liga+puchar pole po polu i wynik nie zgadza się z tabelą liderów
+ * (która liczy +/- wyłącznie z `row`). Bierzemy więc jedno źródło w całości.
+ */
 export function seasonStatsForPlayer(leaguePlayerStats, player) {
   const pointsPlayedMatch = player?.stats?.pointsPlayedMatch ?? 0
   const row = leaguePlayerStats?.[player?.id]
-  const local = player?.seasonStats
   const stats = player?.stats
+  const local = player?.seasonStats
+  const source = row ?? stats ?? local ?? {}
 
-  const goals = coalesceStat(row?.goals, stats?.goals, local?.goals)
-  const assists = coalesceStat(row?.assists, stats?.assists, local?.assists)
-  const blocks = coalesceStat(row?.blocks, stats?.blocks, local?.blocks)
-  const turnovers = coalesceStat(row?.turnovers, stats?.turnovers, local?.turnovers)
-  const attempts = coalesceStat(row?.attempts, stats?.attempts, local?.attempts)
-  const completions = coalesceStat(row?.completions, stats?.completions, local?.completions)
-  const throwMeters = coalesceStat(row?.throwMeters, stats?.throwMeters, local?.throwMeters)
-  const catches = coalesceStat(row?.catches, stats?.catches, local?.catches)
-  const catchMeters = coalesceStat(row?.catchMeters, stats?.catchMeters, local?.catchMeters)
-  const runMeters = coalesceStat(row?.runMeters, stats?.runMeters, local?.runMeters)
+  const goals = source.goals ?? 0
+  const assists = source.assists ?? 0
+  const blocks = source.blocks ?? 0
+  const turnovers = source.turnovers ?? 0
+  const attempts = source.attempts ?? 0
+  const completions = source.completions ?? 0
+  const throwMeters = source.throwMeters ?? 0
+  const catches = source.catches ?? 0
+  const catchMeters = source.catchMeters ?? 0
+  const runMeters = source.runMeters ?? 0
 
   return {
     goals,
@@ -179,7 +181,7 @@ export function seasonStatsForPlayer(leaguePlayerStats, player) {
     blocks,
     turnovers,
     plusMinus: goals + assists + blocks - turnovers,
-    pointsPlayed: coalesceStat(row?.pointsPlayed, stats?.pointsPlayed, local?.pointsPlayed),
+    pointsPlayed: source.pointsPlayed ?? 0,
     pointsPlayedMatch,
     attempts,
     completions,

@@ -844,6 +844,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
         <PlayerProfileModal
           player={profilePlayer}
           onClose={() => setProfilePlayer(null)}
+          leaguePlayerStats={career?.league?.playerStats}
           teamName={team ? resolveTeamName(team, lang) : null}
           isOwnPlayer={false}
           knowledge={profilePlayer ? getPlayerKnowledge(playerTeam, profilePlayer.id) : null}

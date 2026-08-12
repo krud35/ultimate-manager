@@ -73,7 +73,7 @@ function playerLabel(p) {
  * WSZYSTKICH meczów ligowych (nie tylko granych przez gracza pełnym silnikiem).
  */
 function estimateRunMetersForPoint(rng, throwCount = 0) {
-  const base = 90 + rng() * 60
+  const base = 90 + rng.float() * 60
   const extra = Math.min(60, throwCount * 6)
   return base + extra
 }

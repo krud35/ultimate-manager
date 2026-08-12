@@ -561,6 +561,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
           setProfilePlayer(null)
           setProfileTeamName(null)
         }}
+        leaguePlayerStats={career.league?.playerStats}
         teamName={profileTeamName}
         isOwnPlayer={false}
         knowledge={profilePlayer ? getPlayerKnowledge(buyer, profilePlayer.id) : null}
