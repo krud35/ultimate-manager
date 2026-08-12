@@ -271,11 +271,15 @@ function computeStyleFitForTeam(team) {
  * Tożsamość ligowa + ukryty profil trenera AI (jeśli drużyna nie jest gracza).
  * `aiCoachProfile === null` = drużyna gracza — bez archetypu.
  */
-export function resolveAiTeamIdentity(team) {
+export function resolveAiTeamIdentity(team, { lossStreak = 0 } = {}) {
   const base = teamTacticalIdentity(team?.id, team?.tacticalIdentity ?? null)
   if (team?.aiCoachProfile === null) return base
   const styleFit = computeStyleFitForTeam(team)
-  return applyAiCoachProfileToIdentity(base, resolveTeamAiCoachProfile(team), { styleFit })
+  return applyAiCoachProfileToIdentity(base, resolveTeamAiCoachProfile(team), {
+    styleFit,
+    lossStreak,
+    teamId: team?.id ?? null,
+  })
 }
 
 /**
@@ -320,7 +324,7 @@ export function tacticsForTeam(team, options = {}) {
     return defaultTacticsForPlayers([])
   }
 
-  const identity = resolveAiTeamIdentity(team)
+  const identity = resolveAiTeamIdentity(team, { lossStreak: options.lossStreak ?? 0 })
   const staminaMap = options.staminaMap ?? null
   const withInstr = options.withPlayerInstructions !== false
   const pool = availablePlayers(team.players)

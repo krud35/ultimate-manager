@@ -37,9 +37,27 @@ function resolveTeam(league, teamId) {
   return team
 }
 
-function tacticsForResolvedTeam(team) {
+/**
+ * Ile ostatnich meczów z rzędu (dowolna konkurencja) drużyna przegrała — patrz
+ * "crisis mode" w resolveAiTeamIdentity (aiLineup.js): po CRISIS_LOSS_STREAK z rzędu
+ * trener AI traci zaufanie do własnej tożsamości i mocniej opiera się na fitScore.
+ */
+function recentLossStreak(league, teamId) {
+  const history = league?.matchHistory
+  if (!teamId || !history?.length) return 0
+  let streak = 0
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const m = history[i]
+    if (m.homeTeamId !== teamId && m.awayTeamId !== teamId) continue
+    if (!m.winner || m.winner === teamId) break
+    streak += 1
+  }
+  return streak
+}
+
+function tacticsForResolvedTeam(team, league = null) {
   if (!team) return null
-  return tacticsForTeam(team)
+  return tacticsForTeam(team, { lossStreak: recentLossStreak(league, team.id) })
 }
 
 /**
@@ -103,8 +121,8 @@ export function simulateFixtureMatch(league, fixture) {
   const home = resolveTeam(league, fixture.homeTeamId)
   const away = resolveTeam(league, fixture.awayTeamId)
 
-  const homeTactics = tacticsForResolvedTeam(home)
-  const awayTactics = tacticsForResolvedTeam(away)
+  const homeTactics = tacticsForResolvedTeam(home, league)
+  const awayTactics = tacticsForResolvedTeam(away, league)
 
   const engineResult = simulateMatch({
     homeTeam: { ...teamForMatchEngine(home), tactics: homeTactics },
@@ -357,8 +375,8 @@ export function simulatePlayerFixtureMatch(league, fixture, tactics = {}) {
   const home = resolveTeam(league, fixture.homeTeamId)
   const away = resolveTeam(league, fixture.awayTeamId)
 
-  const homeTactics = tactics.homeTactics ?? tacticsForResolvedTeam(home)
-  const awayTactics = tactics.awayTactics ?? tacticsForResolvedTeam(away)
+  const homeTactics = tactics.homeTactics ?? tacticsForResolvedTeam(home, league)
+  const awayTactics = tactics.awayTactics ?? tacticsForResolvedTeam(away, league)
 
   return simulateMatch({
     homeTeam: { ...teamForMatchEngine(home), tactics: homeTactics },

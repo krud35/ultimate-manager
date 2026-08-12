@@ -161,6 +161,10 @@ export function createAiAdaptSideState() {
     pointsSinceAttackChange: 99,
     pointsSinceDefenseChange: 99,
     huckFailStreak: 0,
+    /** 0 = spokój, 1 = zaniepokojony, 2 = panika — patrz sekcja 0 w adaptAiTacticsBetweenPoints. */
+    panicLevel: 0,
+    /** Punkty stracone z rzędu w BIEŻĄCYM meczu (reset przy zdobyciu punktu). */
+    lossStreakInMatch: 0,
   }
 }
 
@@ -240,8 +244,8 @@ export function adaptAiTacticsBetweenPoints({
   if (!isAi || !tactics) return { tactics, adaptSide }
 
   const profile = identity?.aiCoachProfile ?? team?.aiCoachProfile
-  const adapt = profile?.adaptability ?? identity?.adaptability ?? 0.5
-  const conserve = profile?.conservatism ?? identity?.conservatism ?? 0.5
+  let adapt = profile?.adaptability ?? identity?.adaptability ?? 0.5
+  let conserve = profile?.conservatism ?? identity?.conservatism ?? 0.5
   const analysis = pointAnalysis ?? {}
   let next = normalizeTactics({ ...tactics })
   let state = { ...(adaptSide ?? createAiAdaptSideState()) }
@@ -250,6 +254,44 @@ export function adaptAiTacticsBetweenPoints({
 
   const roll = () => (rng?.float ? rng.float() : Math.random())
   const willing = () => roll() < adapt
+
+  // --- 0) Panika: duży deficyt punktowy albo seria strat w TYM meczu → trener odrzuca
+  // ostrożność, nawet jeśli jego archetyp jest z natury uparty (conservatism ignorowany
+  // przy panicLevel 2). Deficyt liczony względem MATCH_CONFIG.pointsToWin (gra do 15).
+  if (analysis.weScored) state.lossStreakInMatch = 0
+  else if (analysis.theyScored) state.lossStreakInMatch = (state.lossStreakInMatch ?? 0) + 1
+
+  const deficit = theirScore - ourScore
+  const targetPanic = deficit >= 7 || (state.lossStreakInMatch ?? 0) >= 4 ? 2 : deficit >= 4 ? 1 : 0
+  const prevPanic = state.panicLevel ?? 0
+  state.panicLevel =
+    targetPanic > prevPanic
+      ? targetPanic
+      : analysis.weScored
+        ? Math.max(targetPanic, prevPanic - 1)
+        : prevPanic
+  const panicLevel = state.panicLevel
+
+  if (panicLevel >= 1) {
+    // Podbija adapt/conserve tak, żeby formacje/sekcje 3-5 poniżej reagowały pewniej i
+    // częściej — bez duplikowania ich logiki. Przy panicLevel 2 conservatism jest
+    // całkowicie zignorowany (gwarantowana reakcja co punkt, jeśli sytuacja tego wymaga).
+    adapt = panicLevel >= 2 ? 1 : Math.max(adapt, 0.85)
+    conserve = panicLevel >= 2 ? 0 : Math.min(conserve, 0.3)
+
+    const swing = panicLevel >= 2 ? 0.5 : 0.25
+    const oDirsPanic = next.oLineCoachDirectives ?? next.coachDirectives
+    const dDirsPanic = next.dLineCoachDirectives ?? oDirsPanic
+    next.oLineCoachDirectives = patchDirectives(oDirsPanic, {
+      huckAppetite: clamp((oDirsPanic?.huckAppetite ?? 0) + swing, -1, 1),
+      possessionTempo: clamp((oDirsPanic?.possessionTempo ?? 0) + swing * 0.6, -1, 1),
+      breakAppetite: clamp((oDirsPanic?.breakAppetite ?? 0) + swing * 0.5, -1, 1),
+    })
+    next.dLineCoachDirectives = patchDirectives(dDirsPanic, {
+      coverageShade: clamp((dDirsPanic?.coverageShade ?? 0) + swing * 0.5, -1, 1),
+      creativity: clamp((dDirsPanic?.creativity ?? 0) + swing * 0.4, -1, 1),
+    })
+  }
 
   // --- 1) Słabo grający zawodnicy: mniej minut + instrukcje ---
   const benchPenaltyIds = new Set()

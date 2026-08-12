@@ -62,7 +62,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: -0.35,
       coverageShade: -0.1,
     },
-    adaptability: 0.35,
+    adaptability: 0.5,
     conservatism: 0.75,
   },
   {
@@ -92,7 +92,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: 0.15,
       coverageShade: -0.2,
     },
-    adaptability: 0.55,
+    adaptability: 0.7,
     conservatism: 0.4,
   },
   {
@@ -123,7 +123,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: 0.25,
       coverageShade: 0.25,
     },
-    adaptability: 0.45,
+    adaptability: 0.6,
     conservatism: 0.35,
   },
   {
@@ -153,7 +153,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: -0.2,
       coverageShade: 0.1,
     },
-    adaptability: 0.5,
+    adaptability: 0.65,
     conservatism: 0.55,
   },
   {
@@ -183,7 +183,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: 0.05,
       coverageShade: 0.15,
     },
-    adaptability: 0.65,
+    adaptability: 0.8,
     conservatism: 0.3,
   },
   {
@@ -213,7 +213,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: -0.1,
       coverageShade: 0,
     },
-    adaptability: 0.55,
+    adaptability: 0.7,
     conservatism: 0.5,
   },
   {
@@ -244,7 +244,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: -0.2,
       coverageShade: 0.3,
     },
-    adaptability: 0.4,
+    adaptability: 0.55,
     conservatism: 0.65,
   },
   {
@@ -275,7 +275,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: 0.15,
       coverageShade: 0.15,
     },
-    adaptability: 0.5,
+    adaptability: 0.65,
     conservatism: 0.55,
   },
   {
@@ -306,7 +306,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: -0.25,
       coverageShade: 0.15,
     },
-    adaptability: 0.3,
+    adaptability: 0.45,
     conservatism: 0.8,
   },
   {
@@ -337,7 +337,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: 0.2,
       coverageShade: 0.35,
     },
-    adaptability: 0.45,
+    adaptability: 0.6,
     conservatism: 0.45,
   },
   {
@@ -368,7 +368,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: 0.05,
       coverageShade: 0.3,
     },
-    adaptability: 0.6,
+    adaptability: 0.75,
     conservatism: 0.35,
   },
   {
@@ -399,7 +399,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: -0.15,
       coverageShade: 0.25,
     },
-    adaptability: 0.4,
+    adaptability: 0.55,
     conservatism: 0.6,
   },
   {
@@ -430,7 +430,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: 0.1,
       coverageShade: 0.3,
     },
-    adaptability: 0.6,
+    adaptability: 0.75,
     conservatism: 0.3,
   },
   {
@@ -461,7 +461,7 @@ export const AI_COACH_ARCHETYPES = [
       passSelectivity: 0.15,
       coverageShade: -0.05,
     },
-    adaptability: 0.55,
+    adaptability: 0.7,
     conservatism: 0.45,
   },
   {
@@ -518,8 +518,13 @@ function blendDirective(base, bias, weight = 0.85) {
   return clampBias((base ?? 0) * (1 - weight) + (bias ?? 0) * weight)
 }
 
-const ARCHETYPE_AFFINITY_WEIGHT = 0.65
-const ROSTER_FIT_WEIGHT = 0.35
+/**
+ * Roster fit jest głównym kryterium wyboru stylu, tożsamość archetypu (waga
+ * `1 - ROSTER_FIT_WEIGHT`) dokłada się na wierzchu — "dopasuj do zawodników najpierw,
+ * charakter trenera potem". Dlatego fit > 0.5 już w stanie bazowym; w kryzysie
+ * (patrz CRISIS_FIT_WEIGHT) przewaga fitu rośnie jeszcze bardziej.
+ */
+const ROSTER_FIT_WEIGHT = 0.6
 
 /** Im wcześniej styl jest w liście preferencji, tym wyższe powinowactwo (100 → 40 floor). */
 function styleAffinity(style, preferredList) {
@@ -530,14 +535,6 @@ function styleAffinity(style, preferredList) {
 }
 
 /**
- * Wybór stylu dla jednego z 4 slotów (oLine/dLine × atak/obrona): łączy tożsamość
- * trenera (`preferredList`, w kolejności) z realnym dopasowaniem drużyny do stylu
- * (`fitMap`, 0–100 per styl — patrz computeStyleFitForTeam w aiLineup.js). Dzięki wadze
- * dopasowania archetyp może zostać "przegłosowany", gdy roster fatalnie pasuje do jego
- * ulubionego stylu (np. brak obrońców do zony) — bez twardego progu, efekt wynika wprost
- * z wagi ROSTER_FIT_WEIGHT. `flatStart` (Geniusz taktyczny) ignoruje tożsamość całkowicie.
- */
-/**
  * Ile gorszy fit preferowanego stylu (względem najlepszego dostępnego) trener jeszcze
  * toleruje, zanim uzna go za niegrywalny z obecnym rosterem i porzuci — niezależnie od
  * tego, jak bardzo "swój" jest to styl. Przykład: archetyp zonowy bez obrońców
@@ -545,14 +542,22 @@ function styleAffinity(style, preferredList) {
  */
 const FIT_OVERRIDE_MARGIN = 20
 
-function pickStyleForSlot(preferredList, fitMap, fallback, flatStart = false) {
+/**
+ * Wybór stylu dla jednego z 4 slotów (oLine/dLine × atak/obrona): łączy tożsamość
+ * trenera (`preferredList`, w kolejności) z realnym dopasowaniem drużyny do stylu
+ * (`fitMap`, 0–100 per styl — patrz computeStyleFitForTeam w aiLineup.js). `fitWeight`
+ * pozwala podkręcić przewagę fitu ponad wagę bazową (np. w kryzysie sezonowym —
+ * patrz CRISIS_FIT_WEIGHT w applyAiCoachProfileToIdentity). `flatStart` (Geniusz
+ * taktyczny) ignoruje tożsamość całkowicie i gra czystym fitem.
+ */
+function pickStyleForSlot(preferredList, fitMap, fallback, flatStart = false, fitWeight = ROSTER_FIT_WEIGHT) {
   const candidates = fitMap ? Object.keys(fitMap) : preferredList
   if (!candidates?.length) return preferredList?.[0] ?? fallback ?? null
 
   const fitOf = (style) => fitMap?.[style] ?? 50
   // Preferencje, których fit fatalnie odstaje od najlepszego dostępnego stylu w tej
   // kategorii, wypadają z rozważań tożsamości — reszta selekcji (poniżej) już samą wagą
-  // ROSTER_FIT_WEIGHT dociąga wybór do tego, co roster faktycznie potrafi zagrać.
+  // fitWeight dociąga wybór do tego, co roster faktycznie potrafi zagrać.
   let usablePreferred = preferredList
   if (!flatStart && preferredList?.length && fitMap) {
     const bestFit = Math.max(...candidates.map(fitOf))
@@ -560,13 +565,14 @@ function pickStyleForSlot(preferredList, fitMap, fallback, flatStart = false) {
     usablePreferred = filtered.length ? filtered : null
   }
 
+  const archetypeWeight = 1 - fitWeight
   let best = candidates[0]
   let bestScore = -Infinity
   for (const style of candidates) {
     const fit = fitOf(style)
     const score = flatStart
       ? fit
-      : styleAffinity(style, usablePreferred) * ARCHETYPE_AFFINITY_WEIGHT + fit * ROSTER_FIT_WEIGHT
+      : styleAffinity(style, usablePreferred) * archetypeWeight + fit * fitWeight
     if (score > bestScore) {
       bestScore = score
       best = style
@@ -652,6 +658,25 @@ export function ensureAiCoachProfiles(world, playerTeamId = null) {
   return world
 }
 
+/** Ile porażek z rzędu (dowolna konkurencja) zanim trener uzna archetyp za niedziałający. */
+const CRISIS_LOSS_STREAK = 4
+/** W kryzysie fit dominuje niemal całkowicie — tożsamość archetypu to już tylko akcent. */
+const CRISIS_FIT_WEIGHT = 0.75
+
+/** Mocniejszy, deterministyczny reshuffle suwaków — "spróbujmy czegoś innego" w kryzysie. */
+function crisisReshuffleBias(biasObj, rng) {
+  const jitter = (key, amp = 0.35) =>
+    clampBias((biasObj?.[key] ?? 0) + (rng.float() * 2 - 1) * amp)
+  return {
+    creativity: jitter('creativity'),
+    coverageShade: jitter('coverageShade', 0.3),
+    huckAppetite: jitter('huckAppetite'),
+    passSelectivity: jitter('passSelectivity', 0.3),
+    breakAppetite: jitter('breakAppetite'),
+    possessionTempo: jitter('possessionTempo'),
+  }
+}
+
 /**
  * Łączy tożsamość ligową z ukrytym profilem trenera.
  * @param {object} identity — z teamTacticalIdentity()
@@ -659,12 +684,24 @@ export function ensureAiCoachProfiles(world, playerTeamId = null) {
  * @param {object} [options]
  * @param {{oLineAttack:object, oLineDefense:object, dLineAttack:object, dLineDefense:object}|null} [options.styleFit]
  *   — mapy `{ [styleId]: 0-100 }` z computeStyleFitForTeam (aiLineup.js), per slot.
+ * @param {number} [options.lossStreak] — porażek z rzędu w bieżącym sezonie (0 = brak kryzysu).
+ * @param {string|null} [options.teamId] — do deterministycznego seeda reshuffle'u w kryzysie.
  */
 export function applyAiCoachProfileToIdentity(identity, profile, options = {}) {
   if (!profile?.id) return identity
-  const { styleFit = null } = options
+  const { styleFit = null, lossStreak = 0, teamId = null } = options
+  const inCrisis = !profile.flatStart && lossStreak >= CRISIS_LOSS_STREAK
 
-  const bias = { o: profile.oLineDirectiveBias ?? {}, d: profile.dLineDirectiveBias ?? {} }
+  let oBias = profile.oLineDirectiveBias ?? {}
+  let dBias = profile.dLineDirectiveBias ?? {}
+  if (inCrisis) {
+    // Ten sam seed dla danej pary (drużyna, długość serii) → reshuffle stabilny przez
+    // kolejne mecze tego samego kryzysu, ale inny, gdy seria się pogłębia (4→5→6…).
+    const rng = createRng(hashString(`${teamId ?? profile.id}:crisis:${Math.min(lossStreak, 8)}`))
+    oBias = crisisReshuffleBias(oBias, rng)
+    dBias = crisisReshuffleBias(dBias, rng)
+  }
+
   const baseO = identity.oLineCoachDirectives ?? identity.coachDirectives ?? defaultCoachDirectives()
   const baseD = identity.dLineCoachDirectives ?? identity.coachDirectives ?? baseO
 
@@ -680,10 +717,11 @@ export function applyAiCoachProfileToIdentity(identity, profile, options = {}) {
       forceSide: profile.preferredForce ?? base.forceSide,
     })
 
-  const oDirs = mergeDirs(baseO, bias.o)
-  const dDirs = mergeDirs(baseD, bias.d)
+  const oDirs = mergeDirs(baseO, oBias)
+  const dDirs = mergeDirs(baseD, dBias)
 
   const flat = profile.flatStart === true
+  const fitWeight = inCrisis ? CRISIS_FIT_WEIGHT : ROSTER_FIT_WEIGHT
 
   return {
     ...identity,
@@ -694,24 +732,28 @@ export function applyAiCoachProfileToIdentity(identity, profile, options = {}) {
       styleFit?.oLineAttack,
       identity.oLineAttackStyle,
       flat,
+      fitWeight,
     ),
     dLineAttackStyle: pickStyleForSlot(
       profile.dLineAttackStyles,
       styleFit?.dLineAttack,
       identity.dLineAttackStyle,
       flat,
+      fitWeight,
     ),
     oLineDefenseStyle: pickStyleForSlot(
       profile.oLineDefenseStyles,
       styleFit?.oLineDefense,
       identity.oLineDefenseStyle,
       flat,
+      fitWeight,
     ),
     dLineDefenseStyle: pickStyleForSlot(
       profile.dLineDefenseStyles,
       styleFit?.dLineDefense,
       identity.dLineDefenseStyle,
       flat,
+      fitWeight,
     ),
     oLineCoachDirectives: oDirs,
     dLineCoachDirectives: dDirs,
@@ -721,6 +763,7 @@ export function applyAiCoachProfileToIdentity(identity, profile, options = {}) {
     defenseMindset: profile.defenseMindset,
     adaptability: profile.adaptability ?? 0.5,
     conservatism: profile.conservatism ?? 0.5,
+    inSeasonCrisis: inCrisis,
   }
 }
 
