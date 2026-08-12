@@ -804,6 +804,7 @@ export default function App() {
         setActionRequiredMessageId(blockingMessageId)
       }
     } catch (err) {
+      console.error('[calendar sim]', err)
       setAppError(friendlySaveErrorMessage(err, uiLang))
     }
   }, [career, simProgress, calendarSim, syncCareer, uiLang])
@@ -1021,6 +1022,7 @@ export default function App() {
         setActiveTab('hub')
       }
     } catch (err) {
+      console.error('[calendar sim]', err)
       setAppError(friendlySaveErrorMessage(err, uiLang))
     } finally {
       setSimProgress(null)
@@ -1170,6 +1172,7 @@ export default function App() {
           setActiveTab('calendar')
         }
       } catch (err) {
+        console.error('[calendar sim]', err)
         setAppError(friendlySaveErrorMessage(err, uiLang))
       } finally {
         setSimProgress(null)
@@ -1741,6 +1744,7 @@ export default function App() {
         setPendingWelcome(true)
         refreshSlots()
       } catch (err) {
+        console.error('[create career]', err)
         setCareerCreateError(friendlySaveErrorMessage(err, uiLang))
       } finally {
         setCreatingCareer(false)
