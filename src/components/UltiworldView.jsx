@@ -14,11 +14,22 @@ const CATEGORY_STYLE = {
   round: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
   cup: 'border-ufa-gold/40 bg-ufa-gold/10 text-ufa-gold',
   awards: 'border-sky-400/40 bg-sky-400/10 text-sky-300',
+  power_rankings: 'border-violet-400/40 bg-violet-500/10 text-violet-300',
   feature: 'border-ufa-border bg-ufa-bg text-ufa-muted',
   breaking: 'border-red-400/40 bg-red-500/10 text-red-300',
 }
 
-const FILTER_IDS = ['all', 'unread', 'match', 'round', 'cup', 'awards', 'breaking', 'feature']
+const FILTER_IDS = [
+  'all',
+  'unread',
+  'match',
+  'round',
+  'cup',
+  'awards',
+  'power_rankings',
+  'breaking',
+  'feature',
+]
 
 function formatDay(iso, lang) {
   if (!iso) return '—'

@@ -6,11 +6,12 @@
 import { getPlayerFullName } from '../data/mockPlayers.js'
 import { getOverallRating } from '../models/playerStats.js'
 import { ensurePlayerMorale } from '../models/playerMorale.js'
-import { ensurePlayerForm } from '../models/playerForm.js'
+import { ensurePlayerForm, FORM_DEFAULT } from '../models/playerForm.js'
 import { noteLoyaltyFromTreatment } from '../models/playerLoyalty.js'
 import { injurePlayer, pickInjuryLabel, rollInjuryDays, injuryLabelEn } from '../models/playerInjury.js'
 import { addDays, formatISODate, parseISODate, nextWeekday } from '../league/seasonCalendar.js'
 import { fixturesForRound, isRoundComplete, teamNameMap } from '../league/leagueState.js'
+import { pointDifferential } from '../league/standings.js'
 import { detectSeasonPhase } from '../league/dayEngine.js'
 import { worldTeamById, worldTeamsList } from './worldState.js'
 import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/index.js'
@@ -168,6 +169,7 @@ export function ensureUltiworld(career) {
       lastPomMonth: null,
       coveredFixtureIds: [],
       worldEventCooldowns: {},
+      powerRankingsSnapshot: null,
       seeded: false,
     }
   }
@@ -177,6 +179,7 @@ export function ensureUltiworld(career) {
   if (typeof u.lastRoundCovered !== 'number') u.lastRoundCovered = 0
   if (u.lastPomMonth === undefined) u.lastPomMonth = null
   if (!u.worldEventCooldowns || typeof u.worldEventCooldowns !== 'object') u.worldEventCooldowns = {}
+  if (u.powerRankingsSnapshot === undefined) u.powerRankingsSnapshot = null
   return u
 }
 
@@ -690,6 +693,124 @@ function roundReviewArticles(career, league, round, namesPl, namesEn, rng) {
   }
 
   return out
+}
+
+const POWER_RANKING_CORE_SIZE = 7
+
+/** Siła drużyny: jakość rdzenia składu (OVR top 7) skorygowana o formę i bieżące wyniki. */
+function teamPowerScore(team, standingsRow) {
+  const players = team?.players ?? []
+  if (!players.length) return null
+  const core = [...players]
+    .sort((a, b) => getOverallRating(b.skills) - getOverallRating(a.skills))
+    .slice(0, Math.min(POWER_RANKING_CORE_SIZE, players.length))
+  const rosterOvr = core.reduce((s, p) => s + getOverallRating(p.skills), 0) / core.length
+  const avgForm = core.reduce((s, p) => s + (typeof p.form === 'number' ? p.form : FORM_DEFAULT), 0) / core.length
+  const formAdj = (avgForm - FORM_DEFAULT) * 0.15
+
+  const games = (standingsRow?.wins ?? 0) + (standingsRow?.losses ?? 0)
+  let resultsAdj = 0
+  if (games > 0) {
+    const winPct = (standingsRow.wins ?? 0) / games
+    const diffPerGame = pointDifferential(standingsRow) / games
+    const clampedDiff = Math.max(-5, Math.min(5, diffPerGame))
+    resultsAdj = ((winPct - 0.5) * 10 + clampedDiff) * 0.4
+  }
+
+  return {
+    score: rosterOvr + formAdj + resultsAdj,
+    rosterOvr: Math.round(rosterOvr),
+  }
+}
+
+/** Ranking siły wszystkich drużyn świata (posortowany malejąco po score). */
+export function computePowerRankings(career, league) {
+  const teams = worldTeamsList(career.world)
+  const rows = []
+  for (const team of teams) {
+    const powered = teamPowerScore(team, league?.standings?.[team.id])
+    if (!powered) continue
+    rows.push({ teamId: team.id, name: team.name, ...powered })
+  }
+  rows.sort((a, b) => b.score - a.score)
+  return rows.map((row, idx) => ({ ...row, rank: idx + 1 }))
+}
+
+function movementMark(prevRank, rank, lang) {
+  if (prevRank == null) return lang === UI_LANG.EN ? 'NEW' : 'NOWY'
+  if (prevRank > rank) return `▲${prevRank - rank}`
+  if (prevRank < rank) return `▼${rank - prevRank}`
+  return '–'
+}
+
+/** Ranking siły drużyn (top-7 OVR + forma + bieżące wyniki), publikowany po każdej kolejce. */
+function powerRankingsArticle(career, league, round, prevSnapshot, namesPl, namesEn) {
+  const rankings = computePowerRankings(career, league)
+  if (rankings.length < 2) return null
+
+  const linesPl = rankings
+    .map((r) => {
+      const label = namesPl[r.teamId] ?? r.name
+      const mark = movementMark(prevSnapshot?.[r.teamId], r.rank, UI_LANG.PL)
+      const flag = r.teamId === career.playerTeamId ? ' (Ty)' : ''
+      return `${r.rank}. ${label}${flag} — Power ${Math.round(r.score)} (OVR ${r.rosterOvr}) ${mark}`
+    })
+    .join('\n')
+  const linesEn = rankings
+    .map((r) => {
+      const label = namesEn[r.teamId] ?? namesPl[r.teamId] ?? r.name
+      const mark = movementMark(prevSnapshot?.[r.teamId], r.rank, UI_LANG.EN)
+      const flag = r.teamId === career.playerTeamId ? ' (You)' : ''
+      return `${r.rank}. ${label}${flag} — Power ${Math.round(r.score)} (OVR ${r.rosterOvr}) ${mark}`
+    })
+    .join('\n')
+
+  const top = rankings[0]
+  const topLabel = namesPl[top.teamId] ?? top.name
+  const topLabelEn = namesEn[top.teamId] ?? topLabel
+
+  let riser = null
+  let faller = null
+  if (prevSnapshot) {
+    for (const r of rankings) {
+      const prevRank = prevSnapshot[r.teamId]
+      if (prevRank == null) continue
+      const delta = prevRank - r.rank
+      if (delta > 0 && (!riser || delta > riser.delta)) riser = { teamId: r.teamId, delta }
+      if (delta < 0 && (!faller || delta < faller.delta)) faller = { teamId: r.teamId, delta }
+    }
+  }
+  const dekPl = riser
+    ? `Najwięcej zyskuje ${namesPl[riser.teamId] ?? riser.teamId} (+${riser.delta}), najwięcej traci ${
+        faller ? namesPl[faller.teamId] ?? faller.teamId : '—'
+      } (${faller ? faller.delta : 0}).`
+    : 'Pierwszy ranking siły w tym sezonie — punkt odniesienia na kolejne tygodnie.'
+  const dekEn = riser
+    ? `Biggest riser: ${namesEn[riser.teamId] ?? riser.teamId} (+${riser.delta}); biggest faller: ${
+        faller ? namesEn[faller.teamId] ?? faller.teamId : '—'
+      } (${faller ? faller.delta : 0}).`
+    : 'The season’s first power ranking — a baseline for the coming weeks.'
+
+  const publishDate = roundAwardsPublishDate(league, round) ?? career.league?.currentDate
+
+  const newSnapshot = Object.fromEntries(rankings.map((r) => [r.teamId, r.rank]))
+
+  return {
+    snapshot: newSnapshot,
+    article: makeArticle({
+      category: 'power_rankings',
+      headline: `Power Rankings po kolejce ${round}: liderem ${topLabel}`,
+      headlineEn: `Power Rankings after round ${round}: ${topLabelEn} on top`,
+      dek: dekPl,
+      dekEn,
+      body: `Ranking Ultiworld ocenia bieżącą siłę wszystkich drużyn na bazie jakości rdzenia składu (top ${POWER_RANKING_CORE_SIZE} wg OVR), aktualnej formy zawodników i wyników w rozgrywkach — to nie jest tabela ligowa, tylko nasza ocena, kto naprawdę jest najgroźniejszy.\n\n${linesPl}\n\nStrzałki pokazują zmianę pozycji względem poprzedniego rankingu.`,
+      bodyEn: `Ultiworld’s ranking rates every team’s current strength from core roster quality (top ${POWER_RANKING_CORE_SIZE} by OVR), player form, and on-field results — not a standings table, just our read on who’s actually most dangerous right now.\n\n${linesEn}\n\nArrows show the move versus the previous ranking.`,
+      date: publishDate,
+      career,
+      tags: ['power-rankings', `runda-${round}`],
+      relatedTeamIds: rankings.slice(0, 3).map((r) => r.teamId),
+    }),
+  }
 }
 
 function playerOfMonthArticle(career, league, names, monthIso, rng) {
@@ -2678,6 +2799,18 @@ export function processUltiworldTick(career, { date = null } = {}) {
     if (!isRoundComplete(league, r)) break
     if (!canPublishRoundAwards(league, r, simDate)) break
     newArticles.push(...roundReviewArticles(career, league, r, namesPl, namesEn, rng))
+    const powerResult = powerRankingsArticle(
+      career,
+      league,
+      r,
+      ultiworld.powerRankingsSnapshot,
+      namesPl,
+      namesEn,
+    )
+    if (powerResult) {
+      newArticles.push(powerResult.article)
+      ultiworld.powerRankingsSnapshot = powerResult.snapshot
+    }
     lastCovered = r
   }
   ultiworld.lastRoundCovered = lastCovered
