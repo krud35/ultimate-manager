@@ -138,8 +138,13 @@ function pickCutTarget(
   )
   // Cut w głąb liczony od pozycji cuttera, nie od dysku — inaczej „głęboki” cut
   // z tyłu stacka kończył się bliżej dysku niż start i huck nigdy nie powstawał.
-  const deepDist = Math.min(45, Math.max(20, situation.discDist + 8 + rng.float() * 14))
-  const { dx, dy } = vectorAtAngle(attackSign, outAngle, deepDist)
+  const deepDist = Math.min(75, Math.max(20, situation.discDist + 20 + rng.float() * 35))
+  // Downfield progres nie może zjadać kąt „diagonal” (do 58°, cos≈0.53) — realny głęboki
+  // cut jest w miarę prosto w pole, więc kąt daje tylko boczny dryf, nie ucina deepDist.
+  const rad = outAngle * DEG
+  const downfieldFactor = Math.max(0.82, Math.cos(rad))
+  const dx = deepDist * downfieldFactor * attackSign
+  const dy = Math.sin(rad) * deepDist
   return {
     kind: 'deep',
     x: clampFieldX(disc.x + dx),

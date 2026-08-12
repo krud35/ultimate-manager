@@ -4,6 +4,14 @@ import { clampFieldX, clampFieldY } from '../fieldDimensions.js'
 
 const DEFAULT_FLIGHT_SPEED_MPS = 10
 const MIN_CUT_SPEED_MPS = 4.5
+/**
+ * Niższa prędkość predykcji WYŁĄCZNIE dla cutu 'deep' (huck lead). Globalne DEFAULT=10
+ * w formule reach=min(toTarget, recvSpeed*pathDist/flightSpeedMps) przy recvSpeed≤~7.2
+ * strukturalnie nie pozwalało dobiec dalej niż ~72% celu — realny huck (≥40m) prawie
+ * nigdy nie powstawał (patrz audyt huck-scarcity). Obniżenie TYLKO dla deep daje więcej
+ * czasu w predykcji bez podnoszenia kompletności krótkich/średnich podań (te nadal 10).
+ */
+export const DEEP_CUT_FLIGHT_SPEED_MPS = 6
 
 function isCuttingState(state) {
   return state === 'ACTIVE_CUT' || state === 'INITIATING_CUT'

@@ -27,7 +27,7 @@ import {
   DEFENSE_STYLES,
 } from './tacticsBehavior.js'
 import { DEFENDER_STATE } from './defenderBrain.js'
-import { predictReceiverCatchPoint } from './discFlightPredict.js'
+import { predictReceiverCatchPoint, DEEP_CUT_FLIGHT_SPEED_MPS } from './discFlightPredict.js'
 import { mergeTraitAndCoachMods } from '../coachDirectives.js'
 import { windOptionScoreAdjust } from '../wind.js'
 
@@ -135,6 +135,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
       agent,
       throwerPos?.x ?? disc?.x ?? agent.x,
       throwerPos?.y ?? disc?.y ?? agent.y,
+      agent.cutKind === 'deep' ? DEEP_CUT_FLIGHT_SPEED_MPS : undefined,
     )
     const situation = evaluatePlayerSituation(agent.player, {
       x: catchPt.x,
@@ -379,7 +380,13 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
         (isDump ? 30 : 0) +
         (isContinuationCut ? 25 : 0) +
         Math.max(0, 40 - distFromThrower) +
-        (situation.separation ?? 0) * 4,
+        (situation.separation ?? 0) * 4 +
+        // Bez tego każda opcja ≥ HUCK_MIN_YARDS (40m) dostawała 0 z członu
+        // odległości (Math.max(0, 40-dist)) i niemal zawsze odpadała z limitu
+        // percepcji (perceivedOptionLimit) przed samym scoringiem — huck nigdy
+        // nie trafiał do `considered`, więc nigdy nie mógł zostać wybrany.
+        // Realnie otwarty głęboki odbiorca RZUCA SIĘ w oczy, nie jest niewidzialny.
+        (distFromThrower >= HUCK_MIN_YARDS && (situation.separation ?? 0) >= 3 ? 20 : 0),
       situation,
       traffic,
       laneThreats: traffic.laneThreats,

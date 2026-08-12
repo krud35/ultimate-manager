@@ -1,5 +1,6 @@
 import { attackDirectionX } from '../fieldDimensions.js'
 import { subStat } from './statFormulas.js'
+import { HUCK_MIN_YARDS } from '../matchStats.js'
 
 /** Postęp w stronę strefy punktowej (metry), dodatni = do przodu. */
 export function forwardProgressMeters(fromX, toX, possessionTeam) {
@@ -363,6 +364,13 @@ export function throwReleaseGateMs(stallCount, forwardProgress = 0, ctx = {}) {
     if (stallCount >= 4) return 1600
     return 3600
   }
+
+  // Lock-in na realnie otwarty huck (≥ HUCK_MIN_YARDS, sep ≥ 3): scanThrowOptions
+  // przelicza best opcję na nowo co tick, więc otwarte okno na hucka regularnie
+  // znikało (cutter biegnie dalej, szum decyzyjny), zanim minął zwykły gate
+  // (2100ms+ dla goldenOpen — ta sama wartość co dla zwykłego dobrego looku).
+  // Prawdziwy rzucający na tak otwarty deep strzela od razu, nie czeka.
+  if (fp >= HUCK_MIN_YARDS && sep >= 3) return 260
 
   // Set play — minimum ~2.1 s (stall 2+), dłużej przy słabszym looku.
   if (goldenOpen && fp >= 8) return 2100

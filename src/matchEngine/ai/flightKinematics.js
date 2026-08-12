@@ -88,7 +88,11 @@ export function createFlightContext({
     throwPathPoints ??
     buildThrowPathPoints(fromX, fromY, toX, toY, trajectory, throwType)
   const pathLen = pathLength(throwPath)
-  const flightSpeedMps = trajectory === 'deep' ? 14 : trajectory === 'overhead' ? 11 : 9
+  // 'deep' było 14 m/s — receiver goni pozycję dysku na ścieżce (predictCatchPointOnPath,
+  // lead tylko do 160ms), więc realny dystans dobiegu ≈ maxSprint*totalFlightMs. Przy 14
+  // i sprincie ~7.5 m/s to ~54% dystansu rzutu — huck (≥40m) nigdy nie był realnie
+  // domykany, mimo że cel cutu (cutterBrain) już regularnie sięgał 40m+.
+  const flightSpeedMps = trajectory === 'deep' ? 6.5 : trajectory === 'overhead' ? 11 : 9
   const totalFlightMs = Math.max(
     FLIGHT_TICK_MS * 4,
     Math.round((pathLen / flightSpeedMps) * 1000),

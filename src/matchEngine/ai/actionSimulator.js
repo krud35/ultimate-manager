@@ -14,7 +14,11 @@ import { tickDefenseAgent, DEFENDER_STATE, forceMarkPosition } from './defenderB
 import { defenderForPersonMark, isPersonDefense } from '../participants.js'
 import { THROW_TYPE, throwProfile } from '../throwTypes.js'
 import { discPositionHeld, discPositionInFlight } from '../discState.js'
-import { predictCatchPointOnPath, predictReceiverCatchPoint } from './discFlightPredict.js'
+import {
+  predictCatchPointOnPath,
+  predictReceiverCatchPoint,
+  DEEP_CUT_FLIGHT_SPEED_MPS,
+} from './discFlightPredict.js'
 import {
   createFlightContext,
   sampleFlightDisc,
@@ -727,7 +731,12 @@ export function runContinuousThrowSimulation({
         const catchPt =
           option.catchX != null && option.catchY != null
             ? { x: option.catchX, y: option.catchY }
-            : predictReceiverCatchPoint(recvAgent, fromX, fromY)
+            : predictReceiverCatchPoint(
+                recvAgent,
+                fromX,
+                fromY,
+                recvAgent?.cutKind === 'deep' ? DEEP_CUT_FLIGHT_SPEED_MPS : undefined,
+              )
         const toX = catchPt.x
         const toY = catchPt.y
 
