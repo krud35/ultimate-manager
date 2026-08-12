@@ -42,6 +42,15 @@ const pl = {
   thisMatch: (n) => `w tym meczu: ${n}`,
   formTitle: (n) => `Forma ${n}/100`,
   moraleTitle: (n) => `Morale ${n}/100`,
+  turnovers: 'Straty',
+  plusMinus: 'Bilans (+/-)',
+  completionPct: '% celnych podań',
+  throwMeters: 'Metry rzucone',
+  catchMeters: 'Metry złapane',
+  avgPerAttempt: (n) => `śr. ${n} m/rzut`,
+  avgPerCatch: (n) => `śr. ${n} m/łap.`,
+  runDistance: 'Przebiegnięty dystans',
+  noData: '—',
 }
 
 const en = {
@@ -86,6 +95,15 @@ const en = {
   thisMatch: (n) => `this match: ${n}`,
   formTitle: (n) => `Form ${n}/100`,
   moraleTitle: (n) => `Morale ${n}/100`,
+  turnovers: 'Turnovers',
+  plusMinus: 'Plus/minus (+/-)',
+  completionPct: 'Pass completion %',
+  throwMeters: 'Throwing meters',
+  catchMeters: 'Receiving meters',
+  avgPerAttempt: (n) => `avg ${n} m/throw`,
+  avgPerCatch: (n) => `avg ${n} m/catch`,
+  runDistance: 'Distance run',
+  noData: '—',
 }
 
 export function playerProfileStrings(lang = UI_LANG.PL) {

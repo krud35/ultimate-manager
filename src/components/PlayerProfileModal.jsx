@@ -107,6 +107,7 @@ export default function PlayerProfileModal({
   onToggleShortlist = null,
   onScoutPlayer = null,
   scoutPending = false,
+  scoutCost = null,
   onStartNegotiation = null,
 }) {
   const effectiveKnowledge = knowledge ?? (isOwnPlayer ? 100 : 40)
@@ -377,7 +378,11 @@ export default function PlayerProfileModal({
                 disabled={scoutBusy || scoutPending}
                 className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
               >
-                {scoutPending ? ts.scoutPlayerPending : ts.scoutPlayerButton}
+                {scoutPending
+                  ? ts.scoutPlayerPending
+                  : scoutCost != null
+                    ? `${ts.scoutPlayerButton} (${formatUsd(scoutCost)})`
+                    : ts.scoutPlayerButton}
               </button>
             )}
             {scoutFlash && (
@@ -508,6 +513,48 @@ export default function PlayerProfileModal({
                   {t.thisMatch(s.pointsPlayedMatch)}
                 </p>
               )}
+            </div>
+            <div>
+              <p className="text-xs text-ufa-muted">{t.turnovers}</p>
+              <p className="text-lg font-semibold tabular-nums">{s.turnovers}</p>
+            </div>
+            <div>
+              <p className="text-xs text-ufa-muted">{t.plusMinus}</p>
+              <p
+                className={`text-lg font-semibold tabular-nums ${
+                  s.plusMinus > 0 ? 'text-emerald-400' : s.plusMinus < 0 ? 'text-red-400' : ''
+                }`}
+              >
+                {s.plusMinus > 0 ? `+${s.plusMinus}` : s.plusMinus}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-ufa-muted">{t.completionPct}</p>
+              <p className="text-lg font-semibold tabular-nums">
+                {s.completionPct != null ? `${Math.round(s.completionPct)}%` : t.noData}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-ufa-muted">{t.throwMeters}</p>
+              <p className="text-lg font-semibold tabular-nums">{Math.round(s.throwMeters)}m</p>
+              {s.avgThrowMetersPerAttempt != null && (
+                <p className="text-[11px] text-ufa-muted mt-0.5">
+                  {t.avgPerAttempt(s.avgThrowMetersPerAttempt.toFixed(1))}
+                </p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-ufa-muted">{t.catchMeters}</p>
+              <p className="text-lg font-semibold tabular-nums">{Math.round(s.catchMeters)}m</p>
+              {s.avgCatchMetersPerCatch != null && (
+                <p className="text-[11px] text-ufa-muted mt-0.5">
+                  {t.avgPerCatch(s.avgCatchMetersPerCatch.toFixed(1))}
+                </p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-ufa-muted">{t.runDistance}</p>
+              <p className="text-lg font-semibold tabular-nums">{s.runKm.toFixed(1)} km</p>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { MATCH_CONFIG } from './config.js'
-import { recordBlock, recordGoal, recordTurnover } from './boxScore.js'
+import { recordBlock, recordGoal, recordTurnover, recordThrowResult, recordRunMeters } from './boxScore.js'
 import {
   buildPointLineups,
   createPersonMatchups,
@@ -64,6 +64,25 @@ import {
 
 function playerLabel(p) {
   return `${p.firstName} ${p.lastName}`
+}
+
+/**
+ * Szacunek dystansu przebiegniętego przez zawodnika w punkcie (m) — cały ruch po
+ * boisku (cuty, powroty, obrona), nie tylko trasa dysku. fastMode nie trzyma klatek
+ * ruchu (motionTrace), więc to jedyne dostępne źródło "distance run" spójne dla
+ * WSZYSTKICH meczów ligowych (nie tylko granych przez gracza pełnym silnikiem).
+ */
+function estimateRunMetersForPoint(rng, throwCount = 0) {
+  const base = 90 + rng() * 60
+  const extra = Math.min(60, throwCount * 6)
+  return base + extra
+}
+
+function recordPointRunMeters(boxScore, lineup, rng, throwCount) {
+  if (!boxScore) return
+  for (const player of lineup ?? []) {
+    recordRunMeters(boxScore, player.id, estimateRunMetersForPoint(rng, throwCount))
+  }
 }
 
 /**
@@ -776,6 +795,9 @@ export function simulatePoint({
           stallCount: attemptStall,
         })
       }
+      if (boxScore) {
+        recordThrowResult(boxScore, thrower.id, { success: true, receiverId: receiver.id, yardsGained })
+      }
 
       const successNarrative = buildThrowNarrative({
         phase: 'success',
@@ -859,6 +881,9 @@ export function simulatePoint({
           stallCount: attemptStall,
         })
       }
+      if (boxScore) {
+        recordThrowResult(boxScore, thrower.id, { success: false })
+      }
 
       const failNarrative = buildThrowNarrative({
         phase: 'fail',
@@ -920,6 +945,8 @@ export function simulatePoint({
     [...pointLineups.home, ...pointLineups.away],
     boxScore,
   )
+  recordPointRunMeters(boxScore, pointLineups.home, rng, throwCount)
+  recordPointRunMeters(boxScore, pointLineups.away, rng, throwCount)
 
   events.push(
     createEvent(EVENT.POINT_END, {
@@ -1263,6 +1290,9 @@ export function simulatePointFast({
       if (matchStats) {
         recordThrowAttempt(matchStats, possession, { success: true, yardsGained, isHuck })
       }
+      if (boxScore) {
+        recordThrowResult(boxScore, thrower.id, { success: true, receiverId: receiver.id, yardsGained })
+      }
 
       events.push(
         createEvent(EVENT.THROW_SUCCESS, {
@@ -1305,6 +1335,9 @@ export function simulatePointFast({
           turnoverMeters: discPositionBefore,
         })
       }
+      if (boxScore) {
+        recordThrowResult(boxScore, thrower.id, { success: false })
+      }
 
       events.push(
         createEvent(EVENT.THROW_FAIL, {
@@ -1341,6 +1374,8 @@ export function simulatePointFast({
   }
 
   recordPointPlayedForPlayers([...pointLineups.home, ...pointLineups.away], boxScore)
+  recordPointRunMeters(boxScore, pointLineups.home, rng, throwCount)
+  recordPointRunMeters(boxScore, pointLineups.away, rng, throwCount)
 
   events.push(
     createEvent(EVENT.POINT_END, {

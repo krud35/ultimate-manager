@@ -397,6 +397,43 @@ function teamHasTrainingPlanOnDate(team, isoDate) {
 }
 
 /**
+ * Dzienny wzrost prospektów akademii. Nie trenują z seniorami (poza `team.players`,
+ * patrz runSessionCore w teamTraining.js), więc bez tego ticka jedyny ich rozwój to
+ * `applyAcademyOffseasonDevelopment` — 2 sesje na CAŁY offseason, zero w trakcie sezonu.
+ * Reużywa growthMultiplier/getIndividualFocusMods jak `applyOffseasonCampGrowth`, tylko
+ * skalowane przez dayScale (ta sama konwencja co reszta tego ticka).
+ */
+function applyAcademyDailyGrowth(player, dayScale, rng) {
+  ensurePlayerDevelopment(player)
+  const mods = getIndividualFocusMods(player)
+  if (mods.isRest) return
+  const cats =
+    mods.focusedCats === 'all' || !mods.focusedCats
+      ? Object.keys(PLAYER_STAT_CATEGORIES)
+      : mods.focusedCats
+  const mult = growthMultiplier(player, 0.85)
+  const weights = cats.map((c) => mods.categoryPickWeight(c))
+  const total = weights.reduce((s, w) => s + w, 0)
+  let roll = rng() * total
+  let cat = cats[0]
+  for (let j = 0; j < cats.length; j += 1) {
+    roll -= weights[j]
+    if (roll <= 0) {
+      cat = cats[j]
+      break
+    }
+  }
+  const weeklyChance = Math.min(0.9, 0.5 * mult * mods.categoryGrowthMult(cat))
+  if (rng() > weeklyChance * dayScale) return
+  const key = pickSubKey(cat, rng)
+  if (!key) return
+  const pot = player.potential ?? 80
+  const current = getSubStat(player.skills, cat, key)
+  if (current >= pot + 3 && rng() > 0.15) return
+  player.skills = bumpSubStat(player.skills, cat, key, 1)
+}
+
+/**
  * Dzienny tick: aging / AI fokus / pasywna regeneracja.
  * Wzrost skilli tylko na treningach drużynowych (fokus = modyfikator sesji).
  */
@@ -466,6 +503,12 @@ export function applyDailyDevelopment(league, options = {}) {
       }
 
       if (getOverallRating(player.skills) !== before) changes += 1
+    }
+
+    for (const prospect of team.academyPlayers ?? []) {
+      const before = getOverallRating(prospect.skills)
+      applyAcademyDailyGrowth(prospect, dayScale, rng)
+      if (getOverallRating(prospect.skills) !== before) changes += 1
     }
   }
 

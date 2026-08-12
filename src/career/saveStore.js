@@ -9,6 +9,36 @@ function emptySlots() {
   return Array.from({ length: SLOT_COUNT }, () => null)
 }
 
+function isQuotaExceededError(err) {
+  if (!err) return false
+  return (
+    err.name === 'QuotaExceededError' ||
+    err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    err.code === 22 ||
+    err.code === 1014 ||
+    /quota/i.test(err.message ?? '')
+  )
+}
+
+/**
+ * Wszystkie 3 sloty dzielą jeden klucz localStorage — zapis do JEDNEGO slotu
+ * wymaga zserializowania WSZYSTKICH trzech naraz. Jeśli inny slot spuchł
+ * (długa kariera, dużo historii meczów), można trafić na limit przeglądarki
+ * nawet zapisując do pustego slotu. Łapiemy to i rzucamy czytelny błąd
+ * zamiast surowego "QuotaExceededError" z przeglądarki.
+ */
+export class StorageQuotaError extends Error {
+  constructor() {
+    super(
+      'Brak miejsca w pamięci przeglądarki (localStorage). Usuń zapisaną karierę w innym slocie, żeby zwolnić miejsce.',
+    )
+    this.name = 'StorageQuotaError'
+    this.messagePl = this.message
+    this.messageEn =
+      "Browser storage is full (localStorage quota exceeded). Delete a save in another slot to free up space."
+  }
+}
+
 function normalizeStore(raw) {
   const slots = emptySlots()
   if (!raw || typeof raw !== 'object') {
@@ -40,7 +70,12 @@ export function writeSaveStore(store) {
     slots[i] = slot && typeof slot === 'object' ? careerForStorage(slot) : null
   }
   const payload = { version: SAVE_VERSION, slots }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+  } catch (err) {
+    if (isQuotaExceededError(err)) throw new StorageQuotaError()
+    throw err
+  }
   return normalizeStore(payload)
 }
 

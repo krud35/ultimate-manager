@@ -111,12 +111,13 @@ import CalendarSimOverlay from './components/CalendarSimOverlay'
 import WelcomeModal from './components/WelcomeModal'
 import TutorialGuide from './components/TutorialGuide'
 import { buildSeasonStateFromLeague } from './seasonEngine/seasonStateFromLeague.js'
-import { displaySeasonLabel, pickLabel, pickCopy } from './ui/locale'
+import { displaySeasonLabel, pickLabel, pickCopy, UI_LANG } from './ui/locale'
 import { useUiLang } from './ui/UiLangContext'
 import { LangSwitch } from './ui/LangSwitch'
 import { careerFlowStrings } from './ui/strings/careerFlow'
 import { shellStrings } from './ui/strings/shell'
 import { hubStrings } from './ui/strings/hub'
+import { commonStrings } from './ui/strings/common'
 
 const NAV_CATEGORIES = [
   {
@@ -432,6 +433,14 @@ function CommandPalette({ open, items, onNavigate, onClose, placeholder, emptyLa
  * losowe, kontuzje, Ultiworld) bez zapisu — pozwala na łańcuchowanie wielu dni w pętli
  * (ciągła symulacja) zanim stan zostanie raz zapisany przez persistCareer.
  */
+/** Zamienia surowy błąd zapisu (np. localStorage quota) na czytelny komunikat. */
+function friendlySaveErrorMessage(err, lang) {
+  if (err?.name === 'StorageQuotaError') {
+    return lang === UI_LANG.EN ? err.messageEn : err.messagePl
+  }
+  return err?.message || String(err)
+}
+
 function computeCalendarDayStep(career, nextLeague, { weekTick = false, trainingDate = null } = {}) {
   const inboxMessages = []
   if (trainingDate) {
@@ -580,6 +589,7 @@ export default function App() {
   const [career, setCareer] = useState(null)
   const [creatingCareer, setCreatingCareer] = useState(false)
   const [careerCreateError, setCareerCreateError] = useState('')
+  const [appError, setAppError] = useState('')
 
   const [activeTab, setActiveTab] = useState('hub')
   const [leagueFixture, setLeagueFixture] = useState(null)
@@ -727,72 +737,76 @@ export default function App() {
     const maxDays = 400
 
     try {
-      while (daysAdvanced < maxDays) {
-        const dayBefore = dayLeague.currentDate
-        const result = advanceCalendarDay(dayLeague)
-        const step = computeCalendarDayStep(workingCareer, dayLeague, {
-          weekTick: !!result.weekTick,
-          trainingDate: dayBefore,
-        })
-        workingCareer = {
-          ...workingCareer,
-          league: step.league,
-          world: step.world,
-          transferLog: step.transferLog,
-          aiTransfersLastDate: step.aiTransfersLastDate,
-          inbox: step.inbox,
-          ultiworld: step.ultiworld,
-        }
-        dayLeague = step.league
-        daysAdvanced += 1
+      try {
+        while (daysAdvanced < maxDays) {
+          const dayBefore = dayLeague.currentDate
+          const result = advanceCalendarDay(dayLeague)
+          const step = computeCalendarDayStep(workingCareer, dayLeague, {
+            weekTick: !!result.weekTick,
+            trainingDate: dayBefore,
+          })
+          workingCareer = {
+            ...workingCareer,
+            league: step.league,
+            world: step.world,
+            transferLog: step.transferLog,
+            aiTransfersLastDate: step.aiTransfersLastDate,
+            inbox: step.inbox,
+            ultiworld: step.ultiworld,
+          }
+          dayLeague = step.league
+          daysAdvanced += 1
 
-        setCalendarSim({
-          currentDate: dayLeague.currentDate,
-          daysAdvanced,
-          recentMessages: step.inbox.slice(0, 3),
-          latestUltiworld: step.ultiworld?.articles?.[0] ?? null,
-        })
+          setCalendarSim({
+            currentDate: dayLeague.currentDate,
+            daysAdvanced,
+            recentMessages: step.inbox.slice(0, 3),
+            latestUltiworld: step.ultiworld?.articles?.[0] ?? null,
+          })
 
-        if (result.blocked && result.playerFixture) {
-          blockedFixture = result.playerFixture
-          break
-        }
-        const blocker = firstImportantInboxMessage(step.inboxMessages)
-        if (blocker) {
-          blockingMessageId = blocker.id
-          break
-        }
-        if (isOfficialSeasonEnded(dayLeague) || dayLeague.status === 'complete') {
-          break
-        }
+          if (result.blocked && result.playerFixture) {
+            blockedFixture = result.playerFixture
+            break
+          }
+          const blocker = firstImportantInboxMessage(step.inboxMessages)
+          if (blocker) {
+            blockingMessageId = blocker.id
+            break
+          }
+          if (isOfficialSeasonEnded(dayLeague) || dayLeague.status === 'complete') {
+            break
+          }
 
-        // Krótka pauza na dzień, żeby przesuwanie kalendarza było widoczne — im
-        // dłużej leci symulacja, tym szybciej przyspiesza, żeby nie męczyć gracza.
-        const delay = daysAdvanced <= 20 ? 140 : daysAdvanced <= 60 ? 40 : 0
-        await new Promise((r) => setTimeout(r, delay))
+          // Krótka pauza na dzień, żeby przesuwanie kalendarza było widoczne — im
+          // dłużej leci symulacja, tym szybciej przyspiesza, żeby nie męczyć gracza.
+          const delay = daysAdvanced <= 20 ? 140 : daysAdvanced <= 60 ? 40 : 0
+          await new Promise((r) => setTimeout(r, delay))
+        }
+      } finally {
+        setCalendarSim(null)
       }
-    } finally {
-      setCalendarSim(null)
-    }
 
-    const next = persistCareer(career, {
-      league: workingCareer.league,
-      world: workingCareer.world,
-      transferLog: workingCareer.transferLog,
-      aiTransfersLastDate: workingCareer.aiTransfersLastDate,
-      inbox: workingCareer.inbox,
-      ultiworld: workingCareer.ultiworld,
-    })
-    syncCareer(next)
+      const next = persistCareer(career, {
+        league: workingCareer.league,
+        world: workingCareer.world,
+        transferLog: workingCareer.transferLog,
+        aiTransfersLastDate: workingCareer.aiTransfersLastDate,
+        inbox: workingCareer.inbox,
+        ultiworld: workingCareer.ultiworld,
+      })
+      syncCareer(next)
 
-    if (blockedFixture) {
-      setActionRequiredMessageId(null)
-      setLeagueFixture(blockedFixture)
-      setActiveTab('match')
-    } else {
-      setActionRequiredMessageId(blockingMessageId)
+      if (blockedFixture) {
+        setActionRequiredMessageId(null)
+        setLeagueFixture(blockedFixture)
+        setActiveTab('match')
+      } else {
+        setActionRequiredMessageId(blockingMessageId)
+      }
+    } catch (err) {
+      setAppError(friendlySaveErrorMessage(err, uiLang))
     }
-  }, [career, simProgress, calendarSim, syncCareer])
+  }, [career, simProgress, calendarSim, syncCareer, uiLang])
 
   const applyFastForwardSideEffects = useCallback(
     async (nextLeague, rangeStart, weekTicks, { includeEndDay = false, onProgress } = {}) => {
@@ -1006,6 +1020,8 @@ export default function App() {
       if (isOfficialSeasonEnded(nextLeague) || nextLeague.status === 'complete') {
         setActiveTab('hub')
       }
+    } catch (err) {
+      setAppError(friendlySaveErrorMessage(err, uiLang))
     } finally {
       setSimProgress(null)
     }
@@ -1153,6 +1169,8 @@ export default function App() {
         } else {
           setActiveTab('calendar')
         }
+      } catch (err) {
+        setAppError(friendlySaveErrorMessage(err, uiLang))
       } finally {
         setSimProgress(null)
       }
@@ -1723,12 +1741,12 @@ export default function App() {
         setPendingWelcome(true)
         refreshSlots()
       } catch (err) {
-        setCareerCreateError(err?.message || String(err))
+        setCareerCreateError(friendlySaveErrorMessage(err, uiLang))
       } finally {
         setCreatingCareer(false)
       }
     },
-    [refreshSlots, creatingCareer],
+    [refreshSlots, creatingCareer, uiLang],
   )
 
   const handleStartNextSeason = useCallback(() => {
@@ -1997,7 +2015,9 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'leaders' && <LeagueLeadersView league={league} />}
+        {activeTab === 'leaders' && (
+          <LeagueLeadersView league={league} career={career} onCareerUpdate={handleTransfersUpdate} />
+        )}
 
         {activeTab === 'career' && (
           <CareerHistoryView career={career} onStartNextSeason={handleStartNextSeason} />
@@ -2208,6 +2228,22 @@ export default function App() {
 
       <SimulationProgressOverlay progress={simProgress} />
       <CalendarSimOverlay sim={calendarSim} />
+
+      {appError && (
+        <div className="fixed inset-x-0 top-0 z-[90] flex justify-center px-4 pt-3">
+          <div className="flex max-w-xl items-start gap-3 rounded-lg border border-red-500/40 bg-ufa-panel px-4 py-3 text-sm text-red-300 shadow-2xl shadow-black/50">
+            <span className="flex-1">{appError}</span>
+            <button
+              type="button"
+              onClick={() => setAppError('')}
+              className="text-red-300/70 hover:text-red-200"
+              aria-label={commonStrings(uiLang).close}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {pendingWelcome && (
         <WelcomeModal

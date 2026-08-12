@@ -8,7 +8,12 @@ import {
   subStat,
 } from './statFormulas.js'
 import { integrateAgentMotion } from './playerMovement.js'
-import { defenseMods, shouldAttemptPoach } from './tacticsBehavior.js'
+import {
+  defenseMods,
+  shouldAttemptPoach,
+  zoneStructuralTarget,
+  ZONE_SLOT_ROLES,
+} from './tacticsBehavior.js'
 import { isCloggingThrowLane } from './offenseReorganization.js'
 import { mergeTraitAndCoachMods } from '../coachDirectives.js'
 
@@ -394,6 +399,60 @@ export function tickDefenderBrain(agent, ctx) {
     lastCutterState: targetOffense?.state,
     markTargetId: agent.markTargetId ?? targetOffense?.id ?? null,
   }
+}
+
+/**
+ * Ruch obrońcy w strefie (cup/wing/middle/deep): trzyma slot względem AKTUALNEJ
+ * pozycji dysku, zamiast gonić najbliższego zawodnika ataku jak w markingu 1:1.
+ * Wcześniej każdy defAgent (zone lub nie) leciał przez resolvePersonMarkTarget, co
+ * dla zone (personMark=false, brak matchupów) spadało do "goń najbliższego" — cały
+ * cup rojem zbiegał się na jednego zawodnika ataku. Marker (fieldRole==='zone_marker')
+ * NIE przechodzi przez tę funkcję — dalej idzie przez zwykły tickDefenderBrain z
+ * isMarkerOnThrower=true (śledzi realnie throwera, forceMarkPosition), bo to jedyny
+ * slot strefy, który faktycznie kryje konkretną osobę.
+ */
+export function tickZoneDefenderBrain(agent, ctx) {
+  const { disc, throwerAgent, dtSec, attackSign = 1, defenseStyle = 'zone_cup' } = ctx
+  const player = agent.player ?? agent
+  const zoneKind = defenseMods(defenseStyle).zoneKind ?? 'cup'
+  const discPos = disc ?? throwerAgent ?? { x: agent.x, y: agent.y }
+  const anchor = zoneStructuralTarget(agent.fieldRole, agent.roleSlotIndex ?? 0, {
+    discX: discPos.x,
+    discY: discPos.y,
+    attackSign,
+    zoneKind,
+  })
+  const next = moveToward(agent, anchor.x, anchor.y, defenderSpeedMps(player), dtSec)
+  return {
+    ...next,
+    state: DEFENDER_STATE.COVERING_CUTTER,
+    reactUntil: 0,
+    pendingTarget: null,
+    poachUntil: 0,
+    poachedFromId: null,
+    nextPoachCheckMs: agent.nextPoachCheckMs ?? 0,
+    lastTargetX: anchor.x,
+    lastTargetY: anchor.y,
+    lastCutterState: null,
+    markTargetId: null,
+    isActiveMark: false,
+  }
+}
+
+/**
+ * Dispatcher: sloty strefy (poza markerem) idą przez tickZoneDefenderBrain, marker
+ * strefy i cała reszta (person / clam / AP) — przez zwykły tickDefenderBrain jak
+ * dotychczas. Jeden punkt wejścia dla actionSimulator.js, żeby obie kopie pętli
+ * tickowej (setup + lot) nie mogły się rozjechać w tym rozróżnieniu.
+ */
+export function tickDefenseAgent(agent, ctx) {
+  if (ZONE_SLOT_ROLES.has(agent.fieldRole)) {
+    if (agent.fieldRole === 'zone_marker') {
+      return tickDefenderBrain(agent, { ...ctx, isMarkerOnThrower: true })
+    }
+    return tickZoneDefenderBrain(agent, ctx)
+  }
+  return tickDefenderBrain(agent, ctx)
 }
 
 export function createDefenderAgent(player, x, y, extra = {}) {

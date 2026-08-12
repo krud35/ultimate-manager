@@ -7,6 +7,7 @@ export {
   writeSlot,
   clearSlot,
   slotSummary,
+  StorageQuotaError,
 } from './saveStore.js'
 export {
   createCareer,
@@ -47,6 +48,8 @@ export {
   WEEKDAY_OPTIONS,
   ensureTeamTraining,
   getTacticsFamiliarity,
+  tacticsFamiliarityMultiplier,
+  applyMatchTacticsFamiliarityGain,
   addWeeklyTeamTraining,
   updateWeeklyTeamTraining,
   removeWeeklyTeamTraining,

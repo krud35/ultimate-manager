@@ -25,6 +25,7 @@ import {
   toggleShortlist,
   hasPendingScoutMission,
   queueScoutMission,
+  scoutMissionCost,
   findPlayerTeamId,
 } from '../career'
 
@@ -569,6 +570,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
             ? hasPendingScoutMission(buyer, { kind: 'player', targetPlayerId: profilePlayer.id })
             : false
         }
+        scoutCost={buyer ? scoutMissionCost('player', buyer) : null}
         onToggleShortlist={(playerId) => {
           toggleShortlist(buyer, playerId)
           onCareerUpdate({ world: career.world })

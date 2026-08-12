@@ -1,7 +1,7 @@
 export { createLeagueSeason, teamNameMap, fixturesForRound, playerFixtureForRound, isRoundComplete, pendingFixturesInRound, findFixture, cloneLeague, isNeutralVenue, venueMarkerForTeam } from './leagueState.js'
 export { generateRoundRobinSchedule, generateDoubleRoundRobinSchedule, flattenSchedule } from './schedule.js'
 export { standingsTable, pointDifferential, applyGameToStandings } from './standings.js'
-export { topLeaders, mergeMatchBoxScore, seasonStatsForPlayer } from './leagueStats.js'
+export { topLeaders, topPlusMinusLeaders, mergeMatchBoxScore, seasonStatsForPlayer } from './leagueStats.js'
 export {
   simulateFixtureMatch,
   tryForfeitMatchRecord,

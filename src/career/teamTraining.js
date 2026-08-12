@@ -232,6 +232,23 @@ export function tacticsFamiliarityMultiplier(teamOrValue) {
   return 1 + ((v - 40) / 100) * 0.14
 }
 
+const MATCH_TACTICS_FAMILIARITY_GAIN = 0.6
+
+/**
+ * Rozegranie meczu w danym systemie taktycznym też buduje zgranie — nie tylko trening.
+ * Ten sam soft-cap co applyTacticsGain, tylko mniejszy przyrost (mecz to jedna okazja,
+ * trening zwykle zdarza się częściej w tygodniu). Wywoływane raz na drużynę na mecz.
+ */
+export function applyMatchTacticsFamiliarityGain(team) {
+  const tt = ensureTeamTraining(team)
+  if (!tt) return 0
+  const cur = tt.tacticsFamiliarity ?? 38
+  const roomMult = cur >= 85 ? 0.25 : cur >= 70 ? 0.5 : cur >= 55 ? 0.75 : 1
+  const before = cur
+  tt.tacticsFamiliarity = clampInt(cur + MATCH_TACTICS_FAMILIARITY_GAIN * roomMult, 0, 100)
+  return tt.tacticsFamiliarity - before
+}
+
 function validateFocusPair(focusA, focusB) {
   if (!FOCUS_BY_ID[focusA] || !FOCUS_BY_ID[focusB]) return false
   if (focusA === focusB) return false

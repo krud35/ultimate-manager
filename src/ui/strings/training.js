@@ -51,6 +51,10 @@ const pl = {
   attendance: 'frekwencja',
   engagement: 'zaangażowanie',
   luck: 'szczęście',
+  selectAll: 'Zaznacz wszystkich',
+  selectedCount: (n) => `Zaznaczono: ${n}`,
+  applyToSelected: 'Zastosuj do zaznaczonych',
+  clearSelection: 'Wyczyść zaznaczenie',
 }
 
 const en = {
@@ -103,6 +107,10 @@ const en = {
   attendance: 'attendance',
   engagement: 'engagement',
   luck: 'luck',
+  selectAll: 'Select all',
+  selectedCount: (n) => `Selected: ${n}`,
+  applyToSelected: 'Apply to selected',
+  clearSelection: 'Clear selection',
 }
 
 export function trainingStrings(lang = UI_LANG.PL) {

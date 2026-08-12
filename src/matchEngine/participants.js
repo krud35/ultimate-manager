@@ -15,16 +15,31 @@ import { mergeTraitAndCoachMods } from './coachDirectives.js'
  * meczu. W fastMode (gdzie throwera losuje się co podanie, patrz simulatePointFast)
  * to koncentrowało prawie wszystkie asysty drużyny na jednym graczu (10-13/mecz).
  * Lepszy zawodnik nadal ma WIĘKSZĄ szansę (proporcjonalną do score), ale nie 100%.
+ *
+ * Poprawka: pierwsza wersja dodawała szum PRZED wagowaniem bez wzmocnienia realnego
+ * rozstawu — najlepsza siódemka na linii ma z natury ciasny rozstaw skilli (np. 82-88
+ * w prawdziwym rosterze UFA, rozpiętość ~6 pkt), a szum ±15 był większy niż ta
+ * rozpiętość, więc wybór throwera/odbiorcy wychodził praktycznie płaski (~14% na
+ * każdego z 7 — zmierzone: tmp-thrower-selection-spread.mjs). AMPLIFY wzmacnia
+ * odchylenie od ŚREDNIEJ SIÓDEMKI (nie stałego punktu — działa tak samo dla słabych
+ * i gwiazdorskich składów), NOISE jest mniejszy, żeby wzmocniony rozstaw nie ginął.
  */
+const SELECTION_AMPLIFY = 4
+const SELECTION_NOISE = 6
+
 function weightedScore(rng, players, weights, scoreBoostFn = null) {
-  const entries = players.map((p) => {
+  const raw = players.map((p) => {
     let score = weightedLegacyStat(p.skills, weights)
     score *= moraleSkillMultiplier(getPlayerMorale(p))
     score *= staminaParticipationFactor(p.currentStamina ?? 100)
     if (scoreBoostFn) score *= scoreBoostFn(p) ?? 1
-    const weight = Math.max(1, score + rng.float() * 15)
-    return { player: p, weight }
+    return { player: p, score }
   })
+  const avg = raw.reduce((sum, e) => sum + e.score, 0) / raw.length
+  const entries = raw.map((e) => ({
+    player: e.player,
+    weight: Math.max(1, avg + (e.score - avg) * SELECTION_AMPLIFY + rng.float() * SELECTION_NOISE),
+  }))
   const total = entries.reduce((sum, e) => sum + e.weight, 0)
   let roll = rng.float() * total
   for (const e of entries) {

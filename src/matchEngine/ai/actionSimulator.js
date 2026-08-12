@@ -10,7 +10,7 @@ import { evaluatePlayerSituation } from './spatialEvaluator.js'
 import { createCutterAgent, tickCutterBrain, CUTTER_STATE } from './cutterBrain.js'
 import { scanThrowOptions, separationFromSituation } from './throwerBrain.js'
 import { throwReleaseGateMs } from './throwerDecision.js'
-import { tickDefenderBrain, DEFENDER_STATE, forceMarkPosition } from './defenderBrain.js'
+import { tickDefenseAgent, DEFENDER_STATE, forceMarkPosition } from './defenderBrain.js'
 import { defenderForPersonMark, isPersonDefense } from '../participants.js'
 import { THROW_TYPE, throwProfile } from '../throwTypes.js'
 import { discPositionHeld, discPositionInFlight } from '../discState.js'
@@ -105,6 +105,7 @@ function layoutToAgents(layout, teamId, rosterLineup = [], tactics = null) {
       teamId,
       fieldRole: p.fieldRole,
       stackIndex: p.stackIndex ?? stackIndex,
+      roleSlotIndex: p.roleSlotIndex ?? 0,
       isThrower: p.fieldRole === 'thrower',
       markTargetId: p.markTargetId ?? null,
     }
@@ -168,7 +169,11 @@ function snapshotFrame(ms, offenseAgents, defenseAgents, throwerId, disc = null,
         vx: a.vx ?? 0,
         vy: a.vy ?? 0,
         // Marker throwera + markTargetId z matchupu (nie tylko aktywny stall).
-        role: isActiveMark ? 'marker' : a.fieldRole === 'zone_cup' ? 'zone_cup' : 'defender',
+        role: isActiveMark
+          ? 'marker'
+          : a.fieldRole?.startsWith('zone_')
+            ? a.fieldRole
+            : 'defender',
         isActiveMark,
         markTargetId: isActiveMark ? throwerId : a.markTargetId ?? null,
         defenderState: a.state,
@@ -288,6 +293,7 @@ export function runContinuousThrowSimulation({
       attackSign,
       forceSide,
       personMatchups,
+      defenseTactics: defenseTeam?.tactics,
     },
   )
 
@@ -387,8 +393,11 @@ export function runContinuousThrowSimulation({
     isPersonDefense(defenseStyle) && personMatchups
       ? defenderForPersonMark(personMatchups, thrower, defenseLineup, rng)
       : null
+  const zoneMarkerAgent = defenseAgents.find((a) => a.fieldRole === 'zone_marker')
   let markerId =
     markerOnThrower?.id ??
+    zoneMarkerAgent?.id ??
+    zoneMarkerAgent?.player?.id ??
     defenseAgents.reduce((best, a) => {
       if (!throwerAgent) return best
       const d = Math.hypot((a.x ?? 0) - throwerAgent.x, (a.y ?? 0) - throwerAgent.y)
@@ -525,7 +534,7 @@ export function runContinuousThrowSimulation({
           : resolvePersonMarkTarget(defAgent, offenseAgents, null)
         const isMarkerOnThrower =
           targetOff?.isThrower || targetOff?.player?.id === thrower.id
-        return tickDefenderBrain(defAgent, {
+        return tickDefenseAgent(defAgent, {
           targetOffense: targetOff,
           throwerAgent,
           disc: discForAi,
@@ -615,7 +624,7 @@ export function runContinuousThrowSimulation({
         const activePoachers = defenseAgents.filter(
           (a) => a.state === DEFENDER_STATE.POACHING,
         ).length
-        return tickDefenderBrain(defAgent, {
+        return tickDefenseAgent(defAgent, {
           targetOffense: targetOff,
           throwerAgent,
           disc,

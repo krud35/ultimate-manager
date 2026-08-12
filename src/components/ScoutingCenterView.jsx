@@ -19,12 +19,14 @@ import {
   pendingScoutMissions,
   hasPendingScoutMission,
   queueScoutMission,
+  scoutMissionCost,
   isPlayerShortlisted,
   toggleShortlist,
   removeFromShortlist,
   buildTransferRowForPlayer,
   submitTransferOffer,
   mergeInbox,
+  formatUsd,
 } from '../career'
 
 export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam }) {
@@ -38,6 +40,7 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
 
   const buyer = worldTeamById(career.world, career.playerTeamId)
   const shortlist = buyer?.scouting?.shortlist ?? []
+  const playerScoutCost = buyer ? scoutMissionCost('player', buyer) : null
 
   const shortlistRows = shortlist
     .map((playerId) => {
@@ -150,7 +153,11 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
                           disabled={row.pending}
                           className="rounded-md border border-ufa-border px-2.5 py-1 text-xs text-ufa-text hover:bg-ufa-panel-hover disabled:opacity-40"
                         >
-                          {row.pending ? ts.scoutPlayerPending : ts.scoutAction}
+                          {row.pending
+                            ? ts.scoutPlayerPending
+                            : playerScoutCost != null
+                              ? `${ts.scoutAction} (${formatUsd(playerScoutCost)})`
+                              : ts.scoutAction}
                         </button>
                         <button
                           type="button"
@@ -237,6 +244,7 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
             ? hasPendingScoutMission(buyer, { kind: 'player', targetPlayerId: profilePlayer.id })
             : false
         }
+        scoutCost={playerScoutCost}
         onToggleShortlist={(playerId) => {
           toggleShortlist(buyer, playerId)
           onCareerUpdate({ world: career.world })

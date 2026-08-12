@@ -340,6 +340,8 @@ export default function TrainingView({
   const { lang } = useUiLang()
   const t = trainingStrings(lang)
   const [filter, setFilter] = useState('all')
+  const [selected, setSelected] = useState(() => new Set())
+  const [bulkFocus, setBulkFocus] = useState('balanced')
   const players = useMemo(() => {
     const list = [...(team?.players ?? [])]
     for (const p of list) ensurePlayerDevelopment(p, { leaguePlayerStats })
@@ -373,6 +375,32 @@ export default function TrainingView({
     bump()
   }
 
+  function toggleSelected(playerId) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(playerId)) next.delete(playerId)
+      else next.add(playerId)
+      return next
+    })
+  }
+
+  function toggleSelectAllVisible() {
+    setSelected((prev) => {
+      const allSelected = filtered.length > 0 && filtered.every((p) => prev.has(p.id))
+      if (allSelected) return new Set()
+      return new Set(filtered.map((p) => p.id))
+    })
+  }
+
+  function applyBulkFocus() {
+    if (disabled || selected.size === 0) return
+    for (const player of filtered) {
+      if (selected.has(player.id)) setPlayerTrainingFocus(player, bulkFocus)
+    }
+    setSelected(new Set())
+    bump()
+  }
+
   if (!team) {
     return <p className="text-sm text-ufa-muted">{t.noTeam}</p>
   }
@@ -397,7 +425,10 @@ export default function TrainingView({
             <button
               key={f.id}
               type="button"
-              onClick={() => setFilter(f.id)}
+              onClick={() => {
+                setFilter(f.id)
+                setSelected(new Set())
+              }}
               className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                 filter === f.id
                   ? 'bg-ufa-accent text-ufa-bg'
@@ -423,6 +454,39 @@ export default function TrainingView({
             </button>
           ))}
         </div>
+
+        {selected.size > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-ufa-accent/40 bg-ufa-accent/10 px-3 py-2">
+            <span className="text-xs font-medium text-ufa-text">{t.selectedCount(selected.size)}</span>
+            <select
+              value={bulkFocus}
+              disabled={disabled}
+              onChange={(e) => setBulkFocus(e.target.value)}
+              className="rounded-md border border-ufa-border bg-ufa-bg px-2 py-1.5 text-sm text-ufa-text disabled:opacity-40"
+            >
+              {TRAINING_FOCUS_OPTIONS.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {pickLabel(opt, lang)}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={applyBulkFocus}
+              className="rounded-md bg-ufa-accent px-3 py-1.5 text-xs font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+            >
+              {t.applyToSelected}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="text-xs text-ufa-muted hover:text-ufa-text"
+            >
+              {t.clearSelection}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
@@ -430,6 +494,15 @@ export default function TrainingView({
           <table className="w-full min-w-[920px] text-left text-sm">
             <thead>
               <tr className="border-b border-ufa-border bg-ufa-bg/80 text-xs uppercase tracking-wider text-ufa-muted">
+                <th className="px-3 py-3 font-medium">
+                  <input
+                    type="checkbox"
+                    checked={filtered.length > 0 && filtered.every((p) => selected.has(p.id))}
+                    onChange={toggleSelectAllVisible}
+                    className="h-4 w-4 rounded border-ufa-border align-middle"
+                    aria-label={t.selectAll}
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">{t.player}</th>
                 <th className="px-3 py-3 font-medium">{t.age}</th>
                 <th className="px-3 py-3 font-medium">OVR</th>
@@ -448,6 +521,15 @@ export default function TrainingView({
                 const room = pot - ovr
                 return (
                   <tr key={player.id} className="hover:bg-ufa-panel-hover">
+                    <td className="px-3 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(player.id)}
+                        onChange={() => toggleSelected(player.id)}
+                        className="h-4 w-4 rounded border-ufa-border align-middle"
+                        aria-label={getPlayerFullName(player)}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-ufa-text">{getPlayerFullName(player)}</p>
                       <p

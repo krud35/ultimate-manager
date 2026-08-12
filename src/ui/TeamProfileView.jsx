@@ -853,6 +853,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
               ? hasPendingScoutMission(playerTeam, { kind: 'player', targetPlayerId: profilePlayer.id })
               : false
           }
+          scoutCost={playerTeam ? scoutMissionCost('player', playerTeam) : null}
           onToggleShortlist={(playerId) => {
             toggleShortlist(playerTeam, playerId)
             onChange?.({})

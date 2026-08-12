@@ -711,15 +711,29 @@ export function ensurePlayerStats(player) {
       goals: 0,
       assists: 0,
       blocks: 0,
+      turnovers: 0,
       pointsPlayed: 0,
       pointsPlayedMatch: 0,
+      attempts: 0,
+      completions: 0,
+      throwMeters: 0,
+      catches: 0,
+      catchMeters: 0,
+      runMeters: 0,
     }
   } else {
     if (player.stats.goals == null) player.stats.goals = 0
     if (player.stats.assists == null) player.stats.assists = 0
     if (player.stats.blocks == null) player.stats.blocks = 0
+    if (player.stats.turnovers == null) player.stats.turnovers = 0
     if (player.stats.pointsPlayed == null) player.stats.pointsPlayed = 0
     if (player.stats.pointsPlayedMatch == null) player.stats.pointsPlayedMatch = 0
+    if (player.stats.attempts == null) player.stats.attempts = 0
+    if (player.stats.completions == null) player.stats.completions = 0
+    if (player.stats.throwMeters == null) player.stats.throwMeters = 0
+    if (player.stats.catches == null) player.stats.catches = 0
+    if (player.stats.catchMeters == null) player.stats.catchMeters = 0
+    if (player.stats.runMeters == null) player.stats.runMeters = 0
   }
   return player
 }

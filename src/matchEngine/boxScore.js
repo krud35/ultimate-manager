@@ -11,6 +11,12 @@ export function createBoxScore(players) {
       blocks: 0,
       turnovers: 0,
       pointsPlayed: 0,
+      attempts: 0,
+      completions: 0,
+      throwMeters: 0,
+      catches: 0,
+      catchMeters: 0,
+      runMeters: 0,
     }
   }
   return byId
@@ -27,6 +33,25 @@ export function recordBlock(boxScore, defenderId) {
 
 export function recordTurnover(boxScore, throwerId) {
   if (boxScore[throwerId]) boxScore[throwerId].turnovers += 1
+}
+
+/** Próba rzutu — zawsze +1 attempts; przy sukcesie +completions/throwMeters/catchMeters. */
+export function recordThrowResult(boxScore, throwerId, { success, receiverId = null, yardsGained = 0 } = {}) {
+  const row = boxScore[throwerId]
+  if (!row) return
+  row.attempts += 1
+  if (!success) return
+  row.completions += 1
+  row.throwMeters += Math.max(0, yardsGained)
+  if (receiverId != null && boxScore[receiverId]) {
+    boxScore[receiverId].catches += 1
+    boxScore[receiverId].catchMeters += Math.max(0, yardsGained)
+  }
+}
+
+export function recordRunMeters(boxScore, playerId, meters) {
+  const row = boxScore[playerId]
+  if (row && Number.isFinite(meters)) row.runMeters += Math.max(0, meters)
 }
 
 /** Lista statystyk posortowana do tabeli (G+A malejąco). */

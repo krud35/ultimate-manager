@@ -13,6 +13,7 @@ import { teamFromLeague } from '../career/worldState.js'
 import { applyReputationForMatchTeams } from '../models/teamReputation.js'
 import { applyFansMoodForMatchTeams } from '../models/teamFans.js'
 import { applyPostMatchFinances } from '../career/clubFacilities.js'
+import { applyMatchTacticsFamiliarityGain } from '../career/teamTraining.js'
 import { isClubBankrupt } from '../career/transfers/clubFinances.js'
 import {
   findFixture,
@@ -241,6 +242,12 @@ export function applyMatchResultToLeague(league, matchRecord) {
     awayWon,
   })
 
+  // Zgranie w systemie rośnie też z rozgrywania meczów razem, nie tylko z treningów.
+  if (!matchRecord.forfeited) {
+    applyMatchTacticsFamiliarityGain(homeTeam)
+    applyMatchTacticsFamiliarityGain(awayTeam)
+  }
+
   delete fixture.boxScore
 
   return league
@@ -270,6 +277,13 @@ function applyEngineBoxScoreToRoster(league, homeTeamId, awayTeamId, boxScoreRow
     player.stats.goals += row.goals ?? 0
     player.stats.assists += row.assists ?? 0
     player.stats.blocks += row.blocks ?? 0
+    player.stats.turnovers += row.turnovers ?? 0
+    player.stats.attempts += row.attempts ?? 0
+    player.stats.completions += row.completions ?? 0
+    player.stats.throwMeters += row.throwMeters ?? 0
+    player.stats.catches += row.catches ?? 0
+    player.stats.catchMeters += row.catchMeters ?? 0
+    player.stats.runMeters += row.runMeters ?? 0
   }
 }
 

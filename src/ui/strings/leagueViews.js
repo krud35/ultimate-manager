@@ -26,6 +26,7 @@ const pl = {
   goals: 'Gole',
   assists: 'Asysty',
   blocks: 'Bloki',
+  plusMinus: 'Bilans',
   pointsPlayed: 'Punkty rozegrane',
   cupTitle: 'Puchar Ligi',
   cupIntro:
@@ -84,6 +85,7 @@ const en = {
   goals: 'Goals',
   assists: 'Assists',
   blocks: 'Blocks',
+  plusMinus: 'Plus/minus',
   pointsPlayed: 'Points played',
   cupTitle: 'League Cup',
   cupIntro:
