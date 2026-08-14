@@ -23,9 +23,9 @@ function distPointToSegment(px, py, ax, ay, bx, by) {
   return Math.hypot(px - cx, py - cy)
 }
 
-export function isCloggingThrowLane(x, y, disc, throwerPos, possessionTeam) {
+export function isCloggingThrowLane(x, y, disc, throwerPos, possessionTeam, attackSignOverride = null) {
   if (!disc) return false
-  const attackSign = attackDirectionX(possessionTeam)
+  const attackSign = attackSignOverride ?? attackDirectionX(possessionTeam)
   const ox = throwerPos?.x ?? disc.x
   const oy = throwerPos?.y ?? disc.y
   const laneEndX = clampFieldX(ox + attackSign * LANE_AHEAD_M)
@@ -93,9 +93,13 @@ export function computeDynamicOffenseTarget({
   rng,
   stackIndex = 2,
   isDump = false,
+  /** Jawny znak ataku (+1/-1) — używać, gdy `possessionTeam` to etykieta rosterowa,
+   * a nie geo/ekranowa (np. w replayu po stronach zamienionych, patrz fieldMotion.js
+   * `geoTeam`). Gdy podany, ma pierwszeństwo przed attackDirectionX(possessionTeam). */
+  attackSign: attackSignOverride = null,
 }) {
   if (!disc) return { x, y }
-  const attackSign = attackDirectionX(possessionTeam)
+  const attackSign = attackSignOverride ?? attackDirectionX(possessionTeam)
   if (playerId === throwerId) {
     return { x: disc.x, y: disc.y }
   }

@@ -1149,6 +1149,7 @@ function repositionTarget(tactical, playerId, ctx) {
     dynamicReorg,
     forceSide,
     possessionTeam,
+    sidesSwapped,
   } = ctx
   if (turnoverPickupId && playerId === turnoverPickupId && discX != null && discY != null) {
     return { x: discX, y: discY }
@@ -1180,12 +1181,17 @@ function repositionTarget(tactical, playerId, ctx) {
     const start = initial
       ? resolveStartXY(tactical, initial, tactical, new Set())
       : { x: tactical.x, y: tactical.y }
+    // `poss` to etykieta rosterowa (do isOffense wyżej) — kierunek ataku na boisku
+    // trzeba liczyć przez geoTeam/sidesSwapped, inaczej co drugi punkt (strony
+    // zamienione) rozstawia zawodników za dyskiem zamiast przed nim.
+    const attackSign = attackDirectionX(geoTeam(poss, sidesSwapped))
     const inLane = isCloggingThrowLane(
       start.x,
       start.y,
       { x: discX, y: discY },
       { x: discX, y: discY },
       poss,
+      attackSign,
     )
     return computeDynamicOffenseTarget({
       x: start.x,
@@ -1198,6 +1204,7 @@ function repositionTarget(tactical, playerId, ctx) {
       possessionTeam: poss,
       inThrowLane: inLane,
       rng: null,
+      attackSign,
     })
   }
   return { x: tactical.x, y: tactical.y }
@@ -1556,6 +1563,7 @@ export function buildThrowActionClip(
     dynamicReorg: true,
     forceSide,
     possessionTeam: offenseTeamId,
+    sidesSwapped,
   })
 
   const anchorPivot =
@@ -1859,6 +1867,7 @@ export function buildTransitionClip(
       dynamicReorg: true,
       forceSide: transitionForce,
       possessionTeam: offenseTeamId,
+      sidesSwapped: stateB.sidesSwapped,
     })
     const end = endDyn ?? endStatic
     if (!end) continue
