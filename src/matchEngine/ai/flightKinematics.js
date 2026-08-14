@@ -88,11 +88,16 @@ export function createFlightContext({
     throwPathPoints ??
     buildThrowPathPoints(fromX, fromY, toX, toY, trajectory, throwType)
   const pathLen = pathLength(throwPath)
-  // 'deep' było 14 m/s — receiver goni pozycję dysku na ścieżce (predictCatchPointOnPath,
-  // lead tylko do 160ms), więc realny dystans dobiegu ≈ maxSprint*totalFlightMs. Przy 14
-  // i sprincie ~7.5 m/s to ~54% dystansu rzutu — huck (≥40m) nigdy nie był realnie
-  // domykany, mimo że cel cutu (cutterBrain) już regularnie sięgał 40m+.
-  const flightSpeedMps = trajectory === 'deep' ? 6.5 : trajectory === 'overhead' ? 11 : 9
+  // Receiver w locie goni pozycję dysku NA ŚCIEŻCE (predictCatchPointOnPath, lead tylko
+  // do 160ms) — to dysk, nie odbiorca, wyznacza tempo. Wartości trzymane blisko/poniżej
+  // maks. sprintu (~4.4–7.2 m/s), żeby wizualny lot i realny chwyt (finalDiscAfterFlight
+  // stawia dysk na realnej pozycji odbiorcy) zgadzały się częściej niż przy starych,
+  // szybszych wartościach (14/11/9). Próbowano też wydłużać czas lotu wg REALNEJ prędkości
+  // konkretnego odbiorcy (jeszcze dokładniejsze), ale to podbijało czas lotu niemal KAŻDEGO
+  // rzutu bliżej limitu ticków (przeciętny gracz jest wolniejszy niż flightSpeedMps) —
+  // symulacja całego meczu potrafiła się wydłużyć z ~75s do 3min+. Wycofane na rzecz
+  // samej kalibracji stałej.
+  const flightSpeedMps = trajectory === 'deep' ? 6.5 : trajectory === 'overhead' ? 7.8 : 7.2
   const totalFlightMs = Math.max(
     FLIGHT_TICK_MS * 4,
     Math.round((pathLen / flightSpeedMps) * 1000),
