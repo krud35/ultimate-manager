@@ -1,6 +1,5 @@
 import { buildThrowPathPoints } from '../fieldViz.js'
 import { DISC_STATE, discPositionHeld, discPositionInFlight } from '../discState.js'
-import { predictCatchPointOnPath } from './discFlightPredict.js'
 import { integrateAgentMotion, waitingHoldSpeedMps } from './playerMovement.js'
 import { computeDynamicOffenseTarget, spacingAdjustedTarget } from './offenseReorganization.js'
 import {
@@ -13,7 +12,8 @@ import { windFlightOffset } from '../wind.js'
 
 export const FLIGHT_TICK_MS = 20
 const DT_SEC = FLIGHT_TICK_MS / 1000
-const LAYOUT_DIST_M = 2.5
+/** Zasięg gracza na dysk (z layoutem) — używane też jako granica fizycznej łapliwości rzutu. */
+export const LAYOUT_DIST_M = 2.5
 const LAYOUT_TIME_MS = 220
 
 export function pathLength(pts) {
@@ -68,6 +68,15 @@ function maybeLayout(agent, discX, discY, timeToDiscMs, player, rng, discZ = 2) 
   return { ...agent, layout: true, layoutMs: timeToDiscMs }
 }
 
+// Granice prędkości dysku wg trajektorii — miękki łuk (deep) vs płaski, twardy rzut (standard).
+// Trzymane blisko wcześniej wykalibrowanych stałych (6.5/7.8/7.2), żeby "mocny rzut" nie
+// był tak szybki, że odbiera zapas czasu, który wcześniej pomagał domykać dystans.
+const SPEED_RANGE_BY_TRAJECTORY = {
+  deep: { min: 4.4, max: 7.8 },
+  overhead: { min: 6.2, max: 9.5 },
+}
+const SPEED_RANGE_DEFAULT = { min: 6.2, max: 9.2 }
+
 export function createFlightContext({
   fromX,
   fromY,
@@ -80,6 +89,7 @@ export function createFlightContext({
   defenderId,
   throwerId,
   receiver,
+  receiverAgent,
   resolution,
   throwMs,
   weather,
@@ -88,19 +98,38 @@ export function createFlightContext({
     throwPathPoints ??
     buildThrowPathPoints(fromX, fromY, toX, toY, trajectory, throwType)
   const pathLen = pathLength(throwPath)
-  // Receiver w locie goni pozycję dysku NA ŚCIEŻCE (predictCatchPointOnPath, lead tylko
-  // do 160ms) — to dysk, nie odbiorca, wyznacza tempo. Wartości trzymane blisko/poniżej
-  // maks. sprintu (~4.4–7.2 m/s), żeby wizualny lot i realny chwyt (finalDiscAfterFlight
-  // stawia dysk na realnej pozycji odbiorcy) zgadzały się częściej niż przy starych,
-  // szybszych wartościach (14/11/9). Próbowano też wydłużać czas lotu wg REALNEJ prędkości
-  // konkretnego odbiorcy (jeszcze dokładniejsze), ale to podbijało czas lotu niemal KAŻDEGO
-  // rzutu bliżej limitu ticków (przeciętny gracz jest wolniejszy niż flightSpeedMps) —
-  // symulacja całego meczu potrafiła się wydłużyć z ~75s do 3min+. Wycofane na rzecz
-  // samej kalibracji stałej.
-  const flightSpeedMps = trajectory === 'deep' ? 6.5 : trajectory === 'overhead' ? 7.8 : 7.2
-  const totalFlightMs = Math.max(
-    FLIGHT_TICK_MS * 4,
-    Math.round((pathLen / flightSpeedMps) * 1000),
+  const finalPt = throwPath[throwPath.length - 1] ?? { x: toX, y: toY }
+
+  // Receiver w locie biegnie WPROST do finalnego miejsca lądowania dysku (flight.toX/toY),
+  // nie goni bieżącej pozycji dysku na ścieżce — pościg za ruchomym punktem matematycznie
+  // nigdy nie domyka dystansu. Prosta linia do znanego z góry celu naprawdę się domyka.
+  //
+  // Moc rzutu (prędkość dysku) zależy od tego, ile czasu potrzebuje TEN odbiorca: gdy ma
+  // daleko do celu (duży lead, np. huck) — rzut leci wolniej/miękcej, dając czas na dobieg;
+  // gdy odbiorca jest już blisko celu — rzut leci szybko/płasko, bo i tak zdąży. Realny
+  // odpowiednik decyzji "mocniej czy słabiej rzucić" w zależności od pozycji odbiorcy.
+  const speedRange = SPEED_RANGE_BY_TRAJECTORY[trajectory] ?? SPEED_RANGE_DEFAULT
+  let flightSpeedMps = speedRange.max
+  if (
+    receiverAgent != null &&
+    Number.isFinite(receiverAgent.x) &&
+    Number.isFinite(receiverAgent.y)
+  ) {
+    const distToTarget = Math.hypot(finalPt.x - receiverAgent.x, finalPt.y - receiverAgent.y)
+    const receiverSpeedMps = Math.max(3.5, maxSpeedMps(receiver))
+    const neededSec = Math.max(0.3, (distToTarget / receiverSpeedMps) * 1.15)
+    const idealSpeedMps = pathLen / neededSec
+    if (Number.isFinite(idealSpeedMps)) {
+      flightSpeedMps = Math.min(speedRange.max, Math.max(speedRange.min, idealSpeedMps))
+    }
+  }
+  // Bezpieczny sufit — actionSimulator.js rezerwuje na fazę lotu stały budżet ticków
+  // (MAX_FLIGHT_MS, musi być >= tego sufitu + margines); dłuższy totalFlightMs nie
+  // wydłuża budżetu, tylko ucina animację przed realnym końcem lotu (a przy wielu
+  // długich rzutach w punkcie potrafi bardzo spowolnić całą symulację).
+  const totalFlightMs = Math.min(
+    7000,
+    Math.max(FLIGHT_TICK_MS * 4, Math.round((pathLen / flightSpeedMps) * 1000)),
   )
   return {
     throwPathPoints: throwPath,
@@ -109,6 +138,8 @@ export function createFlightContext({
     throwMs,
     fromX,
     fromY,
+    toX: finalPt.x,
+    toY: finalPt.y,
     receiverId,
     defenderId,
     throwerId,
@@ -121,9 +152,19 @@ export function createFlightContext({
   }
 }
 
+/**
+ * Dysk zwalnia w locie (opór powietrza) — szybki tuż po wypuszczeniu, wolniejszy
+ * przy końcu (unosi się/opada do złapania), zamiast stałej prędkości przez cały lot.
+ * u(t) = 1-(1-t/T)^DISC_DECEL_POWER: pochodna (prędkość) maleje monotonicznie z
+ * DISC_DECEL_POWER/T na starcie do 0 przy starcie dysku — łagodny ease-out.
+ * Całkowity czas lotu (i średnia prędkość) niezmienione — sam kształt krzywej.
+ */
+const DISC_DECEL_POWER = 1.8
+
 export function sampleFlightDisc(flight, flightElapsedMs) {
   const ms = Math.min(flight.totalFlightMs, Math.max(0, flightElapsedMs))
-  const u = flight.totalFlightMs > 0 ? ms / flight.totalFlightMs : 1
+  const tFrac = flight.totalFlightMs > 0 ? ms / flight.totalFlightMs : 1
+  const u = 1 - (1 - tFrac) ** DISC_DECEL_POWER
   const wind = windFlightOffset(flight.weather, u)
   const base = samplePathAt(flight.throwPathPoints, u)
   const discX = base.x + wind.dx

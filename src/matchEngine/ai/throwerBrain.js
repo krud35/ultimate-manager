@@ -131,6 +131,13 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
   const options = []
   for (const agent of offenseAgents) {
     if (agent.player.id === thrower.id) continue
+    // CLEARING = zawodnik zakończył próbę cutu i wraca do formacji — nie patrzy na
+    // dysk, nie jest gotowy na odbiór. Rzut do niego to nierealny scenariusz (stąd
+    // rzuty czasem leciały daleko w pustkę do kogoś odchodzącego od gry) — nawet gdy
+    // ma etykietę "dump", flaga bywa nieaktualna (np. dump 39m od dysku, wciąż w
+    // CLEARING) i nie jest to realny krótki reset. Dedykowany dump-reset przy stallu
+    // idzie osobną ścieżką (pickDumpReceiver), więc to wykluczenie jej nie dotyczy.
+    if (agent.state === CUTTER_STATE.CLEARING) continue
     const catchPt = predictReceiverCatchPoint(
       agent,
       throwerPos?.x ?? disc?.x ?? agent.x,

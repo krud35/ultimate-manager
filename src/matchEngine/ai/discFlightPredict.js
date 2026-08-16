@@ -54,26 +54,34 @@ export function predictReceiverCatchPoint(
   if (toTarget < 0.75) return { x: curX, y: curY }
 
   // Lead w kierunku B: dysk leci tam, gdzie odbiorca dotrze w czasie lotu (max = target).
-  const pathDist = Math.hypot(tgtX - fromX, tgtY - fromY)
-  const flightSec = Math.max(0.3, pathDist / Math.max(1, flightSpeedMps))
+  // Dostępny czas lotu (flightSec) zależy od dystansu rzucający→PUNKT RZUTU — ale punkt
+  // rzutu (catchPt) to właśnie to, co liczymy. Gdy odbiorca jest już daleko od rzucającego
+  // (typowe w trakcie cutu), liczenie flightSec od rzucający→surowy cel cutu (blisko
+  // rzucającego przy comeback cucie) dawało fałszywie krótki czas → mały reach → catchPt
+  // wciąż blisko odbiorcy, ale i tak daleko (~20m+) od rzucającego, bo odbiorca sam był
+  // tak daleko. Efekt: rzut realnie dłuższy niż czas, jaki formuła założyła. Samouzgodnione
+  // rozwiązanie: iteracja z tłumieniem (5 kroków zbiega się nawet przy oscylacji, patrz
+  // devtest) — pathDist liczony od AKTUALNEGO oszacowania catchPt, nie surowego celu.
   const recvSpeed = Math.max(Math.hypot(vx, vy), MIN_CUT_SPEED_MPS)
-  const reach = Math.min(toTarget, recvSpeed * flightSec)
   const ux = (tgtX - curX) / toTarget
   const uy = (tgtY - curY) / toTarget
+  let reach = Math.min(
+    toTarget,
+    recvSpeed *
+      Math.max(0.3, Math.hypot(tgtX - fromX, tgtY - fromY) / Math.max(1, flightSpeedMps)),
+  )
+  for (let i = 0; i < 5; i += 1) {
+    const catchX = curX + ux * reach
+    const catchY = curY + uy * reach
+    const pathDist = Math.hypot(catchX - fromX, catchY - fromY)
+    const flightSec = Math.max(0.3, pathDist / Math.max(1, flightSpeedMps))
+    const candidate = Math.min(toTarget, recvSpeed * flightSec)
+    reach = (reach + candidate) / 2
+  }
   return {
     x: clampFieldX(curX + ux * reach),
     y: clampFieldY(curY + uy * reach),
   }
-}
-
-export function predictCatchPointOnPath(samplePathAt, pathPoints, u, totalFlightMs, msElapsed) {
-  if (!pathPoints?.length || !samplePathAt) {
-    return { x: 0, y: 0 }
-  }
-  const timeToEnd = Math.max(0, totalFlightMs - msElapsed)
-  const leadMs = Math.min(160, Math.max(35, timeToEnd * 0.42))
-  const uLead = totalFlightMs > 0 ? Math.min(1, u + leadMs / totalFlightMs) : 1
-  return samplePathAt(pathPoints, uLead)
 }
 
 export function discPathVelocityMps(samplePathAt, pathPoints, u, totalFlightMs) {

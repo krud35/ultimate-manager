@@ -15,7 +15,6 @@ import { defenderForPersonMark, isPersonDefense } from '../participants.js'
 import { THROW_TYPE, throwProfile } from '../throwTypes.js'
 import { discPositionHeld, discPositionInFlight } from '../discState.js'
 import {
-  predictCatchPointOnPath,
   predictReceiverCatchPoint,
   DEEP_CUT_FLIGHT_SPEED_MPS,
 } from './discFlightPredict.js'
@@ -27,7 +26,6 @@ import {
   flightComplete,
   applyFlightResolutionToAgents,
   finalDiscAfterFlight,
-  samplePathAt,
 } from './flightKinematics.js'
 import {
   drainAgentsTickStamina,
@@ -50,7 +48,9 @@ export const SIM_TICK_MS = 20
 const DT_SEC = SIM_TICK_MS / 1000
 /** Pełny stall-out = 10 s krycia. */
 const MAX_SETUP_MS = STALL_MAX * STALL_SECOND_MS + SIM_TICK_MS
-const MAX_FLIGHT_MS = 4800
+// Musi być >= sufitu totalFlightMs w createFlightContext (flightKinematics.js) + margines,
+// inaczej dłuższe loty (miękkie, dalekie rzuty) nie mieszczą się w budżecie ticków.
+const MAX_FLIGHT_MS = 7200
 /**
  * Jeśli obrońca jest dalej od swojej marki niż ten dystans na starcie rzutu,
  * doklejamy go do shade (inaczej po reorganizacji O / turnoverze „gubi” człowieka).
@@ -468,13 +468,9 @@ export function runContinuousThrowSimulation({
     if (flight) {
       discSample = sampleFlightDisc(flight, flight.elapsedMs)
       discForAi = { x: discSample.x, y: discSample.y, position: discPosition }
-      const intercept = predictCatchPointOnPath(
-        samplePathAt,
-        flight.throwPathPoints,
-        discSample.u,
-        flight.totalFlightMs,
-        discSample.ms,
-      )
+      // Prosta linia do finalnego miejsca lądowania (flight.toX/toY), nie pościg za
+      // bieżącą pozycją dysku na ścieżce — patrz komentarz w createFlightContext.
+      const intercept = { x: flight.toX, y: flight.toY }
       const throwerPos = { x: flight.fromX, y: flight.fromY }
 
       offenseAgents = offenseAgents.map((agent, idx) => {
@@ -787,6 +783,7 @@ export function runContinuousThrowSimulation({
             defenderId: flightDefender?.id,
             throwerId: thrower.id,
             receiver: throwDecision.receiver,
+            receiverAgent: throwDecision.receiverAgent,
             resolution: commit?.resolution ?? null,
             throwMs: ms,
             weather: wind,
