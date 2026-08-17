@@ -11,7 +11,13 @@ const MIN_CUT_SPEED_MPS = 4.5
  * nigdy nie powstawał (patrz audyt huck-scarcity). Obniżenie TYLKO dla deep daje więcej
  * czasu w predykcji bez podnoszenia kompletności krótkich/średnich podań (te nadal 10).
  */
-export const DEEP_CUT_FLIGHT_SPEED_MPS = 6
+// Obniżone dalej (6->4.8): realna prędkość lotu dla 'deep' w flightKinematics.js jest
+// teraz DYNAMICZNA (4.4-7.8 m/s, dobierana wg potrzeb odbiorcy, sufit czasu lotu 9.5s) —
+// predykcja z 6 m/s zakładała mniej czasu niż realny system potrafi dać na bardzo
+// długich rzutach (55m+), więc sama predykcja ucinała target dużo wcześniej niż
+// wykonanie by na to pozwoliło. 4.8 lepiej odzwierciedla dolny (najbardziej wyczekujący)
+// koniec realnego zakresu.
+export const DEEP_CUT_FLIGHT_SPEED_MPS = 4.8
 
 function isCuttingState(state) {
   return state === 'ACTIVE_CUT' || state === 'INITIATING_CUT'

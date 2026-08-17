@@ -391,9 +391,14 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
         // Bez tego każda opcja ≥ HUCK_MIN_YARDS (40m) dostawała 0 z członu
         // odległości (Math.max(0, 40-dist)) i niemal zawsze odpadała z limitu
         // percepcji (perceivedOptionLimit) przed samym scoringiem — huck nigdy
-        // nie trafiał do `considered`, więc nigdy nie mógł zostać wybrany.
-        // Realnie otwarty głęboki odbiorca RZUCA SIĘ w oczy, nie jest niewidzialny.
-        (distFromThrower >= HUCK_MIN_YARDS && (situation.separation ?? 0) >= 3 ? 20 : 0),
+        // nie trafiał do `considered`, więc nigdy nie mógł zostać wybrany. Skala
+        // rośnie z separacją: NAPRAWDĘ otwarty głęboki odbiorca (duży separation)
+        // rzuca się w oczy tak samo mocno jak bliska opcja z dobrym oknem — bez
+        // tego cele 55m+ (generowane regularnie przez cutterBrain) nigdy nie
+        // przetrwały limitu percepcji wobec kilku bliższych konkurentów.
+        (distFromThrower >= HUCK_MIN_YARDS && (situation.separation ?? 0) >= 3
+          ? 20 + (situation.separation ?? 0) * 6
+          : 0),
       situation,
       traffic,
       laneThreats: traffic.laneThreats,

@@ -128,7 +128,7 @@ export function createFlightContext({
   // wydłuża budżetu, tylko ucina animację przed realnym końcem lotu (a przy wielu
   // długich rzutach w punkcie potrafi bardzo spowolnić całą symulację).
   const totalFlightMs = Math.min(
-    7000,
+    9500,
     Math.max(FLIGHT_TICK_MS * 4, Math.round((pathLen / flightSpeedMps) * 1000)),
   )
   return {

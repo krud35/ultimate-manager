@@ -50,7 +50,7 @@ const DT_SEC = SIM_TICK_MS / 1000
 const MAX_SETUP_MS = STALL_MAX * STALL_SECOND_MS + SIM_TICK_MS
 // Musi być >= sufitu totalFlightMs w createFlightContext (flightKinematics.js) + margines,
 // inaczej dłuższe loty (miękkie, dalekie rzuty) nie mieszczą się w budżecie ticków.
-const MAX_FLIGHT_MS = 7200
+const MAX_FLIGHT_MS = 9700
 /**
  * Jeśli obrońca jest dalej od swojej marki niż ten dystans na starcie rzutu,
  * doklejamy go do shade (inaczej po reorganizacji O / turnoverze „gubi” człowieka).

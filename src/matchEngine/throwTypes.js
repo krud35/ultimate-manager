@@ -277,7 +277,10 @@ export function computeThrowAdvance(
       // Upwind/downwind weakly affects dumps
       geo *= windMods.relation === 'upwind' ? 1.05 : windMods.relation === 'downwind' ? 0.95 : 1
     }
-    geo = Math.max(-8, Math.min(45, geo))
+    // Sufit 45m (z wcześniejszej fazy naprawy huck-scarcity) stał się realnym ograniczeniem
+    // odkąd cutterBrain.js regularnie generuje cele 55-75m, a predykcja/wykonanie lotu je
+    // realnie domyka — podniesiony do 80 (margines nad sufitem deepDist=75m w cutterBrain.js).
+    geo = Math.max(-8, Math.min(80, geo))
     return Math.max(min, Math.min(max, discPosition + Math.round(geo)))
   }
 

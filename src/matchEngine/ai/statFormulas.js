@@ -31,10 +31,16 @@ export function defenderReactionDelayMs(player) {
   )
 }
 
-/** Skan opcji: 22 + (vision / 100) * 26 m — elita widzi także opcję na hucka. */
+/**
+ * Skan opcji: 22 + (vision / 100) * 56 m (22–78 m). Zmierzone: typowy roster ma vision
+ * ~79; poprzednie współczynniki (40, potem 48) wciąż trzymały scanRadius blisko/poniżej
+ * mediany celów cutu 'deep' (p50≈57m z cutterBrain.js), więc bomba 55m+ była widoczna
+ * tylko sporadycznie i ledwo się domykała (max realnego rzutu ~54m). *56 daje ~79 vision
+ * -> ~66m, elita (100) -> 78m — wyraźny margines powyżej sufitu deepDist (75m).
+ */
 export function throwScanRadiusM(player) {
   const mods = getTraitMods(player)
-  return 22 + (subStat(player, 'mental', 'vision') / 100) * 26 + (mods.scanRadiusBonusM ?? 0)
+  return 22 + (subStat(player, 'mental', 'vision') / 100) * 56 + (mods.scanRadiusBonusM ?? 0)
 }
 
 /**
