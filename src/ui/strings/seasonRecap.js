@@ -29,6 +29,16 @@ const pl = {
   goToNext: (next) => `Przejdź do ${next}`,
   viewTable: 'Zobacz tabelę',
   nextLeague: (y1, y2) => `Liga ${y1}/${y2}`,
+
+  pyramidMovementTitle: 'Piramida · prognoza awansów i spadków',
+  pyramidMovementHint:
+    'Szacunek na bazie tabel na dziś (pozostałe 2 poziomy liczone realną siłą klubów) — ostateczny wynik (w tym baraże) rozstrzyga się dopiero przy przejściu do kolejnego sezonu.',
+  pyramidStatusPromoteDirect: 'Bezpośredni awans do wyższej ligi!',
+  pyramidStatusPlayoff: 'Miejsce barażowe o awans (3.–6.)',
+  pyramidStatusRelegate: 'Strefa spadkowa',
+  pyramidStatusSafe: 'Bezpieczne miejsce w tabeli',
+  pyramidMoveRelegatedFrom: (tier) => `Spadek z Ligi ${tier}`,
+  pyramidMovePromotedTo: (tier) => `Awans do Ligi ${tier}`,
 }
 
 const en = {
@@ -59,6 +69,16 @@ const en = {
   goToNext: (next) => `Continue to ${next}`,
   viewTable: 'View table',
   nextLeague: (y1, y2) => `League ${y1}/${y2}`,
+
+  pyramidMovementTitle: 'Pyramid · promotion/relegation projection',
+  pyramidMovementHint:
+    'Estimated from the tables as they stand today (the other 2 tiers are computed from real club strength) — the final result (including playoffs) is only settled when you continue to the next season.',
+  pyramidStatusPromoteDirect: 'Direct promotion to the tier above!',
+  pyramidStatusPlayoff: 'Promotion playoff spot (3rd–6th)',
+  pyramidStatusRelegate: 'Relegation zone',
+  pyramidStatusSafe: 'Safe mid-table spot',
+  pyramidMoveRelegatedFrom: (tier) => `Relegated from Liga ${tier}`,
+  pyramidMovePromotedTo: (tier) => `Promoted to Liga ${tier}`,
 }
 
 export function seasonRecapStrings(lang = UI_LANG.PL) {

@@ -310,7 +310,11 @@ export function ensurePlayerDevelopment(player, options = {}) {
     player.age = rollInitialAge(player)
   }
   if (player.potential == null || !Number.isFinite(player.potential)) {
-    player.potential = computePotential(player, ovr, perf)
+    // Drużyny Ligi Europejskiej mają dodatkowy "boost" bieżącego OVR między poziomami
+    // piramidy (patrz TIER_BASE_OFFSET w eucsLeagueTeams.js) — sufit rozwoju ma go
+    // ignorować, więc przy pierwszym liczeniu potencjału używamy OVR sprzed boostu.
+    const potentialBaseline = Number.isFinite(player.eucsBaselineOvr) ? player.eucsBaselineOvr : ovr
+    player.potential = computePotential(player, potentialBaseline, perf)
   } else {
     // Potencjał nie powinien spaść poniżej OVR − 2 (chyba że veteran)
     const minPot = player.age >= 30 ? Math.min(player.potential, ovr + 1) : player.potential

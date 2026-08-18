@@ -73,6 +73,8 @@ export {
   refreshTeamMarketValues,
   formatUsd,
   formatUsdCompact,
+  setMoneyCurrency,
+  getMoneyCurrency,
   TRANSFER_POLICY_PRESETS,
   ensureTeamFinances,
   ensureWorldFinances,
@@ -252,6 +254,18 @@ export {
   chillRoomMoraleDelta,
   academyIntakeMult,
 } from './clubFacilities.js'
+export {
+  TV_MONEY_MONTHLY_BY_TIER,
+  processMonthlyTvPayouts,
+  processMonthlyTvPayoutsForRange,
+  messagesFromTvPayouts,
+} from './tvMoney.js'
+export {
+  processLeaguePlacementPrizes,
+  messagesFromLeaguePlacementPrizes,
+  applyCupPlacementPrizes,
+  messageFromCupPlacementPrize,
+} from './placementPrizes.js'
 export {
   SPONSOR_SLOTS,
   ensureTeamSponsors,

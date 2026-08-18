@@ -1,0 +1,103 @@
+{
+  "source": "https://ultimate-reference.com/recurring-events/Europe (filters: Club, Men) — European Ultimate Championship Finals (EUCF), 1992-2025",
+  "note": "Only exact/near-exact name matches between our 48-club roster and the reference site's historical results are included. Clubs with similar-but-distinct names (e.g. \"CUSB La Fotta\" vs our \"BFD LaFotta\") are deliberately kept separate — no history is invented.",
+  "fetchedAt": "2026-08-18",
+  "achievements": {
+    "eucs-mooncatchers": [
+      { "year": 2025, "result": "champion" },
+      { "year": 2024, "result": "champion" },
+      { "year": 2023, "result": "runner-up" },
+      { "year": 2018, "result": "semifinalist" },
+      { "year": 2015, "result": "semifinalist" }
+    ],
+    "eucs-bfd-lafotta": [
+      { "year": 2024, "result": "semifinalist" },
+      { "year": 2023, "result": "semifinalist" }
+    ],
+    "eucs-ranelagh": [
+      { "year": 2024, "result": "spirit" },
+      { "year": 2022, "result": "champion" },
+      { "year": 2021, "result": "semifinalist" }
+    ],
+    "eucs-wall-city": [
+      { "year": 2025, "result": "runner-up" },
+      { "year": 2023, "result": "spirit" },
+      { "year": 2009, "result": "spirit" }
+    ],
+    "eucs-clapham": [
+      { "year": 2025, "result": "semifinalist" },
+      { "year": 2024, "result": "runner-up" },
+      { "year": 2023, "result": "champion" },
+      { "year": 2022, "result": "runner-up" },
+      { "year": 2021, "result": "champion" },
+      { "year": 2019, "result": "runner-up" },
+      { "year": 2018, "result": "champion" },
+      { "year": 2017, "result": "champion" },
+      { "year": 2016, "result": "champion" },
+      { "year": 2015, "result": "champion" },
+      { "year": 2014, "result": "champion" },
+      { "year": 2013, "result": "champion" },
+      { "year": 2012, "result": "champion" },
+      { "year": 2011, "result": "runner-up" },
+      { "year": 2011, "result": "spirit" },
+      { "year": 2010, "result": "semifinalist" },
+      { "year": 2009, "result": "semifinalist" },
+      { "year": 2007, "result": "champion" },
+      { "year": 2006, "result": "runner-up" },
+      { "year": 2005, "result": "champion" },
+      { "year": 2005, "result": "spirit" },
+      { "year": 2001, "result": "runner-up" }
+    ],
+    "eucs-chevron-action-flash": [
+      { "year": 2025, "result": "semifinalist" },
+      { "year": 2019, "result": "semifinalist" },
+      { "year": 2014, "result": "semifinalist" },
+      { "year": 2012, "result": "runner-up" },
+      { "year": 2011, "result": "semifinalist" },
+      { "year": 2009, "result": "champion" },
+      { "year": 2008, "result": "semifinalist" }
+    ],
+    "eucs-tchac": [
+      { "year": 2024, "result": "semifinalist" },
+      { "year": 2016, "result": "semifinalist" }
+    ],
+    "eucs-gentle": [
+      { "year": 2023, "result": "semifinalist" },
+      { "year": 2021, "result": "semifinalist" },
+      { "year": 2014, "result": "spirit" }
+    ],
+    "eucs-heidees": [{ "year": 2022, "result": "semifinalist" }],
+    "eucs-bad-skid": [
+      { "year": 2018, "result": "semifinalist" },
+      { "year": 2017, "result": "runner-up" },
+      { "year": 2016, "result": "semifinalist" },
+      { "year": 2014, "result": "semifinalist" },
+      { "year": 2013, "result": "semifinalist" },
+      { "year": 2008, "result": "spirit" }
+    ],
+    "eucs-freespeed": [
+      { "year": 2014, "result": "runner-up" },
+      { "year": 2013, "result": "runner-up" },
+      { "year": 2010, "result": "semifinalist" }
+    ],
+    "eucs-smashd": [{ "year": 2021, "result": "spirit" }],
+    "eucs-flying-angels-bern": [
+      { "year": 2019, "result": "spirit" },
+      { "year": 2017, "result": "semifinalist" },
+      { "year": 2013, "result": "semifinalist" },
+      { "year": 2012, "result": "semifinalist" },
+      { "year": 2011, "result": "champion" },
+      { "year": 2010, "result": "champion" },
+      { "year": 2006, "result": "spirit" },
+      { "year": 2005, "result": "semifinalist" },
+      { "year": 2001, "result": "spirit" }
+    ],
+    "eucs-ka-pow": [{ "year": 2013, "result": "spirit" }],
+    "eucs-kfk": [{ "year": 2018, "result": "spirit" }],
+    "eucs-fwd": [{ "year": 2017, "result": "spirit" }],
+    "eucs-kfum-orebro": [
+      { "year": 1994, "result": "champion" },
+      { "year": 1992, "result": "champion" }
+    ]
+  }
+}

@@ -14,11 +14,19 @@ import {
   getFanTraits,
 } from '../models/teamFans.js'
 import { SPONSOR_INCOME_BOOST } from './clubSponsors.js'
+import { eucsTeamTier } from '../data/eucsLeagueTeams.js'
 
 export const FACILITY_LEVEL_MIN = 1
 export const FACILITY_LEVEL_MAX = 10
 export const FACILITY_BASELINE_LEVEL = 5
 export const FACILITIES_GEN_VERSION = 1
+
+/**
+ * Piramida Ligi Europejskiej: Liga 1 wyraźnie lepsze obiekty niż Liga 2, Liga 2 lepsze
+ * niż Liga 3. Dodawane do wylosowanego poziomu (1–10) przed clampem — brak wpływu na
+ * drużyny spoza Ligi Europejskiej (`eucsTeamTier` → null → bias 0).
+ */
+const EUCS_TIER_FACILITY_BIAS = { 1: 1.8, 2: 0, 3: -1.8 }
 
 /** @typedef {'stadium'|'trainingCenter'|'medicalCenter'|'chillRoom'|'fanShop'|'scoutingDept'|'academy'} FacilityId */
 
@@ -463,9 +471,10 @@ export function seedTeamFacilities(team, options = {}) {
   }
 
   const rng = createRng(hashString(`facilities|${options.seed ?? 0}|${team.id ?? team.name}`))
+  const bias = EUCS_TIER_FACILITY_BIAS[eucsTeamTier(team.id)] ?? 0
   const levels = {}
   for (const id of FACILITY_IDS) {
-    levels[id] = rollFacilityLevel(rng)
+    levels[id] = rollFacilityLevel(rng, { bias })
   }
   team.facilities = {
     facilitiesGen: FACILITIES_GEN_VERSION,
@@ -751,8 +760,8 @@ export function facilityEffectSummary(facilityId, level, lang = 'pl') {
   if (facilityId === 'fanShop') {
     const est = Math.round((90 + lv * 70) * SPONSOR_INCOME_BOOST)
     return lang === 'en'
-      ? `Merch ~$${est}+ / match (fans/form/rep)`
-      : `Merch ~$${est}+ / mecz (kibice/forma/rep)`
+      ? `Merch ~${formatUsd(est)}+ / match (fans/form/rep)`
+      : `Merch ~${formatUsd(est)}+ / mecz (kibice/forma/rep)`
   }
   return ''
 }

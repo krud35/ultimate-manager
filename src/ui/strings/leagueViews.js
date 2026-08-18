@@ -56,6 +56,16 @@ const pl = {
   cupFooter: 'Terminarz · wyniki · liderzy pucharowi',
   waiting: 'Oczekuje…',
   awaiting: 'Oczekuje…',
+
+  pyramidTitle: 'Piramida Ligi Europejskiej',
+  pyramidHint:
+    'Twój poziom liczony jest na bieżąco. Pozostałe dwa poziomy to szacunek na dziś (siła realna klubów) — ostateczne tabele liczą się na koniec sezonu.',
+  pyramidNotAvailable: 'Dostępne tylko w karierach Ligi Europejskiej.',
+  pyramidTier: (n) => `Liga ${n}`,
+  pyramidYourTier: (n) => `Liga ${n} · Twój poziom`,
+  pyramidZonePromote: 'Awans bezpośredni',
+  pyramidZonePlayoff: 'Baraż o awans (3.–6.)',
+  pyramidZoneRelegate: 'Spadek',
 }
 
 const en = {
@@ -115,6 +125,16 @@ const en = {
   cupFooter: 'Bracket · results · cup leaders',
   waiting: 'Waiting…',
   awaiting: 'Waiting…',
+
+  pyramidTitle: 'European League Pyramid',
+  pyramidHint:
+    'Your tier updates live. The other two tiers are an as-of-today estimate (real club strength) — final tables are settled at season end.',
+  pyramidNotAvailable: 'Only available for European League careers.',
+  pyramidTier: (n) => `Liga ${n}`,
+  pyramidYourTier: (n) => `Liga ${n} · your tier`,
+  pyramidZonePromote: 'Automatic promotion',
+  pyramidZonePlayoff: 'Promotion playoff (3rd–6th)',
+  pyramidZoneRelegate: 'Relegation',
 }
 
 export function leagueViewsStrings(lang = UI_LANG.PL) {

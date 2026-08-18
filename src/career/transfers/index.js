@@ -8,7 +8,7 @@ export {
   refreshTeamMarketValues,
 } from './playerValue.js'
 
-export { formatUsd, formatUsdCompact } from './moneyFormat.js'
+export { formatUsd, formatUsdCompact, setMoneyCurrency, getMoneyCurrency } from './moneyFormat.js'
 
 export {
   TRANSFER_POLICY_PRESETS,

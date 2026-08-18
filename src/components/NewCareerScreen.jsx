@@ -6,11 +6,13 @@ import {
   getYearMeta,
   selectRealTeamsForYear,
 } from '../data/seasonLeagueBuilder'
+import { EUCS_TIERS, eucsTeamsForTier } from '../data/eucsLeagueTeams'
 import { careerFlowStrings } from '../ui/strings/careerFlow'
 import { resolveTeamName } from '../ui/locale'
 import TeamStartPreviewModal, {
   buildTeamStartPreview,
 } from './TeamStartPreviewModal'
+import EucsTeamPreviewModal from './EucsTeamPreviewModal'
 
 export default function NewCareerScreen({
   slotIndex,
@@ -25,6 +27,22 @@ export default function NewCareerScreen({
   const defaultYear = years.includes(2025) ? 2025 : years[years.length - 1]
 
   const [managerName, setManagerName] = useState('')
+  const [competition, setCompetition] = useState('ufa')
+  const [eucsTeamId, setEucsTeamId] = useState('')
+  const [eucsPreviewTeamId, setEucsPreviewTeamId] = useState(null)
+  const [eucsPreviewAnchorTop, setEucsPreviewAnchorTop] = useState(null)
+  const eucsTiers = useMemo(
+    () => EUCS_TIERS.map((tier) => ({ tier, teams: eucsTeamsForTier(tier) })),
+    [],
+  )
+  const eucsPreviewTeam = useMemo(() => {
+    if (!eucsPreviewTeamId) return null
+    for (const { teams } of eucsTiers) {
+      const found = teams.find((tm) => tm.id === eucsPreviewTeamId)
+      if (found) return found
+    }
+    return null
+  }, [eucsPreviewTeamId, eucsTiers])
   const [rosterMode, setRosterMode] = useState('historical')
   const [seasonYear, setSeasonYear] = useState(defaultYear)
   const [selectedTeamIds, setSelectedTeamIds] = useState(() =>
@@ -124,6 +142,22 @@ export default function NewCareerScreen({
       setError(t.errManager)
       return
     }
+
+    if (competition === 'eucs') {
+      if (!eucsTeamId) {
+        setError(t.errTeam)
+        return
+      }
+      setError('')
+      onCreate({
+        slotIndex,
+        managerName: name,
+        playerTeamId: eucsTeamId,
+        competition: 'eucs',
+      })
+      return
+    }
+
     if (!playerTeamId) {
       setError(t.errTeam)
       return
@@ -136,6 +170,7 @@ export default function NewCareerScreen({
       seasonYear,
       rosterMode,
       selectedTeamIds,
+      competition: 'ufa',
     })
   }
 
@@ -155,11 +190,42 @@ export default function NewCareerScreen({
       </button>
 
       <h1 className="text-2xl font-bold text-ufa-text">{t.newTitle(slotIndex + 1)}</h1>
-      <p className="mt-2 text-sm text-ufa-muted">{t.newIntro(seasonYear, yearShort)}</p>
+      <p className="mt-2 text-sm text-ufa-muted">
+        {competition === 'eucs' ? t.eucsIntro : t.newIntro(seasonYear, yearShort)}
+      </p>
 
-      <div className="mt-4 rounded-xl border border-ufa-border bg-ufa-panel px-4 py-3 text-sm text-ufa-muted">
-        {t.leagueSlotsInfo}
-      </div>
+      {competition === 'ufa' && (
+        <div className="mt-4 rounded-xl border border-ufa-border bg-ufa-panel px-4 py-3 text-sm text-ufa-muted">
+          {t.leagueSlotsInfo}
+        </div>
+      )}
+
+      <fieldset className="mt-6">
+        <legend className="text-sm font-medium text-ufa-text">{t.competitionLabel}</legend>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {[
+            { id: 'ufa', title: t.competitionUfa, desc: t.competitionUfaDesc },
+            { id: 'eucs', title: t.competitionEucs, desc: t.competitionEucsDesc },
+          ].map((opt) => {
+            const active = competition === opt.id
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setCompetition(opt.id)}
+                className={`rounded-xl border p-4 text-left transition-all ${
+                  active
+                    ? 'border-ufa-accent bg-ufa-accent/10 shadow-md shadow-ufa-accent/10'
+                    : 'border-ufa-border bg-ufa-panel hover:bg-ufa-panel-hover'
+                }`}
+              >
+                <p className="font-semibold text-ufa-text">{opt.title}</p>
+                <p className="mt-1 text-xs text-ufa-muted">{opt.desc}</p>
+              </button>
+            )
+          })}
+        </div>
+      </fieldset>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-8">
         <label className="block">
@@ -174,6 +240,66 @@ export default function NewCareerScreen({
           />
         </label>
 
+        {competition === 'eucs' ? (
+          <fieldset>
+            <legend className="text-sm font-medium text-ufa-text">{t.eucsPickTeam}</legend>
+            <div className="mt-3 space-y-6">
+              {eucsTiers.map(({ tier, teams }) => (
+                <div key={tier}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ufa-muted">
+                    {t.eucsTierLabel(tier)}
+                  </p>
+                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                    {teams.map((team) => {
+                      const active = team.id === eucsTeamId
+                      return (
+                        <div
+                          key={team.id}
+                          className={`rounded-xl border p-4 transition-all ${
+                            active
+                              ? 'border-ufa-accent bg-ufa-accent/10 shadow-md shadow-ufa-accent/10'
+                              : 'border-ufa-border bg-ufa-panel'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setEucsTeamId(team.id)}
+                            className="w-full text-left"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span
+                                className="flex h-10 w-10 items-center justify-center rounded-lg text-xs font-bold text-white"
+                                style={{ backgroundColor: team.primaryColor }}
+                              >
+                                {team.shortName}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-ufa-text truncate">{team.name}</p>
+                              </div>
+                            </div>
+                          </button>
+                          <div className="mt-3">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                setEucsPreviewAnchorTop(e.currentTarget.getBoundingClientRect().top)
+                                setEucsPreviewTeamId(team.id)
+                              }}
+                              className="w-full rounded-md border border-ufa-border px-2 py-1.5 text-xs font-medium text-ufa-accent hover:bg-ufa-accent/10"
+                            >
+                              {t.previewProfile}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </fieldset>
+        ) : (
+        <>
         <fieldset>
           <legend className="text-sm font-medium text-ufa-text">{t.rosterMode}</legend>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -378,6 +504,8 @@ export default function NewCareerScreen({
             </button>
           </p>
         )}
+        </>
+        )}
 
         {error && <p className="text-sm text-red-400">{error}</p>}
         {externalError && <p className="text-sm text-red-400">{externalError}</p>}
@@ -410,6 +538,19 @@ export default function NewCareerScreen({
           onSelect={(id) => {
             setPlayerTeamId(id)
             setPreviewTeamId(null)
+          }}
+        />
+      )}
+
+      {eucsPreviewTeam && (
+        <EucsTeamPreviewModal
+          team={eucsPreviewTeam}
+          t={t}
+          anchorTop={eucsPreviewAnchorTop}
+          onClose={() => setEucsPreviewTeamId(null)}
+          onSelect={(id) => {
+            setEucsTeamId(id)
+            setEucsPreviewTeamId(null)
           }}
         />
       )}

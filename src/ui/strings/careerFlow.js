@@ -74,6 +74,24 @@ const pl = {
   pcHint: 'Przeznaczone do gry na PC — na telefonie może być nieczytelne',
   disclaimer:
     'Ta gra to osobisty projekt hobbystyczny, nie jest powiązana z Ultimate Frisbee Association (UFA) ani żadną inną organizacją. Copyright by Krzysztof Rud 2026©',
+
+  competitionLabel: 'Rozgrywki',
+  competitionUfa: 'UFA',
+  competitionUfaDesc: 'Fikcjonalizowana amerykańska liga zawodowa — składy historyczne lub losowe.',
+  competitionEucs: 'Liga Europejska',
+  competitionEucsDesc: 'Piramida 3 poziomów (16+16+16) zbudowana z realnych klubów EUCS Open, z awansami i spadkami.',
+  eucsIntro:
+    'Wybierz klub z dowolnego z 3 poziomów piramidy — to ustala też Twój poziom startowy. Awanse/spadki (3 w górę / 3 w dół) rozstrzygane są na koniec każdego sezonu, a w styczniu wszystkie 48 drużyn gra w jednym Pucharze Piramidy.',
+  eucsTierLabel: (tier) => `Liga ${tier}`,
+  eucsPickTeam: 'Wybierz klub',
+  eucsPreviewRoster: 'Skład',
+  eucsPreviewHistory: 'Historia klubu (EUCF)',
+  eucsPreviewNoHistory: 'Brak odnotowanych osiągnięć w finałach EUCF.',
+  eucsPreviewSource: 'Źródło: ultimate-reference.com',
+  eucsResultChampion: 'Mistrz',
+  eucsResultRunnerUp: 'Wicemistrz',
+  eucsResultSemifinalist: 'Półfinalista',
+  eucsResultSpirit: 'Nagroda Spirit of the Game',
 }
 
 const en = {
@@ -151,6 +169,24 @@ const en = {
   pcHint: 'Intended to play on PC - might be messy on the phone',
   disclaimer:
     "This game is a personal hobby project, it's not affiliated with Ultimate Frisbee Association (UFA) or any other body. Copyright by Krzysztof Rud 2026©",
+
+  competitionLabel: 'Competition',
+  competitionUfa: 'UFA',
+  competitionUfaDesc: 'Fictionalized US pro league — historical or random rosters.',
+  competitionEucs: 'European League',
+  competitionEucsDesc: 'A 3-tier pyramid (16+16+16) built from real EUCS Open clubs, with promotion and relegation.',
+  eucsIntro:
+    'Pick a club from any of the 3 pyramid tiers — that also sets your starting tier. Promotion/relegation (3 up / 3 down) is decided at the end of each season, and every January all 48 clubs play in one Pyramid Cup.',
+  eucsTierLabel: (tier) => `Liga ${tier}`,
+  eucsPickTeam: 'Pick a club',
+  eucsPreviewRoster: 'Roster',
+  eucsPreviewHistory: 'Club history (EUCF)',
+  eucsPreviewNoHistory: 'No recorded EUCF finals achievements.',
+  eucsPreviewSource: 'Source: ultimate-reference.com',
+  eucsResultChampion: 'Champion',
+  eucsResultRunnerUp: 'Runner-up',
+  eucsResultSemifinalist: 'Semifinalist',
+  eucsResultSpirit: 'Spirit of the Game award',
 }
 
 const BY_LANG = {

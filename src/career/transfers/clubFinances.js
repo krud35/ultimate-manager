@@ -7,6 +7,7 @@ import { createRng } from '../../matchEngine/rng.js'
 import { formatUsd } from './moneyFormat.js'
 import { adjustTeamReputation } from '../../models/teamReputation.js'
 import { ensureTeamFans, adjustFanMood } from '../../models/teamFans.js'
+import { eucsTeamTier } from '../../data/eucsLeagueTeams.js'
 
 /** Re-eksport formatowania — bezpieczny import razem z budżetami (`formatUsd` z clubFinances). */
 export { formatUsd, formatUsdCompact } from './moneyFormat.js'
@@ -74,6 +75,19 @@ const BUDGET_TIERS = [
   { id: 'C', weight: 4, min: 150_000, max: 550_000 },
 ]
 
+/**
+ * Piramida Ligi Europejskiej: Liga 1 wyraźnie bogatsza od Ligi 2, ta wyraźnie bogatsza
+ * od Ligi 3 — mnożnik na rozłożenie budżetowe powyżej (S/A/B/C), więc w ramach poziomu
+ * nadal jest rozrzut, ale całe poziomy różnią się wyraźnie między sobą. Zwraca 1 (brak
+ * zmiany) dla drużyn spoza Ligi Europejskiej (`eucsTeamTier` → null dla id UFA).
+ */
+const EUCS_TIER_BUDGET_MULT = { 1: 1.7, 2: 1.0, 3: 0.55 }
+
+function eucsBudgetMultFor(teamId) {
+  const tier = eucsTeamTier(teamId)
+  return tier ? (EUCS_TIER_BUDGET_MULT[tier] ?? 1) : 1
+}
+
 function hashString(str) {
   let h = 2166136261
   const s = String(str)
@@ -102,8 +116,8 @@ function rollInRange(rng, min, max) {
 export function rollTransferBudget(teamId, seedBase = 0) {
   const rng = createRng(hashString(`${seedBase}|budget|${teamId}`))
   const tier = pickTier(rng)
+  const raw = rollInRange(rng, tier.min, tier.max) * eucsBudgetMultFor(teamId)
   // Zaokrąglenie do 10k — „okrągłe” kwoty jak w raportach klubowych.
-  const raw = rollInRange(rng, tier.min, tier.max)
   return Math.round(raw / 10_000) * 10_000
 }
 

@@ -11,6 +11,92 @@ import { worldTeamById, getTransferBudget, formatUsd } from '../career'
 import { useUiLang } from '../ui/UiLangContext'
 import { displaySeasonLabel } from '../ui/locale'
 import { seasonRecapStrings } from '../ui/strings/seasonRecap'
+import { shadowStandingsThroughRound, simulateShadowMatchResult } from '../league/shadowLeague.js'
+import { computePyramidMovement } from '../league/promotionRelegation.js'
+import { eucsTeamById, eucsTeamStrength } from '../data/eucsLeagueTeams.js'
+
+function previewHashSeed(...parts) {
+  let h = 2166136261
+  for (const part of parts) {
+    const s = String(part)
+    for (let i = 0; i < s.length; i += 1) {
+      h ^= s.charCodeAt(i)
+      h = Math.imul(h, 16777619)
+    }
+  }
+  return h >>> 0
+}
+
+/**
+ * Projekcja awansów/spadków na bazie tabel „na dziś" (nie mutuje niczego) — do
+ * podglądu w recapie, zanim gracz faktycznie przejdzie do kolejnego sezonu.
+ */
+function computeEucsMovementPreview(career, playerTierIds) {
+  if (career?.competition !== 'eucs' || !career.pyramid) return null
+  const tables = { [career.pyramid.tier]: playerTierIds }
+  for (const [tierNumStr, shadowLeague] of Object.entries(career.pyramid.otherTiers ?? {})) {
+    tables[Number(tierNumStr)] = shadowStandingsThroughRound(shadowLeague, null).map((r) => r.teamId)
+  }
+  if (!tables[1] || !tables[2] || !tables[3]) return null
+  const resolveMatch = (a, b) => {
+    const result = simulateShadowMatchResult(
+      eucsTeamStrength(a),
+      eucsTeamStrength(b),
+      previewHashSeed('pyramid-preview', a, b),
+    )
+    return result.winner === 'A' ? a : b
+  }
+  try {
+    return computePyramidMovement({
+      tier1Table: tables[1],
+      tier2Table: tables[2],
+      tier3Table: tables[3],
+      resolveMatch,
+    })
+  } catch {
+    return null
+  }
+}
+
+function eucsName(id) {
+  return eucsTeamById(id)?.name ?? id
+}
+
+function PyramidMovementSection({ career, playerTierIds, t }) {
+  const movement = computeEucsMovementPreview(career, playerTierIds)
+  if (!movement) return null
+
+  const tier = career.pyramid.tier
+  const idx = playerTierIds.indexOf(career.playerTeamId)
+  let status = t.pyramidStatusSafe
+  if (tier !== 1 && idx < 2) status = t.pyramidStatusPromoteDirect
+  else if (tier !== 1 && idx < 6) status = t.pyramidStatusPlayoff
+  else if (tier !== 3 && idx >= playerTierIds.length - 3) status = t.pyramidStatusRelegate
+
+  const groups = new Map()
+  for (const m of movement.movements) {
+    const label = m.reason.startsWith('promoted')
+      ? t.pyramidMovePromotedTo(m.to)
+      : t.pyramidMoveRelegatedFrom(m.from)
+    if (!groups.has(label)) groups.set(label, [])
+    groups.get(label).push(eucsName(m.teamId))
+  }
+
+  return (
+    <div className="mt-5 rounded-lg border border-ufa-border bg-ufa-panel px-4 py-3">
+      <p className="text-sm font-semibold text-ufa-text">{t.pyramidMovementTitle}</p>
+      <p className="mt-1 text-xs font-medium text-ufa-accent">{status}</p>
+      <ul className="mt-2 space-y-1 text-xs text-ufa-muted">
+        {[...groups.entries()].map(([label, teams]) => (
+          <li key={label}>
+            <span className="text-ufa-text">{label}:</span> {teams.join(', ')}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[10px] text-ufa-muted">{t.pyramidMovementHint}</p>
+    </div>
+  )
+}
 
 /**
  * Podsumowanie po zakończeniu rozgrywek (mecze skończone) — przed 31 lipca.
@@ -205,6 +291,14 @@ export default function SeasonRecapPanel({
             ))}
           </ul>
         </div>
+      )}
+
+      {career.competition === 'eucs' && (
+        <PyramidMovementSection
+          career={career}
+          playerTierIds={table.map((r) => r.teamId)}
+          t={t}
+        />
       )}
 
       {lastArchive && (

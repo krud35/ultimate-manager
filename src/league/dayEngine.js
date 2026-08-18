@@ -14,12 +14,14 @@ import {
   createCupFromFallStandings,
   syncCupMatchesIntoFixtures,
 } from './cupBracket.js'
+import { createPyramidCup, resolveFullPyramidCup } from './pyramidCup.js'
 import { createLeaguePlayerStats, mergeMatchBoxScore } from './leagueStats.js'
 import { standingsTable } from './standings.js'
 import { teamFromLeague } from '../career/worldState.js'
 import { applyReputationForMatchTeams } from '../models/teamReputation.js'
 import { applyFansMoodForMatchTeams } from '../models/teamFans.js'
 import { applyPostMatchFinances } from '../career/clubFacilities.js'
+import { applyCupPlacementPrizes } from '../career/placementPrizes.js'
 
 function toIso(date) {
   return typeof date === 'string' ? String(date).slice(0, 10) : formatISODate(date)
@@ -102,9 +104,29 @@ export function maybeInitializeCup(league) {
   if (!league || league.cup) return league
 
   const fallFixtures = (league.fixtures ?? []).filter(
-    (f) => f.competition !== 'cup' && f.round >= 1 && f.round <= 15,
+    (f) => f.competition !== 'cup' && f.competition !== 'pyramid-cup' && f.round >= 1 && f.round <= 15,
   )
   if (!fallFixtures.length || fallFixtures.some((f) => f.status !== 'completed')) {
+    return league
+  }
+
+  if (league.eucsPyramid) {
+    const { tier1Ids, tier2Ids, tier3Ids } = league.eucsPyramid
+    if (!league.calendar?.pyramidCup) return league
+    league.cup = createPyramidCup(
+      tier1Ids,
+      tier2Ids,
+      tier3Ids,
+      league.simSeedBase,
+      league.calendar.pyramidCup,
+    )
+    // Puchar piramidy jest rozstrzygany od razu w tle (silnik meczowy, przeciwnicy
+    // cieniowi dostają jednorazowy skład) — patrz notatka o zakresie w pyramidCup.js.
+    resolveFullPyramidCup(league.cup, { teamsById: league.teamsById }, league.playerTeamId, league.simSeedBase)
+    // Premie pucharowe od razu po rozstrzygnięciu — tylko drużyny obecne w teamsById
+    // (poziom gracza), patrz notatka w placementPrizes.js.
+    applyCupPlacementPrizes(league.cup, league.teamsById)
+    syncCupMatchesIntoFixtures(league)
     return league
   }
 

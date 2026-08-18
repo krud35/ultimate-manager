@@ -142,6 +142,50 @@ function buildJanuaryCupWeeks(janYear) {
 }
 
 /**
+ * Pięć tygodni stycznia dla pucharu piramidy Ligi Europejskiej (48 drużyn, losowa
+ * drabinka): 1 free, 2 puchar (runda 1 + runda 32), 3 puchar (1/8 + ćwierćfinał),
+ * 4 puchar (półfinał + finał), 5 free.
+ */
+function buildJanuaryPyramidCupWeeks(janYear) {
+  const jan1 = new Date(janYear, 0, 1)
+  const week1Start = mondayOfWeek(jan1)
+  const week1End = sundayOfWeek(week1Start)
+
+  const week2Start = addDays(week1Start, 7)
+  const week2End = addDays(week2Start, 6)
+  const week3Start = addDays(week2Start, 7)
+  const week3End = addDays(week3Start, 6)
+  const week4Start = addDays(week3Start, 7)
+  const week4End = addDays(week4Start, 6)
+  const week5Start = addDays(week4Start, 7)
+  const week5End = addDays(week5Start, 6)
+
+  const week2Friday = nextWeekday(week2Start, 5)
+  const week3Friday = nextWeekday(week3Start, 5)
+  const week4Friday = nextWeekday(week4Start, 5)
+
+  return {
+    freeWeek1: dateRange(week1Start, week1End),
+    playWeek2: {
+      ...dateRange(week2Start, week2End),
+      round1: formatISODate(week2Friday),
+      roundOf32: formatISODate(addDays(week2Friday, 1)),
+    },
+    playWeek3: {
+      ...dateRange(week3Start, week3End),
+      roundOf16: formatISODate(week3Friday),
+      quarterfinal: formatISODate(addDays(week3Friday, 1)),
+    },
+    playWeek4: {
+      ...dateRange(week4Start, week4End),
+      semifinal: formatISODate(week4Friday),
+      final: formatISODate(addDays(week4Friday, 2)),
+    },
+    freeWeek5: dateRange(week5Start, week5End),
+  }
+}
+
+/**
  * @param {{ seasonYear: number, teamIds?: string[] }} options
  */
 export function buildSeasonCalendar({ seasonYear, teamIds = [] }) {
@@ -168,6 +212,7 @@ export function buildSeasonCalendar({ seasonYear, teamIds = [] }) {
   )
 
   const cup = buildJanuaryCupWeeks(janYear)
+  const pyramidCup = buildJanuaryPyramidCupWeeks(janYear)
 
   const fallRounds = fallFridays.map((_, i) => i + 1)
   const springRounds = springFridays.map((_, i) => fallRoundCount + i + 1)
@@ -204,6 +249,7 @@ export function buildSeasonCalendar({ seasonYear, teamIds = [] }) {
     fallRounds,
     springRounds,
     cup,
+    pyramidCup,
     roundDates,
   }
 }

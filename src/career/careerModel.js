@@ -5,8 +5,27 @@
 import { createLeagueSeason } from '../league/leagueState.js'
 import { isOfficialSeasonEnded } from '../league/dayEngine.js'
 import { resolvePlayerDefaultTactics } from '../matchEngine'
-import { SAVE_VERSION, STARTING_SEASON_YEAR } from './constants.js'
+import { SAVE_VERSION, STARTING_SEASON_YEAR, EUCS_STARTING_SEASON_YEAR } from './constants.js'
 import { writeSlot } from './saveStore.js'
+import { standingsTable } from '../league/standings.js'
+import { simulateAdHocMatch } from '../league/leagueEngine.js'
+import {
+  EUCS_TIERS,
+  buildEucsLeagueTemplate,
+  eucsTeamsForTier,
+  eucsTeamStrength,
+  eucsTeamTier,
+} from '../data/eucsLeagueTeams.js'
+import {
+  createShadowLeague,
+  ensureShadowTeamRoster,
+  shadowStandingsTable,
+  shadowTeamsForTier,
+  shadowTeamsFromIds,
+  simulateShadowMatchResult,
+  simulateShadowSeason,
+} from '../league/shadowLeague.js'
+import { computePyramidMovement } from '../league/promotionRelegation.js'
 import {
   createWorldFromTemplate,
   initWorldPlayerStats,
@@ -29,6 +48,7 @@ import {
   pruneLeagueMemory,
 } from './seasonArchive.js'
 import { ensureWorldFinances, rollSeasonBudgets } from './transfers/clubFinances.js'
+import { setMoneyCurrency } from './transfers/moneyFormat.js'
 import {
   ensureWorldContracts,
   processSeasonEndContractObligations,
@@ -56,8 +76,15 @@ import {
   messagesFromSponsorExpiringSoon,
   messagesFromSponsorPayouts,
 } from './clubSponsors.js'
-import { ensureTeamFacilities } from './clubFacilities.js'
+import { ensureTeamFacilities, ensureWorldFacilities } from './clubFacilities.js'
+import { processLeaguePlacementPrizes, messagesFromLeaguePlacementPrizes, messageFromCupPlacementPrize } from './placementPrizes.js'
 import { mergeInbox, messagesFromAcademyAgedOut } from './inbox.js'
+import { ensureWorldReputation } from '../models/teamReputation.js'
+import { ensureWorldFans } from '../models/teamFans.js'
+import { ensureWorldScouting } from './scouting.js'
+import { ensureWorldSponsors } from './clubSponsors.js'
+import { refreshTeamMarketValues } from './transfers/playerValue.js'
+import { ensureAiCoachProfiles } from '../matchEngine/aiCoachProfile.js'
 
 /** Cel łącznej liczby zawodników w lidze (senior roster, 16 drużyn) — utrzymuje pulę graczy w ryzach. */
 const ROSTER_STABILIZE_TARGET = 500
@@ -129,6 +156,13 @@ export function buildSeasonArchive(career) {
  */
 export function createCareer(slotIndex, options) {
   const managerName = (options.managerName ?? '').trim() || 'Manager'
+  if (options.competition === 'eucs') {
+    return createEucsCareer(slotIndex, { ...options, managerName })
+  }
+  // Kwoty $ zapisywane w treści wiadomości powitalnych (np. oferty sponsorskie) są
+  // formatowane od razu tutaj, zanim App.jsx zdąży zsynchronizować walutę przy
+  // następnym renderze — ustawiamy więc jawnie na start tworzenia kariery.
+  setMoneyCurrency('USD')
   const playerTeamId = options.playerTeamId
   const seasonYear = options.seasonYear ?? STARTING_SEASON_YEAR
   const rosterMode = options.rosterMode === 'random' ? 'random' : 'historical'
@@ -192,6 +226,116 @@ export function createCareer(slotIndex, options) {
     rosterMode,
     usedFictionalFill: !!template.usedFictionalFill,
     fictionalTeamCount: template.fictionalCount ?? 0,
+    world,
+    league,
+    homeTactics: resolvePlayerDefaultTactics(team.players),
+    seasonHistory: [],
+    careerStats: emptyCareerStats(),
+    allTimeStats: createAllTimeStats(),
+    transferLog: [],
+    inbox: [],
+    ultiworld: {
+      articles: [],
+      lastRoundCovered: 0,
+      lastPomMonth: null,
+      coveredFixtureIds: [],
+      seeded: true,
+    },
+  }
+  const sponsorInbox = messagesFromOpenSponsorOffers(draftCareer, {
+    date: league.currentDate,
+  })
+  draftCareer.inbox = mergeInbox(draftCareer, sponsorInbox)
+
+  return writeSlot(slotIndex, draftCareer)
+}
+
+/**
+ * Nowa kariera w Lidze Europejskiej (EUCS) — piramida 3 poziomów. `options.playerTeamId`
+ * ustala start Ligę (1/2/3); pozostałe dwa poziomy startują jako lekkie ligi cieniowe.
+ */
+function createEucsCareer(slotIndex, options) {
+  // Patrz notatka w createCareer() — walutę trzeba ustawić przed budową wiadomości
+  // powitalnych, nie po (App.jsx synchronizuje ją dopiero przy kolejnym renderze).
+  setMoneyCurrency('EUR')
+  const managerName = options.managerName
+  const playerTeamId = options.playerTeamId
+  const tier = eucsTeamTier(playerTeamId)
+  if (!tier) {
+    throw new Error(`Nieznana drużyna Ligi Europejskiej: ${playerTeamId}`)
+  }
+  const seasonYear = options.seasonYear ?? EUCS_STARTING_SEASON_YEAR
+
+  const financeSeed = seasonYear * 1009 + slotIndex * 17 + Math.floor(Math.random() * 1000)
+  const template = buildEucsLeagueTemplate({
+    tier,
+    teamIds: eucsTeamsForTier(tier).map((t) => t.id),
+    seed: financeSeed,
+  })
+  const world = createWorldFromTemplate(seasonYear, {
+    financeSeed,
+    rosterMode: 'random',
+    teams: template.teams.map((t) => ({
+      ...t,
+      tacticalIdentity: template.tacticalByTeamId?.[t.id] ?? null,
+    })),
+  })
+  rollAiCoachProfilesForWorld(world, playerTeamId, financeSeed)
+  initWorldPlayerStats(world, { playerTeamId })
+  initWorldPlayerDevelopment(world, { playerTeamId })
+  initAllAiTeamTraining(world, playerTeamId)
+  ensureTeamTraining(worldTeamById(world, playerTeamId))
+  ensureWorldFinances(world, { seed: financeSeed, force: true })
+  ensureWorldContracts(world, { seed: financeSeed, force: true, syncBudgets: true })
+  const team = worldTeamById(world, playerTeamId)
+  if (!team) {
+    throw new Error(`Nieznana drużyna: ${playerTeamId}`)
+  }
+  ensureTeamFacilities(team, { seed: financeSeed })
+  ensureTeamSponsors(team, { seed: financeSeed, seasonYear, autoSign: false })
+  team.sponsors.main = null
+  team.sponsors.secondary = null
+  refreshSponsorOffers(team, 'main', { seed: `${financeSeed}|player|main`, seasonYear })
+  refreshSponsorOffers(team, 'secondary', {
+    seed: `${financeSeed}|player|secondary`,
+    seasonYear,
+  })
+
+  const simSeedBase = seasonYear * 1000 + slotIndex * 17 + Math.floor(Math.random() * 1000)
+  const league = createLeagueSeason({
+    world,
+    playerTeamId,
+    seasonYear,
+    simSeedBase,
+    seasonLabel: `Liga Europejska ${tier} ${seasonYear}/${String(seasonYear + 1).slice(-2)}`,
+  })
+
+  const tierIds = Object.fromEntries(EUCS_TIERS.map((t) => [t, eucsTeamsForTier(t).map((x) => x.id)]))
+  league.eucsPyramid = { tier1Ids: tierIds[1], tier2Ids: tierIds[2], tier3Ids: tierIds[3] }
+
+  const otherTiers = {}
+  for (const otherTier of EUCS_TIERS) {
+    if (otherTier === tier) continue
+    otherTiers[otherTier] = createShadowLeague(shadowTeamsForTier(otherTier), simSeedBase + otherTier)
+  }
+
+  const now = new Date().toISOString()
+  const draftCareer = {
+    version: SAVE_VERSION,
+    id: newId(),
+    slotIndex,
+    createdAt: now,
+    updatedAt: now,
+    managerName,
+    playerTeamId,
+    seasonYear,
+    seasonIndex: 1,
+    phase: 'active',
+    rosterMode: 'random',
+    competition: 'eucs',
+    pyramid: { tier, otherTiers },
+    usedFictionalFill: false,
+    fictionalTeamCount: 0,
     world,
     league,
     homeTactics: resolvePlayerDefaultTactics(team.players),
@@ -404,6 +548,22 @@ export function finalizeSeason(career) {
     ]
   }
 
+  // Liga Europejska: premia ligowa (lokata) + premia pucharowa (Puchar Piramidy).
+  let prizeInbox = []
+  if (worldAfterCycle && career.competition === 'eucs' && career.pyramid?.tier) {
+    const leaguePrizes = processLeaguePlacementPrizes(
+      worldAfterCycle,
+      career.league,
+      career.pyramid.tier,
+    )
+    const probe = { ...career, world: worldAfterCycle, league: career.league }
+    prizeInbox = messagesFromLeaguePlacementPrizes(leaguePrizes, probe, {
+      date: career.league?.currentDate,
+    })
+    const cupMsg = messageFromCupPlacementPrize(probe, { date: career.league?.currentDate })
+    if (cupMsg) prizeInbox.push(cupMsg)
+  }
+
   // Bonusy kontraktowe zawodników (spełnione warunki) + kara morale za złamane obietnice.
   let contractObligationInbox = []
   if (worldAfterCycle) {
@@ -445,13 +605,16 @@ export function finalizeSeason(career) {
     aiOffseasonTransferWaves: 1,
     inbox: mergeInbox(
       { ...career, inbox: career.inbox },
-      [...seasonCycleInbox, ...sponsorInbox, ...contractObligationInbox],
+      [...seasonCycleInbox, ...sponsorInbox, ...prizeInbox, ...contractObligationInbox],
     ),
   })
 }
 
 /** Start kolejnego sezonu — offseason development + nowy kalendarz. */
 export function startNextSeason(career) {
+  if (career.competition === 'eucs') {
+    return startNextSeasonEucs(career)
+  }
   const base =
     career.phase === 'season_complete' ? career : finalizeSeason({ ...career })
 
@@ -522,6 +685,183 @@ export function startNextSeason(career) {
     phase: 'active',
     world,
     league,
+    homeTactics: resolvePlayerDefaultTactics(team?.players ?? [], base.homeTactics),
+    transferLog: [],
+    inbox: mergeInbox(draft, sponsorFresh),
+    ultiworld: {
+      articles: [],
+      lastRoundCovered: 0,
+      lastPomMonth: null,
+      coveredFixtureIds: [],
+      cupChampionCovered: false,
+      seeded: false,
+    },
+    aiOffseasonTransferWaves: 0,
+    aiTransfersLastDate: null,
+  })
+}
+
+/**
+ * Start kolejnego sezonu w Lidze Europejskiej: rozstrzyga ligi cieniowe, liczy
+ * awanse/spadki (computePyramidMovement), i przebudowuje world/league drużyny gracza
+ * dla jej nowego poziomu (przycina odchodzące drużyny, dogenerowuje przychodzące).
+ */
+function startNextSeasonEucs(career) {
+  const base = career.phase === 'season_complete' ? career : finalizeSeason({ ...career })
+
+  const nextYear = base.seasonYear + 1
+  const nextIndex = base.seasonIndex + 1
+  const currentTier = base.pyramid.tier
+  const seed = nextYear * 1000 + base.slotIndex * 17 + nextIndex * 31
+
+  // Ligi cieniowe: rozstrzygnięcie w tle (nikt ich nie ogląda) żeby dostać finałowe tabele.
+  const tables = {
+    [currentTier]: standingsTable(base.league.standings).map((r) => r.teamId),
+  }
+  for (const [tierNum, shadowLeague] of Object.entries(base.pyramid.otherTiers)) {
+    simulateShadowSeason(shadowLeague)
+    tables[Number(tierNum)] = shadowStandingsTable(shadowLeague).map((r) => r.teamId)
+  }
+
+  const resolveMatch = (teamA, teamB) => {
+    if (teamA === base.playerTeamId || teamB === base.playerTeamId) {
+      const playerTeam = worldTeamById(base.world, base.playerTeamId)
+      const otherTeamId = teamA === base.playerTeamId ? teamB : teamA
+      const otherTeam =
+        worldTeamById(base.world, otherTeamId) ??
+        ensureShadowTeamRoster({ id: otherTeamId, tier: eucsTeamTier(otherTeamId) }, seed)
+      const homeTeam = teamA === base.playerTeamId ? playerTeam : otherTeam
+      const awayTeam = teamA === base.playerTeamId ? otherTeam : playerTeam
+      return simulateAdHocMatch(homeTeam, awayTeam, seed).winner
+    }
+    const result = simulateShadowMatchResult(eucsTeamStrength(teamA), eucsTeamStrength(teamB), seed)
+    return result.winner === 'A' ? teamA : teamB
+  }
+
+  const movement = computePyramidMovement({
+    tier1Table: tables[1],
+    tier2Table: tables[2],
+    tier3Table: tables[3],
+    resolveMatch,
+  })
+  const nextTierIds = { 1: movement.tier1Next, 2: movement.tier2Next, 3: movement.tier3Next }
+  const newTier = EUCS_TIERS.find((t) => nextTierIds[t].includes(base.playerTeamId))
+
+  const world = base.world
+  applyOffseasonDevelopment(world, {
+    leaguePlayerStats:
+      base.seasonHistory?.[base.seasonHistory.length - 1]?.playerStats ??
+      base.league?.playerStats ??
+      null,
+    playerTeamId: base.playerTeamId,
+    seed,
+  })
+  applyAcademyOffseasonDevelopment(world, { seed })
+  initAllAiTeamTraining(world, base.playerTeamId)
+  ensureTeamTraining(worldTeamById(world, base.playerTeamId))
+  resetWorldSeasonStats(world)
+  resetWorldSeasonInjuryCounts(world)
+  ensureWorldFreeAgents(world)
+  rollSeasonBudgets(world, { seed })
+  const seasonStartPayouts = processSeasonStartSponsorPayouts(world, nextYear)
+
+  // Przytnij drużyny które opuściły poziom gracza; dogeneruj te które właśnie awansowały/spadły.
+  const newTierIds = nextTierIds[newTier]
+  const keep = new Set(newTierIds)
+  for (const id of Object.keys(world.teamsById)) {
+    if (!keep.has(id)) delete world.teamsById[id]
+  }
+  for (const id of newTierIds) {
+    if (world.teamsById[id]) continue
+    const built = buildEucsLeagueTemplate({ tier: newTier, teamIds: [id], seed })
+    const builtTeam = built.teams[0]
+    if (builtTeam) {
+      builtTeam.tacticalIdentity = built.tacticalByTeamId?.[id] ?? null
+      world.teamsById[id] = builtTeam
+    }
+  }
+  world.teamIds = newTierIds
+
+  ensureAiCoachProfiles(world, base.playerTeamId)
+  ensureWorldFinances(world, { seed, force: false })
+  ensureWorldContracts(world, { seed, force: false, syncBudgets: true })
+  ensureWorldReputation(world)
+  ensureWorldFans(world, { seed, force: false })
+  ensureWorldFacilities(world, { seed, force: false })
+  ensureWorldScouting(world)
+  ensureWorldAcademy(world)
+  ensureWorldSponsors(world, {
+    seed,
+    seasonYear: nextYear,
+    force: false,
+    autoSign: true,
+    playerTeamId: base.playerTeamId,
+  })
+  for (const t of worldTeamsList(world)) refreshTeamMarketValues(t)
+  initWorldPlayerStats(world, { playerTeamId: base.playerTeamId })
+  initWorldPlayerDevelopment(world, { playerTeamId: base.playerTeamId })
+
+  const team = worldTeamById(world, base.playerTeamId)
+
+  const league = createLeagueSeason({
+    world,
+    playerTeamId: base.playerTeamId,
+    seasonYear: nextYear,
+    simSeedBase: seed,
+    teamIds: newTierIds,
+    seasonLabel: `Liga Europejska ${newTier} ${nextYear}/${String(nextYear + 1).slice(-2)}`,
+  })
+  const tierIds = Object.fromEntries(
+    EUCS_TIERS.map((t) => [t, nextTierIds[t]]),
+  )
+  league.eucsPyramid = { tier1Ids: tierIds[1], tier2Ids: tierIds[2], tier3Ids: tierIds[3] }
+
+  const otherTiers = {}
+  for (const otherTier of EUCS_TIERS) {
+    if (otherTier === newTier) continue
+    otherTiers[otherTier] = createShadowLeague(
+      shadowTeamsFromIds(nextTierIds[otherTier], otherTier),
+      seed + otherTier,
+    )
+  }
+
+  const keptSponsor = (base.inbox ?? []).filter((m) => {
+    const k = m?.payload?.kind
+    return (
+      m?.type === 'club_news' &&
+      (k === 'sponsor_expired' ||
+        k === 'sponsor_offers' ||
+        k === 'sponsor_expiring_soon' ||
+        (k === 'sponsor_payout' && m.payload?.payoutKind === 'season_end'))
+    )
+  })
+
+  const draft = {
+    ...base,
+    seasonYear: nextYear,
+    seasonIndex: nextIndex,
+    world,
+    league,
+    pyramid: { tier: newTier, otherTiers },
+    lastPyramidMovements: movement.movements,
+    inbox: keptSponsor,
+  }
+  const sponsorFresh = [
+    ...messagesFromSponsorPayouts(seasonStartPayouts, draft, {
+      kind: 'season_start',
+      date: league.currentDate,
+    }),
+    ...messagesFromOpenSponsorOffers(draft, { date: league.currentDate }),
+  ]
+
+  return persistCareer(base, {
+    seasonYear: nextYear,
+    seasonIndex: nextIndex,
+    phase: 'active',
+    world,
+    league,
+    pyramid: { tier: newTier, otherTiers },
+    lastPyramidMovements: movement.movements,
     homeTactics: resolvePlayerDefaultTactics(team?.players ?? [], base.homeTactics),
     transferLog: [],
     inbox: mergeInbox(draft, sponsorFresh),

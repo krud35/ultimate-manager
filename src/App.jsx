@@ -42,6 +42,10 @@ import {
   processMonthlySponsorPayouts,
   processMonthlySponsorPayoutsForRange,
   messagesFromSponsorPayouts,
+  processMonthlyTvPayouts,
+  processMonthlyTvPayoutsForRange,
+  messagesFromTvPayouts,
+  setMoneyCurrency,
   signSponsorOfferFromInbox,
   supersedeSponsorOfferMessages,
   processDelayedTransferReplies,
@@ -91,6 +95,7 @@ import TacticsGuide from './components/TacticsGuide'
 import RosterView from './components/RosterView'
 import LeagueHub from './components/LeagueHub'
 import LeagueStandingsView from './components/LeagueStandingsView'
+import PyramidStandingsView from './components/PyramidStandingsView'
 import LeagueScheduleView from './components/LeagueScheduleView'
 import LeagueLeadersView from './components/LeagueLeadersView'
 import CupView from './components/CupView'
@@ -153,6 +158,7 @@ const NAV_CATEGORIES = [
     labelEn: 'Season',
     items: [
       { id: 'standings', labelPl: 'Tabela ligowa', labelEn: 'Standings' },
+      { id: 'pyramid', labelPl: 'Piramida', labelEn: 'Pyramid' },
       { id: 'league-schedule', labelPl: 'Terminarz ligi', labelEn: 'League schedule' },
       { id: 'leaders', labelPl: 'Liderzy', labelEn: 'Leaders' },
       { id: 'league-transfers', labelPl: 'Transfery ligowe', labelEn: 'League transfers' },
@@ -506,6 +512,12 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
         date: offerDate,
       }),
     )
+    const monthlyTv = processMonthlyTvPayouts(world, offerDate)
+    inboxMessages.push(
+      ...messagesFromTvPayouts(monthlyTv, { ...career, league: nextLeague, world }, {
+        date: offerDate,
+      }),
+    )
   }
   let inboxBase = expireStaleTransferOffers(
     { ...offerCareer, inbox: career.inbox },
@@ -587,6 +599,10 @@ export default function App() {
   const [slots, setSlots] = useState(() => listSlots())
   const [pendingSlot, setPendingSlot] = useState(null)
   const [career, setCareer] = useState(null)
+  // Liga Europejska (EUCS) rozlicza się w EUR, UFA w USD — moduł-singleton
+  // (`career/transfers/moneyFormat.js`) więc synchronizacja musi wyprzedzić render
+  // formatUsd() poniżej; stąd wywołanie wprost w ciele komponentu, nie w useEffect.
+  setMoneyCurrency(career?.competition === 'eucs' ? 'EUR' : 'USD')
   const [creatingCareer, setCreatingCareer] = useState(false)
   const [careerCreateError, setCareerCreateError] = useState('')
   const [appError, setAppError] = useState('')
@@ -935,6 +951,9 @@ export default function App() {
       const monthlyPayouts = world
         ? processMonthlySponsorPayoutsForRange(world, rangeStart, nextLeague.currentDate)
         : []
+      const monthlyTvPayouts = world
+        ? processMonthlyTvPayoutsForRange(world, rangeStart, nextLeague.currentDate)
+        : []
 
       const inboxBaseExpired = expireStaleTransferOffers(
         { ...career, league: nextLeague, world, inbox: career.inbox },
@@ -998,6 +1017,9 @@ export default function App() {
           { ...career, league: nextLeague, world },
           { kind: 'monthly', date: nextLeague.currentDate },
         ),
+        ...messagesFromTvPayouts(monthlyTvPayouts, { ...career, league: nextLeague, world }, {
+          date: nextLeague.currentDate,
+        }),
       ]
 
       const uw = processUltiworldTick(
@@ -1083,6 +1105,9 @@ export default function App() {
         const monthlyPayouts = world
           ? processMonthlySponsorPayoutsForRange(world, rangeStart, nextLeague.currentDate)
           : []
+        const monthlyTvPayouts = world
+          ? processMonthlyTvPayoutsForRange(world, rangeStart, nextLeague.currentDate)
+          : []
 
         const inboxBaseExpired = expireStaleTransferOffers(
           { ...career, league: nextLeague, world, inbox: career.inbox },
@@ -1146,6 +1171,9 @@ export default function App() {
             { ...career, league: nextLeague, world },
             { kind: 'monthly', date: nextLeague.currentDate },
           ),
+          ...messagesFromTvPayouts(monthlyTvPayouts, { ...career, league: nextLeague, world }, {
+            date: nextLeague.currentDate,
+          }),
         ]
 
         const uw = processUltiworldTick(
@@ -1718,7 +1746,15 @@ export default function App() {
   )
 
   const handleCreateCareer = useCallback(
-    async ({ slotIndex, managerName, playerTeamId: teamId, seasonYear, rosterMode, selectedTeamIds }) => {
+    async ({
+      slotIndex,
+      managerName,
+      playerTeamId: teamId,
+      seasonYear,
+      rosterMode,
+      selectedTeamIds,
+      competition,
+    }) => {
       if (creatingCareer) return
       setCreatingCareer(true)
       setCareerCreateError('')
@@ -1733,6 +1769,7 @@ export default function App() {
           seasonYear,
           rosterMode,
           selectedTeamIds,
+          competition,
         })
         setCareer(created)
         setPendingSlot(null)
@@ -1987,6 +2024,10 @@ export default function App() {
 
         {activeTab === 'standings' && (
           <LeagueStandingsView league={league} onTeamSelect={openTeamProfile} />
+        )}
+
+        {activeTab === 'pyramid' && (
+          <PyramidStandingsView career={career} onTeamSelect={openTeamProfile} />
         )}
 
         {activeTab === 'cup' && (

@@ -369,6 +369,27 @@ export function leagueRecordFromEngineResult(fixture, engineResult, playedByPlay
   }
 }
 
+/**
+ * Rozstrzyga pojedynczy mecz między dwoma pełnymi składami BEZ kontekstu ligi
+ * (np. baraż awansowy Ligi Europejskiej albo mecz Pucharu Piramidy przeciwko
+ * drużynie cieniowej). Ten sam silnik co simulateFixtureMatch, bez efektów
+ * finansowych/reputacyjnych — te dotyczą tylko drużyn na stałe w świecie kariery.
+ */
+export function simulateAdHocMatch(teamA, teamB, seed) {
+  const tacticsA = tacticsForResolvedTeam(teamA, null)
+  const tacticsB = tacticsForResolvedTeam(teamB, null)
+  const engineResult = simulateMatch({
+    homeTeam: { ...teamForMatchEngine(teamA), tactics: tacticsA },
+    awayTeam: { ...teamForMatchEngine(teamB), tactics: tacticsB },
+    homeTactics: tacticsA,
+    awayTactics: tacticsB,
+    seed,
+    fastMode: true,
+  })
+  const fixtureLike = { id: `adhoc-${teamA.id}-${teamB.id}`, homeTeamId: teamA.id, awayTeamId: teamB.id }
+  return leagueRecordFromEngineResult(fixtureLike, engineResult, false)
+}
+
 export function canFinishRound(league) {
   const playerFix = fixturesForPlayerRound(league)
   const playerDone = !playerFix || playerFix.status === 'completed'
