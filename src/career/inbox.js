@@ -88,6 +88,10 @@ const SILENT_CLUB_NEWS_KINDS = new Set([
   'sponsor_expiring_soon',
   'contract_bonus_paid',
   'fan_shop',
+  'tv_payout',
+  'league_placement_prize',
+  'cup_placement_prize',
+  'retirement',
 ])
 
 // Pure info/report inbox types — never worth interrupting the loop.
