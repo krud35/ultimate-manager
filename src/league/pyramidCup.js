@@ -5,11 +5,16 @@
  *  - Runda 32: 16 zwycięzców rundy 1 + 16 drużyn Ligi 1, losowe pary.
  *  - Dalej zwykła drabinka pojedynczej eliminacji: 1/8 → ćwierćfinał → półfinał → finał.
  * Awans w drabince liczony jest przez współdzielone `advanceCupAfterMatch` z cupBracket.js.
+ *
+ * Mecze mają `competition: 'cup'` (nie osobny tag) i konkretne daty (patrz
+ * seasonCalendar.js: buildJanuaryPyramidCupWeeks) — to wystarcza, żeby cała reszta
+ * dnia-po-dniu (dayEngine.js: `simulateAiFixturesOnDate`/`getPlayerFixtureOnDate`,
+ * `applyMatchResultToLeague`'s isCup branch) obsłużyła je DOKŁADNIE tak jak zwykły
+ * puchar UFA — łącznie z tym, że mecz gracza czeka na swoją datę i jest grywalny, a
+ * nie rozstrzygany po cichu w tle. Wymaga, żeby wszystkie 48 drużyn miało już pełny
+ * skład w `world.teamsById` ZANIM ich mecz nadejdzie — patrz `materializeFullPyramidTeams`
+ * w shadowLeague.js, wołane raz na starcie sezonu w careerModel.js.
  */
-import { advanceCupAfterMatch } from './cupBracket.js'
-import { ensureShadowTeamRoster, simulateShadowMatchResult } from './shadowLeague.js'
-import { simulateAdHocMatch } from './leagueEngine.js'
-import { eucsTeamStrength, eucsTeamTier } from '../data/eucsLeagueTeams.js'
 
 function mulberry32(seed) {
   let a = seed >>> 0
@@ -78,7 +83,7 @@ export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, seed, pyramidCupW
       homeTeamId: l2Draw[i],
       awayTeamId: l3Draw[i],
       status: 'scheduled',
-      competition: 'pyramid-cup',
+      competition: 'cup',
       venue: 'neutral',
       date: pyramidCupWeeks.playWeek2.round1,
       nextMatchId: null,
@@ -100,7 +105,7 @@ export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, seed, pyramidCupW
       homeTeamId: l1Draw[i],
       awayTeamId: null,
       status: 'pending',
-      competition: 'pyramid-cup',
+      competition: 'cup',
       venue: 'neutral',
       date: pyramidCupWeeks.playWeek2.roundOf32,
       nextMatchId: null,
@@ -123,7 +128,7 @@ export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, seed, pyramidCupW
       homeTeamId: null,
       awayTeamId: null,
       status: 'pending',
-      competition: 'pyramid-cup',
+      competition: 'cup',
       venue: 'neutral',
       date: pyramidCupWeeks.playWeek3.roundOf16,
       nextMatchId: null,
@@ -146,7 +151,7 @@ export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, seed, pyramidCupW
       homeTeamId: null,
       awayTeamId: null,
       status: 'pending',
-      competition: 'pyramid-cup',
+      competition: 'cup',
       venue: 'neutral',
       date: pyramidCupWeeks.playWeek3.quarterfinal,
       nextMatchId: null,
@@ -169,7 +174,7 @@ export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, seed, pyramidCupW
       homeTeamId: null,
       awayTeamId: null,
       status: 'pending',
-      competition: 'pyramid-cup',
+      competition: 'cup',
       venue: 'neutral',
       date: pyramidCupWeeks.playWeek4.semifinal,
       nextMatchId: null,
@@ -188,7 +193,7 @@ export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, seed, pyramidCupW
     homeTeamId: null,
     awayTeamId: null,
     status: 'pending',
-    competition: 'pyramid-cup',
+    competition: 'cup',
     venue: 'neutral',
     date: pyramidCupWeeks.playWeek4.final,
     nextMatchId: null,
@@ -209,91 +214,16 @@ export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, seed, pyramidCupW
   }
 }
 
-/** Mecze pucharu piramidy gotowe do rozegrania w danym dniu. */
+/**
+ * Mecze pucharu piramidy zaplanowane na dany dzień. Rozstrzyganie samo w sobie idzie
+ * teraz przez generyczną maszynerię pucharu w dayEngine.js (`simulateAiFixturesOnDate`
+ * dla AI, normalny mecz gracza dla jego własnych spotkań) — ta funkcja to tylko
+ * pomocniczy odczyt, np. do wyświetlenia "dziś gra się runda X" w kalendarzu.
+ */
 export function pyramidCupFixturesOnDate(cup, dateIso) {
   if (!cup?.matches) return []
   const day = String(dateIso).slice(0, 10)
   return cup.matches.filter(
     (m) => m.date === day && (m.status === 'scheduled' || m.status === 'pending') && m.homeTeamId && m.awayTeamId,
   )
-}
-
-/**
- * Rozstrzyga w tle (model siły z realnego winPct) każdy gotowy do gry mecz pucharu,
- * który NIE dotyczy drużyny gracza — aż do momentu gdy trafi on na mecz gracza (ten
- * zostaje do rozegrania przez normalny silnik meczowy) albo drabinka się skończy.
- * Bezpiecznie wołać wielokrotnie (np. po każdym rozegranym meczu gracza) — idempotentne
- * dla już ukończonych meczów.
- */
-/**
- * Rozstrzyga CAŁY puchar piramidy, łącznie z meczami drużyny gracza (silnik meczowy,
- * przeciwnik cieniowy dostaje jednorazowy skład przez ensureShadowTeamRoster — patrz
- * shadowLeague.js). Zwraca cup po ukończeniu (championTeamId ustawiony).
- */
-export function resolveFullPyramidCup(cup, world, playerTeamId, seed) {
-  resolvePyramidCupExceptTeam(cup, playerTeamId, seed)
-
-  let playerMatch = cup.matches.find(
-    (m) =>
-      m.status !== 'completed' &&
-      m.homeTeamId &&
-      m.awayTeamId &&
-      (m.homeTeamId === playerTeamId || m.awayTeamId === playerTeamId),
-  )
-  while (playerMatch) {
-    const homeTeam =
-      world.teamsById[playerMatch.homeTeamId] ??
-      ensureShadowTeamRoster(
-        { id: playerMatch.homeTeamId, tier: eucsTeamTier(playerMatch.homeTeamId) },
-        seed,
-      )
-    const awayTeam =
-      world.teamsById[playerMatch.awayTeamId] ??
-      ensureShadowTeamRoster(
-        { id: playerMatch.awayTeamId, tier: eucsTeamTier(playerMatch.awayTeamId) },
-        seed,
-      )
-    const record = simulateAdHocMatch(homeTeam, awayTeam, seed ^ hashSeed(seed, playerMatch.id))
-    advanceCupAfterMatch(cup, {
-      fixtureId: playerMatch.id,
-      winner: record.winner,
-      homeScore: record.homeScore,
-      awayScore: record.awayScore,
-    })
-    resolvePyramidCupExceptTeam(cup, playerTeamId, seed)
-    playerMatch = cup.matches.find(
-      (m) =>
-        m.status !== 'completed' &&
-        m.homeTeamId &&
-        m.awayTeamId &&
-        (m.homeTeamId === playerTeamId || m.awayTeamId === playerTeamId),
-    )
-  }
-
-  return cup
-}
-
-export function resolvePyramidCupExceptTeam(cup, playerTeamId, seed) {
-  let progressed = true
-  while (progressed) {
-    progressed = false
-    for (const match of cup.matches) {
-      if (match.status === 'completed') continue
-      if (!match.homeTeamId || !match.awayTeamId) continue
-      if (match.homeTeamId === playerTeamId || match.awayTeamId === playerTeamId) continue
-
-      const strengthHome = eucsTeamStrength(match.homeTeamId)
-      const strengthAway = eucsTeamStrength(match.awayTeamId)
-      const matchSeed = seed ^ hashSeed(seed, match.id)
-      const result = simulateShadowMatchResult(strengthHome, strengthAway, matchSeed)
-      advanceCupAfterMatch(cup, {
-        fixtureId: match.id,
-        winner: result.winner === 'A' ? match.homeTeamId : match.awayTeamId,
-        homeScore: result.scoreA,
-        awayScore: result.scoreB,
-      })
-      progressed = true
-    }
-  }
-  return cup
 }

@@ -22,6 +22,7 @@ const pl = {
   round: (n) => `Kolejka ${n}`,
   leadersTitle: 'Liderzy ligowi',
   leadersHint: 'Statystyki tylko z meczów ligowych — osobna klasyfikacja pucharowa jest w zakładce Puchar.',
+  leadersMyLeague: 'Mój poziom',
   noData: 'Brak danych — rozegraj mecze sezonu.',
   goals: 'Gole',
   assists: 'Asysty',
@@ -59,7 +60,7 @@ const pl = {
 
   pyramidTitle: 'Piramida Ligi Europejskiej',
   pyramidHint:
-    'Twój poziom liczony jest na bieżąco. Pozostałe dwa poziomy to szacunek na dziś (siła realna klubów) — ostateczne tabele liczą się na koniec sezonu.',
+    'Wszystkie 3 poziomy grają dzień po dniu w tym samym kalendarzu — tabele są zawsze aktualne, nie tylko Twój poziom.',
   pyramidNotAvailable: 'Dostępne tylko w karierach Ligi Europejskiej.',
   pyramidTier: (n) => `Liga ${n}`,
   pyramidYourTier: (n) => `Liga ${n} · Twój poziom`,
@@ -91,6 +92,7 @@ const en = {
   leadersTitle: 'League leaders',
   leadersHint:
     'League matches only — cup leaders are on the Cup tab.',
+  leadersMyLeague: 'My tier',
   noData: 'No data yet — play some season matches.',
   goals: 'Goals',
   assists: 'Assists',
@@ -128,7 +130,7 @@ const en = {
 
   pyramidTitle: 'European League Pyramid',
   pyramidHint:
-    'Your tier updates live. The other two tiers are an as-of-today estimate (real club strength) — final tables are settled at season end.',
+    'All 3 tiers play day by day on the same calendar — every table is always up to date, not just yours.',
   pyramidNotAvailable: 'Only available for European League careers.',
   pyramidTier: (n) => `Liga ${n}`,
   pyramidYourTier: (n) => `Liga ${n} · your tier`,

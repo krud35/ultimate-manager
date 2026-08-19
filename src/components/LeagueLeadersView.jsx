@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { topLeaders, topPlusMinusLeaders, teamNameMap } from '../league'
+import { topLeaders, topPlusMinusLeaders } from '../league'
 import { useUiLang } from '../ui/UiLangContext'
 import { leagueViewsStrings } from '../ui/strings/leagueViews'
 import { resolveTeamName } from '../ui/locale'
@@ -44,20 +44,50 @@ function LeaderColumn({ title, rows, valueKey, teamNames, emptyLabel, onSelectPl
   )
 }
 
+/**
+ * Ligi dostępne do podglądu liderów: własna liga gracza + (dla Ligi Europejskiej)
+ * pozostałe poziomy piramidy — `league.otherLeagues`, generyczna lista {id,label,
+ * playerStats}. Zaprojektowane tak, żeby w przyszłości dowolna inna równoległa
+ * rozgrywka (np. liga krajowa) automatycznie pojawiła się tu bez zmian w tym pliku —
+ * wystarczy że trafi do `league.otherLeagues`.
+ */
+function leagueOptionsFor(league, t) {
+  const options = [{ id: 'mine', label: t.leadersMyLeague, playerStats: league.playerStats }]
+  for (const other of league.otherLeagues ?? []) {
+    options.push({ id: other.id, label: other.label, playerStats: other.playerStats })
+  }
+  return options
+}
+
 export default function LeagueLeadersView({ league, career, onCareerUpdate }) {
   const { lang } = useUiLang()
   const t = leagueViewsStrings(lang)
-  const teamNames = teamNameMap(league, lang)
-  const goals = topLeaders(league.playerStats, 'goals', 10)
-  const assists = topLeaders(league.playerStats, 'assists', 10)
-  const blocks = topLeaders(league.playerStats, 'blocks', 10)
-  const plusMinus = topPlusMinusLeaders(league.playerStats, 10)
-  const pointsPlayed = topLeaders(league.playerStats, 'pointsPlayed', 10)
+  const world = career?.world
+
+  const leagueOptions = leagueOptionsFor(league, t)
+  const [selectedLeagueId, setSelectedLeagueId] = useState('mine')
+  const selected = leagueOptions.find((o) => o.id === selectedLeagueId) ?? leagueOptions[0]
+  const selectedPlayerStats = selected.playerStats
+
+  // Nazwy drużyn zawsze z world.teamsById — działa jednolicie dla własnej ligi i dla
+  // pozostałych poziomów piramidy (wszystkie 48 klubów mają tam pełny skład od startu
+  // sezonu), bez potrzeby osobnego `teamNameMap` per liga.
+  const teamNames = {}
+  if (world?.teamsById) {
+    for (const id of Object.keys(world.teamsById)) {
+      teamNames[id] = resolveTeamName(world.teamsById[id], lang) ?? id
+    }
+  }
+
+  const goals = topLeaders(selectedPlayerStats, 'goals', 10)
+  const assists = topLeaders(selectedPlayerStats, 'assists', 10)
+  const blocks = topLeaders(selectedPlayerStats, 'blocks', 10)
+  const plusMinus = topPlusMinusLeaders(selectedPlayerStats, 10)
+  const pointsPlayed = topLeaders(selectedPlayerStats, 'pointsPlayed', 10)
 
   const [profilePlayer, setProfilePlayer] = useState(null)
   const [profileTeam, setProfileTeam] = useState(null)
 
-  const world = career?.world
   const viewerTeam = world && career?.playerTeamId ? worldTeamById(world, career.playerTeamId) : null
 
   function handleSelectPlayer(row) {
@@ -87,6 +117,24 @@ export default function LeagueLeadersView({ league, career, onCareerUpdate }) {
       <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
         <h2 className="text-lg font-semibold text-ufa-text">{t.leadersTitle}</h2>
         <p className="mt-1 text-sm text-ufa-muted">{t.leadersHint}</p>
+        {leagueOptions.length > 1 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {leagueOptions.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setSelectedLeagueId(opt.id)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  opt.id === selectedLeagueId
+                    ? 'bg-ufa-accent text-ufa-bg'
+                    : 'bg-ufa-bg text-ufa-muted hover:text-ufa-text'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <LeaderColumn
@@ -137,7 +185,7 @@ export default function LeagueLeadersView({ league, career, onCareerUpdate }) {
           setProfilePlayer(null)
           setProfileTeam(null)
         }}
-        leaguePlayerStats={league.playerStats}
+        leaguePlayerStats={selectedPlayerStats}
         teamName={profileTeam ? resolveTeamName(profileTeam, lang) : null}
         isOwnPlayer={isOwnPlayer}
         knowledge={

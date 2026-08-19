@@ -1,7 +1,7 @@
 import { standingsTable, teamNameMap } from '../league'
-import { shadowStandingsThroughRound } from '../league/shadowLeague.js'
 import { useUiLang } from '../ui/UiLangContext'
 import { leagueViewsStrings } from '../ui/strings/leagueViews'
+import { resolveTeamName } from '../ui/locale'
 
 function zoneForRow(tier, idx, total) {
   if (tier !== 1) {
@@ -123,13 +123,20 @@ export default function PyramidStandingsView({ career, onTeamSelect }) {
   const league = career.league
   const names = teamNameMap(league, lang)
   const playerTier = career.pyramid.tier
-  const currentRound = league.currentRound
+  const worldTeamsById = career.world?.teamsById ?? {}
 
   const rowsByTier = {
     [playerTier]: standingsTable(league.standings, (id) => names[id]),
   }
-  for (const [tierNumStr, shadowLeague] of Object.entries(career.pyramid.otherTiers ?? {})) {
-    rowsByTier[Number(tierNumStr)] = shadowStandingsThroughRound(shadowLeague, currentRound)
+  // Pozostałe dwie ligi są rozgrywane dzień po dniu w tym samym silniku co liga
+  // gracza (patrz otherLeagues.js) — ich tabela jest więc zawsze aktualna na "dziś",
+  // bez potrzeby żadnej osobnej projekcji "na daną kolejkę".
+  for (const otherLeague of league.otherLeagues ?? []) {
+    const tierNum = Number(otherLeague.id.replace('tier', ''))
+    rowsByTier[tierNum] = standingsTable(
+      otherLeague.standings,
+      (id) => resolveTeamName(worldTeamsById[id], lang) ?? id,
+    )
   }
 
   return (

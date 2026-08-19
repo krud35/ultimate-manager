@@ -8,13 +8,15 @@ import {
   parseISODate,
   officialSeasonEndDate,
 } from './seasonCalendar.js'
-import { simulateFixtureMatch, applyMatchResultToLeague } from './leagueEngine.js'
+import { simulateFixtureMatch, applyMatchResultToLeague, applyEngineBoxScoreToRoster } from './leagueEngine.js'
 import {
   advanceCupAfterMatch,
   createCupFromFallStandings,
   syncCupMatchesIntoFixtures,
 } from './cupBracket.js'
-import { createPyramidCup, resolveFullPyramidCup } from './pyramidCup.js'
+import { createPyramidCup } from './pyramidCup.js'
+import { materializeFullPyramidTeams } from './shadowLeague.js'
+import { advanceOtherLeagueToDate } from './otherLeagues.js'
 import { createLeaguePlayerStats, mergeMatchBoxScore } from './leagueStats.js'
 import { standingsTable } from './standings.js'
 import { teamFromLeague } from '../career/worldState.js'
@@ -104,7 +106,7 @@ export function maybeInitializeCup(league) {
   if (!league || league.cup) return league
 
   const fallFixtures = (league.fixtures ?? []).filter(
-    (f) => f.competition !== 'cup' && f.competition !== 'pyramid-cup' && f.round >= 1 && f.round <= 15,
+    (f) => f.competition !== 'cup' && f.round >= 1 && f.round <= 15,
   )
   if (!fallFixtures.length || fallFixtures.some((f) => f.status !== 'completed')) {
     return league
@@ -113,6 +115,15 @@ export function maybeInitializeCup(league) {
   if (league.eucsPyramid) {
     const { tier1Ids, tier2Ids, tier3Ids } = league.eucsPyramid
     if (!league.calendar?.pyramidCup) return league
+    // Bezpiecznik dla starszych save'ów sprzed pełnej materializacji na starcie sezonu
+    // (patrz careerModel.js) — normalnie wszystkie 48 drużyn ma już pełny skład. Celowo
+    // BEZ `teamIds` w pseudo-world: `league.teamIds` to lista TYLKO poziomu gracza (16),
+    // dopisywanie do niej pomieszałoby ją z pozostałymi 32 drużynami piramidy.
+    materializeFullPyramidTeams(
+      { teamsById: league.teamsById },
+      [...tier1Ids, ...tier2Ids, ...tier3Ids],
+      league.simSeedBase,
+    )
     league.cup = createPyramidCup(
       tier1Ids,
       tier2Ids,
@@ -120,12 +131,10 @@ export function maybeInitializeCup(league) {
       league.simSeedBase,
       league.calendar.pyramidCup,
     )
-    // Puchar piramidy jest rozstrzygany od razu w tle (silnik meczowy, przeciwnicy
-    // cieniowi dostają jednorazowy skład) — patrz notatka o zakresie w pyramidCup.js.
-    resolveFullPyramidCup(league.cup, { teamsById: league.teamsById }, league.playerTeamId, league.simSeedBase)
-    // Premie pucharowe od razu po rozstrzygnięciu — tylko drużyny obecne w teamsById
-    // (poziom gracza), patrz notatka w placementPrizes.js.
-    applyCupPlacementPrizes(league.cup, league.teamsById)
+    // Drabinka rozstrzyga się teraz dzień po dniu (jak zwykły puchar UFA) — patrz
+    // notatka w pyramidCup.js. Premia pucharowa (placementPrizes.js) trafia do
+    // `applyCupMatchResult` poniżej, w momencie gdy `cup.status` faktycznie staje
+    // się 'complete' (czyli po finale), nie tutaj.
     syncCupMatchesIntoFixtures(league)
     return league
   }
@@ -241,6 +250,11 @@ function applyCupMatchResult(league, fixture, record) {
       record.homeTeamId,
       record.awayTeamId,
     )
+    // Bez tego mecze pucharowe rozstrzygane w tle (AI) nigdy nie dopisywały się do
+    // player.stats — tylko do zbiorczego cupPlayerStats. Liga gracza (applyMatchResultToLeague)
+    // już to robi; ta gałąź (dayEngine.js) jest osobną implementacją dla meczów AI i
+    // musi robić to samo, inaczej zawodnicy spoza poziomu gracza nie mają realnych staty.
+    applyEngineBoxScoreToRoster(league, record.homeTeamId, record.awayTeamId, record.boxScore)
   }
 
   if (league.cup) {
@@ -249,6 +263,12 @@ function applyCupMatchResult(league, fixture, record) {
       fixtureId: fixture.id,
     })
     syncCupMatchesIntoFixtures(league)
+    // Puchar Piramidy: premie za lokatę w drabince, dokładnie w momencie ukończenia
+    // finału (dawniej liczone od razu po (usuniętym) natychmiastowym rozstrzygnięciu
+    // całej drabinki — patrz notatka w placementPrizes.js).
+    if (league.cup.status === 'complete') {
+      applyCupPlacementPrizes(league.cup, league.teamsById)
+    }
   }
 
   if (!league.matchHistory) league.matchHistory = []
@@ -308,6 +328,12 @@ export function advanceCalendarDay(league, options = {}) {
   const date = toIso(league.currentDate)
   maybeInitializeCup(league)
   simulateAiFixturesOnDate(league, date)
+
+  // Pozostałe ligi piramidy (którymi gracz nie zarządza) — ten sam kalendarz, ten sam
+  // silnik, dzień po dniu, żeby ich zawodnicy mieli realne staty (patrz otherLeagues.js).
+  for (const otherLeague of league.otherLeagues ?? []) {
+    advanceOtherLeagueToDate(otherLeague, league.teamsById, date)
+  }
 
   let playerFixture = getPlayerFixtureOnDate(league, date)
   let autoSimulatedPlayer = false

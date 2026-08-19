@@ -124,15 +124,23 @@ function teamCupOutcome(cup, teamId) {
 }
 
 /**
- * Premie pucharowe — raz, po rozstrzygnięciu całego Pucharu Piramidy. Płaci tylko
- * drużynom obecnym w `teamsById` (poziom gracza jest zawsze pełny; pozostałe 32 kluby
- * cieniowe dostają finanse dopiero przy materializacji do rynku transferowego — patrz
- * `pyramidTransfers.js`). Idempotentne: zapisuje `cup.prizesAwarded`, więc bezpiecznie
+ * Premie pucharowe — raz, po rozstrzygnięciu całego Pucharu Piramidy. Nie dotyczy
+ * zwykłego pucharu UFA (`cup.pyramidCupDates` obecne tylko dla `createPyramidCup` —
+ * bez tego strażnika mistrz/finalista zwykłego pucharu UFA dostałby premię w EUR mimo
+ * że to inna, niepowiązana rozgrywka). Płaci wszystkim drużynom obecnym w `teamsById`
+ * — od startu sezonu to wszystkie 48 klubów piramidy (patrz `materializeFullPyramidTeams`
+ * w shadowLeague.js). Idempotentne: zapisuje `cup.prizesAwarded`, więc bezpiecznie
  * wołać wielokrotnie.
  * @returns {Record<string, { amount: number, outcome: string }>}
  */
 export function applyCupPlacementPrizes(cup, teamsById) {
-  if (!cup?.matches || cup.status !== 'complete' || cup.prizesAwarded || !teamsById) {
+  if (
+    !cup?.matches ||
+    !cup.pyramidCupDates ||
+    cup.status !== 'complete' ||
+    cup.prizesAwarded ||
+    !teamsById
+  ) {
     return cup?.prizesAwarded ?? {}
   }
   const awarded = {}

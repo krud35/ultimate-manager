@@ -21,6 +21,7 @@ import {
   pendingFixturesInRound,
 } from './leagueState.js'
 import { advanceCupAfterMatch, syncCupMatchesIntoFixtures } from './cupBracket.js'
+import { applyCupPlacementPrizes } from '../career/placementPrizes.js'
 
 function fixtureSeed(league, fixtureId) {
   let h = league.simSeedBase
@@ -201,6 +202,13 @@ export function applyMatchResultToLeague(league, matchRecord) {
       fixtureId: matchRecord.fixtureId,
     })
     syncCupMatchesIntoFixtures(league)
+    // Puchar Piramidy: gdy TEN mecz (np. gracza) właśnie kończy całą drabinkę.
+    // Puste dla zwykłego pucharu UFA — placementPrizes.js zwraca [] bez `cup.matches`
+    // pasujących do jego kształtu (brak `round`/`prizesAwarded` nic nie psuje, po
+    // prostu nie znajdzie żadnych premii do przyznania).
+    if (league.cup.status === 'complete') {
+      applyCupPlacementPrizes(league.cup, league.teamsById)
+    }
   }
 
   league.matchHistory.push({
@@ -262,7 +270,7 @@ function inferTeamSide(league, row, matchRecord) {
 }
 
 /** G/A/B z box score silnika meczowego (PP już jest w `player.stats`). */
-function applyEngineBoxScoreToRoster(league, homeTeamId, awayTeamId, boxScoreRows) {
+export function applyEngineBoxScoreToRoster(league, homeTeamId, awayTeamId, boxScoreRows) {
   const home = teamFromLeague(league, homeTeamId)
   const away = teamFromLeague(league, awayTeamId)
   if (!home || !away) return

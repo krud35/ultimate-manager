@@ -13,18 +13,10 @@ import {
   EUCS_TIERS,
   buildEucsLeagueTemplate,
   eucsTeamsForTier,
-  eucsTeamStrength,
   eucsTeamTier,
 } from '../data/eucsLeagueTeams.js'
-import {
-  createShadowLeague,
-  ensureShadowTeamRoster,
-  shadowStandingsTable,
-  shadowTeamsForTier,
-  shadowTeamsFromIds,
-  simulateShadowMatchResult,
-  simulateShadowSeason,
-} from '../league/shadowLeague.js'
+import { materializeFullPyramidTeams } from '../league/shadowLeague.js'
+import { createOtherLeague } from '../league/otherLeagues.js'
 import { computePyramidMovement } from '../league/promotionRelegation.js'
 import {
   createWorldFromTemplate,
@@ -313,11 +305,31 @@ function createEucsCareer(slotIndex, options) {
   const tierIds = Object.fromEntries(EUCS_TIERS.map((t) => [t, eucsTeamsForTier(t).map((x) => x.id)]))
   league.eucsPyramid = { tier1Ids: tierIds[1], tier2Ids: tierIds[2], tier3Ids: tierIds[3] }
 
-  const otherTiers = {}
-  for (const otherTier of EUCS_TIERS) {
-    if (otherTier === tier) continue
-    otherTiers[otherTier] = createShadowLeague(shadowTeamsForTier(otherTier), simSeedBase + otherTier)
-  }
+  // Wszystkie 48 klubów piramidy dostają pełny skład + finanse + obiekty OD RAZU (nie
+  // tylko poziom gracza) — bo odtąd KAŻDY mecz w tle (liga i puchar) idzie przez ten
+  // sam silnik co liga gracza, więc każdy klub potrzebuje prawdziwego składu do
+  // rozegrania i realnych staty zawodników. Poziom gracza jest już w world.teamsById
+  // (z buildEucsLeagueTemplate powyżej) — materializeFullPyramidTeams pomija go.
+  const allPyramidIds = [...tierIds[1], ...tierIds[2], ...tierIds[3]]
+  materializeFullPyramidTeams(world, allPyramidIds, financeSeed)
+  ensureAiCoachProfiles(world, playerTeamId)
+  initWorldPlayerStats(world, { playerTeamId })
+  initWorldPlayerDevelopment(world, { playerTeamId })
+  for (const t of worldTeamsList(world)) refreshTeamMarketValues(t)
+
+  // Dwie pozostałe ligi rozgrywają się DZIEŃ PO DNIU w tym samym kalendarzu co liga
+  // gracza (ten sam `league.calendar`, więc kolejka N wypada tego samego dnia na
+  // wszystkich 3 poziomach) — patrz advanceCalendarDay w dayEngine.js.
+  const otherLeagues = EUCS_TIERS.filter((t) => t !== tier).map((otherTier) =>
+    createOtherLeague({
+      id: `tier${otherTier}`,
+      label: `Liga Europejska ${otherTier}`,
+      teamIds: tierIds[otherTier],
+      calendar: league.calendar,
+      simSeedBase: simSeedBase + otherTier,
+    }),
+  )
+  league.otherLeagues = otherLeagues
 
   const now = new Date().toISOString()
   const draftCareer = {
@@ -333,7 +345,7 @@ function createEucsCareer(slotIndex, options) {
     phase: 'active',
     rosterMode: 'random',
     competition: 'eucs',
-    pyramid: { tier, otherTiers },
+    pyramid: { tier },
     usedFictionalFill: false,
     fictionalTeamCount: 0,
     world,
@@ -706,6 +718,18 @@ export function startNextSeason(career) {
  * awanse/spadki (computePyramidMovement), i przebudowuje world/league drużyny gracza
  * dla jej nowego poziomu (przycina odchodzące drużyny, dogenerowuje przychodzące).
  */
+function eucsSeedHash(...parts) {
+  let h = 2166136261
+  for (const part of parts) {
+    const s = String(part)
+    for (let i = 0; i < s.length; i += 1) {
+      h ^= s.charCodeAt(i)
+      h = Math.imul(h, 16777619)
+    }
+  }
+  return h >>> 0
+}
+
 function startNextSeasonEucs(career) {
   const base = career.phase === 'season_complete' ? career : finalizeSeason({ ...career })
 
@@ -713,29 +737,27 @@ function startNextSeasonEucs(career) {
   const nextIndex = base.seasonIndex + 1
   const currentTier = base.pyramid.tier
   const seed = nextYear * 1000 + base.slotIndex * 17 + nextIndex * 31
+  const world = base.world
 
-  // Ligi cieniowe: rozstrzygnięcie w tle (nikt ich nie ogląda) żeby dostać finałowe tabele.
+  // Obie pozostałe ligi rozegrały już cały sezon dzień po dniu (patrz otherLeagues.js /
+  // advanceCalendarDay) — ich tabele są więc już ostateczne, bez żadnego dodatkowego
+  // rozstrzygania w tle.
   const tables = {
     [currentTier]: standingsTable(base.league.standings).map((r) => r.teamId),
   }
-  for (const [tierNum, shadowLeague] of Object.entries(base.pyramid.otherTiers)) {
-    simulateShadowSeason(shadowLeague)
-    tables[Number(tierNum)] = shadowStandingsTable(shadowLeague).map((r) => r.teamId)
+  for (const otherLeague of base.league.otherLeagues ?? []) {
+    const tierNum = Number(otherLeague.id.replace('tier', ''))
+    tables[tierNum] = standingsTable(otherLeague.standings).map((r) => r.teamId)
   }
 
-  const resolveMatch = (teamA, teamB) => {
-    if (teamA === base.playerTeamId || teamB === base.playerTeamId) {
-      const playerTeam = worldTeamById(base.world, base.playerTeamId)
-      const otherTeamId = teamA === base.playerTeamId ? teamB : teamA
-      const otherTeam =
-        worldTeamById(base.world, otherTeamId) ??
-        ensureShadowTeamRoster({ id: otherTeamId, tier: eucsTeamTier(otherTeamId) }, seed)
-      const homeTeam = teamA === base.playerTeamId ? playerTeam : otherTeam
-      const awayTeam = teamA === base.playerTeamId ? otherTeam : playerTeam
-      return simulateAdHocMatch(homeTeam, awayTeam, seed).winner
-    }
-    const result = simulateShadowMatchResult(eucsTeamStrength(teamA), eucsTeamStrength(teamB), seed)
-    return result.winner === 'A' ? teamA : teamB
+  // Wszystkie 48 drużyn mają już pełny skład od startu sezonu, więc barażowe mecze
+  // (3v6 / 4v5 / finał) zawsze idą przez ten sam silnik co liga gracza — nie ma już
+  // rozróżnienia "gracz kontra reszta".
+  const resolveMatch = (teamAId, teamBId) => {
+    const teamA = worldTeamById(world, teamAId)
+    const teamB = worldTeamById(world, teamBId)
+    const matchSeed = seed ^ eucsSeedHash(seed, teamAId, teamBId)
+    return simulateAdHocMatch(teamA, teamB, matchSeed).winner
   }
 
   const movement = computePyramidMovement({
@@ -747,7 +769,6 @@ function startNextSeasonEucs(career) {
   const nextTierIds = { 1: movement.tier1Next, 2: movement.tier2Next, 3: movement.tier3Next }
   const newTier = EUCS_TIERS.find((t) => nextTierIds[t].includes(base.playerTeamId))
 
-  const world = base.world
   applyOffseasonDevelopment(world, {
     leaguePlayerStats:
       base.seasonHistory?.[base.seasonHistory.length - 1]?.playerStats ??
@@ -765,22 +786,13 @@ function startNextSeasonEucs(career) {
   rollSeasonBudgets(world, { seed })
   const seasonStartPayouts = processSeasonStartSponsorPayouts(world, nextYear)
 
-  // Przytnij drużyny które opuściły poziom gracza; dogeneruj te które właśnie awansowały/spadły.
+  // Wszystkie 48 drużyn piramidy zostają w world.teamsById na stałe (rosną/starzeją
+  // się/rozwijają jak prawdziwe kluby) — żadnego przycinania/dogenerowywania między
+  // sezonami. `world.teamIds` = kanoniczna lista wszystkich 48 (dla ensureWorldX,
+  // cotygodniowych przebiegów finansowych itd.); `league.teamIds` (poniżej, przez
+  // createLeagueSeason) zostaje tym co zawsze było — tylko 16 drużyn poziomu gracza.
   const newTierIds = nextTierIds[newTier]
-  const keep = new Set(newTierIds)
-  for (const id of Object.keys(world.teamsById)) {
-    if (!keep.has(id)) delete world.teamsById[id]
-  }
-  for (const id of newTierIds) {
-    if (world.teamsById[id]) continue
-    const built = buildEucsLeagueTemplate({ tier: newTier, teamIds: [id], seed })
-    const builtTeam = built.teams[0]
-    if (builtTeam) {
-      builtTeam.tacticalIdentity = built.tacticalByTeamId?.[id] ?? null
-      world.teamsById[id] = builtTeam
-    }
-  }
-  world.teamIds = newTierIds
+  world.teamIds = [...nextTierIds[1], ...nextTierIds[2], ...nextTierIds[3]]
 
   ensureAiCoachProfiles(world, base.playerTeamId)
   ensureWorldFinances(world, { seed, force: false })
@@ -816,14 +828,16 @@ function startNextSeasonEucs(career) {
   )
   league.eucsPyramid = { tier1Ids: tierIds[1], tier2Ids: tierIds[2], tier3Ids: tierIds[3] }
 
-  const otherTiers = {}
-  for (const otherTier of EUCS_TIERS) {
-    if (otherTier === newTier) continue
-    otherTiers[otherTier] = createShadowLeague(
-      shadowTeamsFromIds(nextTierIds[otherTier], otherTier),
-      seed + otherTier,
-    )
-  }
+  const otherLeagues = EUCS_TIERS.filter((t) => t !== newTier).map((otherTier) =>
+    createOtherLeague({
+      id: `tier${otherTier}`,
+      label: `Liga Europejska ${otherTier}`,
+      teamIds: nextTierIds[otherTier],
+      calendar: league.calendar,
+      simSeedBase: seed + otherTier,
+    }),
+  )
+  league.otherLeagues = otherLeagues
 
   const keptSponsor = (base.inbox ?? []).filter((m) => {
     const k = m?.payload?.kind
@@ -842,7 +856,7 @@ function startNextSeasonEucs(career) {
     seasonIndex: nextIndex,
     world,
     league,
-    pyramid: { tier: newTier, otherTiers },
+    pyramid: { tier: newTier },
     lastPyramidMovements: movement.movements,
     inbox: keptSponsor,
   }
@@ -860,7 +874,7 @@ function startNextSeasonEucs(career) {
     phase: 'active',
     world,
     league,
-    pyramid: { tier: newTier, otherTiers },
+    pyramid: { tier: newTier },
     lastPyramidMovements: movement.movements,
     homeTactics: resolvePlayerDefaultTactics(team?.players ?? [], base.homeTactics),
     transferLog: [],

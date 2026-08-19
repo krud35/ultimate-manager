@@ -28,7 +28,6 @@ import {
   scoutMissionCost,
   findPlayerTeamId,
 } from '../career'
-import { materializeAllShadowTeams } from '../league/pyramidTransfers.js'
 
 function WindowBanner({ windowState }) {
   const { lang } = useUiLang()
@@ -82,23 +81,9 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
   const [flash, setFlash] = useState(null)
   const [historyFilter, setHistoryFilter] = useState(isClub ? 'mine' : 'all')
   const summerWaveLock = useRef(false)
-  const pyramidTransfersLock = useRef(false)
-
   useEffect(() => {
     setHistoryFilter(isClub ? 'mine' : 'all')
   }, [isClub])
-
-  // Liga Europejska: rynek transferowy obejmuje wszystkie 48 klubów — pozostałe dwa
-  // poziomy dostają pełny skład+finanse przy pierwszym wejściu w tę zakładkę.
-  useEffect(() => {
-    if (career.competition !== 'eucs') return
-    if (pyramidTransfersLock.current) return
-    pyramidTransfersLock.current = true
-    if (materializeAllShadowTeams(career)) {
-      onCareerUpdate({ world: career.world })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [career.competition])
 
   // Fale AI w oknie letnim (po oficjalnym końcu sezonu) przy wejściu w zakładkę (max 3).
   useEffect(() => {

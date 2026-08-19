@@ -11,9 +11,9 @@ import { worldTeamById, getTransferBudget, formatUsd } from '../career'
 import { useUiLang } from '../ui/UiLangContext'
 import { displaySeasonLabel } from '../ui/locale'
 import { seasonRecapStrings } from '../ui/strings/seasonRecap'
-import { shadowStandingsThroughRound, simulateShadowMatchResult } from '../league/shadowLeague.js'
 import { computePyramidMovement } from '../league/promotionRelegation.js'
-import { eucsTeamById, eucsTeamStrength } from '../data/eucsLeagueTeams.js'
+import { simulateAdHocMatch } from '../league/leagueEngine.js'
+import { eucsTeamById } from '../data/eucsLeagueTeams.js'
 
 function previewHashSeed(...parts) {
   let h = 2166136261
@@ -28,23 +28,24 @@ function previewHashSeed(...parts) {
 }
 
 /**
- * Projekcja awansów/spadków na bazie tabel „na dziś" (nie mutuje niczego) — do
- * podglądu w recapie, zanim gracz faktycznie przejdzie do kolejnego sezonu.
+ * Projekcja awansów/spadków — do podglądu w recapie, zanim gracz faktycznie przejdzie
+ * do kolejnego sezonu. Obie pozostałe ligi grają dzień po dniu w tym samym kalendarzu
+ * co liga gracza (patrz otherLeagues.js), więc do czasu gdy ten panel się pokazuje
+ * (rozgrywki skończone) ich tabele są już ostateczne — bez żadnej projekcji.
  */
 function computeEucsMovementPreview(career, playerTierIds) {
   if (career?.competition !== 'eucs' || !career.pyramid) return null
   const tables = { [career.pyramid.tier]: playerTierIds }
-  for (const [tierNumStr, shadowLeague] of Object.entries(career.pyramid.otherTiers ?? {})) {
-    tables[Number(tierNumStr)] = shadowStandingsThroughRound(shadowLeague, null).map((r) => r.teamId)
+  for (const otherLeague of career.league?.otherLeagues ?? []) {
+    const tierNum = Number(otherLeague.id.replace('tier', ''))
+    tables[tierNum] = standingsTable(otherLeague.standings).map((r) => r.teamId)
   }
   if (!tables[1] || !tables[2] || !tables[3]) return null
+  const world = career.world
   const resolveMatch = (a, b) => {
-    const result = simulateShadowMatchResult(
-      eucsTeamStrength(a),
-      eucsTeamStrength(b),
-      previewHashSeed('pyramid-preview', a, b),
-    )
-    return result.winner === 'A' ? a : b
+    const teamA = worldTeamById(world, a)
+    const teamB = worldTeamById(world, b)
+    return simulateAdHocMatch(teamA, teamB, previewHashSeed('pyramid-preview', a, b)).winner
   }
   try {
     return computePyramidMovement({
