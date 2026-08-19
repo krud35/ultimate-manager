@@ -30,7 +30,7 @@ import { ensurePlayerInjury } from '../models/playerInjury.js'
 import { AI_ROSTER_HARD_CAP, ensureWorldFreeAgents, PLAYER_STATUS } from './transfers/freeAgency.js'
 import { refreshPlayerMarketValue } from './transfers/playerValue.js'
 import { aiAutoPlayerContractTerms } from './transfers/playerNegotiation.js'
-import { signPlayerContract } from './transfers/playerContracts.js'
+import { signPlayerContract, weeklyWageFromOvr } from './transfers/playerContracts.js'
 import { academyIntakeMult, getFacilityLevel } from './clubFacilities.js'
 import { worldTeamsList } from './worldState.js'
 
@@ -38,6 +38,9 @@ export const ACADEMY_GEN_VERSION = 1
 export const ACADEMY_JOIN_AGE_MIN = 16
 export const ACADEMY_JOIN_AGE_MAX = 18
 export const ACADEMY_AGE_OUT = 21
+/** Pierwszy kontrakt zawodnika z akademii płaci jak za ten OVR, niezależnie od realnego —
+ * to jego pierwszy profesjonalny kontrakt, nie ma jeszcze siły przetargowej gwiazdy. */
+export const ROOKIE_WAGE_OVR_CAP = 68
 
 export const ACADEMY_SCOUT_REGIONS = [
   { id: 'northAmerica', labelPl: 'Ameryka Północna', labelEn: 'North America' },
@@ -116,6 +119,39 @@ export function ensureTeamAcademy(team) {
   if (!team) return []
   if (!Array.isArray(team.academyPlayers)) team.academyPlayers = []
   return team.academyPlayers
+}
+
+/**
+ * Kandydaci "pod obserwacją" — wygenerowani przez trwającą kampanię `academyProspect`
+ * (patrz scouting.js), ale jeszcze nie zaakceptowani do akademii. Znajomość każdego
+ * (0-100, rośnie co tydzień) żyje w `team.scouting.players[id]`, ten sam mechanizm co dla
+ * zwykłych zawodników — tu trzymamy tylko same obiekty zawodników.
+ */
+export function ensureTeamAcademyCandidates(team) {
+  if (!team) return []
+  if (!Array.isArray(team.academyCandidates)) team.academyCandidates = []
+  return team.academyCandidates
+}
+
+/** Sprowadza obserwowanego kandydata do akademii (bez kontraktu — jak nabór organiczny). */
+export function signAcademyCandidate(team, candidateId) {
+  if (!team) return { ok: false, error: 'missing_team' }
+  const candidates = ensureTeamAcademyCandidates(team)
+  const idx = candidates.findIndex((p) => p.id === candidateId)
+  if (idx < 0) return { ok: false, error: 'not_a_candidate' }
+  const [candidate] = candidates.splice(idx, 1)
+  ensureTeamAcademy(team).push(candidate)
+  return { ok: true, player: candidate }
+}
+
+/** Kończy obserwację kandydata bez sprowadzania go do akademii. */
+export function rejectAcademyCandidate(team, candidateId) {
+  if (!team) return { ok: false, error: 'missing_team' }
+  const candidates = ensureTeamAcademyCandidates(team)
+  const idx = candidates.findIndex((p) => p.id === candidateId)
+  if (idx < 0) return { ok: false, error: 'not_a_candidate' }
+  const [candidate] = candidates.splice(idx, 1)
+  return { ok: true, player: candidate }
 }
 
 export function ensureWorldAcademy(world) {
@@ -345,7 +381,11 @@ export function promoteAcademyPlayer(team, playerId, { league = null } = {}) {
   if (!auto.ok || !auto.terms) {
     return { ok: false, error: 'no_contract_terms' }
   }
-  const signed = signPlayerContract(team, player, { ...auto.terms, signedDate: null })
+  // Pierwszy profesjonalny kontrakt — niska pensja niezależnie od realnego OVR
+  // (rookie jeszcze nic nie udowodnił w seniorach, nie ma siły przetargowej gwiazdy).
+  const rookieOvr = Math.min(getOverallRating(player.skills), ROOKIE_WAGE_OVR_CAP)
+  const terms = { ...auto.terms, weeklyWage: Math.round(weeklyWageFromOvr(rookieOvr)) }
+  const signed = signPlayerContract(team, player, { ...terms, signedDate: null })
   if (!signed.ok) return { ok: false, error: signed.error ?? 'contract_failed' }
 
   pool.splice(idx, 1)

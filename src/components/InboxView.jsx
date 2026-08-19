@@ -1084,10 +1084,21 @@ function MessageDetail({
         </button>
       )}
 
+      {message.type === INBOX_TYPES.SCOUT_REPORT && p.kind === 'academyWatch' && onNavigate && (
+        <button
+          type="button"
+          onClick={() => onNavigate('academy')}
+          className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
+        >
+          {t.goTo}: {lang === 'en' ? 'Academy' : 'Akademia'}
+        </button>
+      )}
+
       {meta?.navigateTo &&
         onNavigate &&
         message.type !== INBOX_TYPES.TRANSFER_OFFER &&
-        !(message.type === INBOX_TYPES.SCOUT_REPORT && p.opponentTeamId && onOpenTeam) && (
+        !(message.type === INBOX_TYPES.SCOUT_REPORT && p.opponentTeamId && onOpenTeam) &&
+        !(message.type === INBOX_TYPES.SCOUT_REPORT && p.kind === 'academyWatch') && (
           <button
             type="button"
             onClick={() => onNavigate(meta.navigateTo)}

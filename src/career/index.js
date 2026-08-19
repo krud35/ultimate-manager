@@ -169,6 +169,8 @@ export {
   messagesFromNewPlayerMatches,
   messageFromScoutMission,
   messagesFromScoutMissions,
+  messageFromAcademyCampaignReport,
+  messagesFromAcademyCampaignReports,
   messagesFromAcademyAgedOut,
   messageFromTransferDeal,
   messagesFromNewTransferLogEntries,
@@ -335,6 +337,8 @@ export {
   scoutMissionCost,
   queueScoutMission,
   resolveScoutMissions,
+  advanceAcademyCampaigns,
+  ACADEMY_CAMPAIGN_WEEKS,
 } from './scouting.js'
 export {
   ACADEMY_JOIN_AGE_MIN,
@@ -352,4 +356,8 @@ export {
   promoteAcademyPlayer,
   releaseAcademyPlayer,
   applyAcademyOffseasonDevelopment,
+  ensureTeamAcademyCandidates,
+  signAcademyCandidate,
+  rejectAcademyCandidate,
+  ROOKIE_WAGE_OVR_CAP,
 } from './academy.js'

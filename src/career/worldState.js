@@ -334,14 +334,18 @@ export function rehydrateCareerWorld(career) {
   }
 }
 
-/** Do zapisu: składy tylko w `world` (liga nie dubluje teamsById). */
+/** Do zapisu: składy tylko w `world` (liga i otherLeagues nie dublują teamsById —
+ * to ten sam obiekt co world.teamsById, podpinany na nowo w advanceOtherLeagueToDate). */
 export function careerForStorage(career) {
   if (!career) return career
   const { league, world, ...rest } = career
   let leagueOut = league
   if (league) {
-    const { teamsById: _drop, ...leagueRest } = league
+    const { teamsById: _drop, otherLeagues, ...leagueRest } = league
     leagueOut = leagueRest
+    if (Array.isArray(otherLeagues)) {
+      leagueOut.otherLeagues = otherLeagues.map(({ teamsById: _dropOl, ...otherRest }) => otherRest)
+    }
   }
   return {
     ...rest,

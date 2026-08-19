@@ -2,8 +2,12 @@
  * Persistencja 3 slotów kariery w localStorage.
  */
 
+import { compressToUTF16, decompressFromUTF16 } from 'lz-string'
 import { SAVE_VERSION, SLOT_COUNT, STORAGE_KEY } from './constants.js'
 import { careerForStorage, rehydrateCareerWorld } from './worldState.js'
+
+/** Zapisy sprzed kompresji to czysty JSON — ten prefiks odróżnia nowy format. */
+const COMPRESSED_PREFIX = 'lzv1:'
 
 function emptySlots() {
   return Array.from({ length: SLOT_COUNT }, () => null)
@@ -52,11 +56,21 @@ function normalizeStore(raw) {
   return { version: SAVE_VERSION, slots }
 }
 
+/** Stare zapisy to czysty JSON bez prefiksu — wczytujemy oba formaty. */
+function deserializeStoreText(text) {
+  if (text.startsWith(COMPRESSED_PREFIX)) {
+    const json = decompressFromUTF16(text.slice(COMPRESSED_PREFIX.length))
+    if (json == null) throw new Error('Nie udało się zdekompresować zapisu')
+    return JSON.parse(json)
+  }
+  return JSON.parse(text)
+}
+
 export function loadSaveStore() {
   try {
     const text = localStorage.getItem(STORAGE_KEY)
     if (!text) return normalizeStore(null)
-    return normalizeStore(JSON.parse(text))
+    return normalizeStore(deserializeStoreText(text))
   } catch {
     return normalizeStore(null)
   }
@@ -71,7 +85,7 @@ export function writeSaveStore(store) {
   }
   const payload = { version: SAVE_VERSION, slots }
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+    localStorage.setItem(STORAGE_KEY, COMPRESSED_PREFIX + compressToUTF16(JSON.stringify(payload)))
   } catch (err) {
     if (isQuotaExceededError(err)) throw new StorageQuotaError()
     throw err

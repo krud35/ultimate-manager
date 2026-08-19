@@ -13,7 +13,7 @@ import { getFacilityLevel } from './clubFacilities.js'
 import { adjustTransferBudget, getTransferBudget } from './transfers/clubFinances.js'
 import { getOverallRating } from '../models/playerStats.js'
 import { worldTeamById, worldTeamsList } from './worldState.js'
-import { createAcademyProspect } from './academy.js'
+import { createAcademyProspect, ensureTeamAcademyCandidates } from './academy.js'
 
 function mulberry32(seed) {
   let a = seed >>> 0
@@ -71,6 +71,17 @@ export const SCOUT_MISSION_BASE_COST = {
 export const SCOUT_MISSION_EXPIRY_DAYS = 21
 /** Dossier na wolnego agenta (brak klubu -> brak meczu) trwa tyle dni. */
 export const SCOUT_MISSION_DOSSIER_DAYS = 5
+
+/**
+ * Misja `academyProspect` to kampania rozłożona na tygodnie, nie jednorazowy dossier:
+ * skaut wyjeżdża w region na `ACADEMY_CAMPAIGN_WEEKS` tygodni, obserwując tych samych
+ * `ACADEMY_CANDIDATES_PER_MISSION` kandydatów, o których wiedza rośnie co tydzień
+ * (25→40→55→70→85 po 4 tygodniach) — na start mocno zamglona ocena, pod koniec prawie pewna.
+ */
+export const ACADEMY_CAMPAIGN_WEEKS = 4
+export const ACADEMY_CANDIDATES_PER_MISSION = 3
+export const ACADEMY_INITIAL_KNOWLEDGE = 25
+export const ACADEMY_WEEKLY_KNOWLEDGE_GAIN = 15
 
 function clampKnowledge(n) {
   const v = Math.round(Number(n))
@@ -313,8 +324,57 @@ export function queueScoutMission(team, { kind, opponentTeamId = null, targetPla
     queuedAtDate: date ?? null,
     expiresAtDate: date ? addDaysIso(date, SCOUT_MISSION_EXPIRY_DAYS) : null,
   }
+  if (kind === 'academyProspect') {
+    const seasonYear = date ? Number(String(date).slice(0, 4)) : null
+    const rng = mulberry32(hashSeed(mission.id, 'academy-campaign-seed'))
+    const candidates = ensureTeamAcademyCandidates(team)
+    const candidateIds = []
+    for (let i = 0; i < ACADEMY_CANDIDATES_PER_MISSION; i += 1) {
+      const candidate = createAcademyProspect(rng, {
+        seasonYear,
+        teamId: team.id,
+        source: 'scouted',
+        region,
+        index: i,
+      })
+      candidates.push(candidate)
+      candidateIds.push(candidate.id)
+      playerEntry(team, candidate.id).knowledge = ACADEMY_INITIAL_KNOWLEDGE
+    }
+    mission.candidateIds = candidateIds
+    mission.weeksTotal = ACADEMY_CAMPAIGN_WEEKS
+    mission.weeksElapsed = 0
+    // Gotowość liczona przez weeksElapsed>=weeksTotal, nie przez datę — bezpiecznik
+    // SCOUT_MISSION_EXPIRY_DAYS (3 tyg.) zadziałałby przedwcześnie na 4-tyg. kampanii.
+    mission.expiresAtDate = null
+  }
   scouting.pendingMissions.push(mission)
   return { ok: true, mission, cost, remainingBudget: getTransferBudget(team) }
+}
+
+/**
+ * Cotygodniowy postęp kampanii `academyProspect` (woływane obok `decayScoutingKnowledge`
+ * na weekTick): podbija wiedzę o każdym obserwowanym kandydacie i zwraca listę raportów
+ * (po jednym na aktywną kampanię tej drużyny) do zbudowania cotygodniowej wiadomości.
+ */
+export function advanceAcademyCampaigns(team) {
+  const scouting = ensureTeamScouting(team)
+  const reports = []
+  for (const mission of scouting.pendingMissions) {
+    if (mission.kind !== 'academyProspect') continue
+    mission.weeksElapsed = (mission.weeksElapsed ?? 0) + 1
+    for (const candidateId of mission.candidateIds ?? []) {
+      bumpKnowledge(playerEntry(team, candidateId), 'knowledge', ACADEMY_WEEKLY_KNOWLEDGE_GAIN)
+    }
+    reports.push({
+      missionId: mission.id,
+      region: mission.region,
+      weekNumber: mission.weeksElapsed,
+      weeksTotal: mission.weeksTotal,
+      candidateIds: mission.candidateIds ?? [],
+    })
+  }
+  return reports
 }
 
 export function findPlayerTeamId(world, playerId) {
@@ -359,13 +419,8 @@ function applyMissionResult(team, world, mission) {
       knowledge: getPlayerKnowledge(team, mission.targetPlayerId),
     })
   } else if (mission.kind === 'academyProspect') {
-    const rng = mulberry32(hashSeed(mission.id, 'academy-scout-resolve'))
-    result.prospect = createAcademyProspect(rng, {
-      seasonYear: mission.queuedAtDate ? Number(String(mission.queuedAtDate).slice(0, 4)) : null,
-      teamId: team.id,
-      source: 'scouted',
-      region: mission.region ?? null,
-    })
+    result.academyConcluded = true
+    result.candidateIds = mission.candidateIds ?? []
   }
   return result
 }
@@ -390,10 +445,7 @@ export function resolveScoutMissions(world, playerTeamId, league, date) {
 
     if (!ready) {
       if (mission.kind === 'academyProspect') {
-        const readyAt = mission.queuedAtDate
-          ? addDaysIso(mission.queuedAtDate, SCOUT_MISSION_DOSSIER_DAYS)
-          : date
-        ready = date >= readyAt
+        ready = (mission.weeksElapsed ?? 0) >= (mission.weeksTotal ?? ACADEMY_CAMPAIGN_WEEKS)
       } else if (mission.kind === 'player') {
         const clubId = findPlayerTeamId(world, mission.targetPlayerId)
         if (!clubId) {

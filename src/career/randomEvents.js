@@ -25,7 +25,6 @@ import { worldTeamById } from './worldState.js'
 import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/index.js'
 import { randomEventBodyEn, localizeEventChoices } from './randomEventCopyEn.js'
 import { hasActiveSponsor, getActiveSponsors, brandDisplayName } from './clubSponsors.js'
-import { ensureTeamAcademy, academyRegionLabel } from './academy.js'
 
 /** Zgodne z INBOX_TYPES.RANDOM_EVENT — bez importu inbox (unikamy cyklu). */
 export const RANDOM_EVENT_TYPE = 'random_event'
@@ -180,12 +179,6 @@ function applyEffects(team, effects) {
       const sign = fx.delta >= 0 ? '+' : ''
       bits.push(`fanbase ${sign}${fx.delta}`)
       bitsEn.push(`fanbase ${sign}${fx.delta}`)
-    } else if (fx.type === 'addAcademyProspect') {
-      ensureTeamAcademy(team)
-      team.academyPlayers.push(fx.prospect)
-      const name = playerName(fx.prospect)
-      bits.push(`${name} dołączył do akademii`)
-      bitsEn.push(`${name} joined the academy`)
     }
   }
 
@@ -3945,97 +3938,12 @@ function buildPostMatchCtx(career, record, fixture) {
   }
 }
 
-/**
- * Zdarzenia decyzyjne zbudowane bezpośrednio przez wywołujący kod (np. wynik misji
- * skautingowej w inbox.js), nie przez żaden z pickerów powyżej — `ctx` jest budowany
- * ręcznie przez wywołującego i przekazywany prosto do title/body/choices, więc
- * `pickContext` tu nie jest wywoływane (zostaje tylko dla zgodności kształtu EventTemplate).
- * @type {EventTemplate[]}
- */
-export const SCOUT_DECISION_TEMPLATES = [
-  {
-    id: 'academy_prospect_found',
-    weight: 1,
-    pickContext: () => null,
-    title: (ctx) => `Skaut znalazł prospekta: ${ctx.playerName}`,
-    titleEn: (ctx) => `Scout found a prospect: ${ctx.playerName}`,
-    body: (ctx) =>
-      `Skaut wrócił z wyjazdu (${academyRegionLabel(ctx.region, 'pl')}) z propozycją: ${ctx.playerName}, ${ctx.age} lat, ${ctx.ovr} OVR. Podpisać do akademii?`,
-    bodyEn: (ctx) =>
-      `Your scout is back from ${academyRegionLabel(ctx.region, 'en')} with a proposal: ${ctx.playerName}, age ${ctx.age}, ${ctx.ovr} OVR. Sign him to the academy?`,
-    choices: () => [
-      { id: 'accept', label: 'Podpisz do akademii', labelEn: 'Sign to academy' },
-      { id: 'decline', label: 'Odrzuć', labelEn: 'Decline' },
-    ],
-    resolve(ctx, choiceId) {
-      if (choiceId === 'accept') {
-        return {
-          effects: [{ type: 'addAcademyProspect', prospect: ctx.prospect }],
-          summary: `${ctx.playerName} dołączył do akademii.`,
-          summaryEn: `${ctx.playerName} joined the academy.`,
-        }
-      }
-      return {
-        effects: [],
-        summary: `Podziękowałeś skautowi — ${ctx.playerName} szuka szczęścia gdzie indziej.`,
-        summaryEn: `You thanked the scout — ${ctx.playerName} looks for a chance elsewhere.`,
-      }
-    },
-  },
-]
-
 function templateById(id) {
   return (
     RANDOM_EVENT_TEMPLATES.find((t) => t.id === id) ??
     POST_MATCH_EVENT_TEMPLATES.find((t) => t.id === id) ??
-    SCOUT_DECISION_TEMPLATES.find((t) => t.id === id) ??
     null
   )
-}
-
-/**
- * Buduje wiadomość decyzyjną z wyniku rozwiązanej misji `academyProspect`
- * (patrz `scouting.js#resolveScoutMissions` → `result.prospect`). W przeciwieństwie
- * do `pickRandomEventMessage`/`pickPostMatchEventMessage` nic tu nie jest losowane —
- * mecz/misja już się rozstrzygnęły, tu tylko pakujemy wynik w wiadomość skrzynki.
- */
-export function buildAcademyProspectMessage(career, { mission, prospect } = {}) {
-  if (!mission || !prospect) return null
-  const template = templateById('academy_prospect_found')
-  if (!template) return null
-
-  const ctx = {
-    playerName: playerName(prospect),
-    age: prospect.age,
-    ovr: getOverallRating(prospect.skills),
-    region: mission.region ?? null,
-    prospect,
-  }
-  const choices = localizeEventChoices(template.id, template.choices(ctx))
-  if (!choices?.length) return null
-  const bodyEn = typeof template.bodyEn === 'function' ? template.bodyEn(ctx) : null
-
-  return {
-    id: newMessageId(RANDOM_EVENT_TYPE),
-    type: RANDOM_EVENT_TYPE,
-    createdAt: new Date().toISOString(),
-    date: career?.league?.currentDate ?? null,
-    seasonIndex: career?.seasonIndex ?? null,
-    seasonYear: career?.seasonYear ?? null,
-    read: false,
-    title: template.title(ctx),
-    body: template.body(ctx),
-    ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
-    ...(bodyEn ? { bodyEn } : {}),
-    payload: {
-      kind: 'decision',
-      templateId: template.id,
-      missionId: mission.id,
-      status: 'pending',
-      context: ctx,
-      choices,
-    },
-  }
 }
 
 /** Runtime EN title for saved messages that lack titleEn. */

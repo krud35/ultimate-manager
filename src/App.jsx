@@ -70,6 +70,8 @@ import {
   decayScoutingKnowledge,
   recordMatchKnowledgeGain,
   recordMatchKnowledgeGainForNewMatches,
+  advanceAcademyCampaigns,
+  messagesFromAcademyCampaignReports,
 } from './career'
 import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
 import {
@@ -468,6 +470,10 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
     if (career.world) {
       processWeeklyWages(career.world)
       decayScoutingKnowledge(career.world, career.playerTeamId)
+      const academyReports = advanceAcademyCampaigns(worldTeamById(career.world, career.playerTeamId))
+      inboxMessages.push(
+        ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
+      )
       const financialHealth = processWeeklyFinancialHealth(career.world, {
         seasonYear: career.seasonYear,
       })
@@ -885,16 +891,23 @@ export default function App() {
           tag: `day-${rangeEnd}`,
         })
       }
+      const academyReports = []
       for (let i = 0; i < weekTicks; i += 1) {
         weeklyTeamTrainingMaintenance(nextLeague, {
           playerTeamId: career.playerTeamId,
         })
+        if (career.world) {
+          decayScoutingKnowledge(career.world, career.playerTeamId)
+          academyReports.push(
+            ...advanceAcademyCampaigns(worldTeamById(career.world, career.playerTeamId)),
+          )
+        }
       }
       if (weekTicks > 0 && career.world) {
         processWeeklyWagesTimes(career.world, weekTicks)
         processWeeklyFinancialHealth(career.world, { seasonYear: career.seasonYear })
       }
-      return { reports }
+      return { reports, academyReports }
     },
     [career],
   )
@@ -924,7 +937,7 @@ export default function App() {
           }),
       })
 
-      const { reports } = await applyFastForwardSideEffects(
+      const { reports, academyReports } = await applyFastForwardSideEffects(
         nextLeague,
         rangeStart,
         result.weekTicks ?? 0,
@@ -986,6 +999,7 @@ export default function App() {
       const inboxMessages = [
         ...messagesFromTrainingReports(reports, career),
         ...messagesFromTrainingInjuries(reports, career),
+        ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
         ...messagesFromNewPlayerMatches(
           { ...career, league: nextLeague },
           prevMatchHistory,
@@ -1081,7 +1095,7 @@ export default function App() {
             }),
         })
 
-        const { reports } = await applyFastForwardSideEffects(
+        const { reports, academyReports } = await applyFastForwardSideEffects(
           nextLeague,
           rangeStart,
           result.weekTicks ?? 0,
@@ -1140,6 +1154,7 @@ export default function App() {
         const inboxMessages = [
           ...messagesFromTrainingReports(reports, career),
           ...messagesFromTrainingInjuries(reports, career),
+          ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
           ...messagesFromNewPlayerMatches(
             { ...career, league: nextLeague },
             prevMatchHistory,

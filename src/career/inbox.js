@@ -24,9 +24,10 @@ import {
 import {
   pickRandomEventMessage,
   pickPostMatchEventMessage,
-  buildAcademyProspectMessage,
 } from './randomEvents.js'
-import { attributeBandLabel } from '../ui/fogOfWar.js'
+import { academyRegionLabel } from './academy.js'
+import { getPlayerKnowledge } from './scouting.js'
+import { attributeBandLabel, scoutedValueDisplay, trainingRoomLabel } from '../ui/fogOfWar.js'
 import { holdPct, breakPct, pressureCompletionRate } from '../matchEngine'
 
 export const INBOX_TYPES = {
@@ -1075,6 +1076,60 @@ function scoutedPlayerLine(world, playerId, knowledge, lang) {
   return `${name}: ${attributeBandLabel(ovr, lang)}`
 }
 
+function findAcademyCandidate(team, candidateId) {
+  return (team?.academyCandidates ?? []).find((p) => p.id === candidateId) ?? null
+}
+
+/** Linia raportu: nazwisko (wiek) — pasmo OVR + pasmo potencjału, oba zamglone `knowledge`. */
+function academyCandidateBandLine(team, candidateId, lang) {
+  const candidate = findAcademyCandidate(team, candidateId)
+  if (!candidate) return null
+  const name = getPlayerFullName(candidate)
+  const knowledge = getPlayerKnowledge(team, candidateId)
+  const ovr = getOverallRating(candidate.skills)
+  const ovrDisplay = scoutedValueDisplay(ovr, knowledge, lang)
+  const room = (candidate.potential ?? ovr) - ovr
+  const potentialLabel = trainingRoomLabel(room, candidate.age, lang)
+  return `${name} (${candidate.age}): ${ovrDisplay.label}, ${potentialLabel}`
+}
+
+/** Cotygodniowy raport z trwającej kampanii `academyProspect` (`advanceAcademyCampaigns`). */
+export function messageFromAcademyCampaignReport(report, career) {
+  if (!report) return null
+  const team = worldTeamById(career?.world, career?.playerTeamId)
+  const region = academyRegionLabel(report.region, 'pl')
+  const regionEn = academyRegionLabel(report.region, 'en')
+  const linesPl = (report.candidateIds ?? [])
+    .map((id) => academyCandidateBandLine(team, id, 'pl'))
+    .filter(Boolean)
+  const linesEn = (report.candidateIds ?? [])
+    .map((id) => academyCandidateBandLine(team, id, 'en'))
+    .filter(Boolean)
+  return createInboxMessage({
+    type: INBOX_TYPES.SCOUT_REPORT,
+    title: `Scouting · Tydzień ${report.weekNumber}/${report.weeksTotal}: ${region}`,
+    titleEn: `Scouting · Week ${report.weekNumber}/${report.weeksTotal}: ${regionEn}`,
+    body: `Cotygodniowy raport skauta z regionu ${region}. Obserwowani kandydaci: ${linesPl.join('; ') || 'brak'}.`,
+    bodyEn: `Weekly scouting report from ${regionEn}. Candidates observed: ${linesEn.join('; ') || 'none'}.`,
+    date: career?.league?.currentDate ?? null,
+    seasonIndex: career?.seasonIndex ?? null,
+    seasonYear: career?.seasonYear ?? null,
+    payload: {
+      kind: 'academyWatch',
+      missionId: report.missionId,
+      region: report.region ?? null,
+      candidateIds: report.candidateIds ?? [],
+      concluded: false,
+      weekNumber: report.weekNumber,
+      weeksTotal: report.weeksTotal,
+    },
+  })
+}
+
+export function messagesFromAcademyCampaignReports(reports, career) {
+  return (reports ?? []).map((r) => messageFromAcademyCampaignReport(r, career)).filter(Boolean)
+}
+
 /**
  * Raport z zakończonej misji skautingowej (`resolveScoutMissions` w career/scouting.js).
  * @param {object} mission — wynik misji: { kind, opponentTeamId, targetPlayerId, knowledgeGained, tacticsGained, revealedPlayers }
@@ -1085,7 +1140,32 @@ export function messageFromScoutMission(mission, career, { date = null } = {}) {
   const resolvedDate = date ?? career?.league?.currentDate ?? null
 
   if (mission.kind === 'academyProspect') {
-    return buildAcademyProspectMessage(career, { mission, prospect: mission.prospect })
+    const team = worldTeamById(world, career?.playerTeamId)
+    const region = academyRegionLabel(mission.region, 'pl')
+    const regionEn = academyRegionLabel(mission.region, 'en')
+    const linesPl = (mission.candidateIds ?? [])
+      .map((id) => academyCandidateBandLine(team, id, 'pl'))
+      .filter(Boolean)
+    const linesEn = (mission.candidateIds ?? [])
+      .map((id) => academyCandidateBandLine(team, id, 'en'))
+      .filter(Boolean)
+    return createInboxMessage({
+      type: INBOX_TYPES.SCOUT_REPORT,
+      title: `Scouting · Misja zakończona: ${region}`,
+      titleEn: `Scouting · Mission complete: ${regionEn}`,
+      body: `Skaut wraca z regionu ${region}. Obserwowani kandydaci: ${linesPl.join('; ') || 'brak'}. Zdecyduj w Akademii, kogo sprowadzić, kogo obserwować dalej, a kogo odrzucić.`,
+      bodyEn: `Your scout is back from ${regionEn}. Candidates observed: ${linesEn.join('; ') || 'none'}. Decide in the Academy who to sign, keep watching, or reject.`,
+      date: resolvedDate,
+      seasonIndex: career?.seasonIndex ?? null,
+      seasonYear: career?.seasonYear ?? null,
+      payload: {
+        kind: 'academyWatch',
+        missionId: mission.id,
+        region: mission.region ?? null,
+        candidateIds: mission.candidateIds ?? [],
+        concluded: true,
+      },
+    })
   }
 
   const basePayload = {
@@ -1183,6 +1263,9 @@ export function messagesFromAcademyAgedOut(players, career, { date = null } = {}
 export function inboxDedupeKey(message) {
   if (!message) return null
   const p = message.payload ?? {}
+  if (message.type === INBOX_TYPES.SCOUT_REPORT && p.kind === 'academyWatch' && p.missionId) {
+    return `academy_watch:${p.missionId}:${p.concluded ? 'concluded' : p.weekNumber}`
+  }
   if (message.type === INBOX_TYPES.SCOUT_REPORT && p.missionId) {
     return `scout:${p.missionId}`
   }
@@ -1234,13 +1317,6 @@ export function inboxDedupeKey(message) {
     message.date
   ) {
     return `reg:${message.date}:${p.playerId}:${p.sourceMessageId ?? ''}`
-  }
-  if (
-    message.type === INBOX_TYPES.RANDOM_EVENT &&
-    p.templateId === 'academy_prospect_found' &&
-    p.missionId
-  ) {
-    return `academy_prospect:${p.missionId}`
   }
   if (
     message.type === INBOX_TYPES.RANDOM_EVENT &&
