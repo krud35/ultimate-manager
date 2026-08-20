@@ -2,6 +2,7 @@ import { UFA_LEAGUE_TEAMS, PLAYER_TEAM_ID } from '../data/ufaLeagueTeams.js'
 import {
   flattenSchedule,
   generateDoubleRoundRobinSchedule,
+  shuffledTeamOrder,
 } from './schedule.js'
 import { createStandings } from './standings.js'
 import { createLeaguePlayerStats } from './leagueStats.js'
@@ -37,8 +38,12 @@ export function createLeagueSeason(options = {}) {
       : UFA_LEAGUE_TEAMS.map((t) => t.id)
   const playerTeamId = options.playerTeamId ?? PLAYER_TEAM_ID
   const seasonYear = options.seasonYear ?? 2025
+  const simSeedBase = options.simSeedBase ?? seasonYear * 1000 + 805
   const calendar = buildSeasonCalendar({ seasonYear, teamIds })
-  const scheduleRounds = generateDoubleRoundRobinSchedule(teamIds)
+  // Terminarz losowany per-kariera (seed = simSeedBase, inny za każdym razem gdy gracz
+  // zaczyna nową karierę) — metoda koła sama w sobie jest deterministyczna względem
+  // kolejności drużyn, więc bez tasowania każda kariera miałaby identyczny terminarz.
+  const scheduleRounds = generateDoubleRoundRobinSchedule(shuffledTeamOrder(teamIds, simSeedBase))
   const fixtures = assignDatesToLeagueFixtures(flattenSchedule(scheduleRounds), calendar)
 
   const league = {
@@ -60,7 +65,7 @@ export function createLeagueSeason(options = {}) {
     playerStats: createLeaguePlayerStats(),
     /** Statystyki zawodników tylko z meczów Pucharu Ligi (oddzielne od ligi). */
     cupPlayerStats: createLeaguePlayerStats(),
-    simSeedBase: options.simSeedBase ?? seasonYear * 1000 + 805,
+    simSeedBase,
     status: 'active',
   }
 

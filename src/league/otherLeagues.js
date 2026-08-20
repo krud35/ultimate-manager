@@ -15,7 +15,7 @@
  * `fixtures`). `OtherLeague` ma dokładnie ten kształt, więc może być karmiony do tych
  * samych funkcji bez żadnego duplikowania logiki meczowej/finansowej/reputacyjnej.
  */
-import { generateDoubleRoundRobinSchedule, flattenSchedule } from './schedule.js'
+import { generateDoubleRoundRobinSchedule, flattenSchedule, shuffledTeamOrder } from './schedule.js'
 import { createStandings } from './standings.js'
 import { createLeaguePlayerStats } from './leagueStats.js'
 import { assignDatesToLeagueFixtures } from './seasonCalendar.js'
@@ -25,7 +25,9 @@ import { simulateFixtureMatch, applyMatchResultToLeague } from './leagueEngine.j
  * @param {{ id: string, label: string, teamIds: string[], calendar: object, simSeedBase: number }} options
  */
 export function createOtherLeague({ id, label, teamIds, calendar, simSeedBase }) {
-  const scheduleRounds = generateDoubleRoundRobinSchedule(teamIds)
+  // Losowy terminarz per-kariera — patrz notatka w schedule.js (bez tasowania metoda
+  // koła daje identyczny terminarz za każdym razem).
+  const scheduleRounds = generateDoubleRoundRobinSchedule(shuffledTeamOrder(teamIds, simSeedBase))
   const fixtures = assignDatesToLeagueFixtures(flattenSchedule(scheduleRounds), calendar)
   return {
     id,
