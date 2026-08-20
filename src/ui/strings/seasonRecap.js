@@ -37,8 +37,8 @@ const pl = {
   pyramidStatusPlayoff: 'Miejsce barażowe o awans (3.–6.)',
   pyramidStatusRelegate: 'Strefa spadkowa',
   pyramidStatusSafe: 'Bezpieczne miejsce w tabeli',
-  pyramidMoveRelegatedFrom: (tier) => `Spadek z Ligi ${tier}`,
-  pyramidMovePromotedTo: (tier) => `Awans do Ligi ${tier}`,
+  pyramidMoveRelegatedFrom: (tier) => `Spadek z UltiLeague ${tier}`,
+  pyramidMovePromotedTo: (tier) => `Awans do UltiLeague ${tier}`,
 }
 
 const en = {
@@ -77,8 +77,8 @@ const en = {
   pyramidStatusPlayoff: 'Promotion playoff spot (3rd–6th)',
   pyramidStatusRelegate: 'Relegation zone',
   pyramidStatusSafe: 'Safe mid-table spot',
-  pyramidMoveRelegatedFrom: (tier) => `Relegated from Liga ${tier}`,
-  pyramidMovePromotedTo: (tier) => `Promoted to Liga ${tier}`,
+  pyramidMoveRelegatedFrom: (tier) => `Relegated from UltiLeague ${tier}`,
+  pyramidMovePromotedTo: (tier) => `Promoted to UltiLeague ${tier}`,
 }
 
 export function seasonRecapStrings(lang = UI_LANG.PL) {

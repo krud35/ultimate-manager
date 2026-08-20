@@ -58,12 +58,12 @@ const pl = {
   waiting: 'Oczekuje…',
   awaiting: 'Oczekuje…',
 
-  pyramidTitle: 'Piramida Ligi Europejskiej',
+  pyramidTitle: 'Piramida UltiLeague',
   pyramidHint:
     'Wszystkie 3 poziomy grają dzień po dniu w tym samym kalendarzu — tabele są zawsze aktualne, nie tylko Twój poziom.',
-  pyramidNotAvailable: 'Dostępne tylko w karierach Ligi Europejskiej.',
-  pyramidTier: (n) => `Liga ${n}`,
-  pyramidYourTier: (n) => `Liga ${n} · Twój poziom`,
+  pyramidNotAvailable: 'Dostępne tylko w karierach UltiLeague.',
+  pyramidTier: (n) => `UltiLeague ${n}`,
+  pyramidYourTier: (n) => `UltiLeague ${n} · Twój poziom`,
   pyramidZonePromote: 'Awans bezpośredni',
   pyramidZonePlayoff: 'Baraż o awans (3.–6.)',
   pyramidZoneRelegate: 'Spadek',
@@ -128,12 +128,12 @@ const en = {
   waiting: 'Waiting…',
   awaiting: 'Waiting…',
 
-  pyramidTitle: 'European League Pyramid',
+  pyramidTitle: 'UltiLeague Pyramid',
   pyramidHint:
     'All 3 tiers play day by day on the same calendar — every table is always up to date, not just yours.',
-  pyramidNotAvailable: 'Only available for European League careers.',
-  pyramidTier: (n) => `Liga ${n}`,
-  pyramidYourTier: (n) => `Liga ${n} · your tier`,
+  pyramidNotAvailable: 'Only available for UltiLeague careers.',
+  pyramidTier: (n) => `UltiLeague ${n}`,
+  pyramidYourTier: (n) => `UltiLeague ${n} · your tier`,
   pyramidZonePromote: 'Automatic promotion',
   pyramidZonePlayoff: 'Promotion playoff (3rd–6th)',
   pyramidZoneRelegate: 'Relegation',

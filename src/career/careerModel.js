@@ -302,7 +302,7 @@ function createEucsCareer(slotIndex, options) {
     // Jawnie — world.teamIds zaraz urośnie do wszystkich 48 klubów piramidy (patrz
     // materializeFullPyramidTeams poniżej); liga gracza ma zostać przy jego 16.
     teamIds: eucsTeamsForTier(tier).map((t) => t.id),
-    seasonLabel: `Liga Europejska ${tier} ${seasonYear}/${String(seasonYear + 1).slice(-2)}`,
+    seasonLabel: `UltiLeague ${tier} ${seasonYear}/${String(seasonYear + 1).slice(-2)}`,
   })
 
   const tierIds = Object.fromEntries(EUCS_TIERS.map((t) => [t, eucsTeamsForTier(t).map((x) => x.id)]))
@@ -326,7 +326,7 @@ function createEucsCareer(slotIndex, options) {
   const otherLeagues = EUCS_TIERS.filter((t) => t !== tier).map((otherTier) =>
     createOtherLeague({
       id: `tier${otherTier}`,
-      label: `Liga Europejska ${otherTier}`,
+      label: `UltiLeague ${otherTier}`,
       teamIds: tierIds[otherTier],
       calendar: league.calendar,
       simSeedBase: simSeedBase + otherTier,
@@ -824,7 +824,7 @@ function startNextSeasonEucs(career) {
     seasonYear: nextYear,
     simSeedBase: seed,
     teamIds: newTierIds,
-    seasonLabel: `Liga Europejska ${newTier} ${nextYear}/${String(nextYear + 1).slice(-2)}`,
+    seasonLabel: `UltiLeague ${newTier} ${nextYear}/${String(nextYear + 1).slice(-2)}`,
   })
   const tierIds = Object.fromEntries(
     EUCS_TIERS.map((t) => [t, nextTierIds[t]]),
@@ -834,7 +834,7 @@ function startNextSeasonEucs(career) {
   const otherLeagues = EUCS_TIERS.filter((t) => t !== newTier).map((otherTier) =>
     createOtherLeague({
       id: `tier${otherTier}`,
-      label: `Liga Europejska ${otherTier}`,
+      label: `UltiLeague ${otherTier}`,
       teamIds: nextTierIds[otherTier],
       calendar: league.calendar,
       simSeedBase: seed + otherTier,
