@@ -19,7 +19,6 @@ import {
   isTransferWindowOpen,
   refreshPlayerMarketValue,
   classifyTransferTarget,
-  transferTargetMotiveLabelPl,
 } from './transfers/index.js'
 import {
   pickRandomEventMessage,
@@ -951,22 +950,20 @@ export function generateIncomingTransferOffers(career, { date = null } = {}) {
 
   const name = getPlayerFullName(chosen)
   const expires = formatISODate(addDays(parseISODate(simDate), 2 + Math.floor(rng() * 3)))
-  const motiveLabel = transferTargetMotiveLabelPl(chosenTarget)
-  const motiveNote = motiveLabel ? ` Cel AI: ${motiveLabel}.` : ''
   const moraleNote =
     morale < 50
       ? ` ${name.split(' ').pop()} ma słabe morale (${moraleLabel(morale)}) i może naciskać na odejście.`
       : ''
   const formNote = ` Forma: ${formLabel(form)} (${form}).`
-  const agePotNote = ` Wiek ${chosenTarget.age} · POT ${chosenTarget.pot}.`
+  const ageNote = ` Wiek ${chosenTarget.age}.`
 
   return [
     createInboxMessage({
       type: INBOX_TYPES.TRANSFER_OFFER,
       title: `Oferta transferowa · ${name}`,
       titleEn: `Transfer offer · ${name}`,
-      body: `${buyer.team.name} oferuje ${formatUsd(fee)} za ${name} (OVR ${ovr}, ask ${formatUsd(ask)}).${agePotNote}${formNote}${motiveNote}${moraleNote} Negocjuj w skrzynce — oferta ważna do ${expires}.`,
-      bodyEn: `${buyer.team.name} offers ${formatUsd(fee)} for ${name} (OVR ${ovr}, ask ${formatUsd(ask)}). Age ${chosenTarget.age} · POT ${chosenTarget.pot}. Form: ${formLabel(form, 'en')} (${form}).${morale < 50 ? ` Low morale (${moraleLabel(morale, 'en')}) — may push to leave.` : ''} Negotiate in the inbox — offer valid until ${expires}.`,
+      body: `${buyer.team.name} oferuje ${formatUsd(fee)} za ${name} (OVR ${ovr}).${ageNote}${formNote}${moraleNote} Negocjuj w skrzynce — oferta ważna do ${expires}.`,
+      bodyEn: `${buyer.team.name} offers ${formatUsd(fee)} for ${name} (OVR ${ovr}). Age ${chosenTarget.age}. Form: ${formLabel(form, 'en')} (${form}).${morale < 50 ? ` Low morale (${moraleLabel(morale, 'en')}) — may push to leave.` : ''} Negotiate in the inbox — offer valid until ${expires}.`,
       date: simDate,
       seasonIndex: career.seasonIndex,
       seasonYear: career.seasonYear,

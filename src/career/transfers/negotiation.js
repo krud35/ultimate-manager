@@ -68,21 +68,6 @@ export function classifyTransferTarget(player, buyerTeam = null) {
   }
 }
 
-export function transferTargetMotiveLabelPl(target) {
-  if (!target) return null
-  if (target.motive === 'prospect') {
-    return target.strongProspect
-      ? `młody talent (POT ${target.pot}, room +${target.room})`
-      : `perspektywiczny junior (POT ${target.pot})`
-  }
-  if (target.motive === 'veteran') {
-    return target.veteranBargain
-      ? `doświadczony weteran — okazja względem OVR (${target.age} lat)`
-      : `starszy zawodnik (${target.age} lat), tańszy horyzont`
-  }
-  return null
-}
-
 /**
  * Ranking zawodnika w składzie po OVR (0 = najlepszy).
  * @param {object[]} players

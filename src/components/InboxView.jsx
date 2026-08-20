@@ -167,13 +167,6 @@ function IncomingBidPanel({ message, career, onAction, busy }) {
         {p.playerMorale != null
           ? ` · morale ${moraleLabel(p.playerMorale, lang)}`
           : ''}
-        {p.targetMotive === 'prospect'
-          ? t.youngTarget
-          : p.targetMotive === 'veteran'
-            ? lang === 'en'
-              ? ' — veteran / bargain target'
-              : ' — cel: weteran / okazja'
-            : ''}
         {p.playerMorale != null && p.playerMorale < 55 ? t.mayPushExit : ''}
       </p>
 

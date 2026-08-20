@@ -83,7 +83,6 @@ export {
   aiBuyerMaxFee,
   evaluateSellerCounter,
   classifyTransferTarget,
-  transferTargetMotiveLabelPl,
 } from './negotiation.js'
 
 export {

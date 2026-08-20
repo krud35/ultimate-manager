@@ -90,7 +90,6 @@ export {
   aiBuyerMaxFee,
   evaluateSellerCounter,
   classifyTransferTarget,
-  transferTargetMotiveLabelPl,
   listTransferMarket,
   listTransferMarketWithFreeAgents,
   buildTransferRowForPlayer,
