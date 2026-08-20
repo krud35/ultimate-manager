@@ -299,6 +299,9 @@ function createEucsCareer(slotIndex, options) {
     playerTeamId,
     seasonYear,
     simSeedBase,
+    // Jawnie — world.teamIds zaraz urośnie do wszystkich 48 klubów piramidy (patrz
+    // materializeFullPyramidTeams poniżej); liga gracza ma zostać przy jego 16.
+    teamIds: eucsTeamsForTier(tier).map((t) => t.id),
     seasonLabel: `Liga Europejska ${tier} ${seasonYear}/${String(seasonYear + 1).slice(-2)}`,
   })
 

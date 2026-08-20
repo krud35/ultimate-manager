@@ -219,7 +219,21 @@ function strengthOffsetFromRealResult(team, tierTeams, seed) {
   return (TIER_BASE_OFFSET[team.tier] ?? 0) + withinTier
 }
 
-let idCursorBase = 900000000
+const idCursorBase = 900000000
+
+/**
+ * Zakres id zawodników per klub — 1000 slotów na drużynę, indeksowane STAŁĄ pozycją
+ * klubu w pełnej liście 48 drużyn piramidy (nie kolejnością wywołań). Wszystkie 48
+ * klubów żyje teraz jednocześnie w tym samym `world.teamsById` (każdy mecz w tle idzie
+ * przez prawdziwy silnik — patrz otherLeagues.js), więc id muszą być globalnie unikalne
+ * i stabilne niezależnie od tego, czy drużyna buduje się pojedynczo (`ensureShadowTeamRoster`,
+ * jeden klub na wywołanie) czy razem z całym poziomem (`buildEucsLeagueTemplate` dla
+ * poziomu gracza) — stąd indeks pozycyjny zamiast licznika rosnącego per-wywołanie.
+ */
+function idStartForTeam(teamId) {
+  const idx = EUCS_TEAMS.findIndex((t) => t.id === teamId)
+  return idCursorBase + Math.max(0, idx) * 1000
+}
 
 /**
  * @param {{ tier: 1|2|3, teamIds?: string[], seed?: number }} options
@@ -235,7 +249,6 @@ export function buildEucsLeagueTemplate(options) {
 
   const teams = []
   const tacticalByTeamId = {}
-  let idCursor = idCursorBase + tier * 1000000
 
   for (const rawTeam of selected) {
     const identity = eucsTeamIdentity(rawTeam)
@@ -252,8 +265,7 @@ export function buildEucsLeagueTemplate(options) {
       }
     }
 
-    const idStart = idCursor
-    idCursor += rawRows.length + 5
+    const idStart = idStartForTeam(rawTeam.id)
 
     let players = buildTeamRoster(identity.name, rawRows, idStart, {
       mode: 'equalized',

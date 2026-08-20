@@ -26,7 +26,15 @@ export function createLeagueSeason(options = {}) {
     playerTeamId: options.playerTeamId ?? PLAYER_TEAM_ID,
   })
 
-  const teamIds = options.teamIds ?? world.teamIds ?? UFA_LEAGUE_TEAMS.map((t) => t.id)
+  // Kopia, nie alias: `world.teamIds` bywa dalej mutowane (np. materializeFullPyramidTeams
+  // dopisuje do niego pozostałe kluby piramidy) — gdyby `league.teamIds` był tą samą
+  // tablicą, takie dopiski przeciekałyby do zakresu ligi gracza (więcej drużyn w
+  // tabeli/terminarzu niż faktycznie w tej lidze).
+  const teamIds = options.teamIds
+    ? [...options.teamIds]
+    : world.teamIds
+      ? [...world.teamIds]
+      : UFA_LEAGUE_TEAMS.map((t) => t.id)
   const playerTeamId = options.playerTeamId ?? PLAYER_TEAM_ID
   const seasonYear = options.seasonYear ?? 2025
   const calendar = buildSeasonCalendar({ seasonYear, teamIds })
