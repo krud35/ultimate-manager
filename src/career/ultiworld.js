@@ -544,6 +544,49 @@ function roundReviewArticles(career, league, round, namesPl, namesEn, rng) {
         return `${i + 1}. ${playerDisplay(r, namesPl)} — ${r.goals ?? 0}G / ${r.assists ?? 0}A / ${r.blocks ?? 0}B${toBit}`
       })
       .join('\n')
+    const star = top7[0]
+    const starPl = playerDisplay(star, namesPl)
+    const starEn = playerDisplay(star, namesEn)
+    const starStats = `${star.goals ?? 0}G / ${star.assists ?? 0}A / ${star.blocks ?? 0}B`
+    const top7Variants = [
+      {
+        intro: `${starPl} rozdaje karty w kolejce ${round}: ${starStats}. Reszta siódemki depcze mu po piętach, ale ten weekend należy do jednego nazwiska.`,
+        introEn: `${starEn} calls the shots in round ${round}: ${starStats}. The rest of the seven are close behind, but this weekend belongs to one name.`,
+        outro: 'Lista nie jest rankingiem OVR — to zdjęcie z konkretnej kolejki, nic więcej.',
+        outroEn: 'Not an OVR ranking — just a snapshot of one round, nothing more.',
+      },
+      {
+        intro: `Gwiazdą kolejki ${round} został ${starPl} — ${starStats}. Ultiworld typuje: to nazwisko wróci w podsumowaniu sezonu.`,
+        introEn: `Round ${round}’s standout is ${starEn} — ${starStats}. Ultiworld’s bet: that name resurfaces in the season wrap-up.`,
+        outro: '„Liczby nie kłamią, ale turnovery potrafią zepsuć highlight” — żartuje nasz analityk.',
+        outroEn: '“Numbers don’t lie — turnovers just ruin the highlight,” jokes our analyst.',
+      },
+      {
+        intro: `Najgłośniejsze nazwisko kolejki ${round}? ${starPl}. ${starStats} — liczby, których nie da się przegapić.`,
+        introEn: `The loudest name in round ${round}? ${starEn}. ${starStats} — numbers you can’t miss.`,
+        outro: 'Reszta stawki niewiele ustępowała. Redakcja liczy do siedmiu, nie do jednego.',
+        outroEn: 'The rest of the pack wasn’t far behind. The desk counts to seven, not to one.',
+      },
+      {
+        intro: `${starPl} zamyka weekend kolejki ${round} z najlepszym bilansem: ${starStats}. Reszta siódemki walczy o resztę uwagi.`,
+        introEn: `${starEn} closes out round ${round} with the best line: ${starStats}. The rest of the seven fight for what attention is left.`,
+        outro: 'Migawka z jednej kolejki, nie wyrok na cały sezon — ale ładnie wygląda w nagłówku.',
+        outroEn: 'A snapshot from one round, not a season verdict — but it reads great in a headline.',
+      },
+      {
+        intro: `Kolejka ${round} miała jednego bohatera: ${starPl}, ${starStats}. Poniedziałkowa siódemka Ultiworld nie mogła zacząć się inaczej.`,
+        introEn: `Round ${round} had one hero: ${starEn}, ${starStats}. Ultiworld’s Monday seven couldn’t start any other way.`,
+        outro: 'Pełen skład poniżej — bez wagi OVR, tylko to, co wydarzyło się na boisku w ten weekend.',
+        outroEn: 'The full lineup below — no OVR weighting, just what happened on the field this weekend.',
+      },
+      {
+        intro: `${starPl} nie zostawił złudzeń w kolejce ${round}: ${starStats}. Reszta stawki patrzy w plecy.`,
+        introEn: `${starEn} left no doubt in round ${round}: ${starStats}. The rest of the pack is chasing shadows.`,
+        outro: 'Redakcja przypomina: to zdjęcie z jednej kolejki, nie sezonowy wyrok.',
+        outroEn: 'A reminder from the desk: this is a snapshot of one round, not a season verdict.',
+      },
+    ]
+    const chosenTop7 = pick(top7Variants, rng)
     out.push(
       makeArticle({
         category: 'awards',
@@ -551,8 +594,8 @@ function roundReviewArticles(career, league, round, namesPl, namesEn, rng) {
         headlineEn: `Round ${round} seven according to Ultiworld`,
         dek: 'Poniedziałkowa siódemka — po domknięciu całego weekendu ligowego.',
         dekEn: 'Monday seven — after the full league weekend is in the books.',
-        body: `Redakcja czeka do poniedziałku, aż domkną się wszystkie mecze kolejki ${round}. Algorytm (gole ×3, asysty ×2, bloki ×2.5, turnovery −2) wyłonił formę weekendu:\n\n${lines}\n\n„Liczby nie kłamią, ale turnovery potrafią zepsuć highlight” — żartuje nasz analityk. Lista nie jest rankingiem OVR; to zdjęcie z konkretnej kolejki.`,
-        bodyEn: `We wait until Monday so every round ${round} fixture is final. The formula (goals ×3, assists ×2, blocks ×2.5, turnovers −2) picked the weekend’s form:\n\n${lines}\n\n“Numbers don’t lie — turnovers just ruin the highlight,” jokes our analyst. Not an OVR ranking; a snapshot of one round.`,
+        body: `${chosenTop7.intro}\n\n${lines}\n\n${chosenTop7.outro}`,
+        bodyEn: `${chosenTop7.introEn}\n\n${lines}\n\n${chosenTop7.outroEn}`,
         date: publishDate,
         career,
         tags: ['top7', `runda-${round}`, 'liderzy', 'poniedziałek'],

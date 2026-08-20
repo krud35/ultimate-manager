@@ -324,6 +324,16 @@ export function rehydrateCareerWorld(career) {
               : [],
             cupChampionCovered: !!career.ultiworld.cupChampionCovered,
             seeded: !!career.ultiworld.seeded,
+            worldEventCooldowns:
+              career.ultiworld.worldEventCooldowns &&
+              typeof career.ultiworld.worldEventCooldowns === 'object'
+                ? career.ultiworld.worldEventCooldowns
+                : {},
+            powerRankingsSnapshot:
+              career.ultiworld.powerRankingsSnapshot &&
+              typeof career.ultiworld.powerRankingsSnapshot === 'object'
+                ? career.ultiworld.powerRankingsSnapshot
+                : null,
           }
         : {
             articles: [],
