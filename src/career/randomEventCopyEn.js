@@ -168,8 +168,11 @@ export const RANDOM_EVENT_CHOICE_EN = {
     skip: { labelEn: 'Refuse', hintEn: 'Morale −1, reputation −2, fan mood −' },
   },
   kit_sponsor_deal: {
-    sign: { labelEn: 'Sign', hintEn: '+$15k, morale +1, reputation +2' },
-    negotiate: { labelEn: 'Negotiate harder', hintEn: '50%: +$22k & reputation +3, or nothing' },
+    sign: { labelEn: 'Sign', hintEn: '+$15k, reputation +2, team morale −1 (too much logo)' },
+    negotiate: {
+      labelEn: 'Negotiate harder',
+      hintEn: '50%: +$26k & reputation +4 / else morale −2, reputation −1',
+    },
     refuse: { labelEn: 'Refuse', hintEn: 'Morale +2, reputation +1' },
   },
   late_night_party: {
@@ -189,7 +192,10 @@ export const RANDOM_EVENT_CHOICE_EN = {
   },
   rival_trash_talk: {
     clapback: { labelEn: 'Sharp clapback', hintEn: 'Star form +, morale −1, reputation −1' },
-    classy: { labelEn: 'Classy, calm reply', hintEn: 'Team morale +3, reputation +3' },
+    classy: {
+      labelEn: 'Classy, calm reply',
+      hintEn: 'Morale +2, reputation +3, star form −1 (no outlet for the adrenaline)',
+    },
     mute: { labelEn: 'Ignore', hintEn: 'No change' },
   },
   charity_hat_tournament: {
@@ -254,7 +260,7 @@ export const RANDOM_EVENT_CHOICE_EN = {
   },
   practice_tourament: {
     compete: { labelEn: 'Full competition', hintEn: 'Top form ↑, bench morale risk' },
-    fun: { labelEn: 'Fun + silly prizes', hintEn: 'Team morale +, form 0' },
+    fun: { labelEn: 'Fun + silly prizes', hintEn: 'Team morale +, form −1 (less intensity)' },
     skip: { labelEn: 'Normal training', hintEn: 'No change' },
   },
   medical_checkup: {
@@ -274,11 +280,17 @@ export const RANDOM_EVENT_CHOICE_EN = {
   },
   bench_meeting: {
     honest: { labelEn: 'Honest talk + plan', hintEn: 'Bench morale +, top form −1' },
-    promise: { labelEn: 'Promise more minutes', hintEn: 'Bench morale ++; risk later' },
+    promise: {
+      labelEn: 'Promise more minutes',
+      hintEn: 'Bench morale ++; 40%: starters feel threatened (their morale −)',
+    },
     ignore: { labelEn: '“The pitch picks the lineup”', hintEn: 'Bench morale −' },
   },
   merch_drop: {
-    big: { labelEn: 'Big drop', hintEn: 'Budget − now, later +; morale +' },
+    big: {
+      labelEn: 'Big drop',
+      hintEn: 'Budget −$8k now, 70%: big return & morale + / 30%: flop, net loss',
+    },
     small: { labelEn: 'Small run', hintEn: 'Small profit, small boost' },
     skip: { labelEn: 'No merch', hintEn: 'No change' },
   },

@@ -3832,6 +3832,8 @@ export const POST_MATCH_EVENT_TEMPLATES = [
     id: 'postmatch_bad_loss_locker_room',
     weight: 1,
     pickContext(_roster, _rng, _team, matchCtx) {
+      if (!matchCtx || matchCtx.won || matchCtx.draw) return null
+      if ((matchCtx.margin ?? 0) < 5) return null
       return {
         ourScore: matchCtx.ourScore,
         theirScore: matchCtx.theirScore,

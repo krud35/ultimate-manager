@@ -2866,12 +2866,16 @@ export function processUltiworldTick(career, { date = null } = {}) {
   // Cup champion flash
   if (league.cup?.championTeamId && !ultiworld.cupChampionCovered) {
     const champ = names[league.cup.championTeamId] ?? league.cup.championTeamId
+    const champEn = namesEn[league.cup.championTeamId] ?? champ
     newArticles.push(
       makeArticle({
         category: 'cup',
         headline: `Puchar zdobyty! ${champ} na tronie`,
+        headlineEn: `Cup won! ${champEn} on the throne`,
         dek: 'Ultiworld składa gratulacje i przygotowuje winietkę sezonu.',
+        dekEn: 'Ultiworld sends congratulations and preps the season vignette.',
         body: `${champ} przechodzi drabinkę i zapisuje się w historii. Szampan (bezalkoholowy, bo regeneracja) leje się strumieniami. Liga wraca do codzienności — legenda zostaje.`,
+        bodyEn: `${champEn} clears the bracket and writes their name into history. Champagne (non-alcoholic, recovery comes first) flows freely. The league returns to business as usual — the legend stays.`,
         date: simDate,
         career,
         tags: ['puchar', 'mistrz'],
