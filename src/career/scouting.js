@@ -82,6 +82,12 @@ export const ACADEMY_CAMPAIGN_WEEKS = 4
 export const ACADEMY_CANDIDATES_PER_MISSION = 3
 export const ACADEMY_INITIAL_KNOWLEDGE = 25
 export const ACADEMY_WEEKLY_KNOWLEDGE_GAIN = 15
+/** Co tydzień szansa, że skaut namierzy jeszcze jednego kandydata (do limitu). */
+export const ACADEMY_NEW_CANDIDATE_CHANCE = 0.35
+export const ACADEMY_MAX_CANDIDATES_PER_MISSION = 6
+/** Odwołanie skauta z wyjazdu — wraca po 2-3 dniach, kandydaci już namierzeni zostają. */
+export const ACADEMY_RECALL_MIN_DAYS = 2
+export const ACADEMY_RECALL_MAX_DAYS = 3
 
 function clampKnowledge(n) {
   const v = Math.round(Number(n))
@@ -361,20 +367,62 @@ export function advanceAcademyCampaigns(team) {
   const scouting = ensureTeamScouting(team)
   const reports = []
   for (const mission of scouting.pendingMissions) {
-    if (mission.kind !== 'academyProspect') continue
+    if (mission.kind !== 'academyProspect' || mission.recalling) continue
     mission.weeksElapsed = (mission.weeksElapsed ?? 0) + 1
     for (const candidateId of mission.candidateIds ?? []) {
       bumpKnowledge(playerEntry(team, candidateId), 'knowledge', ACADEMY_WEEKLY_KNOWLEDGE_GAIN)
     }
+
+    const newCandidateIds = []
+    if ((mission.candidateIds?.length ?? 0) < ACADEMY_MAX_CANDIDATES_PER_MISSION) {
+      const rng = mulberry32(hashSeed(mission.id, 'academy-new-candidate', mission.weeksElapsed))
+      if (rng() < ACADEMY_NEW_CANDIDATE_CHANCE) {
+        const seasonYear = mission.queuedAtDate
+          ? Number(String(mission.queuedAtDate).slice(0, 4))
+          : null
+        const candidate = createAcademyProspect(rng, {
+          seasonYear,
+          teamId: team.id,
+          source: 'scouted',
+          region: mission.region,
+          index: mission.candidateIds.length,
+        })
+        ensureTeamAcademyCandidates(team).push(candidate)
+        mission.candidateIds = [...(mission.candidateIds ?? []), candidate.id]
+        playerEntry(team, candidate.id).knowledge = ACADEMY_INITIAL_KNOWLEDGE
+        newCandidateIds.push(candidate.id)
+      }
+    }
+
     reports.push({
       missionId: mission.id,
       region: mission.region,
       weekNumber: mission.weeksElapsed,
       weeksTotal: mission.weeksTotal,
       candidateIds: mission.candidateIds ?? [],
+      newCandidateIds,
     })
   }
   return reports
+}
+
+/**
+ * Odwołuje skauta z wyjazdu przed zakończeniem kampanii — wraca po 2-3 dniach (bez
+ * dalszego postępu obserwacji), już namierzeni kandydaci zostają widoczni w akademii.
+ */
+export function recallScoutMission(team, missionId, date) {
+  const scouting = ensureTeamScouting(team)
+  const mission = scouting.pendingMissions.find((m) => m.id === missionId)
+  if (!mission) return { ok: false, error: 'not_found' }
+  if (mission.kind !== 'academyProspect') return { ok: false, error: 'not_recallable' }
+  if (mission.recalling) return { ok: false, error: 'already_recalling' }
+  const rng = mulberry32(hashSeed(mission.id, 'academy-recall'))
+  const returnDays =
+    ACADEMY_RECALL_MIN_DAYS +
+    Math.round(rng() * (ACADEMY_RECALL_MAX_DAYS - ACADEMY_RECALL_MIN_DAYS))
+  mission.recalling = true
+  mission.recallReturnDate = date ? addDaysIso(date, returnDays) : null
+  return { ok: true, mission }
 }
 
 export function findPlayerTeamId(world, playerId) {
@@ -420,6 +468,7 @@ function applyMissionResult(team, world, mission) {
     })
   } else if (mission.kind === 'academyProspect') {
     result.academyConcluded = true
+    result.academyRecalled = !!mission.recalling
     result.candidateIds = mission.candidateIds ?? []
   }
   return result
@@ -445,7 +494,9 @@ export function resolveScoutMissions(world, playerTeamId, league, date) {
 
     if (!ready) {
       if (mission.kind === 'academyProspect') {
-        ready = (mission.weeksElapsed ?? 0) >= (mission.weeksTotal ?? ACADEMY_CAMPAIGN_WEEKS)
+        ready = mission.recalling
+          ? !!mission.recallReturnDate && date >= mission.recallReturnDate
+          : (mission.weeksElapsed ?? 0) >= (mission.weeksTotal ?? ACADEMY_CAMPAIGN_WEEKS)
       } else if (mission.kind === 'player') {
         const clubId = findPlayerTeamId(world, mission.targetPlayerId)
         if (!clubId) {

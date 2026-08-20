@@ -1085,7 +1085,7 @@ function findAcademyCandidate(team, candidateId) {
 }
 
 /** Linia raportu: nazwisko (wiek) — pasmo OVR + pasmo potencjału, oba zamglone `knowledge`. */
-function academyCandidateBandLine(team, candidateId, lang) {
+function academyCandidateBandLine(team, candidateId, lang, { isNew = false } = {}) {
   const candidate = findAcademyCandidate(team, candidateId)
   if (!candidate) return null
   const name = getPlayerFullName(candidate)
@@ -1094,7 +1094,8 @@ function academyCandidateBandLine(team, candidateId, lang) {
   const ovrDisplay = scoutedValueDisplay(ovr, knowledge, lang)
   const room = (candidate.potential ?? ovr) - ovr
   const potentialLabel = trainingRoomLabel(room, candidate.age, lang)
-  return `${name} (${candidate.age}): ${ovrDisplay.label}, ${potentialLabel}`
+  const prefix = isNew ? (lang === 'en' ? 'NEW · ' : 'NOWY · ') : ''
+  return `${prefix}${name} (${candidate.age}): ${ovrDisplay.label}, ${potentialLabel}`
 }
 
 /** Cotygodniowy raport z trwającej kampanii `academyProspect` (`advanceAcademyCampaigns`). */
@@ -1103,11 +1104,12 @@ export function messageFromAcademyCampaignReport(report, career) {
   const team = worldTeamById(career?.world, career?.playerTeamId)
   const region = academyRegionLabel(report.region, 'pl')
   const regionEn = academyRegionLabel(report.region, 'en')
+  const newSet = new Set(report.newCandidateIds ?? [])
   const linesPl = (report.candidateIds ?? [])
-    .map((id) => academyCandidateBandLine(team, id, 'pl'))
+    .map((id) => academyCandidateBandLine(team, id, 'pl', { isNew: newSet.has(id) }))
     .filter(Boolean)
   const linesEn = (report.candidateIds ?? [])
-    .map((id) => academyCandidateBandLine(team, id, 'en'))
+    .map((id) => academyCandidateBandLine(team, id, 'en', { isNew: newSet.has(id) }))
     .filter(Boolean)
   return createInboxMessage({
     type: INBOX_TYPES.SCOUT_REPORT,
@@ -1153,12 +1155,17 @@ export function messageFromScoutMission(mission, career, { date = null } = {}) {
     const linesEn = (mission.candidateIds ?? [])
       .map((id) => academyCandidateBandLine(team, id, 'en'))
       .filter(Boolean)
+    const recalled = !!mission.academyRecalled
     return createInboxMessage({
       type: INBOX_TYPES.SCOUT_REPORT,
-      title: `Scouting · Misja zakończona: ${region}`,
-      titleEn: `Scouting · Mission complete: ${regionEn}`,
-      body: `Skaut wraca z regionu ${region}. Obserwowani kandydaci: ${linesPl.join('; ') || 'brak'}. Zdecyduj w Akademii, kogo sprowadzić, kogo obserwować dalej, a kogo odrzucić.`,
-      bodyEn: `Your scout is back from ${regionEn}. Candidates observed: ${linesEn.join('; ') || 'none'}. Decide in the Academy who to sign, keep watching, or reject.`,
+      title: recalled
+        ? `Scouting · Skaut wrócił wcześniej: ${region}`
+        : `Scouting · Misja zakończona: ${region}`,
+      titleEn: recalled
+        ? `Scouting · Scout recalled early: ${regionEn}`
+        : `Scouting · Mission complete: ${regionEn}`,
+      body: `Skaut wraca z regionu ${region}${recalled ? ' (odwołany wcześniej)' : ''}. Obserwowani kandydaci: ${linesPl.join('; ') || 'brak'}. Zdecyduj w Akademii, kogo sprowadzić, kogo obserwować dalej, a kogo odrzucić.`,
+      bodyEn: `Your scout is back from ${regionEn}${recalled ? ' (recalled early)' : ''}. Candidates observed: ${linesEn.join('; ') || 'none'}. Decide in the Academy who to sign, keep watching, or reject.`,
       date: resolvedDate,
       seasonIndex: career?.seasonIndex ?? null,
       seasonYear: career?.seasonYear ?? null,
@@ -1168,6 +1175,7 @@ export function messageFromScoutMission(mission, career, { date = null } = {}) {
         region: mission.region ?? null,
         candidateIds: mission.candidateIds ?? [],
         concluded: true,
+        recalled,
       },
     })
   }

@@ -88,6 +88,9 @@ import {
   simulateUntilPlayerMatchOrEndAsync,
   isOfficialSeasonEnded,
   tryForfeitMatchRecord,
+  parseISODate,
+  formatISODate,
+  addDays,
 } from './league'
 import { resolvePlayerDefaultTactics } from './matchEngine'
 
@@ -907,7 +910,25 @@ export default function App() {
         processWeeklyWagesTimes(career.world, weekTicks)
         processWeeklyFinancialHealth(career.world, { seasonYear: career.seasonYear })
       }
-      return { reports, academyReports }
+
+      // Bulk fast-forward skips the per-day computeCalendarDayStep loop, which is
+      // normally the only place resolveScoutMissions runs — without this, missions
+      // (incl. recalled/concluded academy campaigns) would never resolve for players
+      // who mostly use "Simulate until match" instead of stepping day by day.
+      const resolvedScoutMissions = []
+      if (career.world && rangeStart) {
+        let cursor = parseISODate(rangeStart)
+        const end = parseISODate(rangeEnd)
+        while (cursor <= end) {
+          const dateStr = formatISODate(cursor)
+          resolvedScoutMissions.push(
+            ...resolveScoutMissions(career.world, career.playerTeamId, nextLeague, dateStr),
+          )
+          cursor = addDays(cursor, 1)
+        }
+      }
+
+      return { reports, academyReports, resolvedScoutMissions }
     },
     [career],
   )
@@ -937,7 +958,7 @@ export default function App() {
           }),
       })
 
-      const { reports, academyReports } = await applyFastForwardSideEffects(
+      const { reports, academyReports, resolvedScoutMissions } = await applyFastForwardSideEffects(
         nextLeague,
         rangeStart,
         result.weekTicks ?? 0,
@@ -1000,6 +1021,7 @@ export default function App() {
         ...messagesFromTrainingReports(reports, career),
         ...messagesFromTrainingInjuries(reports, career),
         ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
+        ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
         ...messagesFromNewPlayerMatches(
           { ...career, league: nextLeague },
           prevMatchHistory,
@@ -1095,7 +1117,7 @@ export default function App() {
             }),
         })
 
-        const { reports, academyReports } = await applyFastForwardSideEffects(
+        const { reports, academyReports, resolvedScoutMissions } = await applyFastForwardSideEffects(
           nextLeague,
           rangeStart,
           result.weekTicks ?? 0,
@@ -1155,6 +1177,7 @@ export default function App() {
           ...messagesFromTrainingReports(reports, career),
           ...messagesFromTrainingInjuries(reports, career),
           ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
+          ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
           ...messagesFromNewPlayerMatches(
             { ...career, league: nextLeague },
             prevMatchHistory,

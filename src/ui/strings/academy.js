@@ -41,6 +41,8 @@ const pl = {
   rejectAction: 'Odrzuć',
   keepObservingAction: 'Obserwuj dalej',
   keepObservingPending: 'Obserwacja w toku…',
+  recallAction: 'Odwołaj skauta',
+  recalling: 'Skaut wraca do domu…',
 }
 
 const en = {
@@ -84,6 +86,8 @@ const en = {
   rejectAction: 'Reject',
   keepObservingAction: 'Keep observing',
   keepObservingPending: 'Observation in progress…',
+  recallAction: 'Recall scout',
+  recalling: 'Scout heading home…',
 }
 
 export function academyStrings(lang = UI_LANG.PL) {

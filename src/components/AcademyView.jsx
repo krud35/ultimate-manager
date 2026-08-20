@@ -15,6 +15,7 @@ import {
   getPlayerKnowledge,
   signAcademyCandidate,
   rejectAcademyCandidate,
+  recallScoutMission,
 } from '../career'
 
 export default function AcademyView({ career, onCareerUpdate }) {
@@ -109,6 +110,13 @@ export default function AcademyView({ career, onCareerUpdate }) {
       return
     }
     setScoutMsg(t.scoutQueued)
+    onCareerUpdate({ world: career.world })
+  }
+
+  function handleRecall(missionId) {
+    setActionError(null)
+    const result = recallScoutMission(team, missionId, career.league?.currentDate ?? null)
+    if (!result.ok) return
     onCareerUpdate({ world: career.world })
   }
 
@@ -294,11 +302,22 @@ export default function AcademyView({ career, onCareerUpdate }) {
         {pending.length === 0 ? (
           <p className="mt-1 text-sm text-ufa-muted">{t.noPendingMissions}</p>
         ) : (
-          <ul className="mt-1 space-y-1 text-sm text-ufa-muted">
+          <ul className="mt-1 space-y-1.5 text-sm text-ufa-muted">
             {pending.map((m) => (
-              <li key={m.id}>
-                {academyRegionLabel(m.region, lang)} ·{' '}
-                {t.weekProgress(m.weeksElapsed ?? 0, m.weeksTotal ?? 4)}
+              <li key={m.id} className="flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  {academyRegionLabel(m.region, lang)} ·{' '}
+                  {m.recalling ? t.recalling : t.weekProgress(m.weeksElapsed ?? 0, m.weeksTotal ?? 4)}
+                </span>
+                {!m.recalling && (
+                  <button
+                    type="button"
+                    onClick={() => handleRecall(m.id)}
+                    className="rounded-md border border-ufa-border px-2.5 py-1 text-xs text-ufa-text hover:bg-ufa-panel-hover"
+                  >
+                    {t.recallAction}
+                  </button>
+                )}
               </li>
             ))}
           </ul>

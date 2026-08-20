@@ -338,6 +338,7 @@ export {
   queueScoutMission,
   resolveScoutMissions,
   advanceAcademyCampaigns,
+  recallScoutMission,
   ACADEMY_CAMPAIGN_WEEKS,
 } from './scouting.js'
 export {
