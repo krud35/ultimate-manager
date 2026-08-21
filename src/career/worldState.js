@@ -336,6 +336,7 @@ export function rehydrateCareerWorld(career) {
               typeof career.ultiworld.powerRankingsSnapshot === 'object'
                 ? career.ultiworld.powerRankingsSnapshot
                 : null,
+            lastPowerRankingMonth: career.ultiworld.lastPowerRankingMonth ?? null,
           }
         : {
             articles: [],

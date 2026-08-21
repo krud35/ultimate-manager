@@ -170,6 +170,7 @@ export function ensureUltiworld(career) {
       coveredFixtureIds: [],
       worldEventCooldowns: {},
       powerRankingsSnapshot: null,
+      lastPowerRankingMonth: null,
       seeded: false,
     }
   }
@@ -180,6 +181,7 @@ export function ensureUltiworld(career) {
   if (u.lastPomMonth === undefined) u.lastPomMonth = null
   if (!u.worldEventCooldowns || typeof u.worldEventCooldowns !== 'object') u.worldEventCooldowns = {}
   if (u.powerRankingsSnapshot === undefined) u.powerRankingsSnapshot = null
+  if (u.lastPowerRankingMonth === undefined) u.lastPowerRankingMonth = null
   return u
 }
 
@@ -739,9 +741,32 @@ function roundReviewArticles(career, league, round, namesPl, namesEn, rng) {
 }
 
 const POWER_RANKING_CORE_SIZE = 7
+/** Ile ostatnich meczów ligowych liczy się jako "bieżąca forma" drużyny. */
+const POWER_RANKING_RECENT_GAMES = 8
 
-/** Siła drużyny: jakość rdzenia składu (OVR top 7) skorygowana o formę i bieżące wyniki. */
-function teamPowerScore(team, standingsRow) {
+/** Bilans i różnica punktowa z ostatnich N meczów ligowych drużyny (bieżąca forma, nie cały sezon). */
+function recentFormStats(matchHistory, teamId) {
+  const games = (matchHistory ?? [])
+    .filter((m) => m.competition === 'league' && (m.homeTeamId === teamId || m.awayTeamId === teamId))
+    .slice(-POWER_RANKING_RECENT_GAMES)
+  if (!games.length) return null
+  let wins = 0
+  let diffSum = 0
+  for (const g of games) {
+    const isHome = g.homeTeamId === teamId
+    const forScore = (isHome ? g.homeScore : g.awayScore) ?? 0
+    const againstScore = (isHome ? g.awayScore : g.homeScore) ?? 0
+    if (forScore > againstScore) wins += 1
+    diffSum += forScore - againstScore
+  }
+  return { games: games.length, winPct: wins / games.length, diffPerGame: diffSum / games.length }
+}
+
+/**
+ * Siła drużyny: jakość rdzenia składu (OVR top 7) i wyniki (zwłaszcza ostatnie mecze) ważą mniej więcej
+ * tyle samo — świetny skład z bilansem .500 nie powinien automatycznie deklasować drużyny w gorącej formie.
+ */
+function teamPowerScore(team, standingsRow, matchHistory) {
   const players = team?.players ?? []
   if (!players.length) return null
   const core = [...players]
@@ -752,16 +777,22 @@ function teamPowerScore(team, standingsRow) {
   const formAdj = (avgForm - FORM_DEFAULT) * 0.15
 
   const games = (standingsRow?.wins ?? 0) + (standingsRow?.losses ?? 0)
-  let resultsAdj = 0
-  if (games > 0) {
-    const winPct = (standingsRow.wins ?? 0) / games
-    const diffPerGame = pointDifferential(standingsRow) / games
-    const clampedDiff = Math.max(-5, Math.min(5, diffPerGame))
-    resultsAdj = ((winPct - 0.5) * 10 + clampedDiff) * 0.4
+  if (games === 0) {
+    // Przedsezon / brak meczów: nie ma jeszcze wyników, więc ranking opiera się tylko na składzie.
+    return { score: rosterOvr + formAdj, rosterOvr: Math.round(rosterOvr) }
   }
 
+  const seasonWinPct = (standingsRow.wins ?? 0) / games
+  const seasonDiffPerGame = pointDifferential(standingsRow) / games
+  const recent = recentFormStats(matchHistory, team.id)
+  // Ostatnie mecze ważą wyraźnie więcej niż cały sezon — to ma pokazywać BIEŻĄCĄ formę, nie tylko bilans.
+  const winPct = recent ? recent.winPct * 0.7 + seasonWinPct * 0.3 : seasonWinPct
+  const diffPerGame = recent ? recent.diffPerGame * 0.7 + seasonDiffPerGame * 0.3 : seasonDiffPerGame
+  const clampedDiff = Math.max(-10, Math.min(10, diffPerGame))
+  const resultsScore = Math.max(30, Math.min(99, 70 + (winPct - 0.5) * 50 + clampedDiff * 1.5))
+
   return {
-    score: rosterOvr + formAdj + resultsAdj,
+    score: rosterOvr * 0.45 + resultsScore * 0.45 + formAdj,
     rosterOvr: Math.round(rosterOvr),
   }
 }
@@ -771,7 +802,7 @@ export function computePowerRankings(career, league) {
   const teams = worldTeamsList(career.world)
   const rows = []
   for (const team of teams) {
-    const powered = teamPowerScore(team, league?.standings?.[team.id])
+    const powered = teamPowerScore(team, league?.standings?.[team.id], league?.matchHistory)
     if (!powered) continue
     rows.push({ teamId: team.id, name: team.name, ...powered })
   }
@@ -786,8 +817,8 @@ function movementMark(prevRank, rank, lang) {
   return '–'
 }
 
-/** Ranking siły drużyn (top-7 OVR + forma + bieżące wyniki), publikowany po każdej kolejce. */
-function powerRankingsArticle(career, league, round, prevSnapshot, namesPl, namesEn) {
+/** Ranking siły drużyn (top-7 OVR + wyniki, zwłaszcza ostatnie mecze), publikowany raz w miesiącu. */
+function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, namesPl, namesEn) {
   const rankings = computePowerRankings(career, league)
   if (rankings.length < 2) return null
 
@@ -827,14 +858,15 @@ function powerRankingsArticle(career, league, round, prevSnapshot, namesPl, name
     ? `Najwięcej zyskuje ${namesPl[riser.teamId] ?? riser.teamId} (+${riser.delta}), najwięcej traci ${
         faller ? namesPl[faller.teamId] ?? faller.teamId : '—'
       } (${faller ? faller.delta : 0}).`
-    : 'Pierwszy ranking siły w tym sezonie — punkt odniesienia na kolejne tygodnie.'
+    : 'Pierwszy ranking siły w tym sezonie — punkt odniesienia na kolejne miesiące.'
   const dekEn = riser
     ? `Biggest riser: ${namesEn[riser.teamId] ?? riser.teamId} (+${riser.delta}); biggest faller: ${
         faller ? namesEn[faller.teamId] ?? faller.teamId : '—'
       } (${faller ? faller.delta : 0}).`
-    : 'The season’s first power ranking — a baseline for the coming weeks.'
+    : 'The season’s first power ranking — a baseline for the months ahead.'
 
-  const publishDate = roundAwardsPublishDate(league, round) ?? career.league?.currentDate
+  const monthLabel = monthLabelPl(monthIso)
+  const monthLabelEnStr = monthLabelEn(monthIso)
 
   const newSnapshot = Object.fromEntries(rankings.map((r) => [r.teamId, r.rank]))
 
@@ -842,15 +874,15 @@ function powerRankingsArticle(career, league, round, prevSnapshot, namesPl, name
     snapshot: newSnapshot,
     article: makeArticle({
       category: 'power_rankings',
-      headline: `Power Rankings po kolejce ${round}: liderem ${topLabel}`,
-      headlineEn: `Power Rankings after round ${round}: ${topLabelEn} on top`,
+      headline: `Power Rankings — ${monthLabel}: liderem ${topLabel}`,
+      headlineEn: `Power Rankings — ${monthLabelEnStr}: ${topLabelEn} on top`,
       dek: dekPl,
       dekEn,
-      body: `Ranking Ultiworld ocenia bieżącą siłę wszystkich drużyn na bazie jakości rdzenia składu (top ${POWER_RANKING_CORE_SIZE} wg OVR), aktualnej formy zawodników i wyników w rozgrywkach — to nie jest tabela ligowa, tylko nasza ocena, kto naprawdę jest najgroźniejszy.\n\n${linesPl}\n\nStrzałki pokazują zmianę pozycji względem poprzedniego rankingu.`,
-      bodyEn: `Ultiworld’s ranking rates every team’s current strength from core roster quality (top ${POWER_RANKING_CORE_SIZE} by OVR), player form, and on-field results — not a standings table, just our read on who’s actually most dangerous right now.\n\n${linesEn}\n\nArrows show the move versus the previous ranking.`,
-      date: publishDate,
+      body: `Comiesięczny ranking Ultiworld ocenia bieżącą siłę wszystkich drużyn: jakość rdzenia składu (top ${POWER_RANKING_CORE_SIZE} wg OVR) i wyniki — zwłaszcza z ostatnich meczów — ważą mniej więcej tyle samo co talent. To nie jest tabela ligowa, tylko nasza ocena, kto naprawdę jest najgroźniejszy teraz.\n\n${linesPl}\n\nStrzałki pokazują zmianę pozycji względem poprzedniego miesiąca.`,
+      bodyEn: `Ultiworld’s monthly ranking rates every team’s current strength: core roster quality (top ${POWER_RANKING_CORE_SIZE} by OVR) and results — especially recent ones — carry roughly as much weight as talent. Not a standings table, just our read on who’s actually most dangerous right now.\n\n${linesEn}\n\nArrows show the move versus last month’s ranking.`,
+      date: simDate ?? career.league?.currentDate ?? null,
       career,
-      tags: ['power-rankings', `runda-${round}`],
+      tags: ['power-rankings', monthIso],
       relatedTeamIds: rankings.slice(0, 3).map((r) => r.teamId),
     }),
   }
@@ -2842,23 +2874,11 @@ export function processUltiworldTick(career, { date = null } = {}) {
     if (!isRoundComplete(league, r)) break
     if (!canPublishRoundAwards(league, r, simDate)) break
     newArticles.push(...roundReviewArticles(career, league, r, namesPl, namesEn, rng))
-    const powerResult = powerRankingsArticle(
-      career,
-      league,
-      r,
-      ultiworld.powerRankingsSnapshot,
-      namesPl,
-      namesEn,
-    )
-    if (powerResult) {
-      newArticles.push(powerResult.article)
-      ultiworld.powerRankingsSnapshot = powerResult.snapshot
-    }
     lastCovered = r
   }
   ultiworld.lastRoundCovered = lastCovered
 
-  // 3) Zawodnik miesiąca — przy zmianie miesiąca
+  // 3) Zawodnik miesiąca (za poprzedni miesiąc) + Power Rankings (na start nowego miesiąca) — przy zmianie miesiąca
   const prevMonth = ultiworld.lastPomMonth
   const curMonth = monthKey(simDate)
   if (curMonth && prevMonth && prevMonth !== curMonth) {
@@ -2867,6 +2887,22 @@ export function processUltiworldTick(career, { date = null } = {}) {
     ultiworld.lastPomMonth = curMonth
   } else if (curMonth && !prevMonth) {
     ultiworld.lastPomMonth = curMonth
+  }
+  if (curMonth && ultiworld.lastPowerRankingMonth !== curMonth) {
+    const powerResult = powerRankingsArticle(
+      career,
+      league,
+      curMonth,
+      simDate,
+      ultiworld.powerRankingsSnapshot,
+      namesPl,
+      namesEn,
+    )
+    if (powerResult) {
+      newArticles.push(powerResult.article)
+      ultiworld.powerRankingsSnapshot = powerResult.snapshot
+    }
+    ultiworld.lastPowerRankingMonth = curMonth
   }
 
   // 4) Losowe wydarzenie świata (+ osobna szansa na ciekawostkę)
