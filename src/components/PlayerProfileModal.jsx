@@ -9,6 +9,7 @@ import {
   getSubStat,
   normalizePlayerSkills,
 } from '../models/playerStats.js'
+import { getSubStatGrowth } from '../models/playerSkillsHistory.js'
 import { DOMINANT_HAND, getDominantHand } from '../models/playerProfile.js'
 import { seasonStatsForPlayer } from '../league/leagueStats.js'
 import { UFA_LEAGUE_TEAMS } from '../data/ufaLeagueTeams.js'
@@ -55,7 +56,14 @@ import {
 import { currentMatchStamina } from '../matchEngine/stamina.js'
 
 /** @param {{ knowledge: number }} props — znajomość zawodnika 0–100 (100 = własny zawodnik, dokładne wartości) */
-function CategoryBlock({ category, skills, knowledge = 100 }) {
+function CategoryBlock({
+  category,
+  skills,
+  knowledge = 100,
+  isOwnPlayer = false,
+  skillsSnapshots = null,
+  growthTitle = '',
+}) {
   const { lang } = useUiLang()
   const overall = Math.round(getCategoryOverall(skills, category))
   const keys = PLAYER_STAT_CATEGORIES[category]
@@ -76,13 +84,29 @@ function CategoryBlock({ category, skills, knowledge = 100 }) {
         {keys.map((key) => {
           const value = getSubStat(skills, category, key)
           const display = scoutedValueDisplay(value, knowledge, lang)
+          const growth =
+            isOwnPlayer && display.kind === 'exact'
+              ? getSubStatGrowth(skillsSnapshots, skills, category, key)
+              : null
           return (
             <li key={key} className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
               <span className="text-xs text-ufa-muted sm:w-[9.5rem] shrink-0">
                 {labels[key] ?? key}
               </span>
               {display.kind === 'exact' ? (
-                <SkillBar value={value} />
+                <div className="flex items-center gap-1.5">
+                  <SkillBar value={value} />
+                  {growth && growth.delta !== 0 && (
+                    <span
+                      className={`text-[11px] font-semibold tabular-nums ${
+                        growth.delta > 0 ? 'text-emerald-400' : 'text-red-400'
+                      }`}
+                      title={growthTitle}
+                    >
+                      ({growth.delta > 0 ? `+${growth.delta}` : growth.delta})
+                    </span>
+                  )}
+                </div>
               ) : (
                 <span className={`text-xs font-semibold ${display.toneClass}`}>{display.label}</span>
               )}
@@ -561,7 +585,15 @@ export default function PlayerProfileModal({
 
         <div className="p-5 grid gap-4 sm:grid-cols-2">
           {Object.keys(PLAYER_STAT_CATEGORIES).map((cat) => (
-            <CategoryBlock key={cat} category={cat} skills={skills} knowledge={effectiveKnowledge} />
+            <CategoryBlock
+              key={cat}
+              category={cat}
+              skills={skills}
+              knowledge={effectiveKnowledge}
+              isOwnPlayer={isOwnPlayer}
+              skillsSnapshots={player.skillsSnapshots}
+              growthTitle={t.growthTitle}
+            />
           ))}
         </div>
       </div>

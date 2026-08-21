@@ -14,6 +14,7 @@ import {
 import { ensurePlayerMorale } from '../models/playerMorale.js'
 import { ensurePlayerForm } from '../models/playerForm.js'
 import { ensurePlayerTraits, getTraitMods } from '../models/playerTraits.js'
+import { recordPlayerSkillsSnapshot } from '../models/playerSkillsHistory.js'
 import {
   incrementPlayerClubTenure,
   applyLoyaltyTenureDrift,
@@ -466,6 +467,9 @@ export function applyDailyDevelopment(league, options = {}) {
       ensurePlayerDevelopment(player, {
         leaguePlayerStats: league.playerStats,
       })
+      if (isPlayer && isoDate && isoDate.slice(8, 10) === '01') {
+        recordPlayerSkillsSnapshot(player, isoDate.slice(0, 7))
+      }
       if (!isPlayer && rng() < 0.28 * dayScale) {
         player.trainingFocus = pickAiTrainingFocus(player, rng)
       }

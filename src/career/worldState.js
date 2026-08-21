@@ -24,6 +24,7 @@ import { ensurePlayerForm } from '../models/playerForm.js'
 import { ensurePlayerLoyalty } from '../models/playerLoyalty.js'
 import { ensurePlayerTraits } from '../models/playerTraits.js'
 import { ensurePlayerInjury } from '../models/playerInjury.js'
+import { ensurePlayerSkillsSnapshots } from '../models/playerSkillsHistory.js'
 import {
   ensureWorldFinances,
 } from './transfers/clubFinances.js'
@@ -207,6 +208,7 @@ export function initWorldPlayerStats(world, options = {}) {
       ensurePlayerInjury(player)
       ensurePlayerDevelopment(player, options)
       ensurePlayerContract(player)
+      ensurePlayerSkillsSnapshots(player)
     }
     refreshTeamMarketValues(team)
   }

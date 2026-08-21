@@ -51,6 +51,7 @@ const pl = {
   avgPerCatch: (n) => `śr. ${n} m/łap.`,
   runDistance: 'Przebiegnięty dystans',
   noData: '—',
+  growthTitle: 'Zmiana w ostatnich ~12 miesiącach',
 }
 
 const en = {
@@ -104,6 +105,7 @@ const en = {
   avgPerCatch: (n) => `avg ${n} m/catch`,
   runDistance: 'Distance run',
   noData: '—',
+  growthTitle: 'Change over the last ~12 months',
 }
 
 export function playerProfileStrings(lang = UI_LANG.PL) {
