@@ -7,6 +7,8 @@ import { translateTransferError } from '../ui/strings/transferErrors'
 import { scoutedValueDisplay, attributeBandToneClass } from '../ui/fogOfWar'
 import { getPlayerFullName, getOverallRating } from '../data/mockPlayers'
 import { seasonStatsForPlayer } from '../league/leagueStats'
+import { PLAYER_STAT_CATEGORIES, CATEGORY_LABELS, SUB_STAT_LABELS } from '../models/playerStats'
+import { TRAIT_DEFS, traitLabel, traitDescription, traitToneClass } from '../models/playerTraits'
 import PlayerProfileModal from './PlayerProfileModal'
 import NegotiateModal from './NegotiateModal'
 import {
@@ -29,11 +31,37 @@ import {
   submitTransferOffer,
   mergeInbox,
   formatUsd,
-  PLAYER_SEARCH_PROFILES,
-  playerSearchProfile,
-  profileFitScore,
+  playerSearchCriteriaScore,
+  playerSearchCriteriaSummary,
   recallScoutMission,
 } from '../career'
+
+const TRAIT_GROUP_TAGS = ['throw', 'cutter', 'defense', 'physical', 'mental']
+const TRAIT_GROUP_LABELS = {
+  throw: { pl: 'Rzuty', en: 'Throwing' },
+  cutter: { pl: 'Cięcia', en: 'Cutting' },
+  defense: { pl: 'Obrona', en: 'Defense' },
+  physical: { pl: 'Fizyczność', en: 'Physical' },
+  mental: { pl: 'Mentalność', en: 'Mental' },
+  other: { pl: 'Osobowość', en: 'Personality' },
+}
+
+function traitGroupFor(tags) {
+  for (const g of TRAIT_GROUP_TAGS) {
+    if (tags?.includes(g)) return g
+  }
+  return 'other'
+}
+
+const TRAITS_BY_GROUP = Object.values(TRAIT_DEFS).reduce((acc, def) => {
+  const group = traitGroupFor(def.tags)
+  ;(acc[group] ??= []).push(def)
+  return acc
+}, {})
+
+function toggleInArray(arr, value) {
+  return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]
+}
 
 export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam }) {
   const { lang } = useUiLang()
@@ -43,7 +71,11 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
   const [profileTeamName, setProfileTeamName] = useState(null)
   const [negotiateRow, setNegotiateRow] = useState(null)
   const [negotiateFlash, setNegotiateFlash] = useState(null)
-  const [searchProfileId, setSearchProfileId] = useState(PLAYER_SEARCH_PROFILES[0]?.id ?? '')
+  const [selectedAttributes, setSelectedAttributes] = useState([])
+  const [selectedTraits, setSelectedTraits] = useState([])
+  const [maxAge, setMaxAge] = useState('')
+  const [maxWage, setMaxWage] = useState('')
+  const [maxValue, setMaxValue] = useState('')
   const [searchError, setSearchError] = useState(null)
   const [searchMsg, setSearchMsg] = useState(null)
 
@@ -93,13 +125,16 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
   function handleSendSearch() {
     setSearchError(null)
     setSearchMsg(null)
-    if (!searchProfileId) {
-      setSearchError(ts.errorGeneric)
-      return
+    const criteria = {
+      attributes: selectedAttributes,
+      traits: selectedTraits,
+      maxAge: maxAge !== '' ? Number(maxAge) : null,
+      maxWage: maxWage !== '' ? Number(maxWage) : null,
+      maxValue: maxValue !== '' ? Number(maxValue) : null,
     }
     const result = queueScoutMission(buyer, {
       kind: 'playerSearch',
-      profileId: searchProfileId,
+      criteria,
       world: career.world,
       date: career.league?.currentDate ?? null,
     })
@@ -124,7 +159,7 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
     if (!player) return null
     const knowledge = getPlayerKnowledge(buyer, playerId)
     const ovr = getOverallRating(player.skills)
-    const fit = profileFitScore(player.skills, mission.profileId)
+    const fit = playerSearchCriteriaScore(player, mission.criteria)
     const clubTeam = teamId ? worldTeamById(career.world, teamId) : null
     const s = seasonStatsForPlayer(career.league?.playerStats, player)
     return {
@@ -293,20 +328,95 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
       <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
         <h3 className="font-semibold text-ufa-text mb-1">{ts.playerSearchTitle}</h3>
         <p className="mb-3 text-xs text-ufa-muted">{ts.playerSearchHint}</p>
-        <div className="flex flex-wrap items-end gap-3">
+
+        <p className="mb-1.5 text-sm text-ufa-muted">{ts.attributesLabel}</p>
+        <div className="space-y-2">
+          {Object.entries(PLAYER_STAT_CATEGORIES).map(([category, keys]) => (
+            <div key={category} className="flex flex-wrap items-center gap-1.5">
+              <span className="w-20 shrink-0 text-xs text-ufa-muted">{CATEGORY_LABELS[category]}</span>
+              {keys.map((key) => {
+                const attr = `${category}.${key}`
+                const active = selectedAttributes.includes(attr)
+                return (
+                  <button
+                    key={attr}
+                    type="button"
+                    onClick={() => setSelectedAttributes((prev) => toggleInArray(prev, attr))}
+                    className={`rounded-md border px-2 py-1 text-xs ${
+                      active
+                        ? 'border-ufa-accent bg-ufa-accent/10 text-ufa-accent'
+                        : 'border-ufa-border text-ufa-text hover:bg-ufa-panel-hover'
+                    }`}
+                  >
+                    {SUB_STAT_LABELS[category][key]}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-4 mb-1.5 text-sm text-ufa-muted">{ts.traitsLabel}</p>
+        <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border border-ufa-border p-2.5">
+          {Object.entries(TRAITS_BY_GROUP).map(([group, defs]) => (
+            <div key={group} className="flex flex-wrap items-start gap-1.5">
+              <span className="w-24 shrink-0 pt-1 text-xs text-ufa-muted">
+                {lang === 'en' ? TRAIT_GROUP_LABELS[group].en : TRAIT_GROUP_LABELS[group].pl}
+              </span>
+              <div className="flex flex-1 flex-wrap gap-1.5">
+                {defs.map((def) => {
+                  const active = selectedTraits.includes(def.id)
+                  return (
+                    <button
+                      key={def.id}
+                      type="button"
+                      title={traitDescription(def.id, lang)}
+                      onClick={() => setSelectedTraits((prev) => toggleInArray(prev, def.id))}
+                      className={`rounded-md border px-2 py-1 text-xs ${
+                        active
+                          ? 'border-ufa-accent bg-ufa-accent/10 text-ufa-accent'
+                          : `border-ufa-border hover:bg-ufa-panel-hover ${traitToneClass(def.id)}`
+                      }`}
+                    >
+                      {traitLabel(def.id, lang)}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-sm text-ufa-muted">
-            {ts.profileLabel}
-            <select
-              value={searchProfileId}
-              onChange={(e) => setSearchProfileId(e.target.value)}
-              className="rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-sm text-ufa-text"
-            >
-              {PLAYER_SEARCH_PROFILES.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {lang === 'pl' ? p.labelPl : p.labelEn}
-                </option>
-              ))}
-            </select>
+            {ts.maxAgeLabel}
+            <input
+              type="number"
+              min="16"
+              value={maxAge}
+              onChange={(e) => setMaxAge(e.target.value)}
+              className="w-24 rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-sm text-ufa-text"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-ufa-muted">
+            {ts.maxWageLabel}
+            <input
+              type="number"
+              min="0"
+              value={maxWage}
+              onChange={(e) => setMaxWage(e.target.value)}
+              className="w-32 rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-sm text-ufa-text"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-ufa-muted">
+            {ts.maxValueLabel}
+            <input
+              type="number"
+              min="0"
+              value={maxValue}
+              onChange={(e) => setMaxValue(e.target.value)}
+              className="w-36 rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-sm text-ufa-text"
+            />
           </label>
           <button
             type="button"
@@ -325,8 +435,6 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
         ) : (
           <div className="mt-2 space-y-4">
             {playerSearchMissions.map((mission) => {
-              const profile = playerSearchProfile(mission.profileId)
-              const label = lang === 'pl' ? profile?.labelPl : profile?.labelEn
               const rows = (mission.candidateIds ?? [])
                 .map((id) => buildSearchCandidateRow(mission, id))
                 .filter(Boolean)
@@ -334,7 +442,7 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
                 <div key={mission.id}>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-sm font-medium text-ufa-text">
-                      {label ?? mission.profileId} ·{' '}
+                      {playerSearchCriteriaSummary(mission.criteria, lang)} ·{' '}
                       {mission.recalling
                         ? ts.recalling
                         : ts.weekProgress(mission.weeksElapsed ?? 0, mission.weeksTotal ?? 3)}

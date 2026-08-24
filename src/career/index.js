@@ -343,10 +343,11 @@ export {
   recallScoutMission,
   ACADEMY_DURATIONS_MONTHS,
   academyScoutMissionCost,
-  PLAYER_SEARCH_PROFILES,
   PLAYER_SEARCH_CAMPAIGN_WEEKS,
-  playerSearchProfile,
-  profileFitScore,
+  customPlayerFitScore,
+  playerSearchCriteriaScore,
+  playerMatchesSearchFilters,
+  playerSearchCriteriaSummary,
   advancePlayerSearchCampaigns,
 } from './scouting.js'
 export {

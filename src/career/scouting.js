@@ -11,11 +11,15 @@ import { getFixturesOnDate } from '../league/index.js'
 import { addDays, formatISODate, parseISODate } from '../league/seasonCalendar.js'
 import { getFacilityLevel } from './clubFacilities.js'
 import { adjustTransferBudget, getTransferBudget } from './transfers/clubFinances.js'
-import { getOverallRating, getSubStat } from '../models/playerStats.js'
+import { getOverallRating, getSubStat, SUB_STAT_LABELS } from '../models/playerStats.js'
+import { playerHasTrait } from '../models/playerTraits.js'
 import { worldTeamById, worldTeamsList } from './worldState.js'
 import { createAcademyProspect, ensureTeamAcademyCandidates } from './academy.js'
 import { eucsTeamTier } from '../data/eucsLeagueTeams.js'
 import { ACADEMY_COUNTRIES } from '../data/academyScoutGeography.js'
+import { weeklyWageFromOvr } from './transfers/playerContracts.js'
+import { getPlayerMarketValue } from './transfers/playerValue.js'
+import { formatUsd } from './transfers/moneyFormat.js'
 
 function mulberry32(seed) {
   let a = seed >>> 0
@@ -101,22 +105,36 @@ export const ACADEMY_RECALL_MAX_DAYS = 3
 
 /**
  * Misja `playerSearch` to kampania szukająca REALNYCH, już istniejących zawodników
- * w lidze (nie generuje nikogo nowego jak akademia) pasujących do zadanego profilu
- * umiejętności (np. "deep threat"). Shortlist ustala się raz przy wysłaniu skauta
- * (na podstawie ukrytego dopasowania), po czym wiedza o tych samych kandydatach
- * rośnie co tydzień (30→50→70→90 po 3 tygodniach) — krótsza kampania niż akademia,
- * bo to gotowi zawodnicy, nie surowy potencjał do odkrycia.
+ * w lidze (nie generuje nikogo nowego jak akademia) wg jawnych kryteriów gracza
+ * (atrybuty/wiek/pensja/wartość/cechy — patrz `playerSearchCriteriaScore` niżej).
+ * Shortlist ustala się raz przy wysłaniu skauta, po czym wiedza o tych samych
+ * kandydatach rośnie co tydzień (30→50→70→90 po 3 tygodniach) — krótsza kampania niż
+ * akademia, bo to gotowi zawodnicy, nie surowy potencjał do odkrycia.
  */
 export const PLAYER_SEARCH_CAMPAIGN_WEEKS = 3
 export const PLAYER_SEARCH_SHORTLIST_SIZE = 5
 export const PLAYER_SEARCH_INITIAL_KNOWLEDGE = 30
 export const PLAYER_SEARCH_WEEKLY_KNOWLEDGE_GAIN = 20
 
-export const PLAYER_SEARCH_PROFILES = [
+/**
+ * Archetypy sylwetek zawodnika — CAŁKOWICIE UKRYTE przed graczem. Służą wyłącznie do
+ * biasowania generowania nowych prospektów akademii (`advanceAcademyCampaigns` losuje
+ * jeden archetyp na kandydata), żeby wygenerowani zawodnicy mieli zróżnicowane,
+ * realistyczne sylwetki zamiast płaskiego rozkładu staty stycznego. Gracz nigdy tego
+ * nie wybiera ani nie widzi — stąd brak `labelPl`/`labelEn` (id tylko do debugowania).
+ */
+export const HIDDEN_PLAYER_ARCHETYPES = [
+  {
+    id: 'thrower',
+    weights: [
+      { category: 'throwing', key: 'huck', weight: 0.3 },
+      { category: 'throwing', key: 'backhand', weight: 0.3 },
+      { category: 'throwing', key: 'forehand', weight: 0.3 },
+      { category: 'throwing', key: 'hammer', weight: 0.1 },
+    ],
+  },
   {
     id: 'huckSpecialist',
-    labelPl: 'Specjalista od hucków',
-    labelEn: 'Huck specialist',
     weights: [
       { category: 'throwing', key: 'huck', weight: 0.5 },
       { category: 'throwing', key: 'backhand', weight: 0.2 },
@@ -125,20 +143,7 @@ export const PLAYER_SEARCH_PROFILES = [
     ],
   },
   {
-    id: 'deepThreat',
-    labelPl: 'Deep threat',
-    labelEn: 'Deep threat',
-    weights: [
-      { category: 'physical', key: 'speed', weight: 0.35 },
-      { category: 'physical', key: 'jump', weight: 0.25 },
-      { category: 'offensive', key: 'cutterMovement', weight: 0.25 },
-      { category: 'offensive', key: 'catching', weight: 0.15 },
-    ],
-  },
-  {
     id: 'handler',
-    labelPl: 'Rozgrywający',
-    labelEn: 'Handler',
     weights: [
       { category: 'mental', key: 'vision', weight: 0.3 },
       { category: 'mental', key: 'decisionMaking', weight: 0.25 },
@@ -147,20 +152,78 @@ export const PLAYER_SEARCH_PROFILES = [
     ],
   },
   {
-    id: 'lockdownDefender',
-    labelPl: 'Twardy obrońca',
-    labelEn: 'Lockdown defender',
+    id: 'shutdownDefender',
     weights: [
-      { category: 'defensive', key: 'blocking', weight: 0.35 },
+      { category: 'defensive', key: 'blocking', weight: 0.3 },
       { category: 'defensive', key: 'defensiveCutterMovement', weight: 0.25 },
       { category: 'defensive', key: 'defensiveHandlerMovement', weight: 0.2 },
-      { category: 'mental', key: 'reactions', weight: 0.2 },
+      { category: 'physical', key: 'agility', weight: 0.25 },
+    ],
+  },
+  {
+    id: 'machine',
+    weights: [
+      { category: 'physical', key: 'endurance', weight: 0.35 },
+      { category: 'physical', key: 'speed', weight: 0.25 },
+      { category: 'physical', key: 'agility', weight: 0.2 },
+      { category: 'physical', key: 'jump', weight: 0.2 },
+    ],
+  },
+  {
+    id: 'offensivePlayer',
+    weights: [
+      { category: 'offensive', key: 'cutterMovement', weight: 0.25 },
+      { category: 'offensive', key: 'handlerMovement', weight: 0.25 },
+      { category: 'offensive', key: 'offensiveSystemsKnowledge', weight: 0.25 },
+      { category: 'offensive', key: 'catching', weight: 0.25 },
+    ],
+  },
+  {
+    id: 'deepThreat',
+    weights: [
+      { category: 'physical', key: 'speed', weight: 0.35 },
+      { category: 'physical', key: 'jump', weight: 0.25 },
+      { category: 'offensive', key: 'cutterMovement', weight: 0.25 },
+      { category: 'offensive', key: 'catching', weight: 0.15 },
+    ],
+  },
+  {
+    id: 'safeHands',
+    weights: [
+      { category: 'offensive', key: 'catching', weight: 0.4 },
+      { category: 'throwing', key: 'backhand', weight: 0.3 },
+      { category: 'throwing', key: 'forehand', weight: 0.3 },
+    ],
+  },
+  {
+    id: 'skyBaller',
+    weights: [
+      { category: 'physical', key: 'jump', weight: 0.4 },
+      { category: 'offensive', key: 'catching', weight: 0.3 },
+      { category: 'throwing', key: 'huck', weight: 0.15 },
+      { category: 'defensive', key: 'blocking', weight: 0.15 },
+    ],
+  },
+  {
+    id: 'creative',
+    weights: [
+      { category: 'mental', key: 'vision', weight: 0.35 },
+      { category: 'throwing', key: 'hammer', weight: 0.35 },
+      { category: 'throwing', key: 'backhand', weight: 0.15 },
+      { category: 'throwing', key: 'forehand', weight: 0.15 },
+    ],
+  },
+  {
+    id: 'layoutMachine',
+    weights: [
+      { category: 'offensive', key: 'catching', weight: 0.3 },
+      { category: 'defensive', key: 'blocking', weight: 0.3 },
+      { category: 'physical', key: 'agility', weight: 0.2 },
+      { category: 'physical', key: 'jump', weight: 0.2 },
     ],
   },
   {
     id: 'twoWayAthlete',
-    labelPl: 'Dwukierunkowy atleta',
-    labelEn: 'Two-way athlete',
     weights: [
       { category: 'physical', key: 'speed', weight: 0.2 },
       { category: 'physical', key: 'endurance', weight: 0.2 },
@@ -170,32 +233,78 @@ export const PLAYER_SEARCH_PROFILES = [
     ],
   },
   {
-    id: 'bigMan',
-    labelPl: 'Wysoki / sky-baller',
-    labelEn: 'Big man / sky-baller',
+    id: 'lockdownDefender',
     weights: [
-      { category: 'physical', key: 'jump', weight: 0.4 },
-      { category: 'offensive', key: 'catching', weight: 0.3 },
-      { category: 'throwing', key: 'huck', weight: 0.15 },
-      { category: 'defensive', key: 'blocking', weight: 0.15 },
+      { category: 'defensive', key: 'blocking', weight: 0.35 },
+      { category: 'defensive', key: 'defensiveCutterMovement', weight: 0.25 },
+      { category: 'defensive', key: 'defensiveHandlerMovement', weight: 0.2 },
+      { category: 'mental', key: 'reactions', weight: 0.2 },
     ],
   },
 ]
 
-export function playerSearchProfile(profileId) {
-  return PLAYER_SEARCH_PROFILES.find((p) => p.id === profileId) ?? null
+/** Losuje jeden ukryty archetyp (deterministycznie, wg podanego `rng`). */
+function pickHiddenArchetype(rng) {
+  return HIDDEN_PLAYER_ARCHETYPES[Math.floor(rng() * HIDDEN_PLAYER_ARCHETYPES.length)]
 }
 
-export function profileFitScore(skills, profileId) {
-  const profile = playerSearchProfile(profileId)
-  if (!profile) return 0
+/**
+ * Dopasowanie zawodnika do JAWNYCH kryteriów gracza (misja `playerSearch`) —
+ * zastępuje dawne rankingowanie względem nazwanego, ukrytego profilu. Bez wybranych
+ * atrybutów spada do gołego OVR (dalej użyteczne jako "pokaż mi najlepszych").
+ */
+export function customPlayerFitScore(skills, attributeIds) {
+  if (!attributeIds?.length) return getOverallRating(skills)
   let sum = 0
-  let wSum = 0
-  for (const { category, key, weight } of profile.weights) {
-    sum += getSubStat(skills, category, key) * weight
-    wSum += weight
+  for (const attr of attributeIds) {
+    const [category, key] = attr.split('.')
+    sum += getSubStat(skills, category, key)
   }
-  return wSum > 0 ? sum / wSum : 0
+  return sum / attributeIds.length
+}
+
+/** Punkty fit-score doliczane za każdą pasującą, wybraną przez gracza cechę. */
+export const PLAYER_SEARCH_TRAIT_BONUS = 6
+
+export function playerSearchCriteriaScore(player, criteria) {
+  const base = customPlayerFitScore(player?.skills, criteria?.attributes)
+  const matches = (criteria?.traits ?? []).filter((t) => playerHasTrait(player, t)).length
+  return base + matches * PLAYER_SEARCH_TRAIT_BONUS
+}
+
+/** Twarde filtry (wiek/pensja/wartość) — zawodnik poza limitem odpada z rankingu. */
+export function playerMatchesSearchFilters(player, criteria) {
+  if (criteria?.maxAge != null && (player?.age ?? 0) > criteria.maxAge) return false
+  if (criteria?.maxWage != null) {
+    const wage = player?.contract?.weeklyWage ?? weeklyWageFromOvr(getOverallRating(player?.skills))
+    if (wage > criteria.maxWage) return false
+  }
+  if (criteria?.maxValue != null && getPlayerMarketValue(player) > criteria.maxValue) return false
+  return true
+}
+
+/** Krótki, czytelny opis kryteriów do tytułu wiadomości/nagłówka wyników. */
+export function playerSearchCriteriaSummary(criteria, lang = 'pl') {
+  const parts = []
+  if (criteria?.attributes?.length) {
+    const labels = criteria.attributes.map((attr) => {
+      const [category, key] = attr.split('.')
+      return SUB_STAT_LABELS[category]?.[key] ?? key
+    })
+    parts.push(labels.slice(0, 3).join(', ') + (labels.length > 3 ? '…' : ''))
+  }
+  if (criteria?.traits?.length) {
+    parts.push(lang === 'en' ? `${criteria.traits.length} traits` : `${criteria.traits.length} cech`)
+  }
+  if (criteria?.maxAge != null) parts.push(lang === 'en' ? `age ≤${criteria.maxAge}` : `wiek ≤${criteria.maxAge}`)
+  if (criteria?.maxWage != null) {
+    parts.push(lang === 'en' ? `wage ≤${formatUsd(criteria.maxWage)}` : `pensja ≤${formatUsd(criteria.maxWage)}`)
+  }
+  if (criteria?.maxValue != null) {
+    parts.push(lang === 'en' ? `value ≤${formatUsd(criteria.maxValue)}` : `wartość ≤${formatUsd(criteria.maxValue)}`)
+  }
+  if (!parts.length) return lang === 'en' ? 'Any players' : 'Dowolni zawodnicy'
+  return parts.join(' · ')
 }
 
 function clampKnowledge(n) {
@@ -440,7 +549,7 @@ function newMissionId() {
 
 /**
  * @param {object} team
- * @param {{ kind: 'tactics'|'keyPlayers'|'player'|'academyProspect'|'playerSearch', opponentTeamId?: string|null, targetPlayerId?: string|null, countryId?: string|null, durationMonths?: number|null, profileId?: string|null, world?: object|null, date: string }} params
+ * @param {{ kind: 'tactics'|'keyPlayers'|'player'|'academyProspect'|'playerSearch', opponentTeamId?: string|null, targetPlayerId?: string|null, countryId?: string|null, durationMonths?: number|null, criteria?: object|null, world?: object|null, date: string }} params
  */
 export function queueScoutMission(
   team,
@@ -450,7 +559,7 @@ export function queueScoutMission(
     targetPlayerId = null,
     countryId = null,
     durationMonths = null,
-    profileId = null,
+    criteria = null,
     world = null,
     date,
   },
@@ -469,9 +578,6 @@ export function queueScoutMission(
   }
   if (kind === 'academyProspect' && !ACADEMY_DURATIONS_MONTHS.includes(durationMonths)) {
     return { ok: false, error: 'invalid_duration' }
-  }
-  if (kind === 'playerSearch' && !profileId) {
-    return { ok: false, error: 'missing_profile' }
   }
   const scouting = ensureTeamScouting(team)
   if (scouting.pendingMissions.length >= scoutMissionCapacity(team)) {
@@ -492,7 +598,7 @@ export function queueScoutMission(
     opponentTeamId,
     targetPlayerId,
     countryId,
-    profileId,
+    criteria: kind === 'playerSearch' ? criteria : null,
     queuedAtDate: date ?? null,
     expiresAtDate: date ? addDaysIso(date, SCOUT_MISSION_EXPIRY_DAYS) : null,
   }
@@ -504,7 +610,8 @@ export function queueScoutMission(
       ...(world?.freeAgents ?? []),
     ]
     const ranked = pool
-      .map((p) => ({ id: p.id, fit: profileFitScore(p.skills, profileId) }))
+      .filter((p) => playerMatchesSearchFilters(p, criteria))
+      .map((p) => ({ id: p.id, fit: playerSearchCriteriaScore(p, criteria) }))
       .sort((a, b) => b.fit - a.fit)
       .slice(0, PLAYER_SEARCH_SHORTLIST_SIZE)
     const candidateIds = ranked.map((r) => r.id)
@@ -573,10 +680,13 @@ export function advanceAcademyCampaigns(team, dateIso) {
     const newCandidateIds = []
     if (newCount > 0) {
       const seasonYear = mission.queuedAtDate ? Number(String(mission.queuedAtDate).slice(0, 4)) : null
-      const profileWeights = mission.profileId ? playerSearchProfile(mission.profileId)?.weights ?? null : null
       const genRng = mulberry32(hashSeed(mission.id, 'academy-gen', mission.monthsElapsed))
       const revealRng = mulberry32(hashSeed(mission.id, 'academy-reveal', mission.monthsElapsed))
+      const archetypeRng = mulberry32(hashSeed(mission.id, 'academy-archetype', mission.monthsElapsed))
       for (let i = 0; i < newCount; i += 1) {
+        // Każdy kandydat dostaje losowy, ukryty archetyp — daje zróżnicowane sylwetki
+        // bez pytania gracza o profil (patrz HIDDEN_PLAYER_ARCHETYPES wyżej).
+        const profileWeights = pickHiddenArchetype(archetypeRng).weights
         const candidate = createAcademyProspect(genRng, {
           seasonYear,
           teamId: team.id,
@@ -598,7 +708,6 @@ export function advanceAcademyCampaigns(team, dateIso) {
     reports.push({
       missionId: mission.id,
       countryId: mission.countryId,
-      profileId: mission.profileId,
       monthNumber: mission.monthsElapsed,
       monthsTotal: mission.monthsTotal,
       candidateIds: mission.candidateIds ?? [],
@@ -625,7 +734,7 @@ export function advancePlayerSearchCampaigns(team) {
     }
     reports.push({
       missionId: mission.id,
-      profileId: mission.profileId,
+      criteria: mission.criteria,
       weekNumber: mission.weeksElapsed,
       weeksTotal: mission.weeksTotal,
       candidateIds: mission.candidateIds ?? [],
@@ -703,7 +812,6 @@ function applyMissionResult(team, world, mission) {
   } else if (mission.kind === 'playerSearch') {
     result.playerSearchConcluded = true
     result.playerSearchRecalled = !!mission.recalling
-    result.profileId = mission.profileId
     result.candidateIds = mission.candidateIds ?? []
   }
   return result

@@ -23,8 +23,6 @@ import {
   academyCountriesForContinent,
   academyEuropeRegionCountries,
   academyScoutMissionCost,
-  PLAYER_SEARCH_PROFILES,
-  playerSearchProfile,
 } from '../career'
 
 function firstCountryFor(continentId, europeRegionId) {
@@ -42,7 +40,6 @@ export default function AcademyView({ career, onCareerUpdate }) {
   const [countryId, setCountryId] = useState(() =>
     firstCountryFor(ACADEMY_CONTINENTS[0]?.id, ACADEMY_EUROPE_REGIONS[0]?.id),
   )
-  const [profileId, setProfileId] = useState('')
   const [durationMonths, setDurationMonths] = useState(ACADEMY_DURATIONS_MONTHS[0])
   const [scoutError, setScoutError] = useState(null)
   const [scoutMsg, setScoutMsg] = useState(null)
@@ -139,7 +136,6 @@ export default function AcademyView({ career, onCareerUpdate }) {
     const result = queueScoutMission(team, {
       kind: 'academyProspect',
       countryId,
-      profileId: profileId || null,
       durationMonths,
       date: career.league?.currentDate ?? null,
     })
@@ -361,21 +357,6 @@ export default function AcademyView({ career, onCareerUpdate }) {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-sm text-ufa-muted">
-            {t.profileLabel}
-            <select
-              value={profileId}
-              onChange={(e) => setProfileId(e.target.value)}
-              className="rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-sm text-ufa-text"
-            >
-              <option value="">{t.anyProfileOption}</option>
-              {PLAYER_SEARCH_PROFILES.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {lang === 'en' ? p.labelEn : p.labelPl}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
 
         <div className="mt-3">
@@ -413,28 +394,23 @@ export default function AcademyView({ career, onCareerUpdate }) {
           <p className="mt-1 text-sm text-ufa-muted">{t.noPendingMissions}</p>
         ) : (
           <ul className="mt-1 space-y-1.5 text-sm text-ufa-muted">
-            {pending.map((m) => {
-              const profile = m.profileId ? playerSearchProfile(m.profileId) : null
-              const profileLabel = profile ? (lang === 'en' ? profile.labelEn : profile.labelPl) : null
-              return (
-                <li key={m.id} className="flex flex-wrap items-center justify-between gap-2">
-                  <span>
-                    {academyCountryLabel(m.countryId, lang)}
-                    {profileLabel ? ` · ${profileLabel}` : ''} ·{' '}
-                    {m.recalling ? t.recalling : t.monthProgress(m.monthsElapsed ?? 0, m.monthsTotal ?? 1)}
-                  </span>
-                  {!m.recalling && (
-                    <button
-                      type="button"
-                      onClick={() => handleRecall(m.id)}
-                      className="rounded-md border border-ufa-border px-2.5 py-1 text-xs text-ufa-text hover:bg-ufa-panel-hover"
-                    >
-                      {t.recallAction}
-                    </button>
-                  )}
-                </li>
-              )
-            })}
+            {pending.map((m) => (
+              <li key={m.id} className="flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  {academyCountryLabel(m.countryId, lang)} ·{' '}
+                  {m.recalling ? t.recalling : t.monthProgress(m.monthsElapsed ?? 0, m.monthsTotal ?? 1)}
+                </span>
+                {!m.recalling && (
+                  <button
+                    type="button"
+                    onClick={() => handleRecall(m.id)}
+                    className="rounded-md border border-ufa-border px-2.5 py-1 text-xs text-ufa-text hover:bg-ufa-panel-hover"
+                  >
+                    {t.recallAction}
+                  </button>
+                )}
+              </li>
+            ))}
           </ul>
         )}
       </section>

@@ -25,7 +25,7 @@ import {
   pickPostMatchEventMessage,
 } from './randomEvents.js'
 import { academyCountryLabel } from '../data/academyScoutGeography.js'
-import { getPlayerKnowledge, profileFitScore, playerSearchProfile } from './scouting.js'
+import { getPlayerKnowledge, playerSearchCriteriaScore, playerSearchCriteriaSummary } from './scouting.js'
 import { attributeBandLabel, scoutedValueDisplay, trainingRoomLabel } from '../ui/fogOfWar.js'
 import { holdPct, breakPct, pressureCompletionRate } from '../matchEngine'
 import { seasonStatsForPlayer } from '../league/leagueStats.js'
@@ -1136,17 +1136,17 @@ export function messagesFromAcademyCampaignReports(reports, career) {
 
 /**
  * Linia raportu misji `playerSearch`: nazwisko (klub/wolny agent) — pasmo OVR + pasmo
- * dopasowania do profilu (oba zamglone `knowledge`), plus zawsze jawna produkcja
- * sezonowa — to ona rośnie na znaczeniu wraz z rozgrywanymi meczami.
+ * dopasowania do kryteriów gracza (oba zamglone `knowledge`), plus zawsze jawna
+ * produkcja sezonowa — to ona rośnie na znaczeniu wraz z rozgrywanymi meczami.
  */
-function playerSearchCandidateLine(world, team, playerId, profileId, leaguePlayerStats, lang) {
+function playerSearchCandidateLine(world, team, playerId, criteria, leaguePlayerStats, lang) {
   const { player, teamId } = findWorldPlayerById(world, playerId)
   if (!player) return null
   const name = getPlayerFullName(player)
   const knowledge = getPlayerKnowledge(team, playerId)
   const ovr = getOverallRating(player.skills)
   const ovrDisplay = scoutedValueDisplay(ovr, knowledge, lang)
-  const fit = profileFitScore(player.skills, profileId)
+  const fit = playerSearchCriteriaScore(player, criteria)
   const fitDisplay = scoutedValueDisplay(fit, knowledge, lang)
   const club = teamId
     ? worldTeamById(world, teamId)?.name ?? teamId
@@ -1163,29 +1163,28 @@ function playerSearchCandidateLine(world, team, playerId, profileId, leaguePlaye
 export function messageFromPlayerSearchReport(report, career) {
   if (!report) return null
   const team = worldTeamById(career?.world, career?.playerTeamId)
-  const profile = playerSearchProfile(report.profileId)
-  const labelPl = profile?.labelPl ?? report.profileId
-  const labelEn = profile?.labelEn ?? report.profileId
+  const summaryPl = playerSearchCriteriaSummary(report.criteria, 'pl')
+  const summaryEn = playerSearchCriteriaSummary(report.criteria, 'en')
   const leaguePlayerStats = career?.league?.playerStats
   const linesPl = (report.candidateIds ?? [])
-    .map((id) => playerSearchCandidateLine(career?.world, team, id, report.profileId, leaguePlayerStats, 'pl'))
+    .map((id) => playerSearchCandidateLine(career?.world, team, id, report.criteria, leaguePlayerStats, 'pl'))
     .filter(Boolean)
   const linesEn = (report.candidateIds ?? [])
-    .map((id) => playerSearchCandidateLine(career?.world, team, id, report.profileId, leaguePlayerStats, 'en'))
+    .map((id) => playerSearchCandidateLine(career?.world, team, id, report.criteria, leaguePlayerStats, 'en'))
     .filter(Boolean)
   return createInboxMessage({
     type: INBOX_TYPES.SCOUT_REPORT,
-    title: `Scouting · Tydzień ${report.weekNumber}/${report.weeksTotal}: ${labelPl}`,
-    titleEn: `Scouting · Week ${report.weekNumber}/${report.weeksTotal}: ${labelEn}`,
-    body: `Cotygodniowy raport poszukiwań wg profilu „${labelPl}". Sugerowani zawodnicy: ${linesPl.join('; ') || 'brak'}.`,
-    bodyEn: `Weekly player-search report for the "${labelEn}" profile. Suggested targets: ${linesEn.join('; ') || 'none'}.`,
+    title: `Scouting · Tydzień ${report.weekNumber}/${report.weeksTotal}: poszukiwania`,
+    titleEn: `Scouting · Week ${report.weekNumber}/${report.weeksTotal}: search`,
+    body: `Cotygodniowy raport poszukiwań (kryteria: ${summaryPl}). Sugerowani zawodnicy: ${linesPl.join('; ') || 'brak'}.`,
+    bodyEn: `Weekly player-search report (criteria: ${summaryEn}). Suggested targets: ${linesEn.join('; ') || 'none'}.`,
     date: career?.league?.currentDate ?? null,
     seasonIndex: career?.seasonIndex ?? null,
     seasonYear: career?.seasonYear ?? null,
     payload: {
       kind: 'playerSearchWatch',
       missionId: report.missionId,
-      profileId: report.profileId ?? null,
+      criteria: report.criteria ?? null,
       candidateIds: report.candidateIds ?? [],
       concluded: false,
       weekNumber: report.weekNumber,
@@ -1244,34 +1243,29 @@ export function messageFromScoutMission(mission, career, { date = null } = {}) {
 
   if (mission.kind === 'playerSearch') {
     const team = worldTeamById(world, career?.playerTeamId)
-    const profile = playerSearchProfile(mission.profileId)
-    const labelPl = profile?.labelPl ?? mission.profileId
-    const labelEn = profile?.labelEn ?? mission.profileId
+    const summaryPl = playerSearchCriteriaSummary(mission.criteria, 'pl')
+    const summaryEn = playerSearchCriteriaSummary(mission.criteria, 'en')
     const leaguePlayerStats = career?.league?.playerStats
     const linesPl = (mission.candidateIds ?? [])
-      .map((id) => playerSearchCandidateLine(world, team, id, mission.profileId, leaguePlayerStats, 'pl'))
+      .map((id) => playerSearchCandidateLine(world, team, id, mission.criteria, leaguePlayerStats, 'pl'))
       .filter(Boolean)
     const linesEn = (mission.candidateIds ?? [])
-      .map((id) => playerSearchCandidateLine(world, team, id, mission.profileId, leaguePlayerStats, 'en'))
+      .map((id) => playerSearchCandidateLine(world, team, id, mission.criteria, leaguePlayerStats, 'en'))
       .filter(Boolean)
     const recalled = !!mission.playerSearchRecalled
     return createInboxMessage({
       type: INBOX_TYPES.SCOUT_REPORT,
-      title: recalled
-        ? `Scouting · Skaut wrócił wcześniej: ${labelPl}`
-        : `Scouting · Misja zakończona: ${labelPl}`,
-      titleEn: recalled
-        ? `Scouting · Scout recalled early: ${labelEn}`
-        : `Scouting · Mission complete: ${labelEn}`,
-      body: `Skaut wraca z poszukiwań wg profilu „${labelPl}"${recalled ? ' (odwołany wcześniej)' : ''}. Sugerowani zawodnicy: ${linesPl.join('; ') || 'brak'}. Otwórz Centrum skautingu, żeby rozpocząć negocjacje.`,
-      bodyEn: `Your scout is back from the "${labelEn}" search${recalled ? ' (recalled early)' : ''}. Suggested targets: ${linesEn.join('; ') || 'none'}. Open the Scouting Center to start negotiations.`,
+      title: recalled ? `Scouting · Skaut wrócił wcześniej: poszukiwania` : `Scouting · Misja zakończona: poszukiwania`,
+      titleEn: recalled ? `Scouting · Scout recalled early: search` : `Scouting · Mission complete: search`,
+      body: `Skaut wraca z poszukiwań (kryteria: ${summaryPl})${recalled ? ' (odwołany wcześniej)' : ''}. Sugerowani zawodnicy: ${linesPl.join('; ') || 'brak'}. Otwórz Centrum skautingu, żeby rozpocząć negocjacje.`,
+      bodyEn: `Your scout is back from the search (criteria: ${summaryEn})${recalled ? ' (recalled early)' : ''}. Suggested targets: ${linesEn.join('; ') || 'none'}. Open the Scouting Center to start negotiations.`,
       date: resolvedDate,
       seasonIndex: career?.seasonIndex ?? null,
       seasonYear: career?.seasonYear ?? null,
       payload: {
         kind: 'playerSearchWatch',
         missionId: mission.id,
-        profileId: mission.profileId ?? null,
+        criteria: mission.criteria ?? null,
         candidateIds: mission.candidateIds ?? [],
         concluded: true,
         recalled,
