@@ -11,6 +11,7 @@ import { buildTeamRoster } from './playerStatsFromUfa.js'
 import { applyRandomOvrBands, rollRandomSkillsForRoster } from './randomRosterSkills.js'
 import { rollTeamTacticalIdentity } from './seasonLeagueBuilder.js'
 import { rollTraitsForPlayer, TRAITS_GEN_VERSION } from '../models/playerTraits.js'
+import { eucsNationalityOverride } from './eucs/eucsNationalityOverrides.js'
 import { getOverallRating } from '../models/playerStats.js'
 
 export const EUCS_LEAGUE_TIER_SLOTS = 16
@@ -103,6 +104,11 @@ export function eucsTeamStrength(teamId) {
 
 export function eucsTeamTier(teamId) {
   return EUCS_TEAMS.find((t) => t.id === teamId)?.tier ?? null
+}
+
+/** Kraj klubu (federacja) — patrz `country` w eucsPyramidTeams.json / eucsCountryStrength.js. */
+export function eucsTeamCountry(teamId) {
+  return EUCS_TEAMS.find((t) => t.id === teamId)?.country ?? null
 }
 
 /** Realne osiągnięcia klubu w EUCF (ultimate-reference.com) — puste [] gdy brak dopasowania. */
@@ -289,6 +295,11 @@ export function buildEucsLeagueTemplate(options) {
     for (const p of players) {
       p.traits = rollTraitsForPlayer({ ...p, id: hashSeed(seed, p.id, 'career-traits') })
       p.traitsGen = TRAITS_GEN_VERSION
+      // Domyślnie narodowość = kraj klubu (realne rosterowe nazwiska to głównie zawodnicy
+      // krajowi w amatorskim ultimate; wygenerowane składy nie mają realnych imion, więc
+      // i tak nie ma czego dopasowywać indywidualnie) — chyba że rozpoznany zawodnik ma
+      // ręczną korektę (patrz eucsNationalityOverrides.js).
+      p.nationality = eucsNationalityOverride(rawTeam.id, p.firstName, p.lastName) ?? rawTeam.country ?? null
     }
 
     tacticalByTeamId[rawTeam.id] = rollTeamTacticalIdentity(rawTeam.id, seed)

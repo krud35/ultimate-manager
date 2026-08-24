@@ -40,6 +40,8 @@ import {
   computePlayerContractDemands,
   previewContractOffer,
 } from '../career'
+import { eucsCountryByName } from '../data/eucs/eucsCountryStrength.js'
+import { academyCountryByEnglishName } from '../data/academyScoutGeography.js'
 import { SkillBar, ThrowingHandBadge } from './TeamRosterPanel'
 import StaminaBar from './StaminaBar'
 import PlayerTraitChips from './PlayerTraitChips'
@@ -279,6 +281,20 @@ export default function PlayerProfileModal({
               {player.age != null && (
                 <span className="rounded bg-ufa-bg px-2 py-0.5 text-xs text-ufa-muted ring-1 ring-ufa-border">
                   {t.age} <span className="font-semibold text-ufa-text">{player.age}</span>
+                </span>
+              )}
+              {player.nationality && (
+                <span className="rounded bg-ufa-bg px-2 py-0.5 text-xs text-ufa-muted ring-1 ring-ufa-border">
+                  {t.nationality}{' '}
+                  <span className="font-semibold text-ufa-text">
+                    {lang === UI_LANG.EN
+                      ? (eucsCountryByName(player.nationality)?.labelEn ??
+                        academyCountryByEnglishName(player.nationality)?.labelEn ??
+                        player.nationality)
+                      : (eucsCountryByName(player.nationality)?.labelPl ??
+                        academyCountryByEnglishName(player.nationality)?.labelPl ??
+                        player.nationality)}
+                  </span>
                 </span>
               )}
               {isOwnPlayer && (

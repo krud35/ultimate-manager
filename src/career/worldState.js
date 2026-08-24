@@ -25,6 +25,8 @@ import { ensurePlayerLoyalty } from '../models/playerLoyalty.js'
 import { ensurePlayerTraits } from '../models/playerTraits.js'
 import { ensurePlayerInjury } from '../models/playerInjury.js'
 import { ensurePlayerSkillsSnapshots } from '../models/playerSkillsHistory.js'
+import { eucsTeamCountry } from '../data/eucsLeagueTeams.js'
+import { eucsNationalityOverride } from '../data/eucs/eucsNationalityOverrides.js'
 import {
   ensureWorldFinances,
 } from './transfers/clubFinances.js'
@@ -209,6 +211,13 @@ export function initWorldPlayerStats(world, options = {}) {
       ensurePlayerDevelopment(player, options)
       ensurePlayerContract(player)
       ensurePlayerSkillsSnapshots(player)
+      // Uzupełnienie dla zapisów założonych przed dodaniem narodowości — nowe kariery
+      // dostają ją już przy generowaniu składu (patrz eucsLeagueTeams.js). Ręczna korekta
+      // (eucsNationalityOverrides.js) wygrywa zawsze, nawet gdy zapis ma już zły domyślny
+      // kraj klubu zapisany z wcześniejszej sesji.
+      const override = eucsNationalityOverride(team.id, player.firstName, player.lastName)
+      if (override) player.nationality = override
+      else if (player.nationality == null) player.nationality = eucsTeamCountry(team.id)
     }
     refreshTeamMarketValues(team)
   }
