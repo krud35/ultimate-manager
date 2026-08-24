@@ -95,7 +95,11 @@ const SILENT_CLUB_NEWS_KINDS = new Set([
 ])
 
 // Pure info/report inbox types — never worth interrupting the loop.
-const SILENT_REPORT_TYPES = new Set([INBOX_TYPES.TRAINING_REPORT, INBOX_TYPES.SCOUT_REPORT])
+const SILENT_REPORT_TYPES = new Set([
+  INBOX_TYPES.TRAINING_REPORT,
+  INBOX_TYPES.SCOUT_REPORT,
+  INBOX_TYPES.INJURY,
+])
 
 // transfer_offer payload {kind, status} combos that actually need the manager's
 // input right now — mirrors the "bidPending" badge logic in InboxView. Everything
