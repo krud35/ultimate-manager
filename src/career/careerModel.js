@@ -6,7 +6,7 @@ import { createLeagueSeason } from '../league/leagueState.js'
 import { isOfficialSeasonEnded } from '../league/dayEngine.js'
 import { resolvePlayerDefaultTactics } from '../matchEngine'
 import { SAVE_VERSION, STARTING_SEASON_YEAR, EUCS_STARTING_SEASON_YEAR } from './constants.js'
-import { writeSlot } from './saveStore.js'
+import { writeSlot, saveCareerNow } from './saveStore.js'
 import { standingsTable } from '../league/standings.js'
 import { simulateAdHocMatch } from '../league/leagueEngine.js'
 import {
@@ -415,7 +415,15 @@ export function ensureCareerHomeTactics(career) {
   return persistCareer(career, { homeTactics: resolved })
 }
 
-/** Zapisuje bieżący stan kariery (świat, liga, taktyka, faza). */
+/**
+ * Oblicza nowy stan kariery (świat, liga, taktyka, faza) po zastosowaniu
+ * `patch` — TYLKO w pamięci, bez zapisu na dysk. Gra zapisuje na dysk
+ * wyłącznie przy jawnych checkpointach (koniec dnia, symulacja do meczu/
+ * daty, rozegrany mecz, zmiana sezonu, wyjście do menu) przez
+ * `saveCareerNow()` — patrz saveStore.js. Reszta akcji (wiadomości, taktyka,
+ * negocjacje...) aktualizuje tylko stan w React, żeby nie blokować UI
+ * kosztownym zapisem przy każdym kliknięciu.
+ */
 export function persistCareer(career, patch = {}) {
   const world = patch.world ?? career.world
   let league = patch.league ?? career.league
@@ -429,14 +437,13 @@ export function persistCareer(career, patch = {}) {
   const players = team?.players ?? []
   const rawTactics = patch.homeTactics ?? career.homeTactics
   const homeTactics = resolvePlayerDefaultTactics(players, rawTactics)
-  const next = {
+  return {
     ...career,
     ...patch,
     world,
     league,
     homeTactics,
   }
-  return writeSlot(career.slotIndex, next)
 }
 
 /** Po oficjalnym końcu sezonu (31 lipca) — archiwizuje (per-season + all-time). */
@@ -609,7 +616,7 @@ export function finalizeSeason(career) {
     },
   )
 
-  return persistCareer(career, {
+  return saveCareerNow(persistCareer(career, {
     phase: 'season_complete',
     seasonHistory,
     careerStats,
@@ -622,7 +629,7 @@ export function finalizeSeason(career) {
       { ...career, inbox: career.inbox },
       [...seasonCycleInbox, ...sponsorInbox, ...prizeInbox, ...contractObligationInbox],
     ),
-  })
+  }))
 }
 
 /** Start kolejnego sezonu — offseason development + nowy kalendarz. */
@@ -694,7 +701,7 @@ export function startNextSeason(career) {
     ...messagesFromOpenSponsorOffers(draft, { date: league.currentDate }),
   ]
 
-  return persistCareer(base, {
+  return saveCareerNow(persistCareer(base, {
     seasonYear: nextYear,
     seasonIndex: nextIndex,
     phase: 'active',
@@ -713,7 +720,7 @@ export function startNextSeason(career) {
     },
     aiOffseasonTransferWaves: 0,
     aiTransfersLastDate: null,
-  })
+  }))
 }
 
 /**
@@ -871,7 +878,7 @@ function startNextSeasonEucs(career) {
     ...messagesFromOpenSponsorOffers(draft, { date: league.currentDate }),
   ]
 
-  return persistCareer(base, {
+  return saveCareerNow(persistCareer(base, {
     seasonYear: nextYear,
     seasonIndex: nextIndex,
     phase: 'active',
@@ -892,7 +899,7 @@ function startNextSeasonEucs(career) {
     },
     aiOffseasonTransferWaves: 0,
     aiTransfersLastDate: null,
-  })
+  }))
 }
 
 export function careerRecordSummary(career) {

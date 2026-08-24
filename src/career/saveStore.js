@@ -9,6 +9,21 @@ import { careerForStorage, rehydrateCareerWorld } from './worldState.js'
 /** Zapisy sprzed kompresji to czysty JSON — ten prefiks odróżnia nowy format. */
 const COMPRESSED_PREFIX = 'lzv1:'
 
+/**
+ * lz-string'owa kompresja ~1-2 MB zapisu kariery potrafi zająć ~1s (blokuje
+ * główny wątek). Wołanie jej synchronicznie przy KAŻDEJ akcji w grze (np.
+ * samo kliknięcie wiadomości w skrzynce) powodowało zauważalne zawieszenie
+ * UI. Zamiast zapisywać natychmiast, odkładamy właściwy zapis do
+ * localStorage o krótką chwilę i łączymy kolejne szybkie akcje w jeden
+ * zapis — a przed KAŻDYM odczytem (loadSaveStore) i przy zamknięciu karty
+ * odkładany zapis jest natychmiast "spłacany", więc nikt nigdy nie widzi
+ * nieaktualnych danych ani nie traci więcej niż ułamek sekundy postępu.
+ */
+const WRITE_DEBOUNCE_MS = 600
+
+let pendingStore = null
+let pendingTimer = null
+
 function emptySlots() {
   return Array.from({ length: SLOT_COUNT }, () => null)
 }
@@ -43,7 +58,7 @@ export class StorageQuotaError extends Error {
   }
 }
 
-function normalizeStore(raw) {
+function normalizeStore(raw, skipIndex = -1) {
   const slots = emptySlots()
   if (!raw || typeof raw !== 'object') {
     return { version: SAVE_VERSION, slots }
@@ -51,6 +66,12 @@ function normalizeStore(raw) {
   const incoming = Array.isArray(raw.slots) ? raw.slots : []
   for (let i = 0; i < SLOT_COUNT; i += 1) {
     const slot = incoming[i]
+    if (i === skipIndex) {
+      // Caller is about to overwrite this slot with an in-memory career it
+      // already has — skip the expensive rehydrate pass, it'd be discarded.
+      slots[i] = slot ?? null
+      continue
+    }
     slots[i] = slot && typeof slot === 'object' ? rehydrateCareerWorld(slot) : null
   }
   return { version: SAVE_VERSION, slots }
@@ -66,17 +87,8 @@ function deserializeStoreText(text) {
   return JSON.parse(text)
 }
 
-export function loadSaveStore() {
-  try {
-    const text = localStorage.getItem(STORAGE_KEY)
-    if (!text) return normalizeStore(null)
-    return normalizeStore(deserializeStoreText(text))
-  } catch {
-    return normalizeStore(null)
-  }
-}
-
-export function writeSaveStore(store) {
+/** Natychmiastowy, synchroniczny zapis (kosztowna kompresja) — bez odkładania. */
+function writeSaveStoreImmediate(store) {
   const slots = emptySlots()
   const incoming = Array.isArray(store?.slots) ? store.slots : []
   for (let i = 0; i < SLOT_COUNT; i += 1) {
@@ -90,7 +102,61 @@ export function writeSaveStore(store) {
     if (isQuotaExceededError(err)) throw new StorageQuotaError()
     throw err
   }
-  return normalizeStore(payload)
+  // `store` (the argument) already holds in-memory slot objects equivalent
+  // to what was just written — re-deriving the return value by running it
+  // back through normalizeStore() would decompress/JSON.parse/rehydrate
+  // (re-scan every team's finances/contracts/scouting/academy) all over
+  // again purely to build a return value that, today, no caller uses.
+  return { version: SAVE_VERSION, slots: incoming }
+}
+
+function cancelPendingWrite() {
+  if (pendingTimer != null) {
+    clearTimeout(pendingTimer)
+    pendingTimer = null
+  }
+  pendingStore = null
+}
+
+/** Zapisuje natychmiast, pomijając odłożony (debounced) zapis w toku. */
+export function flushPendingWrite() {
+  const store = pendingStore
+  cancelPendingWrite()
+  if (store) writeSaveStoreImmediate(store)
+}
+
+/** Odkłada zapis o WRITE_DEBOUNCE_MS; kolejne wywołania zastępują poprzednie. */
+function scheduleWrite(store) {
+  cancelPendingWrite()
+  pendingStore = store
+  pendingTimer = setTimeout(flushPendingWrite, WRITE_DEBOUNCE_MS)
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', flushPendingWrite)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushPendingWrite()
+  })
+}
+
+export function loadSaveStore(skipIndex = -1) {
+  // Gwarantuje spójność: nikt nie odczyta stanu starszego niż to, co
+  // aplikacja "w pamięci" już uznaje za zapisane.
+  flushPendingWrite()
+  try {
+    const text = localStorage.getItem(STORAGE_KEY)
+    if (!text) return normalizeStore(null)
+    return normalizeStore(deserializeStoreText(text), skipIndex)
+  } catch {
+    return normalizeStore(null)
+  }
+}
+
+/** Publiczne API: zapisuje od razu (używane np. przy usuwaniu zapisu). */
+export function writeSaveStore(store) {
+  // Jeśli był odłożony zapis dla innego stanu, ten nowy i tak go zastępuje.
+  cancelPendingWrite()
+  return writeSaveStoreImmediate(store)
 }
 
 export function listSlots() {
@@ -106,15 +172,39 @@ export function writeSlot(slotIndex, career) {
   if (slotIndex < 0 || slotIndex >= SLOT_COUNT) {
     throw new Error(`Nieprawidłowy slot: ${slotIndex}`)
   }
-  const store = loadSaveStore()
+  // `career` is already a live, rehydrated in-memory object — no need to
+  // round-trip it through decompress/JSON.parse/rehydrate just to read it
+  // back. And if a write is already pending (rapid consecutive actions,
+  // e.g. clicking through several inbox messages), that pending store
+  // already reflects the latest known state of every slot — reuse it
+  // in-memory instead of flushing it and re-reading from localStorage,
+  // otherwise every click in a quick burst would still pay the full
+  // decompress+recompress cost the debounce was meant to avoid.
+  const store = pendingStore ?? loadSaveStore(slotIndex)
   const withMeta = {
     ...career,
     slotIndex,
     updatedAt: new Date().toISOString(),
   }
   store.slots[slotIndex] = withMeta
-  writeSaveStore(store)
-  return rehydrateCareerWorld(getSlot(slotIndex))
+  // Kosztowna kompresja+zapis idzie do localStorage z niewielkim opóźnieniem
+  // (patrz WRITE_DEBOUNCE_MS) zamiast blokować wątek w trakcie kliknięcia.
+  scheduleWrite(store)
+  return withMeta
+}
+
+/**
+ * Zapisuje NATYCHMIAST, z pominięciem opóźnienia — do użycia wyłącznie przy
+ * jawnych checkpointach (koniec dnia, symulacja do meczu/daty, rozegrany
+ * mecz, zmiana sezonu, wyjście do menu karier). Reszta akcji w grze (np.
+ * wiadomości w skrzynce, zmiana taktyki, negocjacje) aktualizuje tylko stan
+ * w pamięci i NIE zapisuje na dysk, dopóki gracz nie trafi w jeden z tych
+ * checkpointów.
+ */
+export function saveCareerNow(career) {
+  const result = writeSlot(career.slotIndex, career)
+  flushPendingWrite()
+  return result
 }
 
 export function clearSlot(slotIndex) {
