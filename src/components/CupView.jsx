@@ -1,9 +1,34 @@
 import { useMemo, useState } from 'react'
-import { teamNameMap, topLeaders, detectSeasonPhase } from '../league'
+import { topLeaders, detectSeasonPhase } from '../league'
 import { useUiLang } from '../ui/UiLangContext'
 import { leagueViewsStrings } from '../ui/strings/leagueViews'
+import { resolveTeamName } from '../ui/locale'
 
-const ROUND_ORDER = ['prequarter', 'quarter', 'semi', 'final']
+const UFA_ROUND_ORDER = ['prequarter', 'quarter', 'semi', 'final']
+// Puchar Piramidy (48 drużyn Ligi Europejskiej): 2 dodatkowe wczesne rundy, których
+// nie ma zwykły puchar UFA — patrz pyramidCup.js. Rozpoznawany po `cup.pyramidCupDates`.
+const PYRAMID_ROUND_ORDER = ['round1', 'roundOf32', 'roundOf16', 'quarterfinal', 'semifinal', 'final']
+/** Rundy, w których kolumna ma być wyśrodkowana pionowo (mało meczów, dużo miejsca). */
+const CENTERED_ROUNDS = new Set(['semi', 'final', 'semifinal'])
+
+function roundOrderFor(cup) {
+  return cup?.pyramidCupDates ? PYRAMID_ROUND_ORDER : UFA_ROUND_ORDER
+}
+
+/**
+ * Nazwy WSZYSTKICH drużyn dostępnych w `league.teamsById` — nie tylko `league.teamIds`
+ * (poziom gracza). Puchar Piramidy obejmuje wszystkie 48 klubów piramidy, więc mecze
+ * spoza poziomu gracza potrzebują też swoich nazw (stąd nie da się użyć teamNameMap()
+ * z leagueState.js, ograniczonego do league.teamIds).
+ */
+function allTeamNames(league, lang) {
+  const map = {}
+  const teamsById = league?.teamsById ?? {}
+  for (const id of Object.keys(teamsById)) {
+    map[id] = resolveTeamName(teamsById[id], lang) || id
+  }
+  return map
+}
 
 function shortName(name) {
   if (!name) return 'TBD'
@@ -137,29 +162,31 @@ function BracketMatchCard({ match, names, playerTeamId, onPlayFixture, currentDa
 }
 
 function BracketView({ league, names, onPlayFixture, t }) {
+  const roundOrder = roundOrderFor(league.cup)
   const byRound = useMemo(() => {
-    const map = Object.fromEntries(ROUND_ORDER.map((r) => [r, []]))
+    const map = Object.fromEntries(roundOrder.map((r) => [r, []]))
     for (const m of league.cup?.matches ?? []) {
       if (map[m.round]) map[m.round].push(m)
     }
-    for (const r of ROUND_ORDER) {
+    for (const r of roundOrder) {
       map[r].sort((a, b) => (a.bracketIndex ?? 0) - (b.bracketIndex ?? 0))
     }
     return map
-  }, [league.cup?.matches])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [league.cup?.matches, roundOrder.join('|')])
 
   return (
     <div className="overflow-x-auto pb-2">
       <div className="flex gap-4 min-w-[720px]">
-        {ROUND_ORDER.map((round) => (
+        {roundOrder.map((round) => (
           <div key={round} className="flex-1 min-w-[160px] space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-ufa-gold px-1">
-              {t.cupRound[round]}
+              {t.cupRound[round] ?? round}
             </h4>
             <div
               className={`flex flex-col gap-3 ${
-                round === 'semi' ? 'justify-around min-h-[280px]' : ''
-              } ${round === 'final' ? 'justify-center min-h-[280px]' : ''}`}
+                CENTERED_ROUNDS.has(round) ? 'justify-around min-h-[280px]' : ''
+              }`}
             >
               {byRound[round].map((match) => (
                 <BracketMatchCard
@@ -299,7 +326,7 @@ function CupStatsView({ league, names, t }) {
 export function CupTile({ league, onNavigate }) {
   const { lang } = useUiLang()
   const t = leagueViewsStrings(lang)
-  const names = teamNameMap(league, lang)
+  const names = allTeamNames(league, lang)
   const cup = league.cup
   const phase = detectSeasonPhase(league)
   const champion =
@@ -374,7 +401,7 @@ export default function CupView({ league, onPlayFixture = null }) {
     { id: 'stats', label: t.tabStats },
   ]
   const [tab, setTab] = useState('bracket')
-  const names = teamNameMap(league, lang)
+  const names = allTeamNames(league, lang)
   const cup = league.cup
   const champion =
     cup?.championTeamId != null
