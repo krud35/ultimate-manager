@@ -273,59 +273,6 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
       </section>
 
       <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
-        <h3 className="font-semibold text-ufa-text mb-3">{ts.leagueTeamsTitle}</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="text-xs uppercase tracking-wide text-ufa-muted">
-              <tr className="border-b border-ufa-border">
-                <th className="px-2 py-2 font-medium">{ts.colTeam}</th>
-                <th className="px-2 py-2 font-medium">{ts.colKnowledge}</th>
-                <th className="px-2 py-2 font-medium">{ts.colTactics}</th>
-                <th className="px-2 py-2 font-medium">{ts.colPending}</th>
-                <th className="px-2 py-2 font-medium" />
-              </tr>
-            </thead>
-            <tbody>
-              {leagueTeams.map((opponent) => {
-                const knowledge = getOpponentKnowledge(buyer, opponent.id)
-                const tacticsKnowledge = getOpponentTacticsKnowledge(buyer, opponent.id)
-                const pendingCount = pendingScoutMissions(buyer).filter(
-                  (m) => m.opponentTeamId === opponent.id,
-                ).length
-                return (
-                  <tr key={opponent.id} className="border-b border-ufa-border/70 hover:bg-ufa-bg/40">
-                    <td className="px-2 py-2.5 font-medium text-ufa-text">
-                      {resolveTeamName(opponent, lang)}
-                    </td>
-                    <td
-                      className={`px-2 py-2.5 tabular-nums font-semibold ${attributeBandToneClass(knowledge)}`}
-                    >
-                      {knowledge}%
-                    </td>
-                    <td
-                      className={`px-2 py-2.5 tabular-nums font-semibold ${attributeBandToneClass(tacticsKnowledge)}`}
-                    >
-                      {tacticsKnowledge}%
-                    </td>
-                    <td className="px-2 py-2.5 tabular-nums text-ufa-muted">{pendingCount}</td>
-                    <td className="px-2 py-2.5 text-right">
-                      <button
-                        type="button"
-                        onClick={() => onOpenTeam?.(opponent.id)}
-                        className="rounded-md border border-ufa-border px-2.5 py-1 text-xs text-ufa-text hover:bg-ufa-panel-hover"
-                      >
-                        {ts.openProfile}
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
         <h3 className="font-semibold text-ufa-text mb-1">{ts.playerSearchTitle}</h3>
         <p className="mb-3 text-xs text-ufa-muted">{ts.playerSearchHint}</p>
 
@@ -524,6 +471,59 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
             })}
           </div>
         )}
+      </section>
+
+      <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+        <h3 className="font-semibold text-ufa-text mb-3">{ts.leagueTeamsTitle}</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead className="text-xs uppercase tracking-wide text-ufa-muted">
+              <tr className="border-b border-ufa-border">
+                <th className="px-2 py-2 font-medium">{ts.colTeam}</th>
+                <th className="px-2 py-2 font-medium">{ts.colKnowledge}</th>
+                <th className="px-2 py-2 font-medium">{ts.colTactics}</th>
+                <th className="px-2 py-2 font-medium">{ts.colPending}</th>
+                <th className="px-2 py-2 font-medium" />
+              </tr>
+            </thead>
+            <tbody>
+              {leagueTeams.map((opponent) => {
+                const knowledge = getOpponentKnowledge(buyer, opponent.id)
+                const tacticsKnowledge = getOpponentTacticsKnowledge(buyer, opponent.id)
+                const pendingCount = pendingScoutMissions(buyer).filter(
+                  (m) => m.opponentTeamId === opponent.id,
+                ).length
+                return (
+                  <tr key={opponent.id} className="border-b border-ufa-border/70 hover:bg-ufa-bg/40">
+                    <td className="px-2 py-2.5 font-medium text-ufa-text">
+                      {resolveTeamName(opponent, lang)}
+                    </td>
+                    <td
+                      className={`px-2 py-2.5 tabular-nums font-semibold ${attributeBandToneClass(knowledge)}`}
+                    >
+                      {knowledge}%
+                    </td>
+                    <td
+                      className={`px-2 py-2.5 tabular-nums font-semibold ${attributeBandToneClass(tacticsKnowledge)}`}
+                    >
+                      {tacticsKnowledge}%
+                    </td>
+                    <td className="px-2 py-2.5 tabular-nums text-ufa-muted">{pendingCount}</td>
+                    <td className="px-2 py-2.5 text-right">
+                      <button
+                        type="button"
+                        onClick={() => onOpenTeam?.(opponent.id)}
+                        className="rounded-md border border-ufa-border px-2.5 py-1 text-xs text-ufa-text hover:bg-ufa-panel-hover"
+                      >
+                        {ts.openProfile}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <PlayerProfileModal
