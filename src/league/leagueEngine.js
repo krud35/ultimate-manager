@@ -12,6 +12,7 @@ import { ensurePlayerStats } from '../models/playerStats.js'
 import { teamFromLeague } from '../career/worldState.js'
 import { applyReputationForMatchTeams } from '../models/teamReputation.js'
 import { applyFansMoodForMatchTeams } from '../models/teamFans.js'
+import { applyEloForMatchTeams } from '../models/teamElo.js'
 import { applyPostMatchFinances } from '../career/clubFacilities.js'
 import { applyMatchTacticsFamiliarityGain } from '../career/teamTraining.js'
 import { isClubBankrupt } from '../career/transfers/clubFinances.js'
@@ -156,6 +157,12 @@ export function applyMatchResultToLeague(league, matchRecord) {
       league.standings,
       matchRecord.homeTeamId,
       matchRecord.awayTeamId,
+      matchRecord.homeScore,
+      matchRecord.awayScore,
+    )
+    applyEloForMatchTeams(
+      teamFromLeague(league, matchRecord.homeTeamId),
+      teamFromLeague(league, matchRecord.awayTeamId),
       matchRecord.homeScore,
       matchRecord.awayScore,
     )

@@ -33,6 +33,7 @@ import {
 import { ensureWorldContracts, ensurePlayerContract } from './transfers/playerContracts.js'
 import { refreshTeamMarketValues } from './transfers/playerValue.js'
 import { ensureWorldReputation } from '../models/teamReputation.js'
+import { ensureWorldElo } from '../models/teamElo.js'
 import { ensureWorldFans } from '../models/teamFans.js'
 import { ensureWorldFacilities } from './clubFacilities.js'
 import { ensureWorldSponsors, refreshSponsorOffers } from './clubSponsors.js'
@@ -134,6 +135,7 @@ export function createWorldFromTemplate(templateSeasonYear = 2025, options = {})
   ensureWorldFinances(world, { seed: financeSeed, force: true })
   ensureWorldContracts(world, { seed: financeSeed, force: true, syncBudgets: true })
   ensureWorldReputation(world)
+  ensureWorldElo(world)
   ensureWorldFans(world, { seed: financeSeed, force: true })
   ensureWorldFacilities(world, { seed: financeSeed, force: true })
   ensureWorldScouting(world)
@@ -286,6 +288,7 @@ export function rehydrateCareerWorld(career) {
   ensureWorldFinances(world, { seed: financeSeed, force: false })
   ensureWorldContracts(world, { seed: financeSeed, force: false, syncBudgets: true })
   ensureWorldReputation(world)
+  ensureWorldElo(world)
   ensureWorldFans(world, { seed: financeSeed, force: false })
   ensureWorldFacilities(world, { seed: financeSeed, force: false })
   ensureWorldScouting(world)

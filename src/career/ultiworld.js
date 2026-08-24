@@ -6,14 +6,14 @@
 import { getPlayerFullName } from '../data/mockPlayers.js'
 import { getOverallRating } from '../models/playerStats.js'
 import { ensurePlayerMorale } from '../models/playerMorale.js'
-import { ensurePlayerForm, FORM_DEFAULT } from '../models/playerForm.js'
+import { ensurePlayerForm } from '../models/playerForm.js'
 import { noteLoyaltyFromTreatment } from '../models/playerLoyalty.js'
 import { injurePlayer, pickInjuryLabel, rollInjuryDays, injuryLabelEn } from '../models/playerInjury.js'
 import { addDays, formatISODate, parseISODate, nextWeekday } from '../league/seasonCalendar.js'
 import { fixturesForRound, isRoundComplete, teamNameMap } from '../league/leagueState.js'
-import { pointDifferential } from '../league/standings.js'
 import { detectSeasonPhase } from '../league/dayEngine.js'
 import { worldTeamById, worldTeamsList } from './worldState.js'
+import { getTeamElo } from '../models/teamElo.js'
 import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/index.js'
 import { UI_LANG } from '../ui/locale.js'
 
@@ -740,71 +740,25 @@ function roundReviewArticles(career, league, round, namesPl, namesEn, rng) {
   return out
 }
 
-const POWER_RANKING_CORE_SIZE = 7
-/** Ile ostatnich meczów ligowych liczy się jako "bieżąca forma" drużyny. */
-const POWER_RANKING_RECENT_GAMES = 8
-
-/** Bilans i różnica punktowa z ostatnich N meczów ligowych drużyny (bieżąca forma, nie cały sezon). */
-function recentFormStats(matchHistory, teamId) {
-  const games = (matchHistory ?? [])
-    .filter((m) => m.competition === 'league' && (m.homeTeamId === teamId || m.awayTeamId === teamId))
-    .slice(-POWER_RANKING_RECENT_GAMES)
-  if (!games.length) return null
-  let wins = 0
-  let diffSum = 0
-  for (const g of games) {
-    const isHome = g.homeTeamId === teamId
-    const forScore = (isHome ? g.homeScore : g.awayScore) ?? 0
-    const againstScore = (isHome ? g.awayScore : g.homeScore) ?? 0
-    if (forScore > againstScore) wins += 1
-    diffSum += forScore - againstScore
-  }
-  return { games: games.length, winPct: wins / games.length, diffPerGame: diffSum / games.length }
-}
-
 /**
- * Siła drużyny: jakość rdzenia składu (OVR top 7) i wyniki (zwłaszcza ostatnie mecze) ważą mniej więcej
- * tyle samo — świetny skład z bilansem .500 nie powinien automatycznie deklasować drużyny w gorącej formie.
+ * Ranking siły wszystkich drużyn świata (posortowany malejąco po ELO).
+ * ELO startuje z jakości składu, ale od tego momentu żyje własnym życiem — zmieniają go
+ * tylko wyniki meczów (patrz models/teamElo.js), więc drużyna w dołku formy realnie spada,
+ * niezależnie od tego, jak dobry ma skład na papierze.
  */
-function teamPowerScore(team, standingsRow, matchHistory) {
-  const players = team?.players ?? []
-  if (!players.length) return null
-  const core = [...players]
-    .sort((a, b) => getOverallRating(b.skills) - getOverallRating(a.skills))
-    .slice(0, Math.min(POWER_RANKING_CORE_SIZE, players.length))
-  const rosterOvr = core.reduce((s, p) => s + getOverallRating(p.skills), 0) / core.length
-  const avgForm = core.reduce((s, p) => s + (typeof p.form === 'number' ? p.form : FORM_DEFAULT), 0) / core.length
-  const formAdj = (avgForm - FORM_DEFAULT) * 0.15
-
-  const games = (standingsRow?.wins ?? 0) + (standingsRow?.losses ?? 0)
-  if (games === 0) {
-    // Przedsezon / brak meczów: nie ma jeszcze wyników, więc ranking opiera się tylko na składzie.
-    return { score: rosterOvr + formAdj, rosterOvr: Math.round(rosterOvr) }
-  }
-
-  const seasonWinPct = (standingsRow.wins ?? 0) / games
-  const seasonDiffPerGame = pointDifferential(standingsRow) / games
-  const recent = recentFormStats(matchHistory, team.id)
-  // Ostatnie mecze ważą wyraźnie więcej niż cały sezon — to ma pokazywać BIEŻĄCĄ formę, nie tylko bilans.
-  const winPct = recent ? recent.winPct * 0.7 + seasonWinPct * 0.3 : seasonWinPct
-  const diffPerGame = recent ? recent.diffPerGame * 0.7 + seasonDiffPerGame * 0.3 : seasonDiffPerGame
-  const clampedDiff = Math.max(-10, Math.min(10, diffPerGame))
-  const resultsScore = Math.max(30, Math.min(99, 70 + (winPct - 0.5) * 50 + clampedDiff * 1.5))
-
-  return {
-    score: rosterOvr * 0.45 + resultsScore * 0.45 + formAdj,
-    rosterOvr: Math.round(rosterOvr),
-  }
-}
-
-/** Ranking siły wszystkich drużyn świata (posortowany malejąco po score). */
 export function computePowerRankings(career, league) {
   const teams = worldTeamsList(career.world)
   const rows = []
   for (const team of teams) {
-    const powered = teamPowerScore(team, league?.standings?.[team.id], league?.matchHistory)
-    if (!powered) continue
-    rows.push({ teamId: team.id, name: team.name, ...powered })
+    if (!team?.players?.length) continue
+    const standingsRow = league?.standings?.[team.id]
+    rows.push({
+      teamId: team.id,
+      name: team.name,
+      score: getTeamElo(team),
+      wins: standingsRow?.wins ?? 0,
+      losses: standingsRow?.losses ?? 0,
+    })
   }
   rows.sort((a, b) => b.score - a.score)
   return rows.map((row, idx) => ({ ...row, rank: idx + 1 }))
@@ -817,7 +771,7 @@ function movementMark(prevRank, rank, lang) {
   return '–'
 }
 
-/** Ranking siły drużyn (top-7 OVR + wyniki, zwłaszcza ostatnie mecze), publikowany raz w miesiącu. */
+/** Ranking siły drużyn wg ELO (wyniki meczów, nie skład), publikowany raz w miesiącu. */
 function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, namesPl, namesEn) {
   const rankings = computePowerRankings(career, league)
   if (rankings.length < 2) return null
@@ -827,7 +781,7 @@ function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, n
       const label = namesPl[r.teamId] ?? r.name
       const mark = movementMark(prevSnapshot?.[r.teamId], r.rank, UI_LANG.PL)
       const flag = r.teamId === career.playerTeamId ? ' (Ty)' : ''
-      return `${r.rank}. ${label}${flag} — Power ${Math.round(r.score)} (OVR ${r.rosterOvr}) ${mark}`
+      return `${r.rank}. ${label}${flag} — ELO ${r.score} (${r.wins}-${r.losses}) ${mark}`
     })
     .join('\n')
   const linesEn = rankings
@@ -835,7 +789,7 @@ function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, n
       const label = namesEn[r.teamId] ?? namesPl[r.teamId] ?? r.name
       const mark = movementMark(prevSnapshot?.[r.teamId], r.rank, UI_LANG.EN)
       const flag = r.teamId === career.playerTeamId ? ' (You)' : ''
-      return `${r.rank}. ${label}${flag} — Power ${Math.round(r.score)} (OVR ${r.rosterOvr}) ${mark}`
+      return `${r.rank}. ${label}${flag} — ELO ${r.score} (${r.wins}-${r.losses}) ${mark}`
     })
     .join('\n')
 
@@ -878,8 +832,8 @@ function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, n
       headlineEn: `Power Rankings — ${monthLabelEnStr}: ${topLabelEn} on top`,
       dek: dekPl,
       dekEn,
-      body: `Comiesięczny ranking Ultiworld ocenia bieżącą siłę wszystkich drużyn: jakość rdzenia składu (top ${POWER_RANKING_CORE_SIZE} wg OVR) i wyniki — zwłaszcza z ostatnich meczów — ważą mniej więcej tyle samo co talent. To nie jest tabela ligowa, tylko nasza ocena, kto naprawdę jest najgroźniejszy teraz.\n\n${linesPl}\n\nStrzałki pokazują zmianę pozycji względem poprzedniego miesiąca.`,
-      bodyEn: `Ultiworld’s monthly ranking rates every team’s current strength: core roster quality (top ${POWER_RANKING_CORE_SIZE} by OVR) and results — especially recent ones — carry roughly as much weight as talent. Not a standings table, just our read on who’s actually most dangerous right now.\n\n${linesEn}\n\nArrows show the move versus last month’s ranking.`,
+      body: `Comiesięczny ranking Ultiworld działa na systemie ELO: startowy rating drużyny brał się z jakości składu, ale odtąd żyje własnym życiem — każdy mecz ligowy przesuwa go w górę lub w dół, zależnie od siły rywala i wyniku. Wygrana z mocniejszym zespołem daje więcej niż wygrana z outsiderem; porażka ze słabszym kosztuje więcej niż porażka z faworytem. To nie jest tabela ligowa (liczba wygranych) — to nasza ocena, kto naprawdę jest najgroźniejszy teraz.\n\n${linesPl}\n\nStrzałki pokazują zmianę pozycji względem poprzedniego miesiąca.`,
+      bodyEn: `Ultiworld’s monthly ranking runs on ELO: a team’s starting rating came from roster quality, but from then on it lives on its own — every league match nudges it up or down depending on the opponent’s strength and the result. Beating a stronger team earns more than beating a weak one; losing to a weaker team costs more than losing to a favorite. Not a standings table (win count) — just our read on who’s actually most dangerous right now.\n\n${linesEn}\n\nArrows show the move versus last month’s ranking.`,
       date: simDate ?? career.league?.currentDate ?? null,
       career,
       tags: ['power-rankings', monthIso],
