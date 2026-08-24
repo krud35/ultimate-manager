@@ -40,7 +40,7 @@ export const ACADEMY_EUROPE_REGIONS = [
     id: 'easternEurope',
     labelPl: 'Europa Wschodnia',
     labelEn: 'Eastern Europe',
-    countries: ['pl', 'cz', 'sk', 'hu', 'ua', 'bg'],
+    countries: ['pl', 'cz', 'sk', 'hu', 'ua', 'bg', 'tr'],
   },
 ]
 
@@ -49,27 +49,30 @@ export const ACADEMY_COUNTRIES = {
   ie: { continent: 'europe', labelPl: 'Irlandia', labelEn: 'Ireland', nameEn: 'Ireland', strength: 74 },
   pt: { continent: 'europe', labelPl: 'Portugalia', labelEn: 'Portugal', nameEn: 'Portugal', strength: 35 },
   es: { continent: 'europe', labelPl: 'Hiszpania', labelEn: 'Spain', nameEn: 'Spain', strength: 42 },
-  fr: { continent: 'europe', labelPl: 'Francja', labelEn: 'France', nameEn: 'France', strength: 60 },
-  be: { continent: 'europe', labelPl: 'Belgia', labelEn: 'Belgium', nameEn: 'Belgium', strength: 75 },
-  ch: { continent: 'europe', labelPl: 'Szwajcaria', labelEn: 'Switzerland', nameEn: 'Switzerland', strength: 72 },
+  fr: { continent: 'europe', labelPl: 'Francja', labelEn: 'France', nameEn: 'France', strength: 88 },
+  be: { continent: 'europe', labelPl: 'Belgia', labelEn: 'Belgium', nameEn: 'Belgium', strength: 92 },
+  ch: { continent: 'europe', labelPl: 'Szwajcaria', labelEn: 'Switzerland', nameEn: 'Switzerland', strength: 76 },
   de: { continent: 'europe', labelPl: 'Niemcy', labelEn: 'Germany', nameEn: 'Germany', strength: 82 },
   at: { continent: 'europe', labelPl: 'Austria', labelEn: 'Austria', nameEn: 'Austria', strength: 55 },
-  it: { continent: 'europe', labelPl: 'Włochy', labelEn: 'Italy', nameEn: 'Italy', strength: 66 },
+  it: { continent: 'europe', labelPl: 'Włochy', labelEn: 'Italy', nameEn: 'Italy', strength: 89 },
   si: { continent: 'europe', labelPl: 'Słowenia', labelEn: 'Slovenia', nameEn: 'Slovenia', strength: 45 },
-  cz: { continent: 'europe', labelPl: 'Czechy', labelEn: 'Czech Republic', nameEn: 'Czech Republic', strength: 68 },
+  cz: { continent: 'europe', labelPl: 'Czechy', labelEn: 'Czech Republic', nameEn: 'Czech Republic', strength: 78 },
   sk: { continent: 'europe', labelPl: 'Słowacja', labelEn: 'Slovakia', nameEn: 'Slovakia', strength: 32 },
   pl: { continent: 'europe', labelPl: 'Polska', labelEn: 'Poland', nameEn: 'Poland', strength: 52 },
   ua: { continent: 'europe', labelPl: 'Ukraina', labelEn: 'Ukraine', nameEn: 'Ukraine', strength: 40 },
   bg: { continent: 'europe', labelPl: 'Bułgaria', labelEn: 'Bulgaria', nameEn: 'Bulgaria', strength: 20 },
   hu: { continent: 'europe', labelPl: 'Węgry', labelEn: 'Hungary', nameEn: 'Hungary', strength: 38 },
   dk: { continent: 'europe', labelPl: 'Dania', labelEn: 'Denmark', nameEn: 'Denmark', strength: 58 },
-  fi: { continent: 'europe', labelPl: 'Finlandia', labelEn: 'Finland', nameEn: 'Finland', strength: 95 },
+  fi: { continent: 'europe', labelPl: 'Finlandia', labelEn: 'Finland', nameEn: 'Finland', strength: 71 },
   no: { continent: 'europe', labelPl: 'Norwegia', labelEn: 'Norway', nameEn: 'Norway', strength: 50 },
   hr: { continent: 'europe', labelPl: 'Chorwacja', labelEn: 'Croatia', nameEn: 'Croatia', strength: 42 },
   gr: { continent: 'europe', labelPl: 'Grecja', labelEn: 'Greece', nameEn: 'Greece', strength: 25 },
+  // Klub EUCS "Zoom" (Stambuł) ma country: "Turkey" w eucsPyramidTeams.json — bez tego wpisu
+  // ci zawodnicy byliby niewidoczni dla wyszukiwań po id kraju (kadry narodowe, etykiety).
+  tr: { continent: 'europe', labelPl: 'Turcja', labelEn: 'Turkey', nameEn: 'Turkey', strength: 25 },
 
-  us: { continent: 'northAmerica', labelPl: 'USA', labelEn: 'USA', nameEn: 'United States', strength: 98 },
-  ca: { continent: 'northAmerica', labelPl: 'Kanada', labelEn: 'Canada', nameEn: 'Canada', strength: 80 },
+  us: { continent: 'northAmerica', labelPl: 'USA', labelEn: 'USA', nameEn: 'United States', strength: 95 },
+  ca: { continent: 'northAmerica', labelPl: 'Kanada', labelEn: 'Canada', nameEn: 'Canada', strength: 93 },
   mx: { continent: 'northAmerica', labelPl: 'Meksyk', labelEn: 'Mexico', nameEn: 'Mexico', strength: 30 },
 
   co: { continent: 'southAmerica', labelPl: 'Kolumbia', labelEn: 'Colombia', nameEn: 'Colombia', strength: 70 },
@@ -84,14 +87,14 @@ export const ACADEMY_COUNTRIES = {
   ma: { continent: 'africa', labelPl: 'Maroko', labelEn: 'Morocco', nameEn: 'Morocco', strength: 18 },
   za: { continent: 'africa', labelPl: 'RPA', labelEn: 'South Africa', nameEn: 'South Africa', strength: 35 },
 
-  cn: { continent: 'asia', labelPl: 'Chiny', labelEn: 'China', nameEn: 'China', strength: 30 },
-  jp: { continent: 'asia', labelPl: 'Japonia', labelEn: 'Japan', nameEn: 'Japan', strength: 55 },
+  cn: { continent: 'asia', labelPl: 'Chiny', labelEn: 'China', nameEn: 'China', strength: 72 },
+  jp: { continent: 'asia', labelPl: 'Japonia', labelEn: 'Japan', nameEn: 'Japan', strength: 85 },
   ph: { continent: 'asia', labelPl: 'Filipiny', labelEn: 'Philippines', nameEn: 'Philippines', strength: 25 },
   tw: { continent: 'asia', labelPl: 'Tajwan', labelEn: 'Taiwan', nameEn: 'Taiwan', strength: 30 },
-  sg: { continent: 'asia', labelPl: 'Singapur', labelEn: 'Singapore', nameEn: 'Singapore', strength: 28 },
-  hk: { continent: 'asia', labelPl: 'Hong Kong', labelEn: 'Hong Kong', nameEn: 'Hong Kong', strength: 32 },
+  sg: { continent: 'asia', labelPl: 'Singapur', labelEn: 'Singapore', nameEn: 'Singapore', strength: 68 },
+  hk: { continent: 'asia', labelPl: 'Hong Kong', labelEn: 'Hong Kong', nameEn: 'Hong Kong', strength: 56 },
 
-  au: { continent: 'oceania', labelPl: 'Australia', labelEn: 'Australia', nameEn: 'Australia', strength: 88 },
+  au: { continent: 'oceania', labelPl: 'Australia', labelEn: 'Australia', nameEn: 'Australia', strength: 86 },
   nz: { continent: 'oceania', labelPl: 'Nowa Zelandia', labelEn: 'New Zealand', nameEn: 'New Zealand', strength: 60 },
 }
 
@@ -183,6 +186,10 @@ export const ACADEMY_NATIONALITY_NAMES = {
   gr: {
     firstNames: ['Yiannis', 'Dimitris', 'Nikos', 'Kostas', 'Giorgos', 'Panos', 'Vasilis', 'Christos', 'Andreas', 'Stavros', 'Alexandros', 'Michalis', 'Petros', 'Thanos'],
     lastNames: ['Papadopoulos', 'Papadakis', 'Papadimitriou', 'Georgiou', 'Nikolaou', 'Ioannou', 'Antoniou', 'Vlachos', 'Katsaros', 'Christodoulou', 'Dimitriou', 'Karagiannis', 'Konstantinou', 'Pappas'],
+  },
+  tr: {
+    firstNames: ['Emre', 'Mehmet', 'Ahmet', 'Mustafa', 'Ali', 'Hasan', 'Hüseyin', 'Kemal', 'Burak', 'Cem', 'Ozan', 'Onur', 'Kaan', 'Berk'],
+    lastNames: ['Yılmaz', 'Kaya', 'Demir', 'Şahin', 'Çelik', 'Yıldız', 'Yıldırım', 'Öztürk', 'Aydın', 'Özdemir', 'Arslan', 'Doğan', 'Kılıç', 'Aslan'],
   },
 
   us: {

@@ -10,17 +10,17 @@
  * traktuj jako punkt startowy do dalszego dostrajania w miarę grania.
  */
 export const EUCS_COUNTRIES = [
-  { id: 'fi', country: 'Finland', labelPl: 'Finlandia', labelEn: 'Finland', strength: 95 },
+  { id: 'fi', country: 'Finland', labelPl: 'Finlandia', labelEn: 'Finland', strength: 71 },
   { id: 'se', country: 'Sweden', labelPl: 'Szwecja', labelEn: 'Sweden', strength: 85 },
   { id: 'de', country: 'Germany', labelPl: 'Niemcy', labelEn: 'Germany', strength: 82 },
   { id: 'nl', country: 'Netherlands', labelPl: 'Holandia', labelEn: 'Netherlands', strength: 80 },
   { id: 'gb', country: 'Great Britain', labelPl: 'Wielka Brytania', labelEn: 'Great Britain', strength: 78 },
-  { id: 'be', country: 'Belgium', labelPl: 'Belgia', labelEn: 'Belgium', strength: 75 },
+  { id: 'be', country: 'Belgium', labelPl: 'Belgia', labelEn: 'Belgium', strength: 92 },
   { id: 'ie', country: 'Ireland', labelPl: 'Irlandia', labelEn: 'Ireland', strength: 74 },
-  { id: 'ch', country: 'Switzerland', labelPl: 'Szwajcaria', labelEn: 'Switzerland', strength: 72 },
-  { id: 'cz', country: 'Czech Republic', labelPl: 'Czechy', labelEn: 'Czech Republic', strength: 68 },
-  { id: 'it', country: 'Italy', labelPl: 'Włochy', labelEn: 'Italy', strength: 66 },
-  { id: 'fr', country: 'France', labelPl: 'Francja', labelEn: 'France', strength: 60 },
+  { id: 'ch', country: 'Switzerland', labelPl: 'Szwajcaria', labelEn: 'Switzerland', strength: 76 },
+  { id: 'cz', country: 'Czech Republic', labelPl: 'Czechy', labelEn: 'Czech Republic', strength: 78 },
+  { id: 'it', country: 'Italy', labelPl: 'Włochy', labelEn: 'Italy', strength: 89 },
+  { id: 'fr', country: 'France', labelPl: 'Francja', labelEn: 'France', strength: 88 },
   { id: 'dk', country: 'Denmark', labelPl: 'Dania', labelEn: 'Denmark', strength: 58 },
   { id: 'at', country: 'Austria', labelPl: 'Austria', labelEn: 'Austria', strength: 55 },
   { id: 'pl', country: 'Poland', labelPl: 'Polska', labelEn: 'Poland', strength: 52 },

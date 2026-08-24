@@ -186,6 +186,55 @@ function buildJanuaryPyramidCupWeeks(janYear) {
 }
 
 /**
+ * `count` dat co 3-4 dni od `anchorDate` — celowo NIE przywiązane do weekendu (w
+ * przeciwieństwie do rund ligowych/pucharowych): kadra narodowa gra, ma parę dni
+ * odpoczynku/przelotu, gra znowu — jak realny terminarz turniejowy, nie liga klubowa.
+ * Wzorzec odstępów [3,4,3] (nie [3,4] na przemian) świadomie: suma pełnego cyklu (10 dni)
+ * nie jest wielokrotnością tygodnia, więc kolejne mecze faktycznie wędrują po różnych
+ * dniach tygodnia zamiast osiadać na stałe na tych samych dwóch (co dawałoby dokładnie
+ * to, czego unikamy — cichy powrót do stałego wzorca, tyle że przesuniętego).
+ */
+function spacedDates(anchorDate, count) {
+  const gapCycle = [3, 4, 3]
+  const dates = []
+  let cursor = anchorDate
+  for (let i = 0; i < count; i += 1) {
+    dates.push(formatISODate(cursor))
+    cursor = addDays(cursor, gapCycle[i % gapCycle.length])
+  }
+  return dates
+}
+
+/**
+ * Sześć dat co 3-4 dni na sezon (mecze reprezentacji narodowych — kwalifikacje ME/MŚ,
+ * patrz career/nationalTeamQualifying.js) — w wolnej przestrzeni kalendarza (lipiec, po
+ * zakończeniu rundy wiosennej ~30 czerwca, przed oficjalnym końcem sezonu 31 lipca), żeby
+ * nie ingerować w istniejące losowanie piątków rund ligowych. `dates` to płaska lista —
+ * kolejne rundy terminarza grupy kwalifikacyjnej dostają `dates[round-1]` (patrz
+ * `createQualifyingCampaign`), bez przywiązania do konkretnego dnia tygodnia.
+ */
+function buildInternationalWindows(seasonYear) {
+  const janYear = seasonYear + 1
+  const springWindowEnd = new Date(janYear, 5, 30) // 30 czerwca
+  const anchor = addDays(springWindowEnd, 1)
+  return { dates: spacedDates(anchor, 6) }
+}
+
+/**
+ * Siedem dat co 3-4 dni dla fazy finałowej ME/MŚ (Faza 4 planu kadr narodowych) — ta sama
+ * lipcowa przestrzeń co internationalWindows powyżej (osobny blok: kwalifikacje i faza
+ * finałowa TEGO SAMEGO turnieju nigdy nie są aktywne jednocześnie — patrz projekt).
+ * Płaska lista `dates`; które indeksy odpowiadają której rundzie (ME pomija rundę 1/8,
+ * MŚ jej używa) rozstrzyga `career/nationalTeamFinals.js` (`groupStageDates`/`knockoutDates`).
+ */
+function buildTournamentFinalsWeeks(seasonYear) {
+  const janYear = seasonYear + 1
+  const springWindowEnd = new Date(janYear, 5, 30) // 30 czerwca
+  const anchor = addDays(springWindowEnd, 1)
+  return { dates: spacedDates(anchor, 7) }
+}
+
+/**
  * @param {{ seasonYear: number, teamIds?: string[] }} options
  */
 export function buildSeasonCalendar({ seasonYear, teamIds = [] }) {
@@ -213,6 +262,8 @@ export function buildSeasonCalendar({ seasonYear, teamIds = [] }) {
 
   const cup = buildJanuaryCupWeeks(janYear)
   const pyramidCup = buildJanuaryPyramidCupWeeks(janYear)
+  const internationalWindows = buildInternationalWindows(seasonYear)
+  const nationalTournamentFinals = buildTournamentFinalsWeeks(seasonYear)
 
   const fallRounds = fallFridays.map((_, i) => i + 1)
   const springRounds = springFridays.map((_, i) => fallRoundCount + i + 1)
@@ -250,6 +301,8 @@ export function buildSeasonCalendar({ seasonYear, teamIds = [] }) {
     springRounds,
     cup,
     pyramidCup,
+    internationalWindows,
+    nationalTournamentFinals,
     roundDates,
   }
 }

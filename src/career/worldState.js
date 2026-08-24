@@ -41,6 +41,7 @@ import { ensureWorldAcademy } from './academy.js'
 import { officialSeasonEndDate } from '../league/seasonCalendar.js'
 import { areCompetitionsComplete, isOfficialSeasonEnded } from '../league/dayEngine.js'
 import { ensureAiCoachProfiles } from '../matchEngine/aiCoachProfile.js'
+import { ensureCareerNationalTeams } from './nationalTeams.js'
 
 /**
  * @typedef {object} WorldTeam
@@ -320,6 +321,9 @@ export function rehydrateCareerWorld(career) {
     ...career,
     world,
     league,
+    // Kadry narodowe (Fazy 1-5) — leniwa inicjalizacja/dopełnienie dla zapisów sprzed tej
+    // funkcji, dokładnie ten sam wzorzec co transferLog/inbox/ultiworld poniżej.
+    nationalTeams: ensureCareerNationalTeams(career),
     transferLog: Array.isArray(career.transferLog) ? career.transferLog : [],
     inbox: Array.isArray(career.inbox) ? career.inbox : [],
     ultiworld:

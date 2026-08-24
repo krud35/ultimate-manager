@@ -77,6 +77,8 @@ import { ensureWorldScouting } from './scouting.js'
 import { ensureWorldSponsors } from './clubSponsors.js'
 import { refreshTeamMarketValues } from './transfers/playerValue.js'
 import { ensureAiCoachProfiles } from '../matchEngine/aiCoachProfile.js'
+import { ensureCareerNationalTeams } from './nationalTeams.js'
+import { maybeStartNationalTeamSeason } from './nationalTeamSeason.js'
 
 /** Cel łącznej liczby zawodników w lidze (senior roster, 16 drużyn) — utrzymuje pulę graczy w ryzach. */
 const ROSTER_STABILIZE_TARGET = 500
@@ -371,6 +373,13 @@ function createEucsCareer(slotIndex, options) {
     date: league.currentDate,
   })
   draftCareer.inbox = mergeInbox(draftCareer, sponsorInbox)
+
+  // Kadry narodowe (Fazy 1-5, EUCS-only — patrz nationalTeamSeason.js) — pierwszy sezon
+  // bywa od razu rokiem turniejowym (ME 2027 startuje bez kwalifikacji, kariera zaczyna
+  // się za późno na sezon kwalifikacyjny przed nim), więc trzeba to sprawdzić już tutaj,
+  // nie tylko przy starcie kolejnego sezonu (startNextSeasonEucs).
+  ensureCareerNationalTeams(draftCareer)
+  maybeStartNationalTeamSeason(draftCareer, { seasonYear, calendar: league.calendar })
 
   return writeSlot(slotIndex, draftCareer)
 }
@@ -848,6 +857,11 @@ function startNextSeasonEucs(career) {
     }),
   )
   league.otherLeagues = otherLeagues
+
+  // Kadry narodowe (Fazy 1-5) — sprawdza, czy nadchodzący sezon jest kwalifikacyjny czy
+  // turniejowy dla `nextTournament` (patrz nationalTeamSeason.js). Mutuje `base` w miejscu;
+  // `draft`/`persistCareer` niżej biorą `nationalTeams` przez zwykły spread `...base`.
+  maybeStartNationalTeamSeason(base, { seasonYear: nextYear, calendar: league.calendar })
 
   const keptSponsor = (base.inbox ?? []).filter((m) => {
     const k = m?.payload?.kind

@@ -76,6 +76,7 @@ import {
   advancePlayerSearchCampaigns,
   messagesFromPlayerSearchReports,
 } from './career'
+import { advanceNationalTeamsForDate } from './career/nationalTeamSeason.js'
 import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
 import {
   processTeamTrainingsForDate,
@@ -478,6 +479,13 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
     )
     inboxMessages.push(
       ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
+    )
+    // Kadry narodowe (Fazy 1-5) — kwalifikacje/turniej ME/MŚ mają konkretne daty
+    // (przerwy reprezentacyjne, patrz seasonCalendar.js), więc muszą być sprawdzane
+    // codziennie jak reszta tego bloku, nie tylko w weekTick. Zwraca już gotowe
+    // wiadomości (nie surowe raporty), więc bez pośredniego messagesFromX.
+    inboxMessages.push(
+      ...advanceNationalTeamsForDate(career, career.world, trainingDate ?? nextLeague.currentDate),
     )
   }
   if (weekTick) {
@@ -944,6 +952,11 @@ export default function App() {
       // monthly academy hak (dzień===1) needs the same per-day granularity, not the
       // weekly weekTicks loop above — so it's collected in this same day cursor.
       const resolvedScoutMissions = []
+      // Kadry narodowe (Fazy 1-5) — tak samo jak scouting/academy powyżej, mają konkretne
+      // daty, więc muszą przejść przez ten sam kursor dzień-po-dniu, inaczej mecz
+      // reprezentacji wypadający w środku skoku "symuluj do meczu" nigdy by się nie
+      // rozstrzygnął. Zwraca gotowe wiadomości (nie surowe raporty).
+      const nationalTeamMessages = []
       if (career.world && rangeStart) {
         let cursor = parseISODate(rangeStart)
         const end = parseISODate(rangeEnd)
@@ -955,11 +968,12 @@ export default function App() {
           resolvedScoutMissions.push(
             ...resolveScoutMissions(career.world, career.playerTeamId, nextLeague, dateStr),
           )
+          nationalTeamMessages.push(...advanceNationalTeamsForDate(career, career.world, dateStr))
           cursor = addDays(cursor, 1)
         }
       }
 
-      return { reports, academyReports, playerSearchReports, resolvedScoutMissions }
+      return { reports, academyReports, playerSearchReports, resolvedScoutMissions, nationalTeamMessages }
     },
     [career],
   )
@@ -989,7 +1003,7 @@ export default function App() {
           }),
       })
 
-      const { reports, academyReports, playerSearchReports, resolvedScoutMissions } = await applyFastForwardSideEffects(
+      const { reports, academyReports, playerSearchReports, resolvedScoutMissions, nationalTeamMessages } = await applyFastForwardSideEffects(
         nextLeague,
         rangeStart,
         result.weekTicks ?? 0,
@@ -1054,6 +1068,7 @@ export default function App() {
         ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
         ...messagesFromPlayerSearchReports(playerSearchReports, { ...career, league: nextLeague }),
         ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
+        ...nationalTeamMessages,
         ...messagesFromNewPlayerMatches(
           { ...career, league: nextLeague },
           prevMatchHistory,
@@ -1149,7 +1164,7 @@ export default function App() {
             }),
         })
 
-        const { reports, academyReports, playerSearchReports, resolvedScoutMissions } = await applyFastForwardSideEffects(
+        const { reports, academyReports, playerSearchReports, resolvedScoutMissions, nationalTeamMessages } = await applyFastForwardSideEffects(
           nextLeague,
           rangeStart,
           result.weekTicks ?? 0,
@@ -1211,6 +1226,7 @@ export default function App() {
           ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
           ...messagesFromPlayerSearchReports(playerSearchReports, { ...career, league: nextLeague }),
           ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
+          ...nationalTeamMessages,
           ...messagesFromNewPlayerMatches(
             { ...career, league: nextLeague },
             prevMatchHistory,
