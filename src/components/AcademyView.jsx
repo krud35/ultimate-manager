@@ -6,8 +6,6 @@ import { scoutedValueDisplay, trainingRoomLabel } from '../ui/fogOfWar'
 import {
   worldTeamById,
   getFacilityLevel,
-  ACADEMY_SCOUT_REGIONS,
-  academyRegionLabel,
   promoteAcademyPlayer,
   releaseAcademyPlayer,
   queueScoutMission,
@@ -16,15 +14,55 @@ import {
   signAcademyCandidate,
   rejectAcademyCandidate,
   recallScoutMission,
+  formatUsd,
+  ACADEMY_CONTINENTS,
+  ACADEMY_EUROPE_REGIONS,
+  ACADEMY_DURATIONS_MONTHS,
+  academyContinentLabel,
+  academyCountryLabel,
+  academyCountriesForContinent,
+  academyEuropeRegionCountries,
+  academyScoutMissionCost,
+  PLAYER_SEARCH_PROFILES,
+  playerSearchProfile,
 } from '../career'
+
+function firstCountryFor(continentId, europeRegionId) {
+  if (continentId === 'europe') {
+    return academyEuropeRegionCountries(europeRegionId)[0]?.id ?? ''
+  }
+  return academyCountriesForContinent(continentId)[0]?.id ?? ''
+}
 
 export default function AcademyView({ career, onCareerUpdate }) {
   const { lang } = useUiLang()
   const t = academyStrings(lang)
-  const [region, setRegion] = useState(ACADEMY_SCOUT_REGIONS[0]?.id ?? '')
+  const [continentId, setContinentId] = useState(ACADEMY_CONTINENTS[0]?.id ?? '')
+  const [europeRegionId, setEuropeRegionId] = useState(ACADEMY_EUROPE_REGIONS[0]?.id ?? '')
+  const [countryId, setCountryId] = useState(() =>
+    firstCountryFor(ACADEMY_CONTINENTS[0]?.id, ACADEMY_EUROPE_REGIONS[0]?.id),
+  )
+  const [profileId, setProfileId] = useState('')
+  const [durationMonths, setDurationMonths] = useState(ACADEMY_DURATIONS_MONTHS[0])
   const [scoutError, setScoutError] = useState(null)
   const [scoutMsg, setScoutMsg] = useState(null)
   const [actionError, setActionError] = useState(null)
+
+  function handleContinentChange(nextContinentId) {
+    setContinentId(nextContinentId)
+    if (nextContinentId === 'europe') {
+      const nextRegion = ACADEMY_EUROPE_REGIONS[0]?.id ?? ''
+      setEuropeRegionId(nextRegion)
+      setCountryId(firstCountryFor('europe', nextRegion))
+    } else {
+      setCountryId(firstCountryFor(nextContinentId))
+    }
+  }
+
+  function handleEuropeRegionChange(nextRegionId) {
+    setEuropeRegionId(nextRegionId)
+    setCountryId(firstCountryFor('europe', nextRegionId))
+  }
 
   const team = worldTeamById(career.world, career.playerTeamId)
   const prospects = team?.academyPlayers ?? []
@@ -94,18 +132,21 @@ export default function AcademyView({ career, onCareerUpdate }) {
   function handleSendScout() {
     setScoutError(null)
     setScoutMsg(null)
-    if (!region) {
-      setScoutError(t.errorMissingRegion)
+    if (!countryId) {
+      setScoutError(t.errorMissingCountry)
       return
     }
     const result = queueScoutMission(team, {
       kind: 'academyProspect',
-      region,
+      countryId,
+      profileId: profileId || null,
+      durationMonths,
       date: career.league?.currentDate ?? null,
     })
     if (!result.ok) {
       if (result.error === 'capacity') setScoutError(t.errorCapacity)
       else if (result.error === 'insufficient_funds') setScoutError(t.errorInsufficientFunds)
+      else if (result.error === 'invalid_duration') setScoutError(t.errorInvalidDuration)
       else setScoutError(t.errorGeneric)
       return
     }
@@ -208,7 +249,7 @@ export default function AcademyView({ career, onCareerUpdate }) {
                   <th className="px-2 py-2 font-medium">{t.colAge}</th>
                   <th className="px-2 py-2 font-medium">{t.colOvr}</th>
                   <th className="px-2 py-2 font-medium">{t.colPotentialShort}</th>
-                  <th className="px-2 py-2 font-medium">{t.colRegionShort}</th>
+                  <th className="px-2 py-2 font-medium">{t.colCountry}</th>
                   <th className="px-2 py-2 font-medium">{t.colKnowledge}</th>
                   <th className="px-2 py-2 font-medium" />
                 </tr>
@@ -233,7 +274,7 @@ export default function AcademyView({ career, onCareerUpdate }) {
                         {ovrDisplay.label}
                       </td>
                       <td className="px-2 py-2.5 text-ufa-muted">{potentialLabel}</td>
-                      <td className="px-2 py-2.5 text-ufa-muted">{academyRegionLabel(c.academyRegion, lang)}</td>
+                      <td className="px-2 py-2.5 text-ufa-muted">{academyCountryLabel(c.academyCountry, lang)}</td>
                       <td className="px-2 py-2.5 tabular-nums">{knowledge}%</td>
                       <td className="px-2 py-2.5">
                         <div className="flex flex-wrap justify-end gap-1.5">
@@ -274,27 +315,96 @@ export default function AcademyView({ career, onCareerUpdate }) {
         <h3 className="font-semibold text-ufa-text mb-3">{t.sendScoutTitle}</h3>
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-sm text-ufa-muted">
-            {t.regionLabel}
+            {t.continentLabel}
             <select
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
+              value={continentId}
+              onChange={(e) => handleContinentChange(e.target.value)}
               className="rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-sm text-ufa-text"
             >
-              {ACADEMY_SCOUT_REGIONS.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {academyRegionLabel(r.id, lang)}
+              {ACADEMY_CONTINENTS.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {academyContinentLabel(c.id, lang)}
                 </option>
               ))}
             </select>
           </label>
-          <button
-            type="button"
-            onClick={handleSendScout}
-            className="rounded-md border border-ufa-border px-3 py-1.5 text-sm text-ufa-text hover:bg-ufa-panel-hover"
-          >
-            {t.sendScoutButton}
-          </button>
+          {continentId === 'europe' && (
+            <label className="flex flex-col gap-1 text-sm text-ufa-muted">
+              {t.europeRegionLabel}
+              <select
+                value={europeRegionId}
+                onChange={(e) => handleEuropeRegionChange(e.target.value)}
+                className="rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-sm text-ufa-text"
+              >
+                {ACADEMY_EUROPE_REGIONS.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {lang === 'en' ? r.labelEn : r.labelPl}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="flex flex-col gap-1 text-sm text-ufa-muted">
+            {t.countryLabel}
+            <select
+              value={countryId}
+              onChange={(e) => setCountryId(e.target.value)}
+              className="rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-sm text-ufa-text"
+            >
+              {(continentId === 'europe'
+                ? academyEuropeRegionCountries(europeRegionId)
+                : academyCountriesForContinent(continentId)
+              ).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {academyCountryLabel(c.id, lang)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-ufa-muted">
+            {t.profileLabel}
+            <select
+              value={profileId}
+              onChange={(e) => setProfileId(e.target.value)}
+              className="rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-sm text-ufa-text"
+            >
+              <option value="">{t.anyProfileOption}</option>
+              {PLAYER_SEARCH_PROFILES.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {lang === 'en' ? p.labelEn : p.labelPl}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
+
+        <div className="mt-3">
+          <p className="mb-1.5 text-sm text-ufa-muted">{t.durationLabel}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {ACADEMY_DURATIONS_MONTHS.map((months) => (
+              <button
+                key={months}
+                type="button"
+                onClick={() => setDurationMonths(months)}
+                className={`rounded-md border px-2.5 py-1.5 text-xs ${
+                  durationMonths === months
+                    ? 'border-ufa-accent bg-ufa-accent/10 text-ufa-accent'
+                    : 'border-ufa-border text-ufa-text hover:bg-ufa-panel-hover'
+                }`}
+              >
+                {t.monthsOption(months)} — {formatUsd(academyScoutMissionCost(team, countryId, months))}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSendScout}
+          className="mt-3 rounded-md border border-ufa-border px-3 py-1.5 text-sm text-ufa-text hover:bg-ufa-panel-hover"
+        >
+          {t.sendScoutButton}
+        </button>
         {scoutError && <p className="mt-2 text-sm text-red-400">{scoutError}</p>}
         {scoutMsg && <p className="mt-2 text-sm text-emerald-400">{scoutMsg}</p>}
 
@@ -303,23 +413,28 @@ export default function AcademyView({ career, onCareerUpdate }) {
           <p className="mt-1 text-sm text-ufa-muted">{t.noPendingMissions}</p>
         ) : (
           <ul className="mt-1 space-y-1.5 text-sm text-ufa-muted">
-            {pending.map((m) => (
-              <li key={m.id} className="flex flex-wrap items-center justify-between gap-2">
-                <span>
-                  {academyRegionLabel(m.region, lang)} ·{' '}
-                  {m.recalling ? t.recalling : t.weekProgress(m.weeksElapsed ?? 0, m.weeksTotal ?? 4)}
-                </span>
-                {!m.recalling && (
-                  <button
-                    type="button"
-                    onClick={() => handleRecall(m.id)}
-                    className="rounded-md border border-ufa-border px-2.5 py-1 text-xs text-ufa-text hover:bg-ufa-panel-hover"
-                  >
-                    {t.recallAction}
-                  </button>
-                )}
-              </li>
-            ))}
+            {pending.map((m) => {
+              const profile = m.profileId ? playerSearchProfile(m.profileId) : null
+              const profileLabel = profile ? (lang === 'en' ? profile.labelEn : profile.labelPl) : null
+              return (
+                <li key={m.id} className="flex flex-wrap items-center justify-between gap-2">
+                  <span>
+                    {academyCountryLabel(m.countryId, lang)}
+                    {profileLabel ? ` · ${profileLabel}` : ''} ·{' '}
+                    {m.recalling ? t.recalling : t.monthProgress(m.monthsElapsed ?? 0, m.monthsTotal ?? 1)}
+                  </span>
+                  {!m.recalling && (
+                    <button
+                      type="button"
+                      onClick={() => handleRecall(m.id)}
+                      className="rounded-md border border-ufa-border px-2.5 py-1 text-xs text-ufa-text hover:bg-ufa-panel-hover"
+                    >
+                      {t.recallAction}
+                    </button>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         )}
       </section>

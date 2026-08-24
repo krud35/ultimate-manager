@@ -5,6 +5,7 @@ import {
   listSlots,
   createCareer,
   persistCareer,
+  saveCareerNow,
   ensureCareerHomeTactics,
   finalizeSeason,
   startNextSeason,
@@ -72,6 +73,8 @@ import {
   recordMatchKnowledgeGainForNewMatches,
   advanceAcademyCampaigns,
   messagesFromAcademyCampaignReports,
+  advancePlayerSearchCampaigns,
+  messagesFromPlayerSearchReports,
 } from './career'
 import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
 import {
@@ -466,6 +469,17 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
       tag: `day-${trainingDate}`,
     })
   }
+  if (career.world) {
+    // Comiesięczny hak (dzień===1, samo-gatujące) — woływane codziennie, nie tylko w
+    // weekTick, wzorem processMonthlyTvPayouts/processMonthlySponsorPayouts.
+    const academyReports = advanceAcademyCampaigns(
+      worldTeamById(career.world, career.playerTeamId),
+      trainingDate ?? nextLeague.currentDate,
+    )
+    inboxMessages.push(
+      ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
+    )
+  }
   if (weekTick) {
     weeklyTeamTrainingMaintenance(nextLeague, {
       playerTeamId: career.playerTeamId,
@@ -473,9 +487,11 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
     if (career.world) {
       processWeeklyWages(career.world)
       decayScoutingKnowledge(career.world, career.playerTeamId)
-      const academyReports = advanceAcademyCampaigns(worldTeamById(career.world, career.playerTeamId))
+      const playerSearchReports = advancePlayerSearchCampaigns(
+        worldTeamById(career.world, career.playerTeamId),
+      )
       inboxMessages.push(
-        ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
+        ...messagesFromPlayerSearchReports(playerSearchReports, { ...career, league: nextLeague }),
       )
       const financialHealth = processWeeklyFinancialHealth(career.world, {
         seasonYear: career.seasonYear,
@@ -701,10 +717,19 @@ export default function App() {
     setSlots(listSlots())
   }, [])
 
-  const syncCareer = useCallback((next) => {
-    setCareer(next)
-    refreshSlots()
-  }, [refreshSlots])
+  // Autosave celowo NIE odpala się po każdej akcji (kliknięcie wiadomości,
+  // zmiana taktyki, negocjacje...) — tylko stan w pamięci jest aktualizowany.
+  // Realny zapis na dysk dzieje się wyłącznie przy jawnych checkpointach
+  // (Dalej, symulacja do meczu/daty, rozegrany mecz, zmiana sezonu, wyjście
+  // do menu) — te miejsca wołają `syncCareer(next, { save: true })`.
+  const syncCareer = useCallback((next, { save = false } = {}) => {
+    // Nie odświeżamy tu listy `slots` (ekran wyboru kariery) — ten stan jest
+    // widoczny tylko na ekranie 'slots', a pełny listSlots() dekompresuje i
+    // "rehydratuje" cały zapis, co przy każdym zapisie na dysk powodowałoby
+    // zauważalne zawieszenie UI. Ekran 'slots' odświeża listę sam przy
+    // wejściu (handleExitToSlots itd.).
+    setCareer(save ? saveCareerNow(next) : next)
+  }, [])
 
   // Oficjalny koniec (31 lipca): archiwizacja + pytanie o kolejny sezon
   useEffect(() => {
@@ -819,7 +844,7 @@ export default function App() {
         inbox: workingCareer.inbox,
         ultiworld: workingCareer.ultiworld,
       })
-      syncCareer(next)
+      syncCareer(next, { save: true })
 
       if (blockedFixture) {
         setActionRequiredMessageId(null)
@@ -895,14 +920,15 @@ export default function App() {
         })
       }
       const academyReports = []
+      const playerSearchReports = []
       for (let i = 0; i < weekTicks; i += 1) {
         weeklyTeamTrainingMaintenance(nextLeague, {
           playerTeamId: career.playerTeamId,
         })
         if (career.world) {
           decayScoutingKnowledge(career.world, career.playerTeamId)
-          academyReports.push(
-            ...advanceAcademyCampaigns(worldTeamById(career.world, career.playerTeamId)),
+          playerSearchReports.push(
+            ...advancePlayerSearchCampaigns(worldTeamById(career.world, career.playerTeamId)),
           )
         }
       }
@@ -914,13 +940,18 @@ export default function App() {
       // Bulk fast-forward skips the per-day computeCalendarDayStep loop, which is
       // normally the only place resolveScoutMissions runs — without this, missions
       // (incl. recalled/concluded academy campaigns) would never resolve for players
-      // who mostly use "Simulate until match" instead of stepping day by day.
+      // who mostly use "Simulate until match" instead of stepping day by day. The
+      // monthly academy hak (dzień===1) needs the same per-day granularity, not the
+      // weekly weekTicks loop above — so it's collected in this same day cursor.
       const resolvedScoutMissions = []
       if (career.world && rangeStart) {
         let cursor = parseISODate(rangeStart)
         const end = parseISODate(rangeEnd)
         while (cursor <= end) {
           const dateStr = formatISODate(cursor)
+          academyReports.push(
+            ...advanceAcademyCampaigns(worldTeamById(career.world, career.playerTeamId), dateStr),
+          )
           resolvedScoutMissions.push(
             ...resolveScoutMissions(career.world, career.playerTeamId, nextLeague, dateStr),
           )
@@ -928,7 +959,7 @@ export default function App() {
         }
       }
 
-      return { reports, academyReports, resolvedScoutMissions }
+      return { reports, academyReports, playerSearchReports, resolvedScoutMissions }
     },
     [career],
   )
@@ -958,7 +989,7 @@ export default function App() {
           }),
       })
 
-      const { reports, academyReports, resolvedScoutMissions } = await applyFastForwardSideEffects(
+      const { reports, academyReports, playerSearchReports, resolvedScoutMissions } = await applyFastForwardSideEffects(
         nextLeague,
         rangeStart,
         result.weekTicks ?? 0,
@@ -1021,6 +1052,7 @@ export default function App() {
         ...messagesFromTrainingReports(reports, career),
         ...messagesFromTrainingInjuries(reports, career),
         ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
+        ...messagesFromPlayerSearchReports(playerSearchReports, { ...career, league: nextLeague }),
         ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
         ...messagesFromNewPlayerMatches(
           { ...career, league: nextLeague },
@@ -1074,7 +1106,7 @@ export default function App() {
         inbox: mergeInbox({ ...career, inbox: inboxAfterReg }, inboxMessages),
         ultiworld: uw.ultiworld,
       })
-      syncCareer(next)
+      syncCareer(next, { save: true })
       // Stay on hub — user opens the match via "Go to match" when ready.
       if (isOfficialSeasonEnded(nextLeague) || nextLeague.status === 'complete') {
         setActiveTab('hub')
@@ -1117,7 +1149,7 @@ export default function App() {
             }),
         })
 
-        const { reports, academyReports, resolvedScoutMissions } = await applyFastForwardSideEffects(
+        const { reports, academyReports, playerSearchReports, resolvedScoutMissions } = await applyFastForwardSideEffects(
           nextLeague,
           rangeStart,
           result.weekTicks ?? 0,
@@ -1177,6 +1209,7 @@ export default function App() {
           ...messagesFromTrainingReports(reports, career),
           ...messagesFromTrainingInjuries(reports, career),
           ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
+          ...messagesFromPlayerSearchReports(playerSearchReports, { ...career, league: nextLeague }),
           ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
           ...messagesFromNewPlayerMatches(
             { ...career, league: nextLeague },
@@ -1230,7 +1263,7 @@ export default function App() {
           inbox: mergeInbox({ ...career, inbox: inboxAfterReg }, inboxMessages),
           ultiworld: uw.ultiworld,
         })
-        syncCareer(next)
+        syncCareer(next, { save: true })
         setLeagueFixture(null)
         if (isOfficialSeasonEnded(nextLeague) || nextLeague.status === 'complete') {
           setActiveTab('hub')
@@ -1687,10 +1720,12 @@ export default function App() {
           source: 'match',
         })
         const inboxMsgs = [analysis, postMatchEvent, ...injuryMsgs].filter(Boolean)
-        const saved = persistCareer(prev, {
-          league: copy,
-          inbox: inboxMsgs.length ? mergeInbox(prev, inboxMsgs) : prev.inbox,
-        })
+        const saved = saveCareerNow(
+          persistCareer(prev, {
+            league: copy,
+            inbox: inboxMsgs.length ? mergeInbox(prev, inboxMsgs) : prev.inbox,
+          }),
+        )
         refreshSlots()
         return saved
       })
@@ -1720,7 +1755,7 @@ export default function App() {
         const nextLeague = cloneLeague(career.league)
         applyMatchResultToLeague(nextLeague, forfeit)
         const next = persistCareer(career, { league: nextLeague })
-        syncCareer(next)
+        syncCareer(next, { save: true })
         setLeagueFixture(null)
         setActiveTab('hub')
         return
@@ -1841,7 +1876,7 @@ export default function App() {
 
   const handleExitToSlots = useCallback(() => {
     if (career) {
-      persistCareer(career)
+      saveCareerNow(career)
       refreshSlots()
     }
     setCareer(null)

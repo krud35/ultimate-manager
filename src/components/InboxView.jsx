@@ -1087,11 +1087,22 @@ function MessageDetail({
         </button>
       )}
 
+      {message.type === INBOX_TYPES.SCOUT_REPORT && p.kind === 'playerSearchWatch' && onNavigate && (
+        <button
+          type="button"
+          onClick={() => onNavigate('scouting-center')}
+          className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
+        >
+          {t.goTo}: {lang === 'en' ? 'Scouting center' : 'Centrum skautingu'}
+        </button>
+      )}
+
       {meta?.navigateTo &&
         onNavigate &&
         message.type !== INBOX_TYPES.TRANSFER_OFFER &&
         !(message.type === INBOX_TYPES.SCOUT_REPORT && p.opponentTeamId && onOpenTeam) &&
-        !(message.type === INBOX_TYPES.SCOUT_REPORT && p.kind === 'academyWatch') && (
+        !(message.type === INBOX_TYPES.SCOUT_REPORT && p.kind === 'academyWatch') &&
+        !(message.type === INBOX_TYPES.SCOUT_REPORT && p.kind === 'playerSearchWatch') && (
           <button
             type="button"
             onClick={() => onNavigate(meta.navigateTo)}

@@ -67,6 +67,18 @@ const pl = {
   styleUnknownHint: 'Dokładny system nieznany — wyślij skauta, by go poznać.',
   tacticsKnowledgeLabel: 'Znajomość taktyki',
   forceLabel: 'Force',
+  playerSearchTitle: 'Szukaj zawodnika wg profilu',
+  playerSearchHint:
+    'Skaut przeszuka całą ligę (i wolnych agentów) pod kątem wybranego profilu i będzie co tydzień raportował o tych samych kandydatach.',
+  profileLabel: 'Profil',
+  fitLabel: 'Dopasowanie',
+  productionLabel: 'Produkcja (sezon)',
+  colValue: 'Wartość',
+  resultsTitle: 'Wyniki poszukiwań',
+  resultsEmpty: 'Brak aktywnych poszukiwań — wybierz profil i wyślij skauta.',
+  weekProgress: (elapsed, total) => `Tydzień ${elapsed}/${total}`,
+  recalling: 'Skaut wraca…',
+  recallAction: 'Odwołaj skauta',
 }
 
 const en = {
@@ -124,6 +136,18 @@ const en = {
   styleUnknownHint: 'Exact system unknown — send a scout to find out.',
   tacticsKnowledgeLabel: 'Tactics knowledge',
   forceLabel: 'Force',
+  playerSearchTitle: 'Search for a player by profile',
+  playerSearchHint:
+    'Your scout will scan the whole league (and free agents) for the chosen profile, then report on the same shortlist every week.',
+  profileLabel: 'Profile',
+  fitLabel: 'Fit',
+  productionLabel: 'Production (season)',
+  colValue: 'Value',
+  resultsTitle: 'Search results',
+  resultsEmpty: 'No active search — pick a profile and send a scout.',
+  weekProgress: (elapsed, total) => `Week ${elapsed}/${total}`,
+  recalling: 'Scout heading home…',
+  recallAction: 'Recall scout',
 }
 
 export function scoutingStrings(lang = UI_LANG.PL) {

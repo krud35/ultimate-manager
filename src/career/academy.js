@@ -33,6 +33,12 @@ import { aiAutoPlayerContractTerms } from './transfers/playerNegotiation.js'
 import { signPlayerContract, weeklyWageFromOvr } from './transfers/playerContracts.js'
 import { academyIntakeMult, getFacilityLevel } from './clubFacilities.js'
 import { worldTeamsList } from './worldState.js'
+import { eucsTeamCountry } from '../data/eucsLeagueTeams.js'
+import {
+  ACADEMY_COUNTRIES,
+  academyCountryStrength,
+  pickAcademyName,
+} from '../data/academyScoutGeography.js'
 
 export const ACADEMY_GEN_VERSION = 1
 export const ACADEMY_JOIN_AGE_MIN = 16
@@ -41,20 +47,6 @@ export const ACADEMY_AGE_OUT = 21
 /** Pierwszy kontrakt zawodnika z akademii płaci jak za ten OVR, niezależnie od realnego —
  * to jego pierwszy profesjonalny kontrakt, nie ma jeszcze siły przetargowej gwiazdy. */
 export const ROOKIE_WAGE_OVR_CAP = 68
-
-export const ACADEMY_SCOUT_REGIONS = [
-  { id: 'northAmerica', labelPl: 'Ameryka Północna', labelEn: 'North America' },
-  { id: 'southAmerica', labelPl: 'Ameryka Południowa', labelEn: 'South America' },
-  { id: 'europe', labelPl: 'Europa', labelEn: 'Europe' },
-  { id: 'oceania', labelPl: 'Oceania', labelEn: 'Oceania' },
-  { id: 'asia', labelPl: 'Azja', labelEn: 'Asia' },
-]
-
-export function academyRegionLabel(regionId, lang = 'pl') {
-  const region = ACADEMY_SCOUT_REGIONS.find((r) => r.id === regionId)
-  if (!region) return regionId ?? ''
-  return lang === 'en' ? region.labelEn : region.labelPl
-}
 
 const FIRST_NAMES = [
   'Alex', 'Jordan', 'Casey', 'Riley', 'Morgan', 'Quinn', 'Avery', 'Cameron', 'Drew', 'Jamie',
@@ -170,19 +162,40 @@ export function worldAcademyPlayersList(world) {
 
 // --- prospect generation ---
 
-/** Pasmo docelowego OVR: baseline losowe pasmo, przesunięte przez poziom akademii i źródło. */
-function rollProspectOvrBand(rng, { intakeMult = 1, source = 'intake' } = {}) {
+/**
+ * Pasmo docelowego OVR: baseline losowe pasmo, przesunięte przez poziom akademii/źródło.
+ * Ukryta siła frisbee kraju (`countryStrength` 0-100) NIE przesuwa już zakresu — zamiast
+ * tego kształtuje PRAWDOPODOBIEŃSTWO trafienia lepszego pasma: wysoka szansa na
+ * "przeciętnego" kandydata zawsze dominuje, ale silne kraje wyraźnie podnoszą szansę na
+ * pasmo "gwiazda" (i odwrotnie dla słabych krajów).
+ */
+function rollProspectOvrBand(rng, { intakeMult = 1, source = 'intake', countryStrength = 50 } = {}) {
   const shift = Math.round((intakeMult - 1) * 10)
   const scoutBonus = source === 'scouted' ? 4 : 0
+  const s = countryStrength / 100
+  const starChance = Math.max(0.03, Math.min(0.35, 0.08 + s * 0.22))
+  const midChance = Math.max(0.15, Math.min(0.5, 0.3 + s * 0.15))
   const r = rng()
   let band
-  if (r < 0.35) band = { min: 58, max: 70 }
-  else if (r < 0.75) band = { min: 66, max: 76 }
-  else band = { min: 72, max: 82 }
+  if (r < starChance) band = { min: 72, max: 82 }
+  else if (r < starChance + midChance) band = { min: 66, max: 76 }
+  else band = { min: 58, max: 70 } // większość rolli — pasmo "przeciętny"
   return {
     min: Math.max(40, band.min + shift + scoutBonus),
     max: Math.max(45, band.max + shift + scoutBonus),
   }
+}
+
+/** Podbija tier sub-statu proporcjonalnie do wagi profilu poszukiwanego zawodnika
+ * (patrz `PLAYER_SEARCH_PROFILES` w scouting.js) — bez profilu zwraca tier kategorii
+ * bez zmian, czyli zachowanie identyczne jak przed dodaniem profili. */
+const ACADEMY_PROFILE_BIAS_STRENGTH = 0.35
+function profileBiasedTier(cat, key, baseTiers, profileWeights) {
+  const base = baseTiers[cat]
+  if (!profileWeights) return base
+  const match = profileWeights.find((w) => w.category === cat && w.key === key)
+  if (!match) return base
+  return Math.max(0, Math.min(1, base + match.weight * ACADEMY_PROFILE_BIAS_STRENGTH))
 }
 
 /**
@@ -190,19 +203,25 @@ function rollProspectOvrBand(rng, { intakeMult = 1, source = 'intake' } = {}) {
  * `computePotential`/`ensurePlayerDevelopment` (nie ad-hoc wzór), bo player.potential
  * zostaje niewypełniony przed wywołaniem — to jest właśnie ulepszenie względem youthIntake.js.
  */
-export function createAcademyProspect(rng, { seasonYear, teamId, source = 'intake', region = null, intakeMult = 1, index = 0 } = {}) {
+export function createAcademyProspect(rng, { seasonYear, teamId, source = 'intake', countryId = null, profileWeights = null, intakeMult = 1, index = 0 } = {}) {
   const id = `academy-${teamId}-${seasonYear}-${hashSeed(teamId, seasonYear, source, index, rng())}`
-  const { min, max } = rollProspectOvrBand(rng, { intakeMult, source })
+  const scoutedCountry = countryId ? ACADEMY_COUNTRIES[countryId] : null
+  const countryStrength = scoutedCountry ? academyCountryStrength(countryId) : 50
+  const nationality = scoutedCountry ? scoutedCountry.nameEn : eucsTeamCountry(teamId)
+  const { min, max } = rollProspectOvrBand(rng, { intakeMult, source, countryStrength })
   const targetOvr = Math.max(40, Math.min(88, min + Math.floor(rng() * Math.max(1, max - min + 1))))
   const tiers = buildPlayerArchetypeTiers(rng)
-  let skills = buildBalancedSubStats(hashSeed(id, 'skills'), (cat) => tiers[cat])
+  let skills = buildBalancedSubStats(hashSeed(id, 'skills'), (cat, key) =>
+    profileBiasedTier(cat, key, tiers, profileWeights),
+  )
   skills = scaleSkillsToTargetOvr(skills, targetOvr)
   const age = ACADEMY_JOIN_AGE_MIN + Math.floor(rng() * (ACADEMY_JOIN_AGE_MAX - ACADEMY_JOIN_AGE_MIN + 1))
+  const name = countryId ? pickAcademyName(rng, countryId) : { firstName: pick(rng, FIRST_NAMES), lastName: pick(rng, LAST_NAMES) }
 
   const player = {
     id,
-    firstName: pick(rng, FIRST_NAMES),
-    lastName: pick(rng, LAST_NAMES),
+    firstName: name.firstName,
+    lastName: name.lastName,
     jersey: 1 + Math.floor(rng() * 99),
     age,
     skills,
@@ -211,7 +230,8 @@ export function createAcademyProspect(rng, { seasonYear, teamId, source = 'intak
     inAcademy: true,
     academyJoinedSeason: seasonYear ?? null,
     academySource: source,
-    academyRegion: region,
+    academyCountry: countryId,
+    nationality,
     ufaReference: {
       goals: 0,
       assists: 0,
