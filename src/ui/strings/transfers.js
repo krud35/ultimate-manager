@@ -98,6 +98,11 @@ const pl = {
 
   yourRosterValues: 'Twój skład · wartości',
 
+  transferListedBadge: 'Na liście',
+  myListedTitle: 'Twoi zawodnicy na liście transferowej',
+  myListedEmpty: 'Żaden z Twoich zawodników nie jest na liście transferowej.',
+  removeFromListAction: 'Zdejmij z listy',
+
   yourDeals: (n) => `Twoje deale · łącznie w lidze ${n}`,
 
   allDeals: (n) => `Wszystkie transakcje w lidze · łącznie ${n}`,
@@ -211,6 +216,29 @@ const pl = {
 
   perWeekShort: '/t',
 
+  loan: 'Wypożycz',
+  loanOutTitle: 'Wypożyczenie zawodnika',
+  loanInTitle: 'Prośba o wypożyczenie',
+  loanDestinationClub: 'Klub docelowy',
+  loanFee: 'Opłata za wypożyczenie (USD)',
+  loanDuration: 'Długość wypożyczenia',
+  loanWageSplit: (pct) => `Podział pensji · klub docelowy płaci ${pct}%`,
+  loanWageSplitHintOut: (pct) => `Ty zapłacisz ${100 - pct}% tygodniówki, oni ${pct}%.`,
+  loanWageSplitHintIn: (pct) => `Ty zapłacisz ${pct}% tygodniówki, oni ${100 - pct}%.`,
+  loanBuyClause: 'Klauzula wykupu',
+  loanBuyClauseNone: 'Brak',
+  loanBuyClauseOption: 'Opcja',
+  loanBuyClauseObligation: 'Obowiązek',
+  loanBuyClauseFee: 'Kwota wykupu (USD)',
+  sendLoanProposal: 'Wyślij propozycję',
+  loanSentFlash: 'Propozycja wypożyczenia wysłana — sprawdź skrzynkę za 1–3 dni',
+  myLoansOutTitle: 'Twoi zawodnicy na wypożyczeniu',
+  myLoansOutEmpty: 'Żaden z Twoich zawodników nie jest wypożyczony.',
+  myLoansInTitle: 'Zawodnicy wypożyczeni do Twojego klubu',
+  myLoansInEmpty: 'Nie masz żadnych zawodników wypożyczonych od innych klubów.',
+  loanReturnDateLabel: 'Powrót',
+  loanExerciseBuyClause: (usd) => `Wykup za ${usd}`,
+  loanLetReturn: 'Niech wróci',
 }
 
 
@@ -310,6 +338,11 @@ const en = {
   showAll: 'Show: all',
 
   yourRosterValues: 'Your roster · values',
+
+  transferListedBadge: 'Listed',
+  myListedTitle: 'Your transfer-listed players',
+  myListedEmpty: 'None of your players are on the transfer list.',
+  removeFromListAction: 'Remove from list',
 
   yourDeals: (n) => `Your deals · ${n} league-wide`,
 
@@ -424,6 +457,29 @@ const en = {
 
   perWeekShort: '/wk',
 
+  loan: 'Loan',
+  loanOutTitle: 'Loan out player',
+  loanInTitle: 'Loan request',
+  loanDestinationClub: 'Destination club',
+  loanFee: 'Loan fee (USD)',
+  loanDuration: 'Loan duration',
+  loanWageSplit: (pct) => `Wage split · destination pays ${pct}%`,
+  loanWageSplitHintOut: (pct) => `You pay ${100 - pct}% of the wage, they pay ${pct}%.`,
+  loanWageSplitHintIn: (pct) => `You pay ${pct}% of the wage, they pay ${100 - pct}%.`,
+  loanBuyClause: 'Buy clause',
+  loanBuyClauseNone: 'None',
+  loanBuyClauseOption: 'Option',
+  loanBuyClauseObligation: 'Obligation',
+  loanBuyClauseFee: 'Buy-out fee (USD)',
+  sendLoanProposal: 'Send proposal',
+  loanSentFlash: 'Loan proposal sent — check your inbox in 1–3 days',
+  myLoansOutTitle: 'Your players on loan',
+  myLoansOutEmpty: 'None of your players are out on loan.',
+  myLoansInTitle: 'Players on loan at your club',
+  myLoansInEmpty: "You don't have any players on loan from other clubs.",
+  loanReturnDateLabel: 'Return',
+  loanExerciseBuyClause: (usd) => `Buy out for ${usd}`,
+  loanLetReturn: 'Let him return',
 }
 
 

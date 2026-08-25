@@ -23,6 +23,8 @@ const pl = {
   matchStamina: ' · stamina z meczu',
   matchFreshnessCol: 'Świeżość mecz.',
   hand: 'Ręka',
+  transferListedBadge: 'Na liście',
+  loanedInBadge: (club) => `Wypożyczony od ${club}`,
 }
 
 const en = {
@@ -48,6 +50,8 @@ const en = {
   matchStamina: ' · match stamina',
   matchFreshnessCol: 'Match freshness',
   hand: 'Hand',
+  transferListedBadge: 'Listed',
+  loanedInBadge: (club) => `On loan from ${club}`,
 }
 
 export function rosterStrings(lang = UI_LANG.PL) {

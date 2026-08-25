@@ -97,6 +97,8 @@ export {
   acceptIncomingBid,
   respondToIncomingBid,
   negotiatePlayerContract,
+  setPlayerTransferListed,
+  checkForcedTransferListDemands,
 } from './transferEngine.js'
 
 export {
@@ -116,3 +118,25 @@ export {
   simulateAiOffseasonTransferBurst,
   simulateAiTransfersForDateRange,
 } from './aiMarket.js'
+
+export {
+  MIN_ROSTER_TO_LOAN_OUT,
+  LOAN_DURATION_PRESETS,
+  computeLoanReturnDate,
+  ensureWorldLoans,
+  startLoan,
+  returnLoanedPlayer,
+  resolveLoanBuyClause,
+  decideLoanBuyClause,
+  processLoanReturns,
+  processLoanReturnsForDateRange,
+  listActiveLoans,
+  queueLoanOutOffer,
+  queueLoanInRequest,
+  respondToIncomingLoanRequest,
+  evaluateLoanOffer,
+  evaluateLoanRequestFromParentSide,
+  evaluateLoanBuyClauseAiDecision,
+  resolveOutgoingLoanOffer,
+  resolveIncomingLoanRequestReply,
+} from './loans.js'

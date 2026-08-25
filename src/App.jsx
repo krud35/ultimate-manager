@@ -65,6 +65,7 @@ import {
   declinePendingRegistration,
   formatUsd,
   renewPlayerContract,
+  setPlayerTransferListed,
   isClubBankrupt,
   messagesFromScoutMissions,
   resolveScoutMissions,
@@ -75,6 +76,12 @@ import {
   messagesFromAcademyCampaignReports,
   advancePlayerSearchCampaigns,
   messagesFromPlayerSearchReports,
+  processLoanReturns,
+  processLoanReturnsForDateRange,
+  generateIncomingLoanOffers,
+  queueLoanOutOffer,
+  checkForcedTransferListDemands,
+  messagesFromForcedTransferListDemands,
 } from './career'
 import { advanceNationalTeamsForDate } from './career/nationalTeamSeason.js'
 import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
@@ -511,11 +518,19 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
           { date: trainingDate ?? nextLeague.currentDate, seasonYear: career.seasonYear },
         ),
       )
+      const forcedListDemands = checkForcedTransferListDemands(career.world, {
+        leaguePlayerStats: nextLeague.playerStats,
+        standings: nextLeague.standings,
+      })
+      inboxMessages.push(
+        ...messagesFromForcedTransferListDemands(forcedListDemands, { ...career, league: nextLeague }),
+      )
     }
   }
 
   let world = career.world
   let transferLog = career.transferLog ?? []
+  let loanLog = career.loanLog ?? []
   let aiTransfersLastDate = career.aiTransfersLastDate ?? null
   const probe = { ...career, league: nextLeague, world }
   if (
@@ -526,11 +541,12 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
     const simDate = trainingDate ?? nextLeague.currentDate
     if (simDate && aiTransfersLastDate !== simDate) {
       const ai = simulateAiTransferActivity(
-        { ...probe, transferLog },
+        { ...probe, transferLog, loanLog },
         { mode: 'daily', date: simDate },
       )
       world = ai.world ?? world
       transferLog = ai.transferLog ?? transferLog
+      loanLog = ai.loanLog ?? loanLog
       aiTransfersLastDate = simDate
     }
   }
@@ -557,11 +573,12 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
     { date: offerDate },
   )
   const delayed = processDelayedTransferReplies(
-    { ...offerCareer, inbox: inboxBase },
+    { ...offerCareer, loanLog, inbox: inboxBase },
     { date: offerDate },
   )
   world = delayed.world ?? world
   transferLog = delayed.transferLog ?? transferLog
+  loanLog = delayed.loanLog ?? loanLog
   inboxBase = delayed.inbox ?? inboxBase
   if (delayed.resolved > 0) {
     inboxMessages.push(
@@ -572,6 +589,14 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
       }),
     )
   }
+  const loanReturns = processLoanReturns(
+    { ...offerCareer, world, transferLog, loanLog, inbox: inboxBase },
+    { date: offerDate },
+  )
+  world = loanReturns.world ?? world
+  loanLog = loanReturns.loanLog ?? loanLog
+  transferLog = loanReturns.transferLog ?? transferLog
+  if (loanReturns.inboxMessages?.length) inboxMessages.push(...loanReturns.inboxMessages)
   const regNotices = spawnPendingRegistrationNotices(
     { ...offerCareer, world, transferLog, inbox: inboxBase },
     { date: offerDate },
@@ -582,6 +607,9 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
   }
   inboxMessages.push(
     ...generateIncomingTransferOffers({ ...offerCareer, world, transferLog, inbox: inboxBase }, { date: offerDate }),
+  )
+  inboxMessages.push(
+    ...generateIncomingLoanOffers({ ...offerCareer, world, inbox: inboxBase }, { date: offerDate }),
   )
   inboxMessages.push(...generateRandomEvents(offerCareer, { date: offerDate }))
   inboxMessages.push(
@@ -618,6 +646,7 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
     league: leagueOut,
     world,
     transferLog,
+    loanLog,
     aiTransfersLastDate,
     inbox,
     inboxMessages,
@@ -808,6 +837,7 @@ export default function App() {
             league: step.league,
             world: step.world,
             transferLog: step.transferLog,
+            loanLog: step.loanLog,
             aiTransfersLastDate: step.aiTransfersLastDate,
             inbox: step.inbox,
             ultiworld: step.ultiworld,
@@ -848,6 +878,7 @@ export default function App() {
         league: workingCareer.league,
         world: workingCareer.world,
         transferLog: workingCareer.transferLog,
+        loanLog: workingCareer.loanLog,
         aiTransfersLastDate: workingCareer.aiTransfersLastDate,
         inbox: workingCareer.inbox,
         ultiworld: workingCareer.ultiworld,
@@ -929,6 +960,7 @@ export default function App() {
       }
       const academyReports = []
       const playerSearchReports = []
+      const forcedListMessages = []
       for (let i = 0; i < weekTicks; i += 1) {
         weeklyTeamTrainingMaintenance(nextLeague, {
           playerTeamId: career.playerTeamId,
@@ -937,6 +969,13 @@ export default function App() {
           decayScoutingKnowledge(career.world, career.playerTeamId)
           playerSearchReports.push(
             ...advancePlayerSearchCampaigns(worldTeamById(career.world, career.playerTeamId)),
+          )
+          const forcedListDemands = checkForcedTransferListDemands(career.world, {
+            leaguePlayerStats: nextLeague.playerStats,
+            standings: nextLeague.standings,
+          })
+          forcedListMessages.push(
+            ...messagesFromForcedTransferListDemands(forcedListDemands, { ...career, league: nextLeague }),
           )
         }
       }
@@ -988,6 +1027,7 @@ export default function App() {
         resolvedScoutMissions,
         nationalTeamMessages,
         financialHealthMessages,
+        forcedListMessages,
       }
     },
     [career],
@@ -1025,6 +1065,7 @@ export default function App() {
         resolvedScoutMissions,
         nationalTeamMessages,
         financialHealthMessages,
+        forcedListMessages,
       } = await applyFastForwardSideEffects(
         nextLeague,
         rangeStart,
@@ -1044,10 +1085,12 @@ export default function App() {
 
       let world = career.world
       let transferLog = career.transferLog ?? []
-      const probe = { ...career, league: nextLeague, world, transferLog }
+      let loanLog = career.loanLog ?? []
+      const probe = { ...career, league: nextLeague, world, transferLog, loanLog }
       const ai = simulateAiTransfersForDateRange(probe, rangeStart, nextLeague.currentDate)
       world = ai.world ?? world
       transferLog = ai.transferLog ?? transferLog
+      loanLog = ai.loanLog ?? loanLog
 
       const monthlyPayouts = world
         ? processMonthlySponsorPayoutsForRange(world, rangeStart, nextLeague.currentDate)
@@ -1061,13 +1104,24 @@ export default function App() {
         { date: nextLeague.currentDate },
       )
       const delayed = processDelayedTransferRepliesForDateRange(
-        { ...career, league: nextLeague, world, transferLog, inbox: inboxBaseExpired },
+        { ...career, league: nextLeague, world, transferLog, loanLog, inbox: inboxBaseExpired },
         rangeStart,
         nextLeague.currentDate,
       )
       world = delayed.world ?? world
       transferLog = delayed.transferLog ?? transferLog
-      const inboxBase = delayed.inbox ?? inboxBaseExpired
+      loanLog = delayed.loanLog ?? loanLog
+      const inboxAfterDelayed = delayed.inbox ?? inboxBaseExpired
+
+      const loanReturns = processLoanReturnsForDateRange(
+        { ...career, league: nextLeague, world, transferLog, loanLog, inbox: inboxAfterDelayed },
+        rangeStart,
+        nextLeague.currentDate,
+      )
+      world = loanReturns.world ?? world
+      loanLog = loanReturns.loanLog ?? loanLog
+      transferLog = loanReturns.transferLog ?? transferLog
+      const inboxBase = inboxAfterDelayed
 
       const regNotices = spawnPendingRegistrationNotices(
         { ...career, league: nextLeague, world, transferLog, inbox: inboxBase },
@@ -1092,6 +1146,7 @@ export default function App() {
         ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
         ...nationalTeamMessages,
         ...financialHealthMessages,
+        ...forcedListMessages,
         ...messagesFromNewPlayerMatches(
           { ...career, league: nextLeague },
           prevMatchHistory,
@@ -1114,6 +1169,11 @@ export default function App() {
           { ...career, league: nextLeague, world, transferLog, inbox: inboxAfterReg },
           { date: nextLeague.currentDate },
         ),
+        ...generateIncomingLoanOffers(
+          { ...career, league: nextLeague, world, inbox: inboxAfterReg },
+          { date: nextLeague.currentDate },
+        ),
+        ...loanReturns.inboxMessages ?? [],
         ...generateRandomEvents(
           { ...career, league: nextLeague, world },
           { date: nextLeague.currentDate },
@@ -1140,6 +1200,7 @@ export default function App() {
         league: leagueOut,
         world,
         transferLog,
+        loanLog,
         aiTransfersLastDate: nextLeague.currentDate,
         inbox: mergeInbox({ ...career, inbox: inboxAfterReg }, inboxMessages),
         ultiworld: uw.ultiworld,
@@ -1210,10 +1271,12 @@ export default function App() {
 
         let world = career.world
         let transferLog = career.transferLog ?? []
-        const probe = { ...career, league: nextLeague, world, transferLog }
+        let loanLog = career.loanLog ?? []
+        const probe = { ...career, league: nextLeague, world, transferLog, loanLog }
         const ai = simulateAiTransfersForDateRange(probe, rangeStart, nextLeague.currentDate)
         world = ai.world ?? world
         transferLog = ai.transferLog ?? transferLog
+        loanLog = ai.loanLog ?? loanLog
 
         const monthlyPayouts = world
           ? processMonthlySponsorPayoutsForRange(world, rangeStart, nextLeague.currentDate)
@@ -1227,13 +1290,24 @@ export default function App() {
           { date: nextLeague.currentDate },
         )
         const delayed = processDelayedTransferRepliesForDateRange(
-          { ...career, league: nextLeague, world, transferLog, inbox: inboxBaseExpired },
+          { ...career, league: nextLeague, world, transferLog, loanLog, inbox: inboxBaseExpired },
           rangeStart,
           nextLeague.currentDate,
         )
         world = delayed.world ?? world
         transferLog = delayed.transferLog ?? transferLog
-        const inboxBase = delayed.inbox ?? inboxBaseExpired
+        loanLog = delayed.loanLog ?? loanLog
+        const inboxAfterDelayed = delayed.inbox ?? inboxBaseExpired
+
+        const loanReturns = processLoanReturnsForDateRange(
+          { ...career, league: nextLeague, world, transferLog, loanLog, inbox: inboxAfterDelayed },
+          rangeStart,
+          nextLeague.currentDate,
+        )
+        world = loanReturns.world ?? world
+        loanLog = loanReturns.loanLog ?? loanLog
+        transferLog = loanReturns.transferLog ?? transferLog
+        const inboxBase = inboxAfterDelayed
 
         const regNotices = spawnPendingRegistrationNotices(
           { ...career, league: nextLeague, world, transferLog, inbox: inboxBase },
@@ -1280,6 +1354,11 @@ export default function App() {
             { ...career, league: nextLeague, world, transferLog, inbox: inboxAfterReg },
             { date: nextLeague.currentDate },
           ),
+          ...generateIncomingLoanOffers(
+            { ...career, league: nextLeague, world, inbox: inboxAfterReg },
+            { date: nextLeague.currentDate },
+          ),
+          ...loanReturns.inboxMessages ?? [],
           ...generateRandomEvents(
             { ...career, league: nextLeague, world },
             { date: nextLeague.currentDate },
@@ -1306,6 +1385,7 @@ export default function App() {
           league: leagueOut,
           world,
           transferLog,
+          loanLog,
           aiTransfersLastDate: nextLeague.currentDate,
           inbox: mergeInbox({ ...career, inbox: inboxAfterReg }, inboxMessages),
           ultiworld: uw.ultiworld,
@@ -1367,6 +1447,7 @@ export default function App() {
         world: patch.world ?? career.world,
         league: career.league,
         transferLog: nextLog,
+        loanLog: patch.loanLog ?? career.loanLog,
         aiOffseasonTransferWaves:
           patch.aiOffseasonTransferWaves ?? career.aiOffseasonTransferWaves,
         aiTransfersLastDate: patch.aiTransfersLastDate ?? career.aiTransfersLastDate,
@@ -1826,6 +1907,43 @@ export default function App() {
     [career, syncCareer],
   )
 
+  const handleToggleTransferList = useCallback(
+    (playerId) => {
+      if (!career?.world) return { ok: false }
+      const team = worldTeamById(career.world, career.playerTeamId)
+      const currentlyListed = !!team?.players?.find(
+        (p) => String(p.id) === String(playerId),
+      )?.transferListed
+      const result = setPlayerTransferListed(team, playerId, !currentlyListed)
+      if (result.ok) {
+        const next = persistCareer(career, { world: career.world })
+        syncCareer(next)
+      }
+      return result
+    },
+    [career, syncCareer],
+  )
+
+  const handleProposeLoanOut = useCallback(
+    (playerId, terms) => {
+      if (!career?.world) return { ok: false }
+      const result = queueLoanOutOffer(career, {
+        playerId,
+        destinationTeamId: terms.destinationTeamId,
+        fee: terms.fee,
+        durationPreset: terms.durationPreset,
+        wageSplitPct: terms.wageSplitPct,
+        buyClause: terms.buyClause,
+      })
+      if (!result.ok) return result
+      const nextInbox = mergeInbox(career, [result.message])
+      const next = persistCareer(career, { inbox: nextInbox })
+      syncCareer(next)
+      return { ok: true, flash: 'Propozycja wypożyczenia wysłana.' }
+    },
+    [career, syncCareer],
+  )
+
   const handleReturnToLeague = useCallback(() => {
     setLeagueFixture(null)
     setActiveTab('hub')
@@ -2196,6 +2314,8 @@ export default function App() {
             teams={worldTeams}
             clubOnly
             onExtendContract={handleExtendContract}
+            onToggleTransferList={handleToggleTransferList}
+            onProposeLoanOut={handleProposeLoanOut}
           />
         )}
 

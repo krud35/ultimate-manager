@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getOverallRating } from '../data/mockPlayers'
 import PlayerProfileModal from './PlayerProfileModal'
 import NegotiateModal from './NegotiateModal'
+import LoanTermsModal from './LoanTermsModal'
 import {
   formatUsd,
   formatUsdCompact,
@@ -27,6 +28,10 @@ import {
   queueScoutMission,
   scoutMissionCost,
   findPlayerTeamId,
+  setPlayerTransferListed,
+  listActiveLoans,
+  queueLoanInRequest,
+  decideLoanBuyClause,
 } from '../career'
 
 function WindowBanner({ windowState }) {
@@ -76,6 +81,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
   const [pageSize, setPageSize] = useState(20)
   const [page, setPage] = useState(0)
   const [selected, setSelected] = useState(null)
+  const [loanRow, setLoanRow] = useState(null)
   const [profilePlayer, setProfilePlayer] = useState(null)
   const [profileTeamName, setProfileTeamName] = useState(null)
   const [flash, setFlash] = useState(null)
@@ -101,6 +107,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
     onCareerUpdate({
       world: ai.world ?? career.world,
       transferLog: ai.transferLog ?? career.transferLog,
+      loanLog: ai.loanLog ?? career.loanLog,
       aiOffseasonTransferWaves: waves + 1,
     })
     if (ai.deals?.length) {
@@ -112,9 +119,14 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowState.open, windowState.kind, career.seasonIndex, career.phase])
 
+  // `career.world` mutuje się w miejscu (transferListed toggle) — referencja się nie zmienia,
+  // więc doliczamy licznik odświeżenia, żeby memoizacja rzeczywiście przeliczyła się po toggle
+  // wykonanym bez opuszczania tego widoku.
+  const [listedRefreshTick, setListedRefreshTick] = useState(0)
+
   const market = useMemo(
     () => listTransferMarketWithFreeAgents(career.world, career.playerTeamId),
-    [career.world, career.playerTeamId],
+    [career.world, career.playerTeamId, listedRefreshTick],
   )
 
   const teams = useMemo(() => {
@@ -143,6 +155,8 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
     }
     const sorted = [...list]
     sorted.sort((a, b) => {
+      const listedDiff = (b.listed ? 1 : 0) - (a.listed ? 1 : 0)
+      if (listedDiff !== 0) return listedDiff
       if (sortKey === 'age') return (a.age ?? 99) - (b.age ?? 99)
       if (sortKey === 'name') return a.name.localeCompare(b.name)
       return b.marketValue - a.marketValue
@@ -168,6 +182,64 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
     players.sort((a, b) => getOverallRating(b.skills) - getOverallRating(a.skills))
     return players
   }, [buyer])
+
+  const myListed = useMemo(
+    () => (isClub ? (buyer?.players ?? []).filter((p) => p.transferListed) : []),
+    [buyer, isClub, listedRefreshTick],
+  )
+
+  const handleRemoveFromList = (playerId) => {
+    const result = setPlayerTransferListed(buyer, playerId, false)
+    if (result.ok) {
+      setListedRefreshTick((t) => t + 1)
+      onCareerUpdate({ world: career.world })
+    }
+  }
+
+  const activeLoans = useMemo(
+    () => listActiveLoans(career.world, { teamId: career.playerTeamId }),
+    [career.world, career.playerTeamId, listedRefreshTick],
+  )
+  const loansOut = useMemo(
+    () => activeLoans.filter((l) => l.parentTeamId === career.playerTeamId),
+    [activeLoans, career.playerTeamId],
+  )
+  const loansIn = useMemo(
+    () => activeLoans.filter((l) => l.destinationTeamId === career.playerTeamId),
+    [activeLoans, career.playerTeamId],
+  )
+
+  const handleLoanRequest = (terms) => {
+    if (!loanRow) return
+    const result = queueLoanInRequest(career, {
+      playerId: loanRow.playerId,
+      fee: terms.fee,
+      durationPreset: terms.durationPreset,
+      wageSplitPct: terms.wageSplitPct,
+      buyClause: terms.buyClause,
+    })
+    if (!result.ok) {
+      setFlash({ type: 'error', text: translateTransferError(result.error, lang) ?? t.transferError })
+      return
+    }
+    onCareerUpdate({ inbox: mergeInbox(career, [result.message]) })
+    setFlash({ type: 'ok', text: t.loanSentFlash })
+    setLoanRow(null)
+  }
+
+  const handleLoanBuyClauseDecision = (playerId, exercise) => {
+    const result = decideLoanBuyClause(career, { playerId, exercise })
+    if (result.ok) {
+      setListedRefreshTick((tick) => tick + 1)
+      onCareerUpdate({
+        world: result.world ?? career.world,
+        loanLog: result.loanLogEntry
+          ? [...(career.loanLog ?? []), result.loanLogEntry]
+          : career.loanLog,
+        transferLog: result.transferLog ?? career.transferLog,
+      })
+    }
+  }
 
   const log = career.transferLog ?? []
 
@@ -257,6 +329,103 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
         )}
       </div>
 
+      {isClub && myListed.length > 0 && (
+        <section className="rounded-xl border border-ufa-border bg-ufa-panel p-4 sm:p-6 shadow-xl shadow-black/30">
+          <h3 className="text-sm font-semibold text-ufa-text">{t.myListedTitle}</h3>
+          <ul className="mt-3 space-y-2">
+            {myListed.map((p) => {
+              const ovr = getOverallRating(p.skills)
+              const value = getPlayerMarketValue(p)
+              return (
+                <li
+                  key={p.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-3 py-2 text-sm"
+                >
+                  <span className="text-ufa-text">
+                    {p.firstName} {p.lastName}
+                    <span className="text-ufa-muted"> · {ovr}</span>
+                    <span className="text-ufa-gold tabular-nums"> · {formatUsdCompact(value)}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveFromList(p.id)}
+                    className="rounded-md px-3 py-1 text-xs font-medium text-ufa-muted ring-1 ring-ufa-border hover:bg-ufa-panel-hover hover:text-ufa-text"
+                  >
+                    {t.removeFromListAction}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
+
+      {isClub && (loansOut.length > 0 || loansIn.length > 0) && (
+        <section className="rounded-xl border border-ufa-border bg-ufa-panel p-4 sm:p-6 shadow-xl shadow-black/30 space-y-4">
+          {loansOut.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-ufa-text">{t.myLoansOutTitle}</h3>
+              <ul className="mt-3 space-y-2">
+                {loansOut.map((l) => (
+                  <li
+                    key={l.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-3 py-2 text-sm"
+                  >
+                    <span className="text-ufa-text">
+                      {l.playerName}
+                      <span className="text-ufa-muted"> · {l.destinationTeamName}</span>
+                    </span>
+                    <span className="text-xs text-ufa-muted tabular-nums">
+                      {t.loanReturnDateLabel}: {l.returnDate}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {loansIn.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-ufa-text">{t.myLoansInTitle}</h3>
+              <ul className="mt-3 space-y-2">
+                {loansIn.map((l) => (
+                  <li
+                    key={l.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-3 py-2 text-sm"
+                  >
+                    <span className="text-ufa-text">
+                      {l.playerName}
+                      <span className="text-ufa-muted"> · {l.parentTeamName}</span>
+                    </span>
+                    {l.status === 'pending_buy_decision' && l.buyClause ? (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleLoanBuyClauseDecision(l.playerId, true)}
+                          className="rounded-md bg-ufa-accent/15 px-3 py-1 text-xs font-semibold text-ufa-accent ring-1 ring-ufa-accent/30 hover:bg-ufa-accent/25"
+                        >
+                          {t.loanExerciseBuyClause(formatUsdCompact(l.buyClause.fee))}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleLoanBuyClauseDecision(l.playerId, false)}
+                          className="rounded-md px-3 py-1 text-xs font-medium text-ufa-muted ring-1 ring-ufa-border hover:bg-ufa-panel-hover hover:text-ufa-text"
+                        >
+                          {t.loanLetReturn}
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-ufa-muted tabular-nums">
+                        {t.loanReturnDateLabel}: {l.returnDate}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
+
       <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
         <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 sm:p-6 shadow-xl shadow-black/30">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -337,6 +506,11 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                         {row.rank === 0 && (
                           <span className="text-[10px] text-ufa-gold">★ #1</span>
                         )}
+                        {row.listed && (
+                          <span className="rounded bg-ufa-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
+                            {t.transferListedBadge}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-2 py-2.5 text-ufa-muted">{row.teamShort}</td>
@@ -346,7 +520,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                     <td className="px-2 py-2.5 tabular-nums text-ufa-text">
                       {formatUsdCompact(row.marketValue)}
                     </td>
-                    <td className="px-2 py-2.5 text-right">
+                    <td className="px-2 py-2.5 text-right whitespace-nowrap">
                       <button
                         type="button"
                         disabled={false}
@@ -358,6 +532,18 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                       >
                         {t.negotiate}
                       </button>
+                      {isClub && !row.freeAgent && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLoanRow(row)
+                            setFlash(null)
+                          }}
+                          className="ml-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-ufa-text ring-1 ring-ufa-border hover:bg-ufa-panel-hover"
+                        >
+                          {t.loan}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -551,6 +737,16 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
           budget={budget}
           onClose={() => setSelected(null)}
           onSubmitOffer={handleOffer}
+        />
+      )}
+
+      {loanRow && (
+        <LoanTermsModal
+          mode="in"
+          row={loanRow}
+          budget={budget}
+          onClose={() => setLoanRow(null)}
+          onSubmit={handleLoanRequest}
         />
       )}
 

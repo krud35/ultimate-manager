@@ -30,6 +30,7 @@ import {
   evaluatePlayerContractOffer,
   previewContractOffer,
 } from './playerNegotiation.js'
+import { resolveOutgoingLoanOffer, resolveIncomingLoanRequestReply } from './loans.js'
 
 function hashSeed(str) {
   let h = 2166136261
@@ -405,6 +406,7 @@ export function processDelayedTransferReplies(career, { date = null } = {}) {
       inbox: career?.inbox ?? [],
       world: career?.world,
       transferLog: career?.transferLog ?? [],
+      loanLog: career?.loanLog ?? [],
       resolved: 0,
     }
   }
@@ -412,8 +414,9 @@ export function processDelayedTransferReplies(career, { date = null } = {}) {
   let inbox = [...ensureInbox(career)]
   let world = career.world
   let transferLog = career.transferLog ?? []
+  let loanLog = career.loanLog ?? []
   let resolved = 0
-  const liveCareer = () => ({ ...career, world, transferLog, inbox, league: career.league })
+  const liveCareer = () => ({ ...career, world, transferLog, loanLog, inbox, league: career.league })
 
   for (let i = 0; i < inbox.length; i += 1) {
     const m = inbox[i]
@@ -447,10 +450,28 @@ export function processDelayedTransferReplies(career, { date = null } = {}) {
       if (result.world) world = result.world
       if (result.transferLog) transferLog = result.transferLog
       resolved += 1
+      continue
+    }
+
+    if (p.kind === 'loan_out_offer') {
+      const result = resolveOutgoingLoanOffer(liveCareer(), m)
+      inbox[i] = result.message
+      if (result.world) world = result.world
+      if (result.loanLogEntry) loanLog = [...loanLog, result.loanLogEntry]
+      resolved += 1
+      continue
+    }
+
+    if (p.kind === 'loan_in_request') {
+      const result = resolveIncomingLoanRequestReply(liveCareer(), m)
+      inbox[i] = result.message
+      if (result.world) world = result.world
+      if (result.loanLogEntry) loanLog = [...loanLog, result.loanLogEntry]
+      resolved += 1
     }
   }
 
-  return { inbox, world, transferLog, resolved }
+  return { inbox, world, transferLog, loanLog, resolved }
 }
 
 /**
@@ -462,6 +483,7 @@ export function processDelayedTransferRepliesForDateRange(career, startDate, end
       inbox: career?.inbox ?? [],
       world: career?.world,
       transferLog: career?.transferLog ?? [],
+      loanLog: career?.loanLog ?? [],
       resolved: 0,
     }
   }
@@ -470,21 +492,23 @@ export function processDelayedTransferRepliesForDateRange(career, startDate, end
   let inbox = career.inbox ?? []
   let world = career.world
   let transferLog = career.transferLog ?? []
+  let loanLog = career.loanLog ?? []
   let resolved = 0
 
   while (cursor <= endDate) {
     const result = processDelayedTransferReplies(
-      { ...career, world, transferLog, inbox },
+      { ...career, world, transferLog, loanLog, inbox },
       { date: cursor },
     )
     inbox = result.inbox
     world = result.world
     transferLog = result.transferLog
+    loanLog = result.loanLog
     resolved += result.resolved
     cursor = formatISODate(addDays(parseISODate(cursor), 1))
   }
 
-  return { inbox, world, transferLog, resolved }
+  return { inbox, world, transferLog, loanLog, resolved }
 }
 
 function resolveOutgoingClubOffer(career, message) {
@@ -758,6 +782,8 @@ function resolveIncomingBidCounter(career, message) {
     }
   }
 
+  const prevLog = Array.isArray(p.negotiationLog) ? p.negotiationLog : []
+
   const evaluation = evaluateSellerCounter({
     player: found.player,
     buyerTeam: buyer,
@@ -766,12 +792,11 @@ function resolveIncomingBidCounter(career, message) {
     counterAmount: counter,
     seed: hashSeed(`${message.id}|${p.replyDate}|in-counter`),
     budget: getTransferBudget(buyer),
+    negotiationLog: prevLog,
   })
-
-  const prevLog = Array.isArray(p.negotiationLog) ? p.negotiationLog : []
   const logEntry = {
     at: new Date().toISOString(),
-    action: 'counter_reply',
+    action: evaluation.escalated ? 'ai_escalation' : 'counter_reply',
     counterAmount: counter,
     message: evaluation.message,
   }

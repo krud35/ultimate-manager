@@ -17,6 +17,8 @@ import { getTransferWindowState, isTransferWindowOpen } from './transferWindow.j
 import { completeTransferBetweenClubs } from './transferEngine.js'
 import { aiAutoPlayerContractTerms, previewContractOffer } from './playerNegotiation.js'
 import { ensurePlayerContract } from './playerContracts.js'
+import { getPlayerMarketValue } from './playerValue.js'
+import { startLoan, evaluateLoanOffer } from './loans.js'
 
 const MIN_ROSTER = 14
 
@@ -27,6 +29,169 @@ function hashSeed(str) {
     h = Math.imul(h, 16777619)
   }
   return h >>> 0
+}
+
+export const AI_LISTING_COMFORTABLE_ROSTER = 24
+
+function isoWeekKey(dateIso) {
+  const d = new Date(`${String(dateIso).slice(0, 10)}T12:00:00`)
+  const day = Math.floor(d.getTime() / (7 * 86400000))
+  return String(day)
+}
+
+/**
+ * Kluby AI co tydzień przeglądają skład i same wystawiają nadwyżkowych zawodników
+ * na listę transferową (nigdy gwiazdy). Pełna re-ewaluacja co tydzień — może też
+ * zdjąć zawodnika z listy, gdy warunki już nie zachodzą.
+ */
+function refreshAiTransferListings(world, { date, seed, excludeTeamId = null } = {}) {
+  if (!date) return
+  const weekKey = isoWeekKey(date)
+  for (const team of worldTeamsList(world)) {
+    if (team.id === excludeTeamId) continue
+    if (team._lastListingReviewWeek === weekKey) continue
+    team._lastListingReviewWeek = weekKey
+
+    const rng = createRng(hashSeed(`${seed ?? 1}-${team.id}-listing-${weekKey}`))
+    const players = team.players ?? []
+    if (!players.length) continue
+    const avg = teamAvgOvr(team)
+    const policy = getTransferPolicy(team)
+
+    for (const player of players) {
+      if (player.loan) {
+        player.transferListed = false
+        continue
+      }
+      const ovr = getOverallRating(player.skills)
+      const rank = playerOvrRank(players, player.id)
+      const isStar = rank <= 1 || ovr >= avg + 5
+      if (isStar) {
+        player.transferListed = false
+        continue
+      }
+      const overstocked = players.length > AI_LISTING_COMFORTABLE_ROSTER
+      const ageDecline = (player.age ?? 25) >= 31 && ovr < avg
+      const belowAvg = ovr < avg - 6 && rank >= players.length - 6
+
+      let chance = 0.05
+      if (overstocked) chance += 0.15
+      if (ageDecline) chance += 0.1
+      if (belowAvg) chance += 0.12
+      if (policy.id === 'sell') chance += 0.15
+      else if (policy.id === 'hardline') chance -= 0.08
+
+      player.transferListed = rng.float() < Math.max(0, Math.min(0.6, chance))
+    }
+  }
+}
+
+/**
+ * Kluby AI co tydzień oceniają, których zawodników warto wypożyczyć (nie
+ * "nadwyżka na sprzedaż" jak `transferListed` — tu chodzi o brak minut na boisku:
+ * młode talenty zablokowane przez pierwszy skład, gracze głęboko w rotacji.
+ */
+function refreshAiLoanListings(world, { date, seed, excludeTeamId = null } = {}) {
+  if (!date) return
+  const weekKey = isoWeekKey(date)
+  for (const team of worldTeamsList(world)) {
+    if (team.id === excludeTeamId) continue
+    if (team._lastLoanListingReviewWeek === weekKey) continue
+    team._lastLoanListingReviewWeek = weekKey
+
+    const rng = createRng(hashSeed(`${seed ?? 1}-${team.id}-loanlisting-${weekKey}`))
+    const players = team.players ?? []
+    if (!players.length) continue
+    const avg = teamAvgOvr(team)
+
+    for (const player of players) {
+      if (player.loan || player.transferListed) {
+        player.loanListed = false
+        continue
+      }
+      const ovr = getOverallRating(player.skills)
+      const rank = playerOvrRank(players, player.id)
+      const isStar = rank <= 1 || ovr >= avg + 5
+      if (isStar) {
+        player.loanListed = false
+        continue
+      }
+      const target = classifyTransferTarget(player, team)
+      const blockedProspect = target.prospect && rank >= 7
+      const belowAvg = ovr < avg - 4 && rank >= players.length - 6
+
+      let chance = 0.04
+      if (blockedProspect) chance += 0.22
+      if (belowAvg) chance += 0.14
+
+      player.loanListed = rng.float() < Math.max(0, Math.min(0.55, chance))
+    }
+  }
+}
+
+/**
+ * Jedna próba wypożyczenia AI → AI (poza drużyną gracza).
+ */
+function tryOneAiLoanDeal(career, rng, excludePlayerIds) {
+  const world = career.world
+  const playerTeamId = career.playerTeamId
+  const aiTeams = worldTeamsList(world).filter((t) => t.id !== playerTeamId)
+  if (aiTeams.length < 2) return null
+
+  const destinations = shuffle(
+    aiTeams.filter((t) => canBuyPlayers(t) && getTransferBudget(t) >= 5_000),
+    rng,
+  )
+  const parents = shuffle(
+    aiTeams.filter((t) => (t.players?.length ?? 0) > MIN_ROSTER),
+    rng,
+  )
+
+  for (const destinationTeam of destinations) {
+    if (rng.float() > 0.4) continue
+    for (const parentTeam of parents) {
+      if (parentTeam.id === destinationTeam.id) continue
+      const candidates = shuffle(
+        (parentTeam.players ?? []).filter(
+          (p) => p.loanListed && !p.loan && !excludePlayerIds.has(String(p.id)),
+        ),
+        rng,
+      ).slice(0, 4)
+
+      for (const player of candidates) {
+        refreshPlayerMarketValue(player)
+        const value = getPlayerMarketValue(player)
+        const fee = Math.round((value * (0.05 + rng.float() * 0.1)) / 1000) * 1000
+        const wageSplitPct = 40 + Math.round(rng.float() * 40)
+
+        const evaluation = evaluateLoanOffer({
+          player,
+          destinationTeam,
+          parentTeam,
+          fee,
+          wageSplitPct,
+          buyClause: null,
+          seed: rng.int(1, 1_000_000_000),
+        })
+        if (evaluation.status !== 'accepted') continue
+
+        const done = startLoan(career, {
+          playerId: player.id,
+          parentTeamId: parentTeam.id,
+          destinationTeamId: destinationTeam.id,
+          fee,
+          durationPreset: 'rest_of_season',
+          wageSplitPct,
+          buyClause: null,
+        })
+        if (done.ok) {
+          excludePlayerIds.add(String(player.id))
+          return done.loanLogEntry
+        }
+      }
+    }
+  }
+  return null
 }
 
 function teamAvgOvr(team) {
@@ -128,10 +293,18 @@ function tryOneAiDeal(career, rng, excludePlayerIds) {
     const sellers = sellersSorted.filter((t) => t.id !== buyer.id)
 
     for (const seller of sellers) {
-      const candidates = shuffle(
-        (seller.players ?? []).filter((p) => !excludePlayerIds.has(String(p.id))),
+      const pool = (seller.players ?? []).filter(
+        (p) => !excludePlayerIds.has(String(p.id)) && !p.loan,
+      )
+      const listed = shuffle(
+        pool.filter((p) => p.transferListed),
         rng,
-      ).slice(0, 8)
+      )
+      const rest = shuffle(
+        pool.filter((p) => !p.transferListed),
+        rng,
+      )
+      const candidates = [...listed, ...rest].slice(0, 8)
 
       for (const player of candidates) {
         refreshPlayerMarketValue(player)
@@ -209,6 +382,8 @@ export function simulateAiTransferActivity(career, options = {}) {
       ok: true,
       deals: [],
       transferLog: career?.transferLog ?? [],
+      loanDeals: [],
+      loanLog: career?.loanLog ?? [],
       world: career?.world,
     }
   }
@@ -223,6 +398,7 @@ export function simulateAiTransferActivity(career, options = {}) {
 
   const defaultMax = mode === 'burst' ? 10 : window.kind === 'january' ? 2 : 3
   const maxDeals = Math.max(0, options.maxDeals ?? defaultMax)
+  const maxLoanDeals = mode === 'burst' ? 4 : 1
 
   const seed =
     options.seed ??
@@ -231,9 +407,14 @@ export function simulateAiTransferActivity(career, options = {}) {
     )
   const rng = createRng(seed ^ (seed >>> 16) ^ 0x9e3779b9)
 
+  refreshAiTransferListings(career.world, { date, seed, excludeTeamId: career.playerTeamId })
+  refreshAiLoanListings(career.world, { date, seed, excludeTeamId: career.playerTeamId })
+
   const deals = []
+  const loanDeals = []
   const exclude = new Set()
   let transferLog = career.transferLog ?? []
+  let loanLog = career.loanLog ?? []
 
   for (let i = 0; i < maxDeals; i += 1) {
     // Codziennie: ~80% szansy na pierwszą próbę, potem malejąco.
@@ -242,17 +423,28 @@ export function simulateAiTransferActivity(career, options = {}) {
       if (rng.float() > p) break
     }
 
-    const liveCareer = { ...career, transferLog, world: career.world }
+    const liveCareer = { ...career, transferLog, loanLog, world: career.world }
     const entry = tryOneAiDeal(liveCareer, rng, exclude)
     if (!entry) break
     deals.push(entry)
     transferLog = [...transferLog, entry]
   }
 
+  for (let i = 0; i < maxLoanDeals; i += 1) {
+    if (rng.float() > (i === 0 ? 0.5 : 0.3)) break
+    const liveCareer = { ...career, transferLog, loanLog, world: career.world }
+    const loanEntry = tryOneAiLoanDeal(liveCareer, rng, exclude)
+    if (!loanEntry) break
+    loanDeals.push(loanEntry)
+    loanLog = [...loanLog, loanEntry]
+  }
+
   return {
     ok: true,
     deals,
     transferLog,
+    loanDeals,
+    loanLog,
     world: career.world,
   }
 }

@@ -9,6 +9,7 @@ import { demoHomeTeam } from '../data/demoMatchTeams'
 import StaminaBar, { getStaminaForPlayer } from './StaminaBar'
 import { SkillBar, sortPlayers, ThrowingHandBadge } from './TeamRosterPanel'
 import PlayerProfileModal from './PlayerProfileModal'
+import LoanTermsModal from './LoanTermsModal'
 
 import { seasonStatsForPlayer } from '../league/leagueStats.js'
 import { ensurePlayerDevelopment } from '../career/playerDevelopment.js'
@@ -77,6 +78,8 @@ export default function RosterView({
   /** Tylko skład Twojej drużyny (bez filtrów ligowych). */
   clubOnly = false,
   onExtendContract = null,
+  onToggleTransferList = null,
+  onProposeLoanOut = null,
 }) {
   const { lang } = useUiLang()
   const t = rosterStrings(lang)
@@ -105,6 +108,14 @@ export default function RosterView({
   const [sortDir, setSortDir] = useState('desc')
   const [profilePlayer, setProfilePlayer] = useState(null)
   const [pageSize, setPageSize] = useState(20)
+  const [loanOutPlayer, setLoanOutPlayer] = useState(null)
+  const [loanFlash, setLoanFlash] = useState(null)
+
+  const teamNameById = useMemo(() => {
+    const byId = new Map()
+    for (const team of leagueTeams) byId.set(team.id, team.name)
+    return byId
+  }, [leagueTeams])
 
   const showStamina = !!matchStamina
   const effectiveFilter = clubOnly ? focusTeamName : teamFilter
@@ -308,6 +319,18 @@ export default function RosterView({
                       >
                         {getPlayerFullName(player)}
                       </button>
+                      {clubOnly && player.transferListed ? (
+                        <span className="ml-1.5 rounded bg-ufa-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
+                          {t.transferListedBadge}
+                        </span>
+                      ) : null}
+                      {clubOnly && player.loan ? (
+                        <span className="ml-1.5 rounded bg-ufa-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
+                          {t.loanedInBadge(
+                            teamNameById.get(player.loan.parentTeamId) ?? player.loan.parentTeamId,
+                          )}
+                        </span>
+                      ) : null}
                       {injured ? (
                         <p
                           className="mt-0.5 text-[11px] font-semibold text-red-400"
@@ -386,7 +409,57 @@ export default function RosterView({
         teamName={profilePlayer ? teamNameOf(profilePlayer) : null}
         isOwnPlayer={clubOnly}
         onExtendContract={clubOnly ? onExtendContract : null}
+        onToggleTransferList={clubOnly ? onToggleTransferList : null}
+        onProposeLoanOut={
+          clubOnly && onProposeLoanOut
+            ? () => {
+                setLoanOutPlayer(profilePlayer)
+                setProfilePlayer(null)
+              }
+            : null
+        }
+        loanCounterpartyName={
+          profilePlayer?.loan ? (teamNameById.get(profilePlayer.loan.parentTeamId) ?? null) : null
+        }
       />
+      {loanOutPlayer && onProposeLoanOut && (
+        <LoanTermsModal
+          mode="out"
+          player={{
+            name: getPlayerFullName(loanOutPlayer),
+            marketValue: getPlayerMarketValue(loanOutPlayer),
+          }}
+          teams={leagueTeams.filter((team) => team.name !== focusTeamName)}
+          onClose={() => setLoanOutPlayer(null)}
+          onSubmit={(terms) => {
+            const result = onProposeLoanOut(loanOutPlayer.id, terms)
+            if (result?.ok) {
+              setLoanFlash({ type: 'ok', text: result.flash ?? 'OK' })
+              setLoanOutPlayer(null)
+            } else {
+              setLoanFlash({ type: 'error', text: result?.error ?? 'Error' })
+            }
+          }}
+        />
+      )}
+      {loanFlash && (
+        <div
+          className={`fixed bottom-4 right-4 z-50 rounded-md px-4 py-2 text-sm shadow-lg ${
+            loanFlash.type === 'ok'
+              ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/40'
+              : 'bg-red-500/15 text-red-400 ring-1 ring-red-500/40'
+          }`}
+        >
+          {loanFlash.text}
+          <button
+            type="button"
+            onClick={() => setLoanFlash(null)}
+            className="ml-3 text-xs underline"
+          >
+            {t.close ?? '×'}
+          </button>
+        </div>
+      )}
     </>
   )
 }

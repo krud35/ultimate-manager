@@ -95,6 +95,11 @@ export function starPremium(rank, rosterSize) {
   return 1.0
 }
 
+/** Zawodnik na liście transferowej jest tańszy — właściciel chce sprzedać, nie maksymalizować cenę. */
+export const TRANSFER_LIST_ASK_DISCOUNT = 0.85
+/** Bonus do szansy akceptacji oferty za bycie wystawionym na listę transferową. */
+export const TRANSFER_LIST_ACCEPT_BONUS = 0.12
+
 /**
  * Cena wywoławcza sprzedającego.
  * @param {object} player
@@ -106,13 +111,17 @@ export function computeAskPrice(player, sellerTeam) {
   const rank = playerOvrRank(sellerTeam.players, player.id)
   const premium = starPremium(rank, sellerTeam.players?.length ?? 1)
   const ask = value * (policy.askPriceMultiplier ?? 1.12) * premium
-  return Math.max(value, Math.round(ask / 1000) * 1000)
+  const base = Math.max(value, Math.round(ask / 1000) * 1000)
+  // Zastosowane NA KOŃCU (po podłodze `value`), inaczej rabat ginie dla większości
+  // zawodników (premium=1 → ask już blisko podłogi value, rabat przed floor nic by nie dał).
+  if (!player?.transferListed) return base
+  return Math.round((base * TRANSFER_LIST_ASK_DISCOUNT) / 1000) * 1000
 }
 
 /**
  * Szansa akceptacji oferty (0–1) przed losowaniem „twardego nie”.
  */
-export function acceptanceChance({ offer, ask, rank, policy, rosterSize }) {
+export function acceptanceChance({ offer, ask, rank, policy, rosterSize, listed = false }) {
   const difficulty = Math.max(0.55, policy?.negotiationDifficulty ?? 1)
   const premium = starPremium(rank, rosterSize)
   const ratio = ask > 0 ? offer / ask : 0
@@ -130,6 +139,9 @@ export function acceptanceChance({ offer, ask, rank, policy, rosterSize }) {
   // negotiationDifficulty (polityka transferowa) jest głównym mnożnikiem.
   const starHardness = 1 + (premium - 1) * 0.32
   chance /= difficulty * starHardness
+
+  // Zawodnik na liście transferowej — łatwiej domknąć transfer.
+  if (listed) chance += TRANSFER_LIST_ACCEPT_BONUS
 
   // Nigdy 100% — szczególnie dla #1 w składzie.
   const softCap = rank === 0 ? 0.72 : rank <= 2 ? 0.84 : 0.94
@@ -179,6 +191,7 @@ export function evaluateBuyOffer({ player, sellerTeam, offerAmount, seed = null 
     rank,
     policy,
     rosterSize,
+    listed: !!player?.transferListed,
   })
 
   // Bez seeda: pełny Math.random. Ze seedem: hash, żeby bliskie inty nie dawały tych samych rolli.
@@ -331,6 +344,10 @@ export function aiBuyerMaxFee({
  *
  * @returns {{ status: 'accepted'|'rejected'|'counter', fee?: number, counterAmount?: number, maxFee: number, message: string }}
  */
+export const AI_ESCALATION_MAX_ROUNDS = 2
+/** O ile ponad normalny sufit (`maxFee`) AI jest skłonne się naciągnąć, gdy naprawdę chce zawodnika. */
+export const AI_ESCALATION_STRETCH = 1.22
+
 export function evaluateSellerCounter({
   player,
   buyerTeam,
@@ -339,6 +356,7 @@ export function evaluateSellerCounter({
   counterAmount,
   seed = null,
   budget = null,
+  negotiationLog = [],
 }) {
   const counter = Math.max(0, Math.round(Number(counterAmount) || 0))
   const original = Math.max(0, Math.round(Number(originalOffer) || 0))
@@ -413,6 +431,36 @@ export function evaluateSellerCounter({
         maxFee,
         message: `${club} nie akceptuje ${formatUsd(counter)}, ale podnosi ofertę do ${formatUsd(reCounter)} za ${name}.`,
         messageEn: `${club} does not accept ${formatUsd(counter)}, but raises the offer to ${formatUsd(reCounter)} for ${name}.`,
+      }
+    }
+  }
+
+  // Twardy sufit przekroczony — zanim AI się wycofa, sprawdź czy naprawdę zależy im na
+  // zawodniku na tyle, żeby naciągnąć własny budżet ambicji (ograniczone liczbą rund,
+  // żeby gracz nie mógł wyciskać coraz wyższych ofert w nieskończoność).
+  const cap = budget != null ? budget : Number.POSITIVE_INFINITY
+  const target = classifyTransferTarget(player, buyerTeam)
+  const wantsBadly =
+    target.strongProspect ||
+    (target.ovr ?? 0) >= (target.buyerAvg ?? 70) + 3 ||
+    (buyerTeam && getTeamReputation(buyerTeam) > REPUTATION_DEFAULT + 15)
+  const budgetRoom = cap > maxFee * 1.05
+  const escalationsUsed = (negotiationLog ?? []).filter((e) => e.action === 'ai_escalation').length
+
+  if (escalationsUsed < AI_ESCALATION_MAX_ROUNDS && wantsBadly && budgetRoom) {
+    const escalatedMax = Math.min(cap, Math.round((maxFee * AI_ESCALATION_STRETCH) / 1000) * 1000)
+    if (escalatedMax > maxFee) {
+      const reCounter = Math.min(counter, escalatedMax)
+      if (reCounter > original) {
+        return {
+          status: 'counter',
+          counterAmount: reCounter,
+          fee: reCounter,
+          maxFee: escalatedMax,
+          escalated: true,
+          message: `${club} bardzo chce ${name} — podnosi ofertę do ${formatUsd(reCounter)}, powyżej ich zwykłego budżetu na ten transfer.`,
+          messageEn: `${club} really wants ${name} — raises the offer to ${formatUsd(reCounter)}, above their usual budget for this deal.`,
+        }
       }
     }
   }

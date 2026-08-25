@@ -6,7 +6,7 @@
 
 import { createRng } from '../../matchEngine/rng.js'
 import { getOverallRating } from '../../models/playerStats.js'
-import { worldTeamsList } from '../worldState.js'
+import { worldTeamsList, worldTeamById } from '../worldState.js'
 import { applyDebtMoraleToTeam, ensurePlayerMorale, getPlayerMorale } from '../../models/playerMorale.js'
 import { noteLoyaltyFromTreatment } from '../../models/playerLoyalty.js'
 import { getPlayerFullName } from '../../data/mockPlayers.js'
@@ -450,23 +450,52 @@ export function clearPlayerContractOnExit(team, player) {
  */
 export function processWeeklyWages(world) {
   if (!world?.teamsById) return { paid: 0, teams: 0 }
+
+  // Dwuprzebiegowe: najpierw zbierz należności per klub (włącznie z udziałem w
+  // pensji zawodników na wypożyczeniu, naliczanym na klub macierzysty mimo że
+  // fizycznie siedzą u destination), potem odejmij z budżetów w drugiej pętli
+  // po WSZYSTKICH klubach — inaczej macierzysty nigdy nie zobaczyłby swojego
+  // udziału, bo jego pętla po `players[]` nigdy nie napotka wypożyczonego gracza.
+  const ownBillByTeam = new Map()
+  const loanShareByTeam = new Map()
+
+  for (const team of worldTeamsList(world)) {
+    if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
+    for (const player of team.players ?? []) {
+      const c = player.contract
+      if (!c || !(c.weeksRemaining > 0) || !(c.weeklyWage > 0)) continue
+      c.weeksRemaining = Math.max(0, Math.round(c.weeksRemaining) - 1)
+
+      if (player.loan && player.loan.destinationTeamId === team.id) {
+        const pct = clamp(
+          Number.isFinite(player.loan.wageSplitPct) ? player.loan.wageSplitPct : 50,
+          0,
+          100,
+        )
+        const destShare = Math.round(c.weeklyWage * (pct / 100))
+        const parentShare = Math.max(0, c.weeklyWage - destShare)
+        loanShareByTeam.set(team.id, (loanShareByTeam.get(team.id) ?? 0) + destShare)
+        loanShareByTeam.set(
+          player.loan.parentTeamId,
+          (loanShareByTeam.get(player.loan.parentTeamId) ?? 0) + parentShare,
+        )
+      } else {
+        ownBillByTeam.set(team.id, (ownBillByTeam.get(team.id) ?? 0) + c.weeklyWage)
+      }
+    }
+  }
+
   let paid = 0
   let teams = 0
   for (const team of worldTeamsList(world)) {
     if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
-    let weekBill = 0
-    for (const player of team.players ?? []) {
-      const c = player.contract
-      if (!c || !(c.weeksRemaining > 0) || !(c.weeklyWage > 0)) continue
-      weekBill += c.weeklyWage
-      c.weeksRemaining = Math.max(0, Math.round(c.weeksRemaining) - 1)
-    }
+    const weekBill = (ownBillByTeam.get(team.id) ?? 0) + (loanShareByTeam.get(team.id) ?? 0)
     if (weekBill <= 0) {
       applyDebtMoraleToTeam(team, getTransferBudget(team))
       continue
     }
     const salary = Math.max(0, Math.round(team.finances.salaryBudget ?? 0))
-    const deduct = Math.min(salary, weekBill)
+    const deduct = Math.min(salary, Math.round(weekBill))
     team.finances.salaryBudget = salary - deduct
     // Niedobór (np. stary save) — nie pożeraj budżetu transferowego.
     paid += deduct
@@ -605,11 +634,15 @@ export function processSeasonEndContractObligations(world, options = {}) {
           teamId: team.id,
         })
         if (!met) continue
-        adjustTransferBudget(team, bonus.amount)
+        // Bonusy kontraktowe to zobowiązanie klubu MACIERZYSTEGO (nadal właściciela
+        // umowy) — dla zawodnika na wypożyczeniu to nie destination płaci, mimo że
+        // to destination iteruje go w `players[]`.
+        const payTeam = player.loan ? (worldTeamById(world, player.loan.parentTeamId) ?? team) : team
+        adjustTransferBudget(payTeam, bonus.amount)
         if (!contract.bonusesPaidSeasons) contract.bonusesPaidSeasons = {}
         contract.bonusesPaidSeasons[paidKey] = bonus.amount
         bonusPayouts.push({
-          teamId: team.id,
+          teamId: payTeam.id,
           playerId: player.id,
           playerName: getPlayerFullName(player),
           type: bonus.type,

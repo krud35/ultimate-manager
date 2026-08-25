@@ -19,6 +19,7 @@ import {
   isTransferWindowOpen,
   refreshPlayerMarketValue,
   classifyTransferTarget,
+  computeLoanReturnDate,
 } from './transfers/index.js'
 import {
   pickRandomEventMessage,
@@ -121,6 +122,9 @@ function isActionableTransferOffer(payload) {
   if (kind === 'outgoing_club_offer') return status === 'counter' || status === 'club_agreed'
   if (kind === 'outgoing_player_contract') return status === 'counter' || status === 'rejected'
   if (kind === 'pending_registration') return status === 'pending_confirm'
+  if (kind === 'loan_out_offer' || kind === 'loan_in_request') return status === 'counter'
+  if (kind === 'loan_in_request_from_ai') return status === 'pending'
+  if (kind === 'loan_buy_clause_decision') return status === 'pending_decision'
   return false
 }
 
@@ -764,11 +768,41 @@ export function messagesFromNewTransferLogEntries(prevLog, nextLog, career) {
   return fresh.map((e) => messageFromTransferDeal(e, career)).filter(Boolean)
 }
 
+/** Wiadomości o zawodnikach, którzy sami wymusili wpis na listę transferową. */
+export function messagesFromForcedTransferListDemands(forced, career) {
+  if (!forced?.length || !career?.playerTeamId) return []
+  const mine = forced.filter((f) => f.teamId === career.playerTeamId)
+  if (!mine.length) return []
+  return mine.map((f) => {
+    const playtime = f.reason === 'playtime'
+    return createInboxMessage({
+      type: INBOX_TYPES.TRANSFER_OFFER,
+      title: `Żądanie transferu · ${f.playerName}`,
+      titleEn: `Transfer demand · ${f.playerName}`,
+      body: playtime
+        ? `${f.playerName} czuje się pominięty w składzie i sam zażądał wpisania na listę transferową. Agent już szuka nowego klubu.`
+        : `${f.playerName} jest głęboko niezadowolony i sam zażądał wpisania na listę transferową. Agent już szuka nowego klubu.`,
+      bodyEn: playtime
+        ? `${f.playerName} feels overlooked for playing time and has demanded to be put on the transfer list. His agent is already shopping him around.`
+        : `${f.playerName} is deeply unhappy and has demanded to be put on the transfer list. His agent is already shopping him around.`,
+      date: career.league?.currentDate ?? null,
+      seasonIndex: career.seasonIndex ?? null,
+      seasonYear: career.seasonYear ?? null,
+      payload: { kind: 'forced_transfer_list_demand', playerId: f.playerId, reason: f.reason },
+    })
+  })
+}
+
 /**
  * Czy AI kupujący zainteresuje się zawodnikiem gracza.
  * Cele: jakość/upgrade, młody talent, weteran-okazja; forma; morale otwiera drzwi.
  * @returns {number} 0–1 szansa zainteresowania
  */
+// Zawodnik na liście transferowej: AI wie, że klub chce go sprzedać.
+const TRANSFER_LIST_AI_INTEREST_MULT = 1.6
+const TRANSFER_LIST_WEIGHT_MULT = 2.2
+const TRANSFER_LIST_DAY_CHANCE_MULT = 1.5
+
 function aiIncomingInterestChance(buyer, player, seller, rng) {
   const form = getPlayerForm(player)
   const morale = getPlayerMorale(player)
@@ -831,6 +865,8 @@ function aiIncomingInterestChance(buyer, player, seller, rng) {
   // Kluby „sell” chętniej biorą tanie weterany.
   if (policy.id === 'sell' && veteranBargain) chance += 0.05
 
+  if (player.transferListed) chance *= TRANSFER_LIST_AI_INTEREST_MULT
+
   return Math.max(0, Math.min(0.88, chance + (rng() - 0.5) * 0.04))
 }
 
@@ -879,14 +915,15 @@ export function generateIncomingTransferOffers(career, { date = null } = {}) {
     const form = getPlayerForm(p)
     return form >= 55 && (t.strongProspect || t.veteranBargain)
   })
-  const dayChance = unhappyQuality ? 0.13 : hasHotTarget ? 0.11 : 0.09
+  let dayChance = unhappyQuality ? 0.13 : hasHotTarget ? 0.11 : 0.09
+  if (playerTeam.players.some((p) => p.transferListed)) dayChance *= TRANSFER_LIST_DAY_CHANCE_MULT
   if (rng() > dayChance) return []
 
   const aiTeams = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
   if (!aiTeams.length) return []
 
   const blocked = pendingBidPlayerIds(career.inbox)
-  const roster = [...playerTeam.players].filter((p) => !blocked.has(String(p.id)))
+  const roster = [...playerTeam.players].filter((p) => !blocked.has(String(p.id)) && !p.loan)
   if (!roster.length) return []
 
   // Wagi: OVR/forma + talent młodych + okazje weteranów + niskie morale.
@@ -907,6 +944,7 @@ export function generateIncomingTransferOffers(career, { date = null } = {}) {
     else if (target.veteran && target.ovr >= 72) w *= 1.15
     if (morale < 45) w *= 1.5
     else if (morale < 55) w *= 1.22
+    if (player.transferListed) w *= TRANSFER_LIST_WEIGHT_MULT
     weighted.push({ player, w, target })
   }
   if (!weighted.length) return []
@@ -974,14 +1012,16 @@ export function generateIncomingTransferOffers(career, { date = null } = {}) {
       : ''
   const formNote = ` Forma: ${formLabel(form)} (${form}).`
   const ageNote = ` Wiek ${chosenTarget.age}.`
+  const listedNote = chosen.transferListed ? ' (zawodnik na liście transferowej)' : ''
+  const listedNoteEn = chosen.transferListed ? ' (player is transfer listed)' : ''
 
   return [
     createInboxMessage({
       type: INBOX_TYPES.TRANSFER_OFFER,
       title: `Oferta transferowa · ${name}`,
       titleEn: `Transfer offer · ${name}`,
-      body: `${buyer.team.name} oferuje ${formatUsd(fee)} za ${name} (OVR ${ovr}).${ageNote}${formNote}${moraleNote} Negocjuj w skrzynce — oferta ważna do ${expires}.`,
-      bodyEn: `${buyer.team.name} offers ${formatUsd(fee)} for ${name} (OVR ${ovr}). Age ${chosenTarget.age}. Form: ${formLabel(form, 'en')} (${form}).${morale < 50 ? ` Low morale (${moraleLabel(morale, 'en')}) — may push to leave.` : ''} Negotiate in the inbox — offer valid until ${expires}.`,
+      body: `${buyer.team.name} oferuje ${formatUsd(fee)} za ${name} (OVR ${ovr}).${ageNote}${formNote}${moraleNote}${listedNote} Negocjuj w skrzynce — oferta ważna do ${expires}.`,
+      bodyEn: `${buyer.team.name} offers ${formatUsd(fee)} for ${name} (OVR ${ovr}). Age ${chosenTarget.age}. Form: ${formLabel(form, 'en')} (${form}).${morale < 50 ? ` Low morale (${moraleLabel(morale, 'en')}) — may push to leave.` : ''}${listedNoteEn} Negotiate in the inbox — offer valid until ${expires}.`,
       date: simDate,
       seasonIndex: career.seasonIndex,
       seasonYear: career.seasonYear,
@@ -1004,6 +1044,104 @@ export function generateIncomingTransferOffers(career, { date = null } = {}) {
         fromTeamName: buyer.team.name,
         expiresDate: expires,
         negotiationLog: [],
+      },
+    }),
+  ]
+}
+
+/**
+ * Oferty AI o wypożyczenie zawodnika gracza — analog `generateIncomingTransferOffers`,
+ * ale cel to „przyda się na wypożyczenie" (głębia rotacji/rezerwowi), nie jakość/okazja,
+ * a opłata jest znacznie niższa niż przy transferze.
+ */
+export function generateIncomingLoanOffers(career, { date = null } = {}) {
+  if (!career?.world || !isTransferWindowOpen(career)) return []
+
+  const simDate = date ?? career.league?.currentDate
+  if (!simDate) return []
+
+  const playerTeam = worldTeamById(career.world, career.playerTeamId)
+  if (!playerTeam?.players?.length || playerTeam.players.length <= 16) return []
+
+  const seed = hashSeed(
+    `${career.id}|${career.seasonIndex}|${simDate}|loan-offers-v1|${(career.inbox ?? []).length}`,
+  )
+  const rng = mulberry32(seed)
+
+  if (rng() > 0.05) return []
+
+  const aiTeams = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
+  if (!aiTeams.length) return []
+
+  const blocked = pendingBidPlayerIds(career.inbox)
+  const roster = [...playerTeam.players].filter((p) => !blocked.has(String(p.id)) && !p.loan)
+  if (!roster.length) return []
+
+  const rankedByOvr = [...roster].sort(
+    (a, b) => getOverallRating(b.skills) - getOverallRating(a.skills),
+  )
+  const weighted = []
+  for (const player of roster) {
+    const rank = rankedByOvr.findIndex((p) => String(p.id) === String(player.id))
+    if (rank <= 2) continue // nie proś o gwiazdy/kluczowych graczy
+    const form = getPlayerForm(player)
+    if (form < 45) continue
+    let w = Math.max(0.05, 1 - rank / roster.length)
+    weighted.push({ player, w })
+  }
+  if (!weighted.length) return []
+
+  const totalW = weighted.reduce((s, x) => s + x.w, 0)
+  let pick = rng() * totalW
+  let chosenRow = weighted[0]
+  for (const row of weighted) {
+    pick -= row.w
+    if (pick <= 0) {
+      chosenRow = row
+      break
+    }
+  }
+  const chosen = chosenRow.player
+
+  const buyer = aiTeams[Math.floor(rng() * aiTeams.length)]
+  if (!buyer) return []
+
+  refreshPlayerMarketValue(chosen)
+  const value = getPlayerMarketValue(chosen)
+  const ovr = getOverallRating(chosen.skills)
+  const fee = Math.round((value * (0.03 + rng() * 0.07)) / 1000) * 1000
+  const wageSplitPct = 50 + Math.round(rng() * 40)
+  const durationPreset = rng() < 0.6 ? 'rest_of_season' : 'six_months'
+  const returnDate = computeLoanReturnDate(durationPreset, {
+    fromDate: simDate,
+    seasonYear: career.seasonYear,
+  })
+  const name = getPlayerFullName(chosen)
+  const expires = formatISODate(addDays(parseISODate(simDate), 3 + Math.floor(rng() * 3)))
+
+  return [
+    createInboxMessage({
+      type: INBOX_TYPES.TRANSFER_OFFER,
+      title: `Prośba o wypożyczenie · ${name}`,
+      titleEn: `Loan request · ${name}`,
+      body: `${buyer.name} chce wypożyczyć ${name} (OVR ${ovr}) — opłata ${formatUsd(fee)}, ${wageSplitPct}% pensji po ich stronie, do ${returnDate}. Odpowiedz w skrzynce — oferta ważna do ${expires}.`,
+      bodyEn: `${buyer.name} wants to loan ${name} (OVR ${ovr}) — fee ${formatUsd(fee)}, ${wageSplitPct}% of wages on their side, until ${returnDate}. Respond in the inbox — offer valid until ${expires}.`,
+      date: simDate,
+      seasonIndex: career.seasonIndex,
+      seasonYear: career.seasonYear,
+      payload: {
+        kind: 'loan_in_request_from_ai',
+        status: 'pending',
+        playerId: chosen.id,
+        playerName: name,
+        playerOvr: ovr,
+        fee,
+        wageSplitPct,
+        durationPreset,
+        returnDate,
+        destinationTeamId: buyer.id,
+        destinationTeamName: buyer.name,
+        expiresDate: expires,
       },
     }),
   ]
@@ -1050,6 +1188,25 @@ export function expireStaleTransferOffers(career, { date = null } = {}) {
           read: m.read,
           body: `${m.body} · Oferta wygasła.`,
           bodyEn: `${m.bodyEn ?? m.body} · Offer expired.`,
+          payload: { ...p, status: 'expired' },
+        }
+      }
+      return m
+    }
+
+    // Prośba AI o wypożyczenie zawodnika gracza — ten sam wzorzec co incoming_bid.
+    if (
+      p?.kind === 'loan_in_request_from_ai' &&
+      (p.status === 'pending' || p.status === 'awaiting_reply')
+    ) {
+      const deadline = p.status === 'awaiting_reply' && p.replyDate ? p.replyDate : p.expiresDate
+      const expiredByDate = today && deadline && today > deadline
+      if (!windowOpen || expiredByDate) {
+        changed = true
+        return {
+          ...m,
+          body: `${m.body} · Prośba wygasła.`,
+          bodyEn: `${m.bodyEn ?? m.body} · Request expired.`,
           payload: { ...p, status: 'expired' },
         }
       }

@@ -50,6 +50,28 @@ const STATIC_MAP = {
   'Nie udało się podpisać kontraktu': 'Could not sign the contract',
   'Nieprawidłowa kwota oferty': 'Invalid offer amount',
   'Nieznana akcja negocjacji': 'Unknown negotiation action',
+  'Zawodnik już jest w tym klubie': 'The player is already at this club',
+  'Zawodnik nie jest w klubie macierzystym': 'The player is not at the parent club',
+  'Zawodnik jest już wypożyczony': 'The player is already on loan',
+  'Klub docelowy nie ma budżetu na opłatę wypożyczenia':
+    'The destination club has no budget for the loan fee',
+  'Klub docelowy nie ma wystarczającego budżetu transferowego':
+    'The destination club does not have enough transfer budget',
+  'Nie udało się wyliczyć daty powrotu': 'Could not compute the return date',
+  'Zawodnik nie jest na wypożyczeniu': 'The player is not on loan',
+  'Nie znaleziono klubu macierzystego': 'Could not find the parent club',
+  'Brak aktywnej klauzuli wykupu': 'No active buy clause',
+  'Brak oczekującej decyzji o klauzuli wykupu': 'No pending buy-clause decision',
+  'Masz już otwartą propozycję wypożyczenia tego zawodnika':
+    'You already have an open loan proposal for this player',
+  'Zawodnik jest już wypożyczony gdzie indziej': 'The player is already on loan elsewhere',
+  'Masz już otwartą prośbę o wypożyczenie tego zawodnika':
+    'You already have an open loan request for this player',
+  'Brak wystarczającego budżetu transferowego na opłatę':
+    'Not enough transfer budget for the fee',
+  'Nie znaleziono propozycji': 'Could not find the proposal',
+  'Propozycja nieaktywna': 'Proposal is not active',
+  'Nieznana akcja': 'Unknown action',
 }
 
 const DYNAMIC_PATTERNS = [
@@ -68,6 +90,10 @@ const DYNAMIC_PATTERNS = [
   {
     re: /^Nie możesz sprzedać — skład musi mieć więcej niż (\d+) zawodników$/,
     en: (m) => `You can't sell — the roster must have more than ${m[1]} players`,
+  },
+  {
+    re: /^Nie możesz wypożyczyć — skład musi mieć co najmniej (\d+) zawodników$/,
+    en: (m) => `You can't loan out — the roster must have at least ${m[1]} players`,
   },
 ]
 

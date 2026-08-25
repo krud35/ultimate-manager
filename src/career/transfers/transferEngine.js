@@ -4,7 +4,7 @@
 
 import { getOverallRating } from '../../models/playerStats.js'
 import { getPlayerFullName } from '../../data/mockPlayers.js'
-import { getPlayerMorale, ensurePlayerMorale } from '../../models/playerMorale.js'
+import { getPlayerMorale, ensurePlayerMorale, MORALE_MIN, MORALE_MAX } from '../../models/playerMorale.js'
 import { worldTeamById, worldTeamsList } from '../worldState.js'
 import {
   adjustTransferBudget,
@@ -49,6 +49,83 @@ function findPlayerInWorld(world, playerId) {
   return null
 }
 
+/** Jednorazowy spadek morale przy wystawieniu na listę transferową. */
+export const TRANSFER_LIST_MORALE_HIT = -4
+
+/**
+ * Wystawia/zdejmuje zawodnika z listy transferowej — flaga ortogonalna do `status`
+ * (który mówi GDZIE zawodnik żyje: active/free_agent/academy), nie nowy status.
+ * @param {object} team
+ * @param {string|number} playerId
+ * @param {boolean} listed
+ */
+export function setPlayerTransferListed(team, playerId, listed) {
+  const player = (team?.players ?? []).find((p) => String(p.id) === String(playerId))
+  if (!player) return { ok: false, error: 'not_on_roster' }
+  const wasListed = !!player.transferListed
+  player.transferListed = !!listed
+  if (listed && !wasListed) {
+    // Jednorazowy, niewielki spadek morale/lojalności — zawodnik wie, że klub go nie
+    // chce. Nie odwracamy przy zdjęciu z listy (unika farmienia morale przez toggle).
+    ensurePlayerMorale(player)
+    const before = getPlayerMorale(player)
+    player.morale = Math.max(MORALE_MIN, Math.min(MORALE_MAX, before + TRANSFER_LIST_MORALE_HIT))
+    noteLoyaltyFromTreatment(player, player.morale - before)
+  }
+  return { ok: true, player, listed: player.transferListed }
+}
+
+/** Progi „wymuszenia" wpisu na listę transferową przez niezadowolonego zawodnika. */
+export const UNHAPPY_DEMAND_MORALE_THRESHOLD = 32
+export const UNHAPPY_DEMAND_PLAYTIME_SHARE = 0.25
+export const UNHAPPY_DEMAND_MIN_TEAM_GAMES = 4
+export const UNHAPPY_DEMAND_MORALE_WITH_LOW_PLAYTIME = 45
+
+/**
+ * Cotygodniowy przegląd: skrajnie niezadowolony zawodnik (bardzo niskie morale, albo
+ * brak czasu gry przy umiarkowanie niskim morale) sam wymusza wpis na listę transferową
+ * — to presja zawodnika/agenta, klub się na to nie pyta. Wypożyczeni i już wystawieni
+ * zawodnicy są pomijani (nic tu do wymuszenia).
+ * @param {object} world
+ * @param {{ leaguePlayerStats?: object, standings?: object }} [options]
+ * @returns {{ teamId: string, playerId: string|number, playerName: string, reason: 'morale'|'playtime' }[]}
+ */
+export function checkForcedTransferListDemands(world, { leaguePlayerStats = {}, standings = {} } = {}) {
+  const forced = []
+  for (const team of worldTeamsList(world)) {
+    const standing = standings?.[team.id]
+    const teamGames = Math.max(0, (standing?.wins ?? 0) + (standing?.losses ?? 0))
+
+    for (const player of team.players ?? []) {
+      if (player.transferListed || player.loan) continue
+      ensurePlayerMorale(player)
+      const morale = getPlayerMorale(player)
+
+      let starved = false
+      if (teamGames >= UNHAPPY_DEMAND_MIN_TEAM_GAMES) {
+        const games = leaguePlayerStats?.[player.id]?.games ?? 0
+        starved = games / teamGames < UNHAPPY_DEMAND_PLAYTIME_SHARE
+      }
+
+      const wantsOut =
+        morale < UNHAPPY_DEMAND_MORALE_THRESHOLD ||
+        (starved && morale < UNHAPPY_DEMAND_MORALE_WITH_LOW_PLAYTIME)
+      if (!wantsOut) continue
+
+      const result = setPlayerTransferListed(team, player.id, true)
+      if (result.ok) {
+        forced.push({
+          teamId: team.id,
+          playerId: player.id,
+          playerName: getPlayerFullName(player),
+          reason: morale < UNHAPPY_DEMAND_MORALE_THRESHOLD ? 'morale' : 'playtime',
+        })
+      }
+    }
+  }
+  return forced
+}
+
 /**
  * Lista zawodników dostępnych na rynku (wszyscy poza drużyną gracza).
  * @param {object} world
@@ -62,6 +139,9 @@ export function listTransferMarket(world, buyerTeamId) {
     refreshTeamMarketValues(team)
     const policy = getTransferPolicy(team)
     for (const player of team.players ?? []) {
+      // Wypożyczony zawodnik nie może pojawić się na rynku pod klubem docelowym —
+      // wyglądałoby jakby destination był jego właścicielem.
+      if (player.loan) continue
       const ovr = getOverallRating(player.skills)
       const value = getPlayerMarketValue(player)
       const ask = computeAskPrice(player, team)
@@ -88,10 +168,11 @@ export function listTransferMarket(world, buyerTeamId) {
         weeklyWage,
         contractYears,
         contractRemaining,
+        listed: !!player.transferListed,
       })
     }
   }
-  rows.sort((a, b) => b.ovr - a.ovr || b.marketValue - a.marketValue)
+  rows.sort((a, b) => (b.listed ? 1 : 0) - (a.listed ? 1 : 0) || b.ovr - a.ovr || b.marketValue - a.marketValue)
   return rows
 }
 
@@ -127,10 +208,14 @@ export function listTransferMarketWithFreeAgents(world, buyerTeamId) {
       contractYears: null,
       contractRemaining: 0,
       freeAgent: true,
+      listed: false,
     })
   }
   return [...faRows, ...clubRows].sort(
-    (a, b) => b.ovr - a.ovr || (b.marketValue ?? 0) - (a.marketValue ?? 0),
+    (a, b) =>
+      (b.listed ? 1 : 0) - (a.listed ? 1 : 0) ||
+      b.ovr - a.ovr ||
+      (b.marketValue ?? 0) - (a.marketValue ?? 0),
   )
 }
 
@@ -145,6 +230,7 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
   const found = findPlayerInWorld(world, playerId)
   if (found) {
     if (found.team.id === buyerTeamId) return null
+    if (found.player.loan) return null
     refreshTeamMarketValues(found.team)
     const { team, player } = found
     const policy = getTransferPolicy(team)
@@ -167,6 +253,7 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
       weeklyWage: player.contract?.weeklyWage ?? 0,
       contractYears: player.contract?.years ?? null,
       contractRemaining: getContractRemainingCost(player.contract),
+      listed: !!player.transferListed,
     }
   }
   const freeAgent = (world?.freeAgents ?? []).find((p) => String(p.id) === String(playerId))
@@ -191,6 +278,7 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
     contractYears: null,
     contractRemaining: 0,
     freeAgent: true,
+    listed: false,
   }
 }
 

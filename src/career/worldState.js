@@ -277,6 +277,8 @@ export function rehydrateCareerWorld(career) {
     ? career.world
     : createWorldFromTemplate(career.seasonYear ?? 2025)
 
+  if (!Array.isArray(world.activeLoans)) world.activeLoans = []
+
   initWorldPlayerStats(world)
   ensureTeamKitColors(world)
   ensureAiCoachProfiles(world, career.playerTeamId ?? null)
@@ -328,6 +330,7 @@ export function rehydrateCareerWorld(career) {
     // funkcji, dokładnie ten sam wzorzec co transferLog/inbox/ultiworld poniżej.
     nationalTeams: ensureCareerNationalTeams(career),
     transferLog: Array.isArray(career.transferLog) ? career.transferLog : [],
+    loanLog: Array.isArray(career.loanLog) ? career.loanLog : [],
     inbox: Array.isArray(career.inbox) ? career.inbox : [],
     ultiworld:
       career.ultiworld && typeof career.ultiworld === 'object'

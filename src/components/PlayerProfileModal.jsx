@@ -129,6 +129,9 @@ export default function PlayerProfileModal({
   isOwnPlayer = true,
   knowledge = null,
   onExtendContract = null,
+  onToggleTransferList = null,
+  onProposeLoanOut = null,
+  loanCounterpartyName = null,
   isShortlisted = false,
   onToggleShortlist = null,
   onScoutPlayer = null,
@@ -347,6 +350,18 @@ export default function PlayerProfileModal({
                   OVR {ovr}
                 </span>
               )}
+              {isOwnPlayer && player.transferListed && (
+                <span className="rounded bg-ufa-gold/15 px-2 py-0.5 text-xs font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
+                  {t.transferListedBadge}
+                </span>
+              )}
+              {isOwnPlayer && player.loan && (
+                <span className="rounded bg-ufa-gold/15 px-2 py-0.5 text-xs font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
+                  {loanCounterpartyName
+                    ? t.loanedInBadge(loanCounterpartyName, player.loan.returnDate)
+                    : t.transferListedBadge}
+                </span>
+              )}
               <span
                 className="rounded bg-ufa-bg px-2 py-0.5 text-xs text-ufa-gold ring-1 ring-ufa-border tabular-nums"
                 title={t.marketValueTitle}
@@ -465,7 +480,7 @@ export default function PlayerProfileModal({
           ) : (
             <p className="text-ufa-muted text-xs">{t.noContract}</p>
           )}
-          {isOwnPlayer && onExtendContract && (
+          {isOwnPlayer && onExtendContract && !player.loan && (
             <div className="mt-3 space-y-2">
               {!extendOpen ? (
                 <button
@@ -519,6 +534,32 @@ export default function PlayerProfileModal({
                   {extendFlash.text}
                 </p>
               )}
+            </div>
+          )}
+          {isOwnPlayer && onToggleTransferList && !player.loan && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => onToggleTransferList(player.id)}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold ring-1 ${
+                  player.transferListed
+                    ? 'bg-ufa-gold/15 text-ufa-gold ring-ufa-gold/40 hover:bg-ufa-gold/25'
+                    : 'bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover'
+                }`}
+              >
+                {player.transferListed ? t.removeFromTransferList : t.addToTransferList}
+              </button>
+            </div>
+          )}
+          {isOwnPlayer && onProposeLoanOut && !player.loan && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => onProposeLoanOut(player.id)}
+                className="rounded-md px-3 py-1.5 text-xs font-semibold ring-1 bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover"
+              >
+                {t.proposeLoanOut}
+              </button>
             </div>
           )}
         </div>

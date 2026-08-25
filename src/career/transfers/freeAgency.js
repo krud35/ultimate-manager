@@ -297,6 +297,9 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
       .sort((a, b) => a.ovr - b.ovr)
 
     for (const row of ranked) {
+      // Zawodnik na wypożyczeniu nie należy kontraktowo do tego klubu — nie
+      // zwalniaj/odnawiaj go tutaj (kontrakt/decyzje zostają przy klubie macierzystym).
+      if (row.p.loan) continue
       salt = (Math.imul(salt, 1664525) + 1013904223) >>> 0
       const roll = (salt % 1000) / 1000
       const isStar = row.rank <= 1 || row.ovr >= avg + 5
