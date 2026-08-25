@@ -9,6 +9,7 @@ import { ensurePlayerMorale, getPlayerMorale } from '../models/playerMorale.js'
 import { ensurePlayerForm } from '../models/playerForm.js'
 import { ensurePlayerTraits, getTraitMods } from '../models/playerTraits.js'
 import { noteLoyaltyFromTreatment } from '../models/playerLoyalty.js'
+import { isPlayerInjured } from '../models/playerInjury.js'
 import { adjustTeamReputation } from '../models/teamReputation.js'
 import {
   ensureTeamFans,
@@ -427,12 +428,14 @@ export const RANDOM_EVENT_TEMPLATES = [
     weight: 1.05,
     canSpawn: (_career, team) => (team?.players?.length ?? 0) >= 1,
     pickContext(roster, rng) {
-      const withMorale = [...roster].sort(
+      const available = (roster ?? []).filter((p) => !isPlayerInjured(p))
+      if (!available.length) return null
+      const withMorale = [...available].sort(
         (a, b) => getPlayerMorale(a) - getPlayerMorale(b),
       )
       // Preferuj najniższe morale, czasem losowy
       const target =
-        rng() < 0.7 ? withMorale[0] : pickRandom(roster, rng)
+        rng() < 0.7 ? withMorale[0] : pickRandom(available, rng)
       if (!target) return null
       return { playerId: target.id, playerName: playerName(target) }
     },
@@ -631,7 +634,7 @@ export const RANDOM_EVENT_TEMPLATES = [
     weight: 1,
     canSpawn: (_career, team) => (team?.players?.length ?? 0) >= 8,
     pickContext(roster, rng) {
-      const sorted = sortByOvrDesc(roster)
+      const sorted = sortByOvrDesc((roster ?? []).filter((p) => !isPlayerInjured(p)))
       const bench = sorted.slice(7)
       if (!bench.length) return null
       // Preferuj lepszych z ławki
@@ -1609,7 +1612,7 @@ export const RANDOM_EVENT_TEMPLATES = [
     weight: 1,
     canSpawn: (_career, team) => (team?.players?.length ?? 0) >= 4,
     pickContext(roster, rng) {
-      const sorted = sortByOvrDesc(roster)
+      const sorted = sortByOvrDesc((roster ?? []).filter((p) => !isPlayerInjured(p)))
       const rookies = sorted.slice(-Math.max(3, Math.floor(sorted.length / 3)))
       const rookie = pickRandom(rookies, rng) ?? sorted[sorted.length - 1]
       const mentor = sorted[0]
@@ -3771,7 +3774,7 @@ export const POST_MATCH_EVENT_TEMPLATES = [
           .map((r) => r.playerId),
       )
       const unused = sortByOvrDesc(
-        (roster ?? []).filter((p) => !playedIds.has(p.id)),
+        (roster ?? []).filter((p) => !playedIds.has(p.id) && !isPlayerInjured(p)),
       )
       const player = unused[0]
       if (!player) return null

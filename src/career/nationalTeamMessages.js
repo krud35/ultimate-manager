@@ -2,9 +2,9 @@
  * Faza 5 planu kadr narodowych: wiadomości do skrzynki o kwalifikacjach/turnieju.
  * Reużywa istniejący typ `INBOX_TYPES.CLUB_NEWS` z własnym `payload.kind` — dokładnie ten
  * sam wzorzec co `sponsor_payout`/`league_placement_prize` itd. (patrz inbox.js) — więc
- * ZERO zmian w `INBOX_TYPES`/`INBOX_TYPE_META` samego inbox.js. Nasze kindy nie są w
- * `SILENT_CLUB_NEWS_KINDS`, więc te wiadomości naturalnie przerywają pętlę "symuluj dalej"
- * (traktowane jak kontuzje/oferty — godne uwagi), zamiast cicho znikać w tle.
+ * ZERO zmian w `INBOX_TYPES`/`INBOX_TYPE_META` samego inbox.js. Czyste FYI bez żadnej
+ * decyzji do podjęcia, więc oba kindy są w `SILENT_CLUB_NEWS_KINDS` (inbox.js) — trafiają
+ * do skrzynki, ale nie przerywają pętli "symuluj dalej".
  */
 import { createInboxMessage, INBOX_TYPES } from './inbox.js'
 import { academyCountryLabel } from '../data/academyScoutGeography.js'

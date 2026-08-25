@@ -145,10 +145,10 @@ function IncomingBidPanel({ message, career, onAction, busy }) {
           {t.offerStatus[p.status] ?? p.status}
         </span>
         {awaiting && p.replyDate ? (
-          <span className="text-xs text-ufa-muted">{`${t.replyBy} ${formatDayLabel(p.replyDate)}`}</span>
+          <span className="text-xs text-ufa-muted">{`${t.replyBy} ${formatDayLabel(p.replyDate, lang)}`}</span>
         ) : null}
         {p.expiresDate ? (
-          <span className="text-xs text-ufa-muted">{`${t.expires} ${formatDayLabel(p.expiresDate)}`}</span>
+          <span className="text-xs text-ufa-muted">{`${t.expires} ${formatDayLabel(p.expiresDate, lang)}`}</span>
         ) : null}
       </div>
 
@@ -172,7 +172,7 @@ function IncomingBidPanel({ message, career, onAction, busy }) {
 
       {p.lastNegotiationMessage ? (
         <p className="rounded-md border border-ufa-border bg-ufa-bg/50 px-3 py-2 text-xs text-ufa-muted">
-          {p.lastNegotiationMessage}
+          {lang === 'en' ? p.lastNegotiationMessageEn ?? p.lastNegotiationMessage : p.lastNegotiationMessage}
         </p>
       ) : null}
 
@@ -414,7 +414,7 @@ function OutgoingClubOfferPanel({ message, career, onAction, busy }) {
           {t.offerStatus[p.status] ?? p.status}
         </span>
         {p.replyDate && p.status === 'awaiting_reply' ? (
-          <span className="text-xs text-ufa-muted">{`${t.replyBy} ${formatDayLabel(p.replyDate)}`}</span>
+          <span className="text-xs text-ufa-muted">{`${t.replyBy} ${formatDayLabel(p.replyDate, lang)}`}</span>
         ) : null}
       </div>
       <p className="text-ufa-text">
@@ -479,11 +479,11 @@ function OutgoingPlayerContractPanel({ message, career, onAction, busy }) {
           {t.offerStatus[p.status] ?? p.status}
         </span>
         {p.replyDate && p.status === 'awaiting_reply' ? (
-          <span className="text-xs text-ufa-muted">{`${t.replyBy} ${formatDayLabel(p.replyDate)}`}</span>
+          <span className="text-xs text-ufa-muted">{`${t.replyBy} ${formatDayLabel(p.replyDate, lang)}`}</span>
         ) : null}
       </div>
       <p className="text-ufa-text">
-        {formatUsd(p.weeklyWage)}/tydz. × {p.years} {lang === 'en' ? 'yrs' : 'lat'} ·{' '}
+        {formatUsd(p.weeklyWage)}{lang === 'en' ? '/wk' : '/tydz.'} × {p.years} {lang === 'en' ? 'yrs' : 'lat'} ·{' '}
         {t.contractTotal} {formatUsd(p.totalCost)} · {t.feeAgreed} {formatUsd(p.fee)}
       </p>
 
@@ -495,7 +495,7 @@ function OutgoingPlayerContractPanel({ message, career, onAction, busy }) {
           <p className="text-xs text-ufa-muted">
             {lang === 'en' ? 'Player wants' : 'Zawodnik chce'}:{' '}
             <span className="font-semibold text-ufa-gold">
-              {formatUsd(p.counterWeeklyWage)}/tydz. × {p.counterYears}{' '}
+              {formatUsd(p.counterWeeklyWage)}{lang === 'en' ? '/wk' : '/tydz.'} × {p.counterYears}{' '}
               {lang === 'en' ? 'yrs' : 'lat'}
             </span>
             {' '}({formatUsd(previewContractOffer(p.counterWeeklyWage, p.counterYears).totalCost)})
@@ -560,7 +560,7 @@ function PendingRegistrationPanel({ message, career, onAction, busy }) {
         {p.contractTerms ? (
           <span className="text-ufa-muted">
             {' '}
-            · {formatUsd(p.contractTerms.weeklyWage)}/tydz. × {p.contractTerms.years}{' '}
+            · {formatUsd(p.contractTerms.weeklyWage)}{lang === 'en' ? '/wk' : '/tydz.'} × {p.contractTerms.years}{' '}
             {lang === 'en' ? 'yrs' : 'lat'}
           </span>
         ) : null}
@@ -1301,7 +1301,7 @@ export default function InboxView({
             onClick={handleMarkAll}
             className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover disabled:opacity-40"
           >
-            Oznacz wszystkie jako przeczytane
+            {tInbox.markAllRead}
           </button>
         </div>
 

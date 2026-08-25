@@ -92,6 +92,14 @@ const SILENT_CLUB_NEWS_KINDS = new Set([
   'league_placement_prize',
   'cup_placement_prize',
   'retirement',
+  // Pure FYI — no button, no payload.status to resolve, so leaving these "important"
+  // just traps the sim loop until the message is deleted (same class of bug as injuries).
+  'board_bailout',
+  'board_warning',
+  'academy_aged_out',
+  'promise_broken',
+  'nationalTeamQualifying',
+  'nationalTeamTournament',
 ])
 
 // Pure info/report inbox types — never worth interrupting the loop.
@@ -99,6 +107,7 @@ const SILENT_REPORT_TYPES = new Set([
   INBOX_TYPES.TRAINING_REPORT,
   INBOX_TYPES.SCOUT_REPORT,
   INBOX_TYPES.INJURY,
+  INBOX_TYPES.MATCH_ANALYSIS,
 ])
 
 // transfer_offer payload {kind, status} combos that actually need the manager's
@@ -117,11 +126,13 @@ function isActionableTransferOffer(payload) {
 
 /**
  * Czy ta wiadomość powinna przerwać ciągłą symulację kalendarza ("Dalej")?
- * Raporty (treningowe, scouting) i rutynowe newsy klubowe (wypłaty, wygaśnięcia)
- * są ciche — kariera leci dalej. Zdarzenia losowe, które oferują opcję "zignoruj",
- * też nie blokują — gracz świadomie może je pominąć. Kontuzje, aktywne oferty/
- * odpowiedzi transferowe, decyzje bez opcji zignorowania i alarmy finansowe
- * zatrzymują symulację.
+ * Raporty (treningowe, scouting), kontuzje i rutynowe/informacyjne newsy klubowe
+ * (wypłaty, wygaśnięcia, dotacja zarządu, ostrzeżenie finansowe, kadra narodowa)
+ * są ciche — kariera leci dalej, bo nie ma w nich żadnej decyzji do podjęcia z
+ * poziomu skrzynki. Zdarzenia losowe, które oferują opcję "zignoruj", też nie
+ * blokują — gracz świadomie może je pominąć. Aktywne oferty/odpowiedzi
+ * transferowe i decyzje bez opcji zignorowania zatrzymują symulację — tam
+ * naprawdę trzeba coś kliknąć, żeby iść dalej.
  */
 export function isImportantInboxMessage(message) {
   if (!message) return false
@@ -694,7 +705,9 @@ export function messagesFromNewPlayerMatches(career, prevHistory, nextHistory, l
 
   const out = []
   for (const entry of nextHistory ?? []) {
-    if (!entry?.playedByPlayer) continue
+    // Mecze rozegrane ręcznie (playedByPlayer) mają już analizę dodaną bezpośrednio przez
+    // handleLeagueMatchComplete — tu łapiemy tylko te auto-symulowane (np. "Sim do daty").
+    if (entry?.playedByPlayer) continue
     if (prevIds.has(entry.fixtureId)) continue
     if (entry.homeTeamId !== playerTeamId && entry.awayTeamId !== playerTeamId) continue
     const fixture =
@@ -1020,12 +1033,16 @@ export function expireStaleTransferOffers(career, { date = null } = {}) {
     const p = m.payload
     if (m.type !== INBOX_TYPES.TRANSFER_OFFER) return m
 
-    // Przychodzące oferty AI — tylko w oknie / do expiresDate
+    // Przychodzące oferty AI — tylko w oknie / do expiresDate. Po wysłaniu kontroferty
+    // (awaiting_reply) liczy się replyDate klubu, nie pierwotny expiresDate oferty —
+    // inaczej kontra wysłana tuż przed expiresDate mogła wygasnąć, zanim AI zdążyła
+    // odpowiedzieć, i gracz nigdy nie widział wyniku negocjacji.
     if (
       p?.kind === 'incoming_bid' &&
       (p.status === 'pending' || p.status === 'counter' || p.status === 'awaiting_reply')
     ) {
-      const expiredByDate = today && p.expiresDate && today > p.expiresDate
+      const deadline = p.status === 'awaiting_reply' && p.replyDate ? p.replyDate : p.expiresDate
+      const expiredByDate = today && deadline && today > deadline
       if (!windowOpen || expiredByDate) {
         changed = true
         return {

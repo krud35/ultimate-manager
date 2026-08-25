@@ -5,6 +5,7 @@ const pl = {
   empty: 'Skrzynka jest pusta — raporty treningowe, oferty i analizy pojawią się tutaj.',
   pickMessage: 'Wybierz wiadomość z listy.',
   markAllRead: 'Oznacz przeczytane',
+  mayPushExit: ' — może naciskać na odejście',
   filters: {
     all: 'Wszystkie',
     unread: 'Nieprzeczytane',
@@ -105,6 +106,7 @@ const en = {
   empty: 'Inbox is empty — training reports, offers and analysis will show up here.',
   pickMessage: 'Pick a message from the list.',
   markAllRead: 'Mark all read',
+  mayPushExit: ' — may push to leave',
   filters: {
     all: 'All',
     unread: 'Unread',

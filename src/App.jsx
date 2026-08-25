@@ -940,9 +940,17 @@ export default function App() {
           )
         }
       }
+      let financialHealthMessages = []
       if (weekTicks > 0 && career.world) {
         processWeeklyWagesTimes(career.world, weekTicks)
-        processWeeklyFinancialHealth(career.world, { seasonYear: career.seasonYear })
+        const financialHealth = processWeeklyFinancialHealth(career.world, {
+          seasonYear: career.seasonYear,
+        })
+        financialHealthMessages = messagesFromFinancialHealth(
+          financialHealth,
+          { ...career, league: nextLeague },
+          { date: rangeEnd, seasonYear: career.seasonYear },
+        )
       }
 
       // Bulk fast-forward skips the per-day computeCalendarDayStep loop, which is
@@ -973,7 +981,14 @@ export default function App() {
         }
       }
 
-      return { reports, academyReports, playerSearchReports, resolvedScoutMissions, nationalTeamMessages }
+      return {
+        reports,
+        academyReports,
+        playerSearchReports,
+        resolvedScoutMissions,
+        nationalTeamMessages,
+        financialHealthMessages,
+      }
     },
     [career],
   )
@@ -1003,7 +1018,14 @@ export default function App() {
           }),
       })
 
-      const { reports, academyReports, playerSearchReports, resolvedScoutMissions, nationalTeamMessages } = await applyFastForwardSideEffects(
+      const {
+        reports,
+        academyReports,
+        playerSearchReports,
+        resolvedScoutMissions,
+        nationalTeamMessages,
+        financialHealthMessages,
+      } = await applyFastForwardSideEffects(
         nextLeague,
         rangeStart,
         result.weekTicks ?? 0,
@@ -1069,6 +1091,7 @@ export default function App() {
         ...messagesFromPlayerSearchReports(playerSearchReports, { ...career, league: nextLeague }),
         ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
         ...nationalTeamMessages,
+        ...financialHealthMessages,
         ...messagesFromNewPlayerMatches(
           { ...career, league: nextLeague },
           prevMatchHistory,
@@ -1164,7 +1187,14 @@ export default function App() {
             }),
         })
 
-        const { reports, academyReports, playerSearchReports, resolvedScoutMissions, nationalTeamMessages } = await applyFastForwardSideEffects(
+        const {
+          reports,
+          academyReports,
+          playerSearchReports,
+          resolvedScoutMissions,
+          nationalTeamMessages,
+          financialHealthMessages,
+        } = await applyFastForwardSideEffects(
           nextLeague,
           rangeStart,
           result.weekTicks ?? 0,
@@ -1227,6 +1257,7 @@ export default function App() {
           ...messagesFromPlayerSearchReports(playerSearchReports, { ...career, league: nextLeague }),
           ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
           ...nationalTeamMessages,
+          ...financialHealthMessages,
           ...messagesFromNewPlayerMatches(
             { ...career, league: nextLeague },
             prevMatchHistory,
