@@ -587,6 +587,7 @@ export default function TacticsForm({
         lineupIds={isD ? defenseLine : offenseLine}
         attackStyle={isD ? dAttackStyle : oAttackStyle}
         teamColor={teamColor}
+        title={isD ? t.formationD : t.formationO}
         teamName={
           teamName
             ? `${teamName} · ${isD ? 'D-Line' : 'O-Line'}`
@@ -708,7 +709,7 @@ export default function TacticsForm({
             onTacticsChange={onTacticsChange}
             compact={compact}
             lineRole={compactPointStyles.coachLineRole}
-            defaultOpen
+            defaultOpen={false}
           />
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -720,6 +721,16 @@ export default function TacticsForm({
             </div>
             <PointStartBadge role={pointStartRole} />
           </div>
+
+          <FormationPreview
+            roster={roster}
+            lineupIds={pointLine}
+            attackStyle={pointAttackStyle}
+            teamColor={teamColor}
+            title={pointStartRole === 'defense' ? t.formationD : t.formationO}
+            teamName={teamName ? `${teamName} · ${t.seven}` : t.seven}
+          />
+
           {compact ? (
             <CompactLineupSection
               compact
@@ -858,14 +869,16 @@ export default function TacticsForm({
             <PlayerInstructionsOverview roster={roster} tactics={tactics} />
           )}
 
-          {!compact && showLines && (
+          {showLines && (
             <section className="space-y-3">
-              <div>
-                <h3 className="text-sm font-semibold text-ufa-text">{t.formationPreview}</h3>
-                <p className="mt-0.5 text-xs text-ufa-muted">
-                  {t.formationPreviewHint}
-                </p>
-              </div>
+              {!compact && (
+                <div>
+                  <h3 className="text-sm font-semibold text-ufa-text">{t.formationPreview}</h3>
+                  <p className="mt-0.5 text-xs text-ufa-muted">
+                    {t.formationPreviewHint}
+                  </p>
+                </div>
+              )}
               <div
                 className={
                   isCombined ? 'grid gap-4 lg:grid-cols-2' : 'grid gap-4'

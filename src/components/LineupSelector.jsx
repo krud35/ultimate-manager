@@ -4,6 +4,21 @@ import { useUiLang } from '../ui/UiLangContext'
 import { tacticsStrings } from '../ui/strings/tactics'
 import { matchStrings } from '../ui/strings/match'
 
+function PointStartBadge({ role, t }) {
+  const isOffense = role === 'offense'
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center rounded-md px-3 py-1 text-sm font-semibold ${
+        isOffense
+          ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/40'
+          : 'bg-orange-500/20 text-orange-300 ring-1 ring-orange-500/40'
+      }`}
+    >
+      {isOffense ? t.startOffense : t.startDefense}
+    </span>
+  )
+}
+
 /**
  * Panel przed punktem: skład 7 + taktyka ataku/obrony + force.
  */
@@ -36,19 +51,16 @@ export default function LineupSelector({
 
   return (
     <div className="rounded-xl border border-ufa-accent/40 bg-ufa-panel p-5 shadow-lg shadow-black/20">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
         <div>
           <h3 className="font-semibold text-ufa-text">
             {editDefaultLines ? t.prepTitle : t.pointLineupTitle(pointNumber)}
           </h3>
-          <p className="text-xs text-ufa-muted mt-1">
-            {editDefaultLines
-              ? t.setDefaultLines
-              : pointStartRole === 'offense'
-                ? t.startOffense
-                : t.startDefense}
-          </p>
+          {editDefaultLines ? (
+            <p className="text-xs text-ufa-muted mt-1">{t.setDefaultLines}</p>
+          ) : null}
         </div>
+        {!editDefaultLines ? <PointStartBadge role={pointStartRole} t={t} /> : null}
       </div>
 
       {lineupError ? (

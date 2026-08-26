@@ -41,11 +41,14 @@ import {
 import { BoxScoreTable } from './BoxScoreTable'
 import PointHistory from './PointHistory'
 import LineupSelector from './LineupSelector'
-import TacticsForm from './TacticsForm'
 import PointStaminaPanel from './PointStaminaPanel'
 import FieldView2D from './FieldView2D'
 import { resolveMatchColors } from '../data/teamColors.js'
 import MatchDashboard from './MatchDashboard'
+import TeamNewsView from './match/TeamNewsView'
+import TacticsOverlay from './match/TacticsOverlay'
+import DressingRoomView from './match/DressingRoomView'
+import RoundResultsView from './match/RoundResultsView'
 import { useUiLang } from '../ui/UiLangContext'
 import { matchStrings } from '../ui/strings/match'
 import { pickCopy, UI_LANG } from '../ui/locale'
@@ -147,6 +150,9 @@ function commentaryForFieldAction(events, step, phase, homeName, awayName, t, la
   return eventLabel(ev, homeName, awayName, t, lang)
 }
 
+/** Etapy dnia meczowego od zakończenia meczu do wyjścia — auto-advance do "postMatch" ich nie dotyczy. */
+const POST_MATCH_STAGES = new Set(['postMatch', 'dressingRoomPost', 'roundResults'])
+
 function parseSeed(seedInput) {
   const trimmed = seedInput.trim()
   if (trimmed === '') return null
@@ -171,6 +177,8 @@ export default function MatchView({
   homeTeam: homeTeamProp = null,
   awayTeam: awayTeamProp = null,
   leaguePlayerStats = null,
+  league = null,
+  onMatchLockChange = null,
 }) {
   const { lang } = useUiLang()
   const t = matchStrings(lang)
@@ -189,10 +197,20 @@ export default function MatchView({
   const playbackPointRef = useRef(null)
   const leagueSubmittedRef = useRef(false)
   const fastForwardSkipRef = useRef(false)
+  /** Numer punktu, dla którego już otworzyliśmy modal taktyki automatycznie (bez powtórek). */
+  const tacticsAutoOpenedForRef = useRef(null)
   /** Tryb "punkt po punkcie": bez animacji boiska, ręczne tempo (gracz klika kolejny punkt). */
   const [pointByPointMode, setPointByPointMode] = useState(false)
-  const [showTacticsInPointByPoint, setShowTacticsInPointByPoint] = useState(false)
   const [returnPulse, setReturnPulse] = useState(false)
+  /** Etapy dnia meczowego: przygotowanie -> team news -> mecz -> po meczu. */
+  const [stage, setStage] = useState('prep')
+  const [tacticsModalOpen, setTacticsModalOpen] = useState(false)
+  const [showFullStats, setShowFullStats] = useState(false)
+
+  /** Poza "prep" blokujemy nawigację w App.jsx — nie da się porzucić meczu w trakcie. */
+  useEffect(() => {
+    onMatchLockChange?.(stage !== 'prep')
+  }, [stage, onMatchLockChange])
   const [pointPlaybackComplete, setPointPlaybackComplete] = useState(true)
   /** Taktyka / składy tylko na ten mecz (nie zapisują się do career.homeTactics). */
   const [matchTacticsBundle, setMatchTacticsBundle] = useState({
@@ -441,12 +459,27 @@ export default function MatchView({
 
   function handleEnterPointByPoint() {
     setPointByPointMode(true)
-    setShowTacticsInPointByPoint(false)
+    setTacticsModalOpen(false)
   }
 
   function handleExitPointByPoint() {
     setPointByPointMode(false)
-    setShowTacticsInPointByPoint(false)
+    setTacticsModalOpen(false)
+  }
+
+  /** Etap "prep": zatwierdza siódemki startowe i przechodzi do team news (bez rozgrywania punktu). */
+  function handleContinueToTeamNews() {
+    setStage('teamNews')
+  }
+
+  /** Etap "team news": faktyczne rozegranie punktu 1, zgodnie z wybranym trybem (animowany / punkt po punkcie). */
+  function handleKickoff() {
+    if (pointByPointMode) {
+      handleSimulateNextPoint()
+    } else {
+      handlePlayNextPoint()
+    }
+    setStage('live')
   }
 
   function handleSimulateAll() {
@@ -458,6 +491,7 @@ export default function MatchView({
     publishStamina(finished)
     sessionRef.current = null
     setReviewPointIndex(finished.pointsPlayed || 1)
+    setStage('postMatch')
     bump()
   }
 
@@ -506,14 +540,28 @@ export default function MatchView({
   const matchFinished =
     result?.status === 'finished' || session?.status === 'finished'
 
+  /**
+   * Auto-przejście do ekranu pomeczowego, gdy mecz się kończy — czy to w trakcie
+   * normalnej rozgrywki ("live"), czy przez "Symuluj do końca meczu" kliknięte
+   * jeszcze na etapie "prep" (mecz może się skończyć bez odwiedzenia "live").
+   */
+  useEffect(() => {
+    if (!POST_MATCH_STAGES.has(stage) && matchFinished) {
+      setStage('postMatch')
+    }
+  }, [stage, matchFinished])
+
   function resetMatch() {
     setPointByPointMode(false)
-    setShowTacticsInPointByPoint(false)
+    setTacticsModalOpen(false)
+    setShowFullStats(false)
+    setStage('prep')
     sessionRef.current = null
     setInstantResult(null)
     setReviewPointIndex(null)
     setPointPlaybackComplete(true)
     leagueSubmittedRef.current = false
+    tacticsAutoOpenedForRef.current = null
     onMatchStaminaChange?.(null)
     if (homeTactics) {
       setMatchTacticsBundle({
@@ -534,8 +582,11 @@ export default function MatchView({
 
   useEffect(() => {
     leagueSubmittedRef.current = false
+    tacticsAutoOpenedForRef.current = null
     setPointByPointMode(false)
-    setShowTacticsInPointByPoint(false)
+    setTacticsModalOpen(false)
+    setShowFullStats(false)
+    setStage('prep')
     if (!isLeagueMatch || leagueFixture.status === 'completed') return
     setInstantResult(null)
     setReviewPointIndex(null)
@@ -893,6 +944,15 @@ export default function MatchView({
     !fieldPlaying &&
     !pointByPointMode
 
+  /** Po zdobyciu punktu — od razu otwórz wybór składu/taktyki na kolejny punkt. */
+  useEffect(() => {
+    if (stage !== 'live') return
+    if (!matchLive || !canPlayPoint || !pointPlaybackComplete || fieldPlaying) return
+    if (tacticsAutoOpenedForRef.current === activeReviewPoint) return
+    tacticsAutoOpenedForRef.current = activeReviewPoint
+    setTacticsModalOpen(true)
+  }, [stage, matchLive, canPlayPoint, pointPlaybackComplete, fieldPlaying, activeReviewPoint])
+
   const homeNextPointRole = session
     ? pointStartRoleForTeam(playerSide, session.pullTeam)
     : 'offense'
@@ -942,6 +1002,32 @@ export default function MatchView({
 
   const lineupSubmitError = lineupValidationMessage(lineupCheck)
 
+  // Team news: potwierdzone siódemki startowe obu drużyn wg roli przy odbiorze/wykonaniu pulla.
+  const homeStartRole = session ? pointStartRoleForTeam('home', session.pullTeam) : 'offense'
+  const awayStartRole = homeStartRole === 'offense' ? 'defense' : 'offense'
+  const homeSideTactics = playerSide === 'home' ? matchTactics : aiTacticsRef.current
+  const awaySideTactics = playerSide === 'away' ? matchTactics : aiTacticsRef.current
+  const homeStartingIds = homeSideTactics
+    ? lineupIdsForPointStart(homeSideTactics, homeStartRole)
+    : []
+  const awayStartingIds = awaySideTactics
+    ? lineupIdsForPointStart(awaySideTactics, awayStartRole)
+    : []
+
+  // Szatnia: cały skład drużyny gracza (reakcje wszystkich, nie tylko grającej siódemki).
+  const matchdayRoster = playerRosterForValidation()
+
+  const finalHomeScore = result?.homeScore ?? session?.homeScore ?? 0
+  const finalAwayScore = result?.awayScore ?? session?.awayScore ?? 0
+  const playerFinalScore = playerSide === 'home' ? finalHomeScore : finalAwayScore
+  const opponentFinalScore = playerSide === 'home' ? finalAwayScore : finalHomeScore
+  const matchOutcome =
+    playerFinalScore > opponentFinalScore
+      ? 'win'
+      : playerFinalScore < opponentFinalScore
+        ? 'loss'
+        : 'draw'
+
   return (
     <div className={`space-y-6 ${returnPulse ? 'opacity-0 transition-opacity duration-300' : ''}`}>
       {isLeagueMatch && (
@@ -951,295 +1037,399 @@ export default function MatchView({
           <span className="text-ufa-text">{awayTeam.name}</span>
         </div>
       )}
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-ufa-text">
-              {isLeagueMatch ? t.leagueMatch : t.simMatch}
-            </h2>
-            <p className="mt-1 text-sm text-ufa-muted">
-              {t.matchupSubtitle(
-                homeTeam.name,
-                homeTeam.players.length,
-                awayTeam.name,
-                awayTeam.players.length,
-                MATCH_CONFIG.pointsToWin,
-              )}{' '}
-              · O: {oAttackLabel}/{oDefenseLabel} · D: {dAttackLabel}/{dDefenseLabel}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-xs text-ufa-muted">
-              {t.seedOptional}
-              <input
-                type="text"
-                inputMode="numeric"
-                value={seedInput}
-                onChange={(e) => setSeedInput(e.target.value)}
-                placeholder={t.seedRandomPlaceholder}
-                disabled={!!session}
-                className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-sm text-ufa-text w-28 disabled:opacity-50"
-              />
-            </label>
-            <label className="flex items-center gap-2 pb-2 text-sm text-ufa-muted cursor-pointer">
-              <input
-                type="checkbox"
-                checked={verbose}
-                onChange={(e) => setVerbose(e.target.checked)}
-                className="rounded border-ufa-border"
-              />
-              {t.fullThrowLog}
-            </label>
-            {!session && !isLeagueMatch && (
-              <>
-                <button
-                  type="button"
-                  onClick={startInteractiveMatch}
-                  className="rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-bg shadow-md hover:opacity-90"
-                >
-                  {t.pointByPointMatch}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSimulateAll}
-                  className="rounded-md border border-ufa-border bg-ufa-bg px-4 py-2 text-sm font-medium text-ufa-text hover:bg-ufa-panel-hover"
-                >
-                  {t.simRest}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
 
-        {(result || session) && (
-          <div className="mt-6 space-y-3">
-            <MatchDashboard
-              matchStats={matchStats}
-              homeName={homeTeam.name}
-              awayName={awayTeam.name}
-              homeScore={displayedScore.home}
-              awayScore={displayedScore.away}
-              matchEvents={result?.events ?? session?.events ?? null}
-            />
-
-            <div className="space-y-3">
-              {pointByPointMode ? (
-                <div className="rounded-xl border border-ufa-border bg-ufa-panel/80 p-5">
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={!canPlayPoint || !lineupCheck.ok}
-                      onClick={handleSimulateNextPoint}
-                      className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
-                    >
-                      {t.simNextPoint}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowTacticsInPointByPoint((v) => !v)}
-                      className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
-                    >
-                      {showTacticsInPointByPoint ? t.hideTactics : t.changeTactics}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleExitPointByPoint}
-                      className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-muted hover:bg-ufa-panel-hover"
-                    >
-                      {t.exitPointByPoint}
-                    </button>
-                  </div>
-                  {lineupSubmitError ? (
-                    <p className="mt-3 text-sm text-red-400">{lineupSubmitError}</p>
-                  ) : null}
-                  {showTacticsInPointByPoint && session && (
-                    <div className="mt-4">
-                      <TacticsForm
-                        roster={session?.[playerSide]?.players ?? playerTeamObj?.players ?? []}
-                        tactics={matchTactics}
-                        onTacticsChange={handleMatchTacticsChange}
-                        staminaMap={playerStaminaMap}
-                        lineupMode={beforeFirstPoint ? 'dual' : 'single'}
-                        pointStartRole={homeNextPointRole}
-                        teamName={playerTeamObj?.name}
-                        leaguePlayerStats={leaguePlayerStats}
-                        compact
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs text-ufa-muted">{t.simTempo}</span>
-                      {PLAYBACK_SPEED_OPTIONS.map((speed) => (
-                        <button
-                          key={speed}
-                          type="button"
-                          onClick={() => setPlaybackSpeed(speed)}
-                          className={`rounded-md px-2.5 py-1 text-xs font-medium tabular-nums ${
-                            playbackSpeed === speed
-                              ? 'bg-ufa-accent text-ufa-bg'
-                              : 'border border-ufa-border text-ufa-muted hover:bg-ufa-panel-hover'
-                          }`}
-                        >
-                          {speed}×
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <FieldView2D
-                    fieldState={fieldState}
-                    renderFrame={renderFrame}
-                    fieldPointKey={activeReviewPoint}
-                    wind={wind}
-                    homeLabel={homeTeam.name.split(' ').pop()}
-                    awayLabel={awayTeam.name.split(' ').pop()}
-                    homeColor={matchKitColors.homeColor}
-                    awayColor={matchKitColors.awayColor}
-                    commentary={fieldCommentary}
-                  />
-                </>
-              )}
-              {fieldStaminaReady && (
-                <PointStaminaPanel
-                  homeName={homeTeam.name}
-                  awayName={awayTeam.name}
-                  homePlayers={reviewHomeLineup}
-                  awayPlayers={reviewAwayLineup}
-                  staminaMaps={playbackStaminaMaps}
-                  pointEvents={pointStatsEvents}
-                  pointComplete={pointStatsComplete}
-                  pointIndex={activeReviewPoint}
+      {stage === 'prep' && (
+        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-ufa-text">
+                {isLeagueMatch ? t.leagueMatch : t.simMatch}
+              </h2>
+              <p className="mt-1 text-sm text-ufa-muted">
+                {t.matchupSubtitle(
+                  homeTeam.name,
+                  homeTeam.players.length,
+                  awayTeam.name,
+                  awayTeam.players.length,
+                  MATCH_CONFIG.pointsToWin,
+                )}{' '}
+                · O: {oAttackLabel}/{oDefenseLabel} · D: {dAttackLabel}/{dDefenseLabel}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="flex flex-col gap-1 text-xs text-ufa-muted">
+                {t.seedOptional}
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={seedInput}
+                  onChange={(e) => setSeedInput(e.target.value)}
+                  placeholder={t.seedRandomPlaceholder}
+                  disabled={!!session}
+                  className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-sm text-ufa-text w-28 disabled:opacity-50"
                 />
+              </label>
+              <label className="flex items-center gap-2 pb-2 text-sm text-ufa-muted cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={verbose}
+                  onChange={(e) => setVerbose(e.target.checked)}
+                  className="rounded border-ufa-border"
+                />
+                {t.fullThrowLog}
+              </label>
+              {!session && !isLeagueMatch && (
+                <>
+                  <button
+                    type="button"
+                    onClick={startInteractiveMatch}
+                    className="rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-bg shadow-md hover:opacity-90"
+                  >
+                    {t.pointByPointMatch}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSimulateAll}
+                    className="rounded-md border border-ufa-border bg-ufa-bg px-4 py-2 text-sm font-medium text-ufa-text hover:bg-ufa-panel-hover"
+                  >
+                    {t.simRest}
+                  </button>
+                </>
               )}
             </div>
           </div>
-        )}
 
-        {session && session.lastPoint && (
-          <p className="mt-4 text-center text-sm text-ufa-muted">
-            {t.pointN(session.lastPoint.pointIndex)}{' '}
-            <span className="text-ufa-text font-medium">
-              {session.lastPoint.scoringTeam === 'home'
-                ? homeTeam.name
-                : awayTeam.name}
-            </span>{' '}
-            · {t.throwsN(session.lastPoint.throws)} ·{' '}
-            <span className="text-ufa-accent">{t.historyBelow}</span>
-          </p>
-        )}
-      </div>
-
-      {showLineupPanel && (
-        <LineupSelector
-          session={session}
-          playerTeam={playerTeamObj}
-          playerSide={playerSide}
-          pullTeam={session.pullTeam}
-          tactics={matchTactics}
-          onTacticsChange={handleMatchTacticsChange}
-          staminaMap={playerStaminaMap}
-          onPlayPoint={canPlayPoint ? handlePlayNextPoint : null}
-          onEnterPointByPoint={canPlayPoint ? handleEnterPointByPoint : null}
-          lineupError={lineupSubmitError}
-          playDisabled={!lineupCheck.ok}
-          playLabel={
-            beforeFirstPoint ? t.playPoint1 : t.playPoint(session.pointIndex)
-          }
-          onSimulateToEnd={canPlayPoint ? handleSimulateToEnd : null}
-          editDefaultLines={!!beforeFirstPoint}
-          leaguePlayerStats={leaguePlayerStats}
-        />
-      )}
-
-      {matchFinished && (
-        <div className="flex flex-col items-center gap-3 league-fade-in">
-          {isLeagueMatch ? (
-            <button
-              type="button"
-              onClick={handleReturnToLeague}
-              className="rounded-md bg-ufa-accent px-6 py-2.5 text-sm font-semibold text-ufa-bg shadow-md hover:opacity-90"
-            >
-              {t.returnHub}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={resetMatch}
-              className="rounded-md border border-ufa-border bg-ufa-panel px-5 py-2 text-sm font-medium text-ufa-text hover:bg-ufa-panel-hover"
-            >
-              {t.newMatch}
-            </button>
+          {session && (
+            <div className="mt-6">
+              <LineupSelector
+                session={session}
+                playerTeam={playerTeamObj}
+                playerSide={playerSide}
+                pullTeam={session.pullTeam}
+                tactics={matchTactics}
+                onTacticsChange={handleMatchTacticsChange}
+                staminaMap={playerStaminaMap}
+                onPlayPoint={canPlayPoint ? handleContinueToTeamNews : null}
+                onEnterPointByPoint={null}
+                lineupError={lineupSubmitError}
+                playDisabled={!lineupCheck.ok}
+                playLabel={t.goToMatch}
+                onSimulateToEnd={null}
+                editDefaultLines
+                leaguePlayerStats={leaguePlayerStats}
+              />
+            </div>
           )}
         </div>
       )}
 
-      {matchFinished && (
-        <p className="text-center text-sm text-ufa-gold font-medium -mt-4">
-          {isLeagueMatch ? t.resultSaved : t.matchOver}
-        </p>
-      )}
-
-      {reviewPointEvents.length > 0 && (
-        <PointHistory
-          events={reviewPointEvents}
-          pointIndex={activeReviewPoint}
-          pointIndices={pointIndices}
-          onSelectPointIndex={setReviewPointIndex}
-          scoringTeam={reviewPointMeta.scoringTeam}
-          throws={reviewPointMeta.throws}
-          homeTeamName={homeTeam.name}
-          awayTeamName={awayTeam.name}
+      {stage === 'teamNews' && (
+        <TeamNewsView
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          homeStartingIds={homeStartingIds}
+          awayStartingIds={awayStartingIds}
+          onContinue={() => setStage('dressingRoomPre')}
         />
       )}
 
-      {result && !matchFinished && (
-        <BoxScoreTable
-          variant="full"
-          rows={result.boxScore}
-          homeTeamName={homeTeam.name}
-          awayTeamName={awayTeam.name}
-        />
+      {stage === 'dressingRoomPre' && (
+        <DressingRoomView mode="pre" roster={matchdayRoster} onContinue={handleKickoff} />
       )}
 
-      {result && matchFinished && (
-        <BoxScoreTable
-          variant="full"
-          rows={result.boxScore}
-          homeTeamName={homeTeam.name}
-          awayTeamName={awayTeam.name}
-        />
-      )}
-
-      {result && (
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
-          <div className="border-b border-ufa-border px-6 py-4">
-            <h3 className="font-semibold text-ufa-text">{t.matchLog}</h3>
-            <p className="text-xs text-ufa-muted mt-1">
-              {t.pointsEvents(result.pointsPlayed, result.events.length)}
-              {verbose ? '' : t.abbreviated}
-            </p>
-          </div>
-          <ul className="max-h-[480px] overflow-y-auto divide-y divide-ufa-border/60 px-4 py-2 text-sm font-mono">
-            {displayEvents.map((event) => (
-              <li
-                key={event.id}
-                className={`py-2 px-2 ${
-                  event.type === EVENT.SCORE
-                    ? 'text-ufa-accent font-semibold'
-                    : event.type === EVENT.MATCH_END
-                      ? 'text-ufa-gold'
-                      : 'text-ufa-muted'
-                }`}
+      {stage === 'live' && (
+        <div className="space-y-4 league-fade-in">
+          <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-xl shadow-black/30">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-ufa-text">
+                {homeTeam.name}
+                <span className="mx-2 tabular-nums text-ufa-accent">
+                  {displayedScore.home}–{displayedScore.away}
+                </span>
+                {awayTeam.name}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowFullStats((v) => !v)}
+                className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
               >
-                {eventLabel(event, homeTeam.name, awayTeam.name, t, lang)}
-              </li>
-            ))}
-          </ul>
+                {showFullStats ? t.hideFullStats : t.fullStats}
+              </button>
+            </div>
+            {showFullStats && (
+              <div className="mt-4">
+                <MatchDashboard
+                  matchStats={matchStats}
+                  homeName={homeTeam.name}
+                  awayName={awayTeam.name}
+                  homeScore={displayedScore.home}
+                  awayScore={displayedScore.away}
+                  matchEvents={result?.events ?? session?.events ?? null}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 sm:p-6 shadow-xl shadow-black/30">
+            {pointByPointMode ? (
+              <div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={!canPlayPoint || !lineupCheck.ok}
+                    onClick={handleSimulateNextPoint}
+                    className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                  >
+                    {t.simNextPoint}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTacticsModalOpen(true)}
+                    className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
+                  >
+                    {t.tacticsAndSubs}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExitPointByPoint}
+                    className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-muted hover:bg-ufa-panel-hover"
+                  >
+                    {t.exitPointByPoint}
+                  </button>
+                </div>
+                {lineupSubmitError ? (
+                  <p className="mt-3 text-sm text-red-400">{lineupSubmitError}</p>
+                ) : null}
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-ufa-muted">{t.simTempo}</span>
+                    {PLAYBACK_SPEED_OPTIONS.map((speed) => (
+                      <button
+                        key={speed}
+                        type="button"
+                        onClick={() => setPlaybackSpeed(speed)}
+                        className={`rounded-md px-2.5 py-1 text-xs font-medium tabular-nums ${
+                          playbackSpeed === speed
+                            ? 'bg-ufa-accent text-ufa-bg'
+                            : 'border border-ufa-border text-ufa-muted hover:bg-ufa-panel-hover'
+                        }`}
+                      >
+                        {speed}×
+                      </button>
+                    ))}
+                  </div>
+                  {showLineupPanel && (
+                    <button
+                      type="button"
+                      onClick={() => setTacticsModalOpen(true)}
+                      className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+                    >
+                      {t.tacticsAndSubs}
+                    </button>
+                  )}
+                </div>
+                <FieldView2D
+                  className="field-view-2d--fullscreen mt-3"
+                  fieldState={fieldState}
+                  renderFrame={renderFrame}
+                  fieldPointKey={activeReviewPoint}
+                  wind={wind}
+                  homeLabel={homeTeam.name.split(' ').pop()}
+                  awayLabel={awayTeam.name.split(' ').pop()}
+                  homeColor={matchKitColors.homeColor}
+                  awayColor={matchKitColors.awayColor}
+                  commentary={fieldCommentary}
+                />
+              </>
+            )}
+            {fieldStaminaReady && (
+              <PointStaminaPanel
+                homeName={homeTeam.name}
+                awayName={awayTeam.name}
+                homePlayers={reviewHomeLineup}
+                awayPlayers={reviewAwayLineup}
+                staminaMaps={playbackStaminaMaps}
+                pointEvents={pointStatsEvents}
+                pointComplete={pointStatsComplete}
+                pointIndex={activeReviewPoint}
+              />
+            )}
+          </div>
+
+          {session && session.lastPoint && (
+            <p className="text-center text-sm text-ufa-muted">
+              {t.pointN(session.lastPoint.pointIndex)}{' '}
+              <span className="text-ufa-text font-medium">
+                {session.lastPoint.scoringTeam === 'home' ? homeTeam.name : awayTeam.name}
+              </span>{' '}
+              · {t.throwsN(session.lastPoint.throws)} ·{' '}
+              <span className="text-ufa-accent">{t.historyBelow}</span>
+            </p>
+          )}
+
+          {showFullStats && reviewPointEvents.length > 0 && (
+            <PointHistory
+              events={reviewPointEvents}
+              pointIndex={activeReviewPoint}
+              pointIndices={pointIndices}
+              onSelectPointIndex={setReviewPointIndex}
+              scoringTeam={reviewPointMeta.scoringTeam}
+              throws={reviewPointMeta.throws}
+              homeTeamName={homeTeam.name}
+              awayTeamName={awayTeam.name}
+            />
+          )}
+
+          {showFullStats && result && (
+            <BoxScoreTable
+              variant="full"
+              rows={result.boxScore}
+              homeTeamName={homeTeam.name}
+              awayTeamName={awayTeam.name}
+            />
+          )}
         </div>
       )}
+
+      {stage === 'postMatch' && (
+        <div className="space-y-4 league-fade-in">
+          <MatchDashboard
+            matchStats={matchStats}
+            homeName={homeTeam.name}
+            awayName={awayTeam.name}
+            homeScore={displayedScore.home}
+            awayScore={displayedScore.away}
+            matchEvents={result?.events ?? session?.events ?? null}
+          />
+
+          <div className="flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setStage('dressingRoomPost')}
+              className="rounded-md bg-ufa-accent px-6 py-2.5 text-sm font-semibold text-ufa-bg shadow-md hover:opacity-90"
+            >
+              {t.postMatchContinue}
+            </button>
+            <p className="text-center text-sm text-ufa-gold font-medium">
+              {isLeagueMatch ? t.resultSaved : t.matchOver}
+            </p>
+          </div>
+
+          {reviewPointEvents.length > 0 && (
+            <PointHistory
+              events={reviewPointEvents}
+              pointIndex={activeReviewPoint}
+              pointIndices={pointIndices}
+              onSelectPointIndex={setReviewPointIndex}
+              scoringTeam={reviewPointMeta.scoringTeam}
+              throws={reviewPointMeta.throws}
+              homeTeamName={homeTeam.name}
+              awayTeamName={awayTeam.name}
+            />
+          )}
+
+          {result && (
+            <BoxScoreTable
+              variant="full"
+              rows={result.boxScore}
+              homeTeamName={homeTeam.name}
+              awayTeamName={awayTeam.name}
+            />
+          )}
+
+          {result && (
+            <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
+              <div className="border-b border-ufa-border px-6 py-4">
+                <h3 className="font-semibold text-ufa-text">{t.matchLog}</h3>
+                <p className="text-xs text-ufa-muted mt-1">
+                  {t.pointsEvents(result.pointsPlayed, result.events.length)}
+                  {verbose ? '' : t.abbreviated}
+                </p>
+              </div>
+              <ul className="max-h-[480px] overflow-y-auto divide-y divide-ufa-border/60 px-4 py-2 text-sm font-mono">
+                {displayEvents.map((event) => (
+                  <li
+                    key={event.id}
+                    className={`py-2 px-2 ${
+                      event.type === EVENT.SCORE
+                        ? 'text-ufa-accent font-semibold'
+                        : event.type === EVENT.MATCH_END
+                          ? 'text-ufa-gold'
+                          : 'text-ufa-muted'
+                    }`}
+                  >
+                    {eventLabel(event, homeTeam.name, awayTeam.name, t, lang)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {stage === 'dressingRoomPost' && (
+        <DressingRoomView
+          mode="post"
+          roster={matchdayRoster}
+          outcome={matchOutcome}
+          onContinue={isLeagueMatch ? () => setStage('roundResults') : resetMatch}
+        />
+      )}
+
+      {stage === 'roundResults' && (
+        <RoundResultsView
+          league={league}
+          fixture={leagueFixture}
+          playerTeamId={playerTeamId}
+          onContinue={handleReturnToLeague}
+        />
+      )}
+
+      <TacticsOverlay open={tacticsModalOpen} onClose={() => setTacticsModalOpen(false)}>
+        {session && (
+          <LineupSelector
+            session={session}
+            playerTeam={playerTeamObj}
+            playerSide={playerSide}
+            pullTeam={session.pullTeam}
+            tactics={matchTactics}
+            onTacticsChange={handleMatchTacticsChange}
+            staminaMap={playerStaminaMap}
+            onPlayPoint={
+              canPlayPoint
+                ? () => {
+                    ;(pointByPointMode ? handleSimulateNextPoint : handlePlayNextPoint)()
+                    setTacticsModalOpen(false)
+                  }
+                : null
+            }
+            onEnterPointByPoint={
+              !pointByPointMode && canPlayPoint
+                ? () => {
+                    handleEnterPointByPoint()
+                    setTacticsModalOpen(false)
+                  }
+                : null
+            }
+            lineupError={lineupSubmitError}
+            playDisabled={!lineupCheck.ok}
+            playLabel={t.playPoint(session.pointIndex)}
+            onSimulateToEnd={
+              canPlayPoint
+                ? () => {
+                    handleSimulateToEnd()
+                    setTacticsModalOpen(false)
+                  }
+                : null
+            }
+            editDefaultLines={false}
+            leaguePlayerStats={leaguePlayerStats}
+          />
+        )}
+      </TacticsOverlay>
 
       {/* tick forces re-render when session mutates */}
       <span className="sr-only" aria-hidden>

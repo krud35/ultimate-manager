@@ -32,6 +32,7 @@ export default function FormationPreview({
   attackStyle,
   teamColor = DEFAULT_HOME_FIELD_COLOR,
   teamName = '',
+  title = null,
 }) {
   const { lang } = useUiLang()
   const t = tacticsStrings(lang)
@@ -72,7 +73,7 @@ export default function FormationPreview({
     <section className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-ufa-text">{t.formationO}</h3>
+          <h3 className="text-sm font-semibold text-ufa-text">{title ?? t.formationO}</h3>
           <p className="mt-0.5 text-xs text-ufa-muted">
             {teamName ? `${teamName} · ` : ''}
             {styleLabel} — {t.handlersCutters(handlerN, cutterN)}

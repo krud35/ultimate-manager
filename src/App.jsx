@@ -676,6 +676,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('hub')
   const [leagueFixture, setLeagueFixture] = useState(null)
   const [matchStamina, setMatchStamina] = useState(null)
+  /** Blokada nawigacji: mecz przeszedł etap "prep" (MatchView zgłasza to przez onMatchLockChange). */
+  const [matchInProgress, setMatchInProgress] = useState(false)
   const [teamProfileId, setTeamProfileId] = useState(null)
   const [simProgress, setSimProgress] = useState(null)
   const [calendarSim, setCalendarSim] = useState(null)
@@ -684,6 +686,10 @@ export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [pendingWelcome, setPendingWelcome] = useState(false)
   const [tutorialOpen, setTutorialOpen] = useState(false)
+
+  useEffect(() => {
+    if (activeTab !== 'match') setMatchInProgress(false)
+  }, [activeTab])
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -1791,6 +1797,7 @@ export default function App() {
   const navigateTo = useCallback(
     (tabId) => {
       const id = resolveTabId(tabId)
+      if (matchInProgress && id !== 'match') return
       if (id === 'match') {
         const needNext =
           !leagueFixture ||
@@ -1805,7 +1812,7 @@ export default function App() {
       setTeamProfileId(null)
       setActiveTab(id)
     },
-    [career?.league, leagueFixture],
+    [career?.league, leagueFixture, matchInProgress],
   )
 
   // Wiadomość, która zatrzymała ciągłą symulację ("Dalej" → "Wymaga decyzji") —
@@ -2153,7 +2160,13 @@ export default function App() {
           <kbd className="rounded border border-ufa-border px-1 font-mono text-[10px]">Ctrl K</kbd>
         </button>
 
-        <nav className="flex-1 overflow-y-auto px-2.5 py-3" aria-label={tShell.navAria}>
+        <nav
+          className={`flex-1 overflow-y-auto px-2.5 py-3 ${
+            matchInProgress ? 'pointer-events-none opacity-40' : ''
+          }`}
+          aria-label={tShell.navAria}
+          aria-disabled={matchInProgress}
+        >
           {NAV_CATEGORIES.map((cat) => {
             const Icon = NAV_ICONS[cat.id]
             const catBadge = categoryBadge(cat)
@@ -2204,7 +2217,8 @@ export default function App() {
           <button
             type="button"
             onClick={handleExitToSlots}
-            className="rounded-sm border border-ufa-border px-3 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover"
+            disabled={matchInProgress}
+            className="rounded-sm border border-ufa-border px-3 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover disabled:pointer-events-none disabled:opacity-40"
           >
             {tShell.saveAndExit}
           </button>
@@ -2233,7 +2247,8 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleExitToSlots}
-                className="min-h-9 max-w-[7.5rem] truncate rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover"
+                disabled={matchInProgress}
+                className="min-h-9 max-w-[7.5rem] truncate rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover disabled:pointer-events-none disabled:opacity-40"
               >
                 {tShell.saveAndExit}
               </button>
@@ -2387,6 +2402,8 @@ export default function App() {
                 onLeagueMatchComplete={handleLeagueMatchComplete}
                 onReturnToLeague={handleReturnToLeague}
                 leaguePlayerStats={league.playerStats}
+                league={league}
+                onMatchLockChange={setMatchInProgress}
               />
             ) : (
               <PreMatchView
