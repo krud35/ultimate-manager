@@ -332,6 +332,9 @@ export function rehydrateCareerWorld(career) {
     transferLog: Array.isArray(career.transferLog) ? career.transferLog : [],
     loanLog: Array.isArray(career.loanLog) ? career.loanLog : [],
     inbox: Array.isArray(career.inbox) ? career.inbox : [],
+    pendingEventFollowUps: Array.isArray(career.pendingEventFollowUps)
+      ? career.pendingEventFollowUps
+      : [],
     ultiworld:
       career.ultiworld && typeof career.ultiworld === 'object'
         ? {

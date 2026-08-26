@@ -30,6 +30,7 @@ import {
   messagesFromNewTransferLogEntries,
   generateIncomingTransferOffers,
   generateRandomEvents,
+  processPendingEventFollowUps,
   mergeInbox,
   unreadInboxCount,
   respondToIncomingBid,
@@ -612,6 +613,8 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
     ...generateIncomingLoanOffers({ ...offerCareer, world, inbox: inboxBase }, { date: offerDate }),
   )
   inboxMessages.push(...generateRandomEvents(offerCareer, { date: offerDate }))
+  const followUps = processPendingEventFollowUps(offerCareer, { date: offerDate })
+  if (followUps.messages.length) inboxMessages.push(...followUps.messages)
   inboxMessages.push(
     ...messagesFromNewMatchInjuries(
       offerCareer,
@@ -651,6 +654,7 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
     inbox,
     inboxMessages,
     ultiworld: uw.ultiworld,
+    pendingEventFollowUps: followUps.pendingEventFollowUps,
   }
 }
 
@@ -841,6 +845,7 @@ export default function App() {
             aiTransfersLastDate: step.aiTransfersLastDate,
             inbox: step.inbox,
             ultiworld: step.ultiworld,
+            pendingEventFollowUps: step.pendingEventFollowUps,
           }
           dayLeague = step.league
           daysAdvanced += 1
@@ -882,6 +887,7 @@ export default function App() {
         aiTransfersLastDate: workingCareer.aiTransfersLastDate,
         inbox: workingCareer.inbox,
         ultiworld: workingCareer.ultiworld,
+        pendingEventFollowUps: workingCareer.pendingEventFollowUps,
       })
       syncCareer(next, { save: true })
 
@@ -1138,6 +1144,11 @@ export default function App() {
         nextLeague.matchHistory,
       )
 
+      const followUps = processPendingEventFollowUps(
+        { ...career, league: nextLeague },
+        { date: nextLeague.currentDate },
+      )
+
       const inboxMessages = [
         ...messagesFromTrainingReports(reports, career),
         ...messagesFromTrainingInjuries(reports, career),
@@ -1147,6 +1158,7 @@ export default function App() {
         ...nationalTeamMessages,
         ...financialHealthMessages,
         ...forcedListMessages,
+        ...followUps.messages,
         ...messagesFromNewPlayerMatches(
           { ...career, league: nextLeague },
           prevMatchHistory,
@@ -1204,6 +1216,7 @@ export default function App() {
         aiTransfersLastDate: nextLeague.currentDate,
         inbox: mergeInbox({ ...career, inbox: inboxAfterReg }, inboxMessages),
         ultiworld: uw.ultiworld,
+        pendingEventFollowUps: followUps.pendingEventFollowUps,
       })
       syncCareer(next, { save: true })
       // Stay on hub — user opens the match via "Go to match" when ready.
@@ -1324,6 +1337,11 @@ export default function App() {
           nextLeague.matchHistory,
         )
 
+        const followUps = processPendingEventFollowUps(
+          { ...career, league: nextLeague },
+          { date: nextLeague.currentDate },
+        )
+
         const inboxMessages = [
           ...messagesFromTrainingReports(reports, career),
           ...messagesFromTrainingInjuries(reports, career),
@@ -1332,6 +1350,7 @@ export default function App() {
           ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
           ...nationalTeamMessages,
           ...financialHealthMessages,
+          ...followUps.messages,
           ...messagesFromNewPlayerMatches(
             { ...career, league: nextLeague },
             prevMatchHistory,
@@ -1389,6 +1408,7 @@ export default function App() {
           aiTransfersLastDate: nextLeague.currentDate,
           inbox: mergeInbox({ ...career, inbox: inboxAfterReg }, inboxMessages),
           ultiworld: uw.ultiworld,
+          pendingEventFollowUps: followUps.pendingEventFollowUps,
         })
         syncCareer(next, { save: true })
         setLeagueFixture(null)

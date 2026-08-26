@@ -209,10 +209,12 @@ export {
 } from './inbox.js'
 export {
   RANDOM_EVENT_TEMPLATES,
+  RANDOM_EVENT_FOLLOWUP_TEMPLATES,
   pickRandomEventMessage,
   pickPostMatchEventMessage,
   applyRandomEventChoice,
   resolveInboxDecision,
+  processPendingEventFollowUps,
 } from './randomEvents.js'
 export {
   ensureUltiworld,

@@ -26,6 +26,7 @@ import { worldTeamById } from './worldState.js'
 import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/index.js'
 import { randomEventBodyEn, localizeEventChoices } from './randomEventCopyEn.js'
 import { hasActiveSponsor, getActiveSponsors, brandDisplayName } from './clubSponsors.js'
+import { addDays, formatISODate, parseISODate } from '../league/seasonCalendar.js'
 
 /** Zgodne z INBOX_TYPES.RANDOM_EVENT — bez importu inbox (unikamy cyklu). */
 export const RANDOM_EVENT_TYPE = 'random_event'
@@ -3596,6 +3597,230 @@ export const RANDOM_EVENT_TEMPLATES = [
       }
     },
   },
+
+  // ——— Zdarzenia wieloetapowe: pierwszy wybór decyduje, co przyjdzie w kolejnej wiadomości ———
+  {
+    id: 'sponsor_rumor',
+    weight: 0.8,
+    canSpawn: (_c, team) => hasActiveSponsor(team),
+    pickContext(_roster, rng, team) {
+      const sponsor = pickRandom(getActiveSponsors(team), rng)
+      if (!sponsor) return null
+      return {
+        sponsorName: brandDisplayName(sponsor, 'pl'),
+        sponsorNameEn: brandDisplayName(sponsor, 'en'),
+      }
+    },
+    title: (ctx) => `Niepokojące plotki o ${ctx.sponsorName}`,
+    titleEn: (ctx) => `Unsettling rumors about ${ctx.sponsorNameEn}`,
+    body: (ctx) =>
+      `Dziennikarz śledczy sugeruje, że ${ctx.sponsorName} może być zamieszany w coś nieczystego finansowo. Nic pewnego — na razie plotki.`,
+    bodyEn: (ctx) =>
+      `An investigative reporter hints that ${ctx.sponsorNameEn} might be tangled up in something financially shady. Nothing confirmed — just rumors for now.`,
+    choices: () => [
+      {
+        id: 'investigate',
+        label: 'Zleć własne śledztwo',
+        labelEn: 'Commission your own investigation',
+        hint: '−$2k, prawdę poznasz za kilka dni',
+        hintEn: '−$2k, you\'ll learn the truth in a few days',
+      },
+      {
+        id: 'cut_now',
+        label: 'Zerwij współpracę od razu',
+        labelEn: 'Cut ties right away',
+        hint: 'Tracisz sponsora, reputacja +1 (ostrożność)',
+        hintEn: 'You lose the sponsor, reputation +1 (caution)',
+      },
+      {
+        id: 'ignore',
+        label: 'Zignoruj plotki',
+        labelEn: 'Ignore the rumors',
+        hint: 'Bez zmian teraz — ryzyko zostaje',
+        hintEn: 'No change now — the risk remains',
+      },
+    ],
+    resolve(ctx, choiceId, rng) {
+      if (choiceId === 'investigate') {
+        const guilty = rng() < 0.45
+        return {
+          effects: [{ type: 'budget', delta: -2000 }],
+          summary: `Zleciłeś śledztwo w sprawie ${ctx.sponsorName}. Wyniki będą za kilka dni.`,
+          summaryEn: `You commissioned an investigation into ${ctx.sponsorNameEn}. Results in a few days.`,
+          followUp: {
+            templateId: guilty ? 'sponsor_investigation_guilty' : 'sponsor_investigation_cleared',
+            delayDays: 3 + Math.floor(rng() * 3),
+            ctx: { ...ctx },
+          },
+        }
+      }
+      if (choiceId === 'cut_now') {
+        return {
+          effects: [
+            { type: 'reputation', delta: 1 },
+            { type: 'moraleTeam', delta: -1 },
+          ],
+          summary: `Zerwałeś współpracę z ${ctx.sponsorName}, zanim cokolwiek się potwierdziło. Zarząd chwali ostrożność, szatnia pyta „po co”.`,
+          summaryEn: `You cut ties with ${ctx.sponsorNameEn} before anything was confirmed. The board praises the caution; the locker room asks "why."`,
+        }
+      }
+      return {
+        effects: [],
+        summary: 'Zignorowałeś plotki. Temat może jeszcze wrócić.',
+        summaryEn: 'You ignored the rumors. The topic might resurface.',
+      }
+    },
+  },
+
+  {
+    id: 'foreign_interest',
+    weight: 0.85,
+    canSpawn: (_c, team) => (team?.players?.length ?? 0) >= 3,
+    pickContext(roster, rng) {
+      const star = sortByOvrDesc(roster)[0]
+      if (!star) return null
+      const leagues = ['Japonii', 'Australii', 'Niemiec', 'Kanady']
+      const leaguesEn = ['Japan', 'Australia', 'Germany', 'Canada']
+      const idx = Math.floor(rng() * leagues.length)
+      return {
+        starId: star.id,
+        starName: playerName(star),
+        leagueName: leagues[idx],
+        leagueNameEn: leaguesEn[idx],
+      }
+    },
+    title: (ctx) => `Zagraniczny klub pyta o ${ctx.starName}`,
+    titleEn: (ctx) => `A foreign club is asking about ${ctx.starName}`,
+    body: (ctx) =>
+      `Agent ${ctx.starName} informuje: klub z ${ctx.leagueName} nieoficjalnie pyta o zainteresowanie transferem. Nic formalnego — jeszcze.`,
+    bodyEn: (ctx) =>
+      `${ctx.starName}'s agent tips you off: a club from ${ctx.leagueNameEn} is unofficially asking about a transfer. Nothing formal — yet.`,
+    choices: (ctx) => [
+      {
+        id: 'talk_now',
+        label: `Porozmawiaj z ${ctx.starName} od razu`,
+        labelEn: `Talk to ${ctx.starName} right away`,
+        hint: 'Morale +3 teraz; temat może wrócić za kilka dni',
+        hintEn: 'Morale +3 now; the topic may resurface in a few days',
+      },
+      {
+        id: 'preempt_contract',
+        label: 'Zaproponuj od razu lepszy kontrakt',
+        labelEn: 'Offer a better contract right away',
+        hint: '−budżet, lojalność mocno +, temat zamknięty',
+        hintEn: '−budget, loyalty up sharply, topic closed',
+      },
+      {
+        id: 'ignore',
+        label: 'Zignoruj — to na razie plotki',
+        labelEn: 'Ignore it — for now it\'s just rumors',
+        hint: 'Bez zmian teraz; ryzyko eskalacji',
+        hintEn: 'No change now; risk of escalation',
+      },
+    ],
+    resolve(ctx, choiceId, rng) {
+      if (choiceId === 'talk_now') {
+        return {
+          effects: [{ type: 'morale', playerId: ctx.starId, delta: 3 }],
+          summary: `Porozmawiałeś z ${ctx.starName} — czuje się doceniony, ale zainteresowanie z zagranicy nie zniknęło.`,
+          summaryEn: `You talked to ${ctx.starName} — they feel valued, but the foreign interest hasn't gone away.`,
+          followUp: {
+            templateId: 'foreign_interest_formal_offer',
+            delayDays: 5 + Math.floor(rng() * 4),
+            ctx: { ...ctx },
+          },
+        }
+      }
+      if (choiceId === 'preempt_contract') {
+        return {
+          effects: [
+            { type: 'morale', playerId: ctx.starId, delta: 8 },
+            { type: 'budget', delta: -3000 },
+          ],
+          summary: `Zaproponowałeś ${ctx.starName} poprawione warunki od razu. Temat zamknięty — na razie.`,
+          summaryEn: `You offered ${ctx.starName} improved terms right away. The topic is closed — for now.`,
+        }
+      }
+      return {
+        effects: [],
+        summary: `Zignorowałeś sygnał. ${ctx.starName} nie wie, że w ogóle o tym rozmawiano.`,
+        summaryEn: `You ignored the signal. ${ctx.starName} doesn't even know it came up.`,
+        followUp: {
+          templateId: 'foreign_interest_leak',
+          delayDays: 6 + Math.floor(rng() * 5),
+          ctx: { ...ctx },
+        },
+      }
+    },
+  },
+
+  {
+    id: 'nagging_pain',
+    weight: 0.9,
+    canSpawn: (_c, team) => (team?.players?.length ?? 0) >= 3,
+    pickContext(roster, rng) {
+      const candidates = (roster ?? []).filter((p) => !isPlayerInjured(p))
+      const player = pickRandom(candidates, rng)
+      if (!player) return null
+      return { playerId: player.id, playerName: playerName(player) }
+    },
+    title: (ctx) => `${ctx.playerName} zgłasza dziwny ból`,
+    titleEn: (ctx) => `${ctx.playerName} reports a nagging ache`,
+    body: (ctx) =>
+      `${ctx.playerName} czuje nawracający ból, który nie przechodzi mimo krótkiego odpoczynku. Sztab medyczny prosi o decyzję.`,
+    bodyEn: (ctx) =>
+      `${ctx.playerName} feels a recurring ache that isn't going away with a short rest. The medical staff wants a call.`,
+    choices: () => [
+      {
+        id: 'tests',
+        label: 'Zleć dodatkowe badania',
+        labelEn: 'Order extra tests',
+        hint: '−$3k, wyniki za kilka dni',
+        hintEn: '−$3k, results in a few days',
+      },
+      {
+        id: 'push',
+        label: 'Niech gra dalej',
+        labelEn: 'Let them keep playing',
+        hint: 'Bez zmian teraz — ryzyko zostaje',
+        hintEn: 'No change now — the risk remains',
+      },
+      {
+        id: 'rest',
+        label: 'Daj kilka dni przerwy od razu',
+        labelEn: 'Give them a few days off right away',
+        hint: 'Forma −2 teraz, ryzyko znika',
+        hintEn: 'Form −2 now, risk disappears',
+      },
+    ],
+    resolve(ctx, choiceId, rng) {
+      if (choiceId === 'tests') {
+        const seriousIssue = rng() < 0.35
+        return {
+          effects: [{ type: 'budget', delta: -3000 }],
+          summary: `Zlecono dodatkowe badania ${ctx.playerName}. Wyniki będą za kilka dni.`,
+          summaryEn: `Extra tests ordered for ${ctx.playerName}. Results in a few days.`,
+          followUp: {
+            templateId: seriousIssue ? 'nagging_pain_real_issue' : 'nagging_pain_false_alarm',
+            delayDays: 2 + Math.floor(rng() * 3),
+            ctx: { ...ctx },
+          },
+        }
+      }
+      if (choiceId === 'rest') {
+        return {
+          effects: [{ type: 'form', playerId: ctx.playerId, delta: -2 }],
+          summary: `${ctx.playerName} dostał kilka dni przerwy. Ryzyko zażegnane.`,
+          summaryEn: `${ctx.playerName} got a few days off. Risk avoided.`,
+        }
+      }
+      return {
+        effects: [{ type: 'form', playerId: ctx.playerId, delta: 1 }],
+        summary: `${ctx.playerName} gra dalej. Sztab kręci głową.`,
+        summaryEn: `${ctx.playerName} keeps playing. The staff shakes their heads.`,
+      }
+    },
+  },
 ]
 
 /**
@@ -3899,6 +4124,312 @@ export const POST_MATCH_EVENT_TEMPLATES = [
   },
 ]
 
+/**
+ * Drugi (i kolejne) etapy zdarzeń wieloetapowych — nigdy nie losowane bezpośrednio.
+ * Wywoływane wyłącznie przez `resolve().followUp` szablonu z `RANDOM_EVENT_TEMPLATES`
+ * (patrz `processPendingEventFollowUps`); `ctx` jest dziedziczony z etapu 1, więc te
+ * szablony nie mają `pickContext` — kontekst już istnieje, zanim wiadomość powstanie.
+ */
+export const RANDOM_EVENT_FOLLOWUP_TEMPLATES = [
+  {
+    id: 'sponsor_investigation_cleared',
+    title: (ctx) => `Śledztwo zakończone: ${ctx.sponsorName} czysty`,
+    titleEn: (ctx) => `Investigation closed: ${ctx.sponsorNameEn} is clean`,
+    body: (ctx) =>
+      `Twoi ludzie potwierdzają: plotki o ${ctx.sponsorName} były przesadzone. Sponsor docenia, że nie wyciągnąłeś pochopnych wniosków.`,
+    bodyEn: (ctx) =>
+      `Your people confirm it: the rumors about ${ctx.sponsorNameEn} were overblown. The sponsor appreciates that you didn't jump to conclusions.`,
+    choices: () => [
+      {
+        id: 'thank',
+        label: 'Podziękuj i przedłuż relację',
+        labelEn: 'Thank them and extend the relationship',
+        hint: 'Reputacja +2, budżet +',
+        hintEn: 'Reputation +2, budget +',
+      },
+      {
+        id: 'move_on',
+        label: 'Przejdź dalej bez fanfar',
+        labelEn: 'Move on without fanfare',
+        hint: 'Reputacja +1',
+        hintEn: 'Reputation +1',
+      },
+    ],
+    resolve(ctx, choiceId, rng) {
+      if (choiceId === 'thank') {
+        const pay = Math.round((4000 + rng() * 4000) / 1000) * 1000
+        return {
+          effects: [
+            { type: 'reputation', delta: 2 },
+            { type: 'budget', delta: pay },
+          ],
+          summary: `${ctx.sponsorName} docenił lojalność premią +${formatUsd(pay)}.`,
+          summaryEn: `${ctx.sponsorNameEn} rewarded the loyalty with a +${formatUsd(pay)} bonus.`,
+        }
+      }
+      return {
+        effects: [{ type: 'reputation', delta: 1 }],
+        summary: 'Sprawa zamknięta bez zbędnego rozgłosu.',
+        summaryEn: 'Case closed without unnecessary fanfare.',
+      }
+    },
+  },
+  {
+    id: 'sponsor_investigation_guilty',
+    title: (ctx) => `Śledztwo zakończone: ${ctx.sponsorName} jednak zamieszany`,
+    titleEn: (ctx) => `Investigation closed: ${ctx.sponsorNameEn} was involved after all`,
+    body: (ctx) =>
+      `Twoi ludzie potwierdzają najgorsze: ${ctx.sponsorName} rzeczywiście maczał palce w podejrzanych finansach. Musisz zdecydować, co dalej.`,
+    bodyEn: (ctx) =>
+      `Your people confirm the worst: ${ctx.sponsorNameEn} really was involved in shady finances. Time to decide what happens next.`,
+    choices: () => [
+      {
+        id: 'cut_public',
+        label: 'Zerwij umowę publicznie',
+        labelEn: 'Cut ties publicly',
+        hint: 'Reputacja +4, tracisz sponsora',
+        hintEn: 'Reputation +4, you lose the sponsor',
+      },
+      {
+        id: 'cut_quiet',
+        label: 'Zerwij po cichu',
+        labelEn: 'Cut ties quietly',
+        hint: 'Reputacja +1, tracisz sponsora',
+        hintEn: 'Reputation +1, you lose the sponsor',
+      },
+      {
+        id: 'stay',
+        label: 'Zostań przy umowie (liczą się pieniądze)',
+        labelEn: 'Stick with the deal (money talks)',
+        hint: 'Budżet +, reputacja −4',
+        hintEn: 'Budget +, reputation −4',
+      },
+    ],
+    resolve(ctx, choiceId, rng) {
+      if (choiceId === 'cut_public') {
+        return {
+          effects: [
+            { type: 'reputation', delta: 4 },
+            { type: 'moraleTeam', delta: 1 },
+          ],
+          summary: `Publicznie zerwałeś umowę z ${ctx.sponsorName}. Media chwalą klub za twardą postawę.`,
+          summaryEn: `You publicly cut ties with ${ctx.sponsorNameEn}. Media praise the club's tough stance.`,
+        }
+      }
+      if (choiceId === 'cut_quiet') {
+        return {
+          effects: [{ type: 'reputation', delta: 1 }],
+          summary: `Cicho zakończyłeś współpracę z ${ctx.sponsorName}. Bez rozgłosu, ale problem zniknął.`,
+          summaryEn: `You quietly ended the deal with ${ctx.sponsorNameEn}. No headlines, but the problem is gone.`,
+        }
+      }
+      const pay = Math.round((6000 + rng() * 6000) / 1000) * 1000
+      return {
+        effects: [
+          { type: 'budget', delta: pay },
+          { type: 'reputation', delta: -4 },
+        ],
+        summary: `Zostałeś przy ${ctx.sponsorName} dla pieniędzy (+${formatUsd(pay)}). Jeśli to wypłynie publicznie, klub zapłaci wizerunkowo.`,
+        summaryEn: `You stuck with ${ctx.sponsorNameEn} for the money (+${formatUsd(pay)}). If this goes public, the club's image will pay for it.`,
+      }
+    },
+  },
+  {
+    id: 'foreign_interest_formal_offer',
+    title: (ctx) => `${ctx.leagueName}: formalne zapytanie o ${ctx.starName}`,
+    titleEn: (ctx) => `${ctx.leagueNameEn}: formal enquiry about ${ctx.starName}`,
+    body: (ctx) =>
+      `Klub z ${ctx.leagueName} złożył formalne zapytanie o warunki transferu ${ctx.starName}. To już nie plotka — trzeba zareagować.`,
+    bodyEn: (ctx) =>
+      `The club from ${ctx.leagueNameEn} has made a formal enquiry about ${ctx.starName}'s transfer terms. This isn't a rumor anymore.`,
+    choices: () => [
+      {
+        id: 'lock_in',
+        label: 'Podpisz przedłużenie kontraktu',
+        labelEn: 'Sign a contract extension',
+        hint: '−budżet, lojalność mocno +, temat zamknięty',
+        hintEn: '−budget, loyalty up sharply, topic closed',
+      },
+      {
+        id: 'open_talks',
+        label: 'Otwórz rozmowy transferowe',
+        labelEn: 'Open transfer talks',
+        hint: 'Możliwy zysk finansowy, niepokój w szatni',
+        hintEn: 'Possible financial gain, unease in the locker room',
+      },
+      {
+        id: 'block',
+        label: 'Zablokuj wszelkie rozmowy',
+        labelEn: 'Block all talks',
+        hint: 'Morale gwiazdy −, lojalność −',
+        hintEn: 'Star\'s morale −, loyalty −',
+      },
+    ],
+    resolve(ctx, choiceId) {
+      if (choiceId === 'lock_in') {
+        return {
+          effects: [
+            { type: 'morale', playerId: ctx.starId, delta: 10 },
+            { type: 'budget', delta: -5000 },
+          ],
+          summary: `Przedłużyłeś kontrakt ${ctx.starName}. Zagraniczny klub odpuszcza.`,
+          summaryEn: `You extended ${ctx.starName}'s contract. The foreign club backs off.`,
+        }
+      }
+      if (choiceId === 'open_talks') {
+        return {
+          effects: [
+            { type: 'budget', delta: 15000 },
+            { type: 'reputation', delta: 2 },
+            { type: 'moraleTeam', delta: -2 },
+          ],
+          summary: `Otworzyłeś rozmowy transferowe. Kasa napłynęła, ale szatnia czuje niepewność co do przyszłości ${ctx.starName}.`,
+          summaryEn: `You opened transfer talks. Cash flowed in, but the locker room feels uneasy about ${ctx.starName}'s future.`,
+        }
+      }
+      return {
+        effects: [
+          { type: 'morale', playerId: ctx.starId, delta: -6 },
+          { type: 'reputation', delta: -1 },
+        ],
+        summary: `Zablokowałeś rozmowy. ${ctx.starName} czuje się uwięziony.`,
+        summaryEn: `You blocked the talks. ${ctx.starName} feels trapped.`,
+      }
+    },
+  },
+  {
+    id: 'foreign_interest_leak',
+    title: (ctx) => `Wyciek: ${ctx.starName} łączony z klubem z ${ctx.leagueName}`,
+    titleEn: (ctx) => `Leak: ${ctx.starName} linked with a club from ${ctx.leagueNameEn}`,
+    body: (ctx) =>
+      `Temat wyciekł do mediów, zanim cokolwiek zrobiłeś. ${ctx.starName} dowiaduje się o zainteresowaniu z gazet, nie od ciebie.`,
+    bodyEn: (ctx) =>
+      `The story leaked to the media before you did anything. ${ctx.starName} finds out about the interest from the papers, not from you.`,
+    choices: () => [
+      {
+        id: 'apologize',
+        label: 'Przeproś za brak komunikacji',
+        labelEn: 'Apologize for the lack of communication',
+        hint: 'Morale częściowo odbudowane',
+        hintEn: 'Morale partially rebuilt',
+      },
+      {
+        id: 'deny',
+        label: 'Zdementuj publicznie',
+        labelEn: 'Deny it publicly',
+        hint: 'Reputacja +1, gwiazda wie że to nie do końca prawda',
+        hintEn: 'Reputation +1, the star knows it\'s not quite true',
+      },
+      {
+        id: 'shrug',
+        label: 'Nie komentuj',
+        labelEn: 'No comment',
+        hint: 'Morale gwiazdy wyraźnie −',
+        hintEn: 'Star\'s morale drops noticeably',
+      },
+    ],
+    resolve(ctx, choiceId) {
+      if (choiceId === 'apologize') {
+        return {
+          effects: [{ type: 'morale', playerId: ctx.starId, delta: 2 }],
+          summary: `Przeprosiłeś ${ctx.starName} za to, że dowiedział się z prasy. Częściowo naprawione.`,
+          summaryEn: `You apologized to ${ctx.starName} for them hearing it from the press. Partially patched up.`,
+        }
+      }
+      if (choiceId === 'deny') {
+        return {
+          effects: [
+            { type: 'reputation', delta: 1 },
+            { type: 'morale', playerId: ctx.starId, delta: -2 },
+          ],
+          summary: `Zdementowałeś doniesienia publicznie. ${ctx.starName} wie, że to nie do końca prawda.`,
+          summaryEn: `You publicly denied the reports. ${ctx.starName} knows that's not quite true.`,
+        }
+      }
+      return {
+        effects: [{ type: 'morale', playerId: ctx.starId, delta: -5 }],
+        summary: `Zero komentarza. ${ctx.starName} czuje się pominięty w rozmowie o własnej przyszłości.`,
+        summaryEn: `Zero comment. ${ctx.starName} feels left out of a conversation about their own future.`,
+      }
+    },
+  },
+  {
+    id: 'nagging_pain_false_alarm',
+    title: (ctx) => `Wyniki ${ctx.playerName}: fałszywy alarm`,
+    titleEn: (ctx) => `${ctx.playerName}'s results: false alarm`,
+    body: (ctx) =>
+      `Badania niczego groźnego nie wykazały. ${ctx.playerName} może wrócić do pełnego treningu ze spokojną głową.`,
+    bodyEn: (ctx) =>
+      `Tests found nothing serious. ${ctx.playerName} can return to full training with peace of mind.`,
+    choices: () => [
+      {
+        id: 'relief',
+        label: 'Ulga — wracaj do gry',
+        labelEn: 'Relief — back to action',
+        hint: 'Morale +3',
+        hintEn: 'Morale +3',
+      },
+    ],
+    resolve(ctx) {
+      return {
+        effects: [{ type: 'morale', playerId: ctx.playerId, delta: 3 }],
+        summary: `${ctx.playerName} wraca do gry z ulgą.`,
+        summaryEn: `${ctx.playerName} returns to action with relief.`,
+      }
+    },
+  },
+  {
+    id: 'nagging_pain_real_issue',
+    title: (ctx) => `Wyniki ${ctx.playerName}: coś jednak jest`,
+    titleEn: (ctx) => `${ctx.playerName}'s results: there's something there`,
+    body: (ctx) =>
+      `Badania ${ctx.playerName} wykryły faktyczne przeciążenie. Sztab medyczny zaleca ostrożność — decyzja należy do ciebie.`,
+    bodyEn: (ctx) =>
+      `${ctx.playerName}'s tests found a real overload issue. The medical staff recommends caution — the call is yours.`,
+    choices: () => [
+      {
+        id: 'rest_now',
+        label: 'Wyślij na przymusowy odpoczynek',
+        labelEn: 'Send them for mandatory rest',
+        hint: 'Forma −3 teraz, unikasz ryzyka',
+        hintEn: 'Form −3 now, you avoid the risk',
+      },
+      {
+        id: 'risk_it',
+        label: 'Graj mimo ostrzeżenia',
+        labelEn: 'Play on despite the warning',
+        hint: 'Ryzyko poważniejszego spadku formy',
+        hintEn: 'Risk of a more serious form drop',
+      },
+    ],
+    resolve(ctx, choiceId, rng) {
+      if (choiceId === 'rest_now') {
+        return {
+          effects: [{ type: 'form', playerId: ctx.playerId, delta: -3 }],
+          summary: `${ctx.playerName} odpoczywa. Ryzyko uniknięte.`,
+          summaryEn: `${ctx.playerName} rests up. Risk avoided.`,
+        }
+      }
+      const unlucky = rng() < 0.4
+      if (unlucky) {
+        return {
+          effects: [
+            { type: 'form', playerId: ctx.playerId, delta: -6 },
+            { type: 'morale', playerId: ctx.playerId, delta: -4 },
+          ],
+          summary: `${ctx.playerName} przecenił swoje możliwości — ostrzeżenie się potwierdziło, forma mocno spadła.`,
+          summaryEn: `${ctx.playerName} overestimated their fitness — the warning proved right; form dropped hard.`,
+        }
+      }
+      return {
+        effects: [{ type: 'form', playerId: ctx.playerId, delta: 2 }],
+        summary: `${ctx.playerName} zaryzykował i tym razem się udało.`,
+        summaryEn: `${ctx.playerName} took the risk, and this time it paid off.`,
+      }
+    },
+  },
+]
+
 const POST_MATCH_SPAWN_CHANCE = 0.4
 
 function boxImpactScore(row) {
@@ -3947,6 +4478,7 @@ function templateById(id) {
   return (
     RANDOM_EVENT_TEMPLATES.find((t) => t.id === id) ??
     POST_MATCH_EVENT_TEMPLATES.find((t) => t.id === id) ??
+    RANDOM_EVENT_FOLLOWUP_TEMPLATES.find((t) => t.id === id) ??
     null
   )
 }
@@ -4040,6 +4572,80 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
       choices,
     },
   }
+}
+
+/**
+ * Buduje wiadomość decyzyjną z dowolnego szablonu + gotowego kontekstu — używane przez
+ * kolejne etapy zdarzeń wieloetapowych, gdzie `ctx` już istnieje (dziedziczony z etapu 1),
+ * więc nie trzeba (i nie da się) wywołać `pickContext`.
+ */
+function buildDecisionMessage(template, ctx, { date, seasonIndex = null, seasonYear = null } = {}) {
+  const choices = localizeEventChoices(template.id, template.choices(ctx))
+  if (!choices?.length) return null
+
+  const bodyEn =
+    (typeof template.bodyEn === 'function' ? template.bodyEn(ctx) : null) ??
+    randomEventBodyEn(template.id, ctx)
+
+  return {
+    id: newMessageId(RANDOM_EVENT_TYPE),
+    type: RANDOM_EVENT_TYPE,
+    createdAt: new Date().toISOString(),
+    date,
+    seasonIndex,
+    seasonYear,
+    read: false,
+    title: template.title(ctx),
+    body: template.body(ctx),
+    ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
+    ...(bodyEn ? { bodyEn } : {}),
+    payload: {
+      kind: 'decision',
+      templateId: template.id,
+      status: 'pending',
+      context: ctx,
+      choices,
+    },
+  }
+}
+
+/**
+ * Odpala kolejne etapy zdarzeń wieloetapowych, których termin (dueDate) już nadszedł —
+ * ten sam wzorzec co processDelayedTransferReplies: kolejka dat, sprawdzana co tick,
+ * a nie natychmiastowa akcja. `career.pendingEventFollowUps` wypełnia applyRandomEventChoice,
+ * gdy `resolve()` zwróci pole `followUp`.
+ */
+export function processPendingEventFollowUps(career, { date = null } = {}) {
+  const today = date ?? career?.league?.currentDate
+  const pending = Array.isArray(career?.pendingEventFollowUps) ? career.pendingEventFollowUps : []
+  if (!pending.length || !today) {
+    return { messages: [], pendingEventFollowUps: pending }
+  }
+
+  const due = []
+  const remaining = []
+  for (const item of pending) {
+    if (item?.dueDate && item.dueDate <= today) due.push(item)
+    else remaining.push(item)
+  }
+  if (!due.length) return { messages: [], pendingEventFollowUps: pending }
+
+  const messages = []
+  for (const item of due) {
+    const template = templateById(item.templateId)
+    if (!template) continue
+    try {
+      const msg = buildDecisionMessage(template, item.ctx ?? {}, {
+        date: today,
+        seasonIndex: item.seasonIndex ?? career?.seasonIndex ?? null,
+        seasonYear: item.seasonYear ?? career?.seasonYear ?? null,
+      })
+      if (msg) messages.push(msg)
+    } catch {
+      // Kontekst niekompletny (np. zawodnik odszedł od etapu 1) — po prostu pomiń etap 2.
+    }
+  }
+  return { messages, pendingEventFollowUps: remaining }
 }
 
 /**
@@ -4201,12 +4807,37 @@ export function applyRandomEventChoice(career, messageId, choiceId) {
     }
   })
 
+  // Zdarzenie wieloetapowe: ten wybór nie kończy sprawy, tylko planuje kolejną
+  // wiadomość za `delayDays` — który szablon trafi do kolejki, zależy od TEGO wyboru
+  // (i ewentualnie od rng powyżej), więc różne decyzje prowadzą do różnych etapów 2.
+  let pendingEventFollowUps = Array.isArray(career.pendingEventFollowUps)
+    ? career.pendingEventFollowUps
+    : []
+  if (resolved.followUp?.templateId) {
+    const today = career.league?.currentDate
+    const delayDays = resolved.followUp.delayDays ?? 3
+    const dueDate = today ? formatISODate(addDays(parseISODate(today), delayDays)) : today
+    pendingEventFollowUps = [
+      ...pendingEventFollowUps,
+      {
+        id: newMessageId('followup'),
+        templateId: resolved.followUp.templateId,
+        ctx: resolved.followUp.ctx ?? ctx,
+        dueDate,
+        seasonIndex: career.seasonIndex ?? null,
+        seasonYear: career.seasonYear ?? null,
+        sourceMessageId: messageId,
+      },
+    ]
+  }
+
   return {
     ok: true,
     world,
     nextInbox,
     outcomeSummary,
     outcomeSummaryEn,
+    pendingEventFollowUps,
   }
 }
 
@@ -4223,6 +4854,7 @@ export function resolveInboxDecision(career, messageId, choiceId) {
     careerPatch: {
       world: result.world,
       inbox: result.nextInbox,
+      pendingEventFollowUps: result.pendingEventFollowUps,
     },
     outcomeSummary: result.outcomeSummary,
     outcomeSummaryEn: result.outcomeSummaryEn,

@@ -228,6 +228,7 @@ export function createCareer(slotIndex, options) {
     allTimeStats: createAllTimeStats(),
     transferLog: [],
     inbox: [],
+    pendingEventFollowUps: [],
     ultiworld: {
       articles: [],
       lastRoundCovered: 0,
@@ -361,6 +362,7 @@ function createEucsCareer(slotIndex, options) {
     allTimeStats: createAllTimeStats(),
     transferLog: [],
     inbox: [],
+    pendingEventFollowUps: [],
     ultiworld: {
       articles: [],
       lastRoundCovered: 0,
@@ -719,6 +721,7 @@ export function startNextSeason(career) {
     homeTactics: resolvePlayerDefaultTactics(team?.players ?? [], base.homeTactics),
     transferLog: [],
     inbox: mergeInbox(draft, sponsorFresh),
+    pendingEventFollowUps: [],
     ultiworld: {
       articles: [],
       lastRoundCovered: 0,
@@ -903,6 +906,7 @@ function startNextSeasonEucs(career) {
     homeTactics: resolvePlayerDefaultTactics(team?.players ?? [], base.homeTactics),
     transferLog: [],
     inbox: mergeInbox(draft, sponsorFresh),
+    pendingEventFollowUps: [],
     ultiworld: {
       articles: [],
       lastRoundCovered: 0,
