@@ -496,6 +496,8 @@ export function createCutterAgent(player, x, y) {
     id: player.id,
     x,
     y,
+    z: 0,
+    vz: 0,
     state: CUTTER_STATE.WAITING,
     stateMs: 0,
     targetX: x,

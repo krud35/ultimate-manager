@@ -27,7 +27,11 @@ import {
   DEFENSE_STYLES,
 } from './tacticsBehavior.js'
 import { DEFENDER_STATE } from './defenderBrain.js'
-import { predictReceiverCatchPoint, DEEP_CUT_FLIGHT_SPEED_MPS } from './discFlightPredict.js'
+import {
+  predictReceiverCatchPoint,
+  DEEP_CUT_FLIGHT_SPEED_MPS,
+  DEEP_CUT_MAX_LEAD_SEC,
+} from './discFlightPredict.js'
 import { mergeTraitAndCoachMods } from '../coachDirectives.js'
 import { windOptionScoreAdjust } from '../wind.js'
 
@@ -138,12 +142,32 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     // CLEARING) i nie jest to realny krótki reset. Dedykowany dump-reset przy stallu
     // idzie osobną ścieżką (pickDumpReceiver), więc to wykluczenie jej nie dotyczy.
     if (agent.state === CUTTER_STATE.CLEARING) continue
-    const catchPt = predictReceiverCatchPoint(
-      agent,
-      throwerPos?.x ?? disc?.x ?? agent.x,
-      throwerPos?.y ?? disc?.y ?? agent.y,
-      agent.cutKind === 'deep' ? DEEP_CUT_FLIGHT_SPEED_MPS : undefined,
-    )
+    // Szeroki sufit czasu predykcji (DEEP_CUT_*) tylko gdy WYNIK predykcji sam z siebie
+    // zasługuje na huck-owe traktowanie — nie po cutKind='deep' ani po surowym dystansie
+    // do CELU cutu. cutKind opisuje KSZTAŁT trasy cuttera, nie dystans rzutu: mnóstwo
+    // deep-cutów kończy się throwType STANDARD (< HUCK_MIN_YARDS), a bramka po surowym
+    // dystansie do celu wciąż dawała im 8.5s sufitu (bo SUROWY cel bywa ≥40m, nawet gdy
+    // realny catchPt po ograniczonym reach wychodzi dużo bliżej) — przewidziany lead 20m+
+    // przy realnym (szybkim) locie ~2-3s, odbiorca fizycznie nie mógł dobiec (zmierzone:
+    // tmp-standard-gap-diag.mjs, 9.6% rzutów standard geometrycznie zawodzi, mediana
+    // predictedLeadDist ~20.6m, ACTIVE_CUT dominuje). Samouzgodnione dwuprzebiegowe
+    // podejście: licz najpierw z CIASNYM sufitem (domyślne założenie — większość rzutów
+    // NIE jest huckiem); jeśli WYNIK i tak wychodzi ≥HUCK_MIN_YARDS od rzucającego,
+    // dopiero wtedy przelicz z hojnym sufitem (i tak zostanie zaklasyfikowany jako huck
+    // przez inferThrowType niżej, więc zasługuje na realistyczną, nie ucinaną predykcję).
+    const throwerX = throwerPos?.x ?? disc?.x ?? agent.x
+    const throwerY = throwerPos?.y ?? disc?.y ?? agent.y
+    let catchPt = predictReceiverCatchPoint(agent, throwerX, throwerY)
+    const tightDist = Math.hypot(catchPt.x - throwerX, catchPt.y - throwerY)
+    if (tightDist >= HUCK_MIN_YARDS) {
+      catchPt = predictReceiverCatchPoint(
+        agent,
+        throwerX,
+        throwerY,
+        DEEP_CUT_FLIGHT_SPEED_MPS,
+        DEEP_CUT_MAX_LEAD_SEC,
+      )
+    }
     const situation = evaluatePlayerSituation(agent.player, {
       x: catchPt.x,
       y: catchPt.y,
@@ -353,6 +377,15 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     }
 
     // Poach: porzucony receiver jest złotem; rzut w lane poachera — pułapka.
+    // Faza 5 planu 3D: odkąd geometryczny resolve (Faza 4b, actionSimulator.js:
+    // computeGeometricResolution) realnie kredytuje NAJBLIŻSZEGO obrońcę (nie tylko
+    // statycznie przypisaną markę) — poacher bliżej dysku niż receiver naprawdę
+    // przejmuje blok, fizycznie, bez udziału tego bonusu/kary. Kara za rzut w lane
+    // poachera (-22) liczyłaby to ryzyko PODWÓJNIE (raz tu jako "zła decyzja", raz
+    // realnie jako fizyczna konsekwencja) — zmniejszona o połowę, zostaje jako czysty
+    // sygnał jakości decyzji (czy thrower w ogóle WIDZI poacha), nie substytut fizyki.
+    // Bonus za trafienie w porzuconego receivera zostaje bez zmian — to wciąż dobra
+    // decyzja do nagrodzenia, nie podwójne liczenie tego samego ryzyka.
     const poachers = defenseAgents.filter((d) => d.state === DEFENDER_STATE.POACHING)
     for (const p of poachers) {
       const abandonedId = p.poachedFromId
@@ -360,7 +393,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
         score += 28
       }
       const nearPoach = Math.hypot(catchPt.x - p.x, catchPt.y - p.y) < 4.5
-      if (nearPoach && agent.player.id !== abandonedId) score -= 22
+      if (nearPoach && agent.player.id !== abandonedId) score -= 11
     }
 
     score = applyAttackThrowBias(score, {

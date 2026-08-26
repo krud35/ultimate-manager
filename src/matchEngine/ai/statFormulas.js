@@ -32,15 +32,16 @@ export function defenderReactionDelayMs(player) {
 }
 
 /**
- * Skan opcji: 22 + (vision / 100) * 56 m (22–78 m). Zmierzone: typowy roster ma vision
- * ~79; poprzednie współczynniki (40, potem 48) wciąż trzymały scanRadius blisko/poniżej
- * mediany celów cutu 'deep' (p50≈57m z cutterBrain.js), więc bomba 55m+ była widoczna
- * tylko sporadycznie i ledwo się domykała (max realnego rzutu ~54m). *56 daje ~79 vision
- * -> ~66m, elita (100) -> 78m — wyraźny margines powyżej sufitu deepDist (75m).
+ * Skan opcji: 22 + (vision/100)^4 * 55 m. Sześcian (^3 *60) wciąż dawał przy typowym
+ * rosterze (vision~79) scanRadius ~52m i hucki na ~15% rzutów — nadal za często (miały
+ * być sporadyczne). Czwarta potęga mocniej odcina środek stawki: vision 79 -> 0.79^4≈0.39
+ * -> tylko ~43m, elita (vision 93+: 0.93^4≈0.75 -> ~63m) wciąż może sporadycznie zobaczyć
+ * bombę 55m+. Sufit przy vision=100 to 77m, margines nad deepDist (75m).
  */
 export function throwScanRadiusM(player) {
   const mods = getTraitMods(player)
-  return 22 + (subStat(player, 'mental', 'vision') / 100) * 56 + (mods.scanRadiusBonusM ?? 0)
+  const visionFrac = subStat(player, 'mental', 'vision') / 100
+  return 22 + visionFrac ** 4 * 55 + (mods.scanRadiusBonusM ?? 0)
 }
 
 /**

@@ -14,8 +14,10 @@ import {
 } from './participants.js'
 import {
   computeThrowAdvance,
+  computeMissDistanceM,
   isInEndzone,
   resolveThrow,
+  MISS_CALIBRATION,
 } from './resolution.js'
 import { createEvent, EVENT } from './events.js'
 import {
@@ -36,7 +38,7 @@ import {
   offenseRoleSlot,
   receiverFieldYMeters,
 } from './fieldPlayback.js'
-import { attackDirectionX, fieldCenterY } from './fieldDimensions.js'
+import { attackDirectionX, fieldCenterY, clampFieldX, clampFieldY } from './fieldDimensions.js'
 import { effectiveDecisionStall } from './ai/throwerDecision.js'
 import {
   STALL_MAX,
@@ -65,6 +67,20 @@ import {
 function playerLabel(p) {
   return `${p.firstName} ${p.lastName}`
 }
+
+/**
+ * Faza 4b planu 3D (kill-switch). Gdy true: wynik rzutu (complete/block/drop) i kredyt
+ * za blok decyduje realna geometria 3D po zakończeniu lotu (actionSimulator.js:
+ * computeGeometricResolution — kto NAPRAWDĘ był najbliżej dysku, łącznie z poaczerami),
+ * a nie sam abstrakcyjny resolveThrow. throwScore/defenseScore z resolveThrow nie znikają
+ * — margines steruje tym, o ile metrów rzut "chybia" zamierzonego celu (patrz
+ * computeMissDistanceM), więc jakość wykonania rzutu nadal realnie wpływa na wynik,
+ * tylko przez fizykę toru, nie przez bezpośrednią bramkę. Domyślnie false: zero zmiany
+ * zachowania względem stanu przed Fazą 4b, dopóki nie przejdzie dedykowanej rekalibracji
+ * (tmp-*.mjs balance harness) i nie zostanie świadomie włączone. Obiekt (nie zwykły
+ * const) — pozwala skryptowi kalibrującemu przełączać flagę w locie, bez edycji pliku.
+ */
+export const RESOLUTION_MODE = { useGeometric: false }
 
 /**
  * Szacunek dystansu przebiegniętego przez zawodnika w punkcie (m) — cały ruch po
@@ -506,6 +522,31 @@ export function simulatePoint({
           windRelation: result.windRelation ?? null,
         }
 
+        // Faza 4b: gorszy rzut (mały/ujemny margines) przesuwa realny cel lotu — geometria
+        // po locie decyduje, czy taki tor faktycznie kończy się złapaniem. Blok na torze
+        // (lane block) to już definitywna, oddzielna decyzja — nie przesuwaj celu w tym
+        // wypadku, zostaw synchroniczny wynik jak dziś.
+        let adjustedTarget = null
+        if (RESOLUTION_MODE.useGeometric && !result.isLaneBlock) {
+          // Miss ograniczony do ułamka DŁUGOŚCI TEGO rzutu — bez tego stały, absolutny
+          // miss w metrach jest niezauważalny na hucku (20m+) ale katastrofalny na
+          // krótkim dumpie/swingu (2-4m), gdzie ten sam miss to nierealny procent
+          // dystansu (zmierzone: dump_swing completion 100%→76.9% po włączeniu geometrii,
+          // zanim dodano ten cap).
+          const rawMissDistanceM = computeMissDistanceM(result.throwScore, result.defenseScore)
+          const missDistanceM = Math.min(
+            rawMissDistanceM,
+            throwDistanceM * MISS_CALIBRATION.missDistanceFractionCap,
+          )
+          if (missDistanceM > 0) {
+            const angle = rng.float() * Math.PI * 2
+            adjustedTarget = {
+              x: clampFieldX(catchX + Math.cos(angle) * missDistanceM),
+              y: clampFieldY(catchY + Math.sin(angle) * missDistanceM),
+            }
+          }
+        }
+
         return {
           resolution: {
             success: result.success,
@@ -518,6 +559,9 @@ export function simulatePoint({
           throwType,
           defender: creditedDefender,
           separation,
+          ...(adjustedTarget
+            ? { adjustedToX: adjustedTarget.x, adjustedToY: adjustedTarget.y }
+            : null),
         }
       },
     })
@@ -647,6 +691,24 @@ export function simulatePoint({
     const attemptStall = commitStallCount ?? stallCount
     const ctx = narrativeContext()
 
+    // Faza 4b (kill-switch, patrz RESOLUTION_MODE.useGeometric powyżej): gdy włączone,
+    // prawdziwy wynik i kredytowany obrońca pochodzą z realnej geometrii 3D po locie
+    // (sim.geometricResolution — actionSimulator.js), nie z result.success/isBlock.
+    // Lane block zostaje definitywną, synchroniczną decyzją jak dziś (nie przechodzi
+    // przez geometrię). Wind drop to osobny, już-realny efekt fizyczny — stosowany
+    // PO geometrii, nie zamiast niej.
+    let finalSuccess = result.success
+    let finalIsBlock = result.isBlock
+    let finalDefender = defender
+    if (RESOLUTION_MODE.useGeometric && !result.isLaneBlock && sim.geometricResolution) {
+      const geo = sim.geometricResolution
+      finalSuccess = geo.success && !result.isWindDrop
+      finalIsBlock = finalSuccess ? false : geo.isBlock
+      if (geo.defenderId != null && geo.defenderId !== defender.id) {
+        finalDefender = defenseLineup.find((d) => d.id === geo.defenderId) ?? defender
+      }
+    }
+
     if (simStaminaMaps) {
       syncLineupStaminaFromMaps(simStaminaMaps, offenseLineup, possession)
       syncLineupStaminaFromMaps(simStaminaMaps, defenseLineup, defendingTeamId())
@@ -769,7 +831,7 @@ export function simulatePoint({
     const yardsIfSuccess = yardsFromPositions(discPositionBefore, discAfter)
     const isHuck = isHuckType(throwType, yardsIfSuccess)
 
-    if (result.success) {
+    if (finalSuccess) {
       discPosition = discAfter
       // Dysk zostaje tam, gdzie faktycznie doszło do chwytu — inaczej odbiorca
       // przeskakuje na pozycję wyliczoną z roli w formacji.
@@ -855,8 +917,8 @@ export function simulatePoint({
         discHolder = receiver
       }
     } else {
-      if (boxScore && result.isBlock) {
-        recordBlock(boxScore, defender.id)
+      if (boxScore && finalIsBlock) {
+        recordBlock(boxScore, finalDefender.id)
       }
       if (boxScore) {
         recordTurnover(boxScore, thrower.id)
@@ -865,8 +927,8 @@ export function simulatePoint({
       // Dysk zostaje w miejscu bloku / dropu — nie wraca do miejsca rzutu.
       const turnoverPoint = resolveTurnoverPointFromMotionTrace(motionTrace, {
         receiverId: receiver.id,
-        defenderId: defender.id,
-        isBlock: result.isBlock,
+        defenderId: finalDefender.id,
+        isBlock: finalIsBlock,
       })
       const absFieldX =
         turnoverPoint?.x ?? discMetersFromState(discPositionBefore, geo(possession))
@@ -890,9 +952,9 @@ export function simulatePoint({
         ...ctx,
         throwerName: playerLabel(thrower),
         receiverName: playerLabel(receiver),
-        defenderName: playerLabel(defender),
+        defenderName: playerLabel(finalDefender),
         throwType,
-        isBlock: result.isBlock,
+        isBlock: finalIsBlock,
         success: false,
       })
 
@@ -901,7 +963,7 @@ export function simulatePoint({
           throwScore: result.throwScore,
           defenseScore: result.defenseScore,
           throwerId: thrower.id,
-          defenderId: defender.id,
+          defenderId: finalDefender.id,
           receiverId: receiver.id,
           possessionTeam: possession,
           discPositionBefore,
@@ -910,7 +972,7 @@ export function simulatePoint({
           throwType,
           trajectory: profile.trajectory,
           turnoverMeters,
-          isBlock: result.isBlock,
+          isBlock: finalIsBlock,
           isOpenSide: commitIsOpenSide,
           throwTechnique: commitThrowTechnique ?? sim.throwTechnique ?? null,
           windRelation: commitWindRelation,
@@ -921,7 +983,7 @@ export function simulatePoint({
         }),
       )
       applyTurnoverAtPosition({
-        reason: result.isBlock ? 'block' : 'drop',
+        reason: finalIsBlock ? 'block' : 'drop',
         fieldX: absFieldX,
         discY: absFieldY,
       })

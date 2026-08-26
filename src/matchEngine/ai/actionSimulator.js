@@ -17,6 +17,7 @@ import { discPositionHeld, discPositionInFlight } from '../discState.js'
 import {
   predictReceiverCatchPoint,
   DEEP_CUT_FLIGHT_SPEED_MPS,
+  DEEP_CUT_MAX_LEAD_SEC,
 } from './discFlightPredict.js'
 import {
   createFlightContext,
@@ -26,6 +27,7 @@ import {
   flightComplete,
   applyFlightResolutionToAgents,
   finalDiscAfterFlight,
+  LAYOUT_DIST_M,
 } from './flightKinematics.js'
 import {
   drainAgentsTickStamina,
@@ -42,6 +44,7 @@ import {
   isStallOutHoldMs,
 } from '../stall.js'
 import { subRoleForAgent, HANDLER_SUB_ROLES } from '../playerSubRoles.js'
+import { HUCK_MIN_YARDS } from '../matchStats.js'
 
 export const SIM_TICK_MS = 20
 /** Stały krok symulacji (50 Hz); jedna ciągła pętla setup → lot */
@@ -56,9 +59,111 @@ const MAX_FLIGHT_MS = 9700
  * doklejamy go do shade (inaczej po reorganizacji O / turnoverze „gubi” człowieka).
  */
 const DEFENSE_REANCHOR_GAP_M = 5.5
+/** Faza 4a (shadow mode): okno przed złapaniem, w którym śledzimy realną odległość 3D
+ * każdego obrońcy/receivera do dysku — zbliżone do LAYOUT_TIME_MS (kiedy layout/skok
+ * może się realnie zdarzyć). */
+const CONTEST_WINDOW_MS = 260
 
 function agentPlayerId(agent) {
   return agent?.player?.id ?? agent?.id ?? null
+}
+
+// Faza 4a (shadow mode) — opcjonalny log diagnostyczny do porównania geometrii z
+// abstrakcyjnym resolveThrow bez dotykania point.js/kontraktu gry. Zero kosztu gdy nikt
+// nie woła __getShadowContestLog (tmp-*.mjs harness). Nie jest to stan gry.
+let __shadowContestLog = []
+export function __getShadowContestLog() {
+  return __shadowContestLog
+}
+export function __clearShadowContestLog() {
+  __shadowContestLog = []
+}
+
+/**
+ * Faza 4a (shadow mode) — zwija zebrane w oknie kontestu minimalne odległości 3D w jeden
+ * podsumowujący obiekt do porównania z abstrakcyjnym resolveThrow (flight.resolution).
+ * Czysto diagnostyczne: nic z tego nie wraca do gry ani nie zmienia stanu meczu.
+ */
+function summarizeShadowContest(shadowContest, flight) {
+  if (!shadowContest || !flight) return null
+  let nearestDefenderId = null
+  let nearestDefenderMinDist3D = Infinity
+  for (const [id, d] of shadowContest.defenders) {
+    if (d < nearestDefenderMinDist3D) {
+      nearestDefenderMinDist3D = d
+      nearestDefenderId = id
+    }
+  }
+  const assignedDefenderMinDist3D = shadowContest.defenders.get(flight.defenderId) ?? null
+  const receiverMinDist3D = Number.isFinite(shadowContest.receiverMinDist3D)
+    ? shadowContest.receiverMinDist3D
+    : null
+  const geometricSuccess = receiverMinDist3D != null && receiverMinDist3D <= LAYOUT_DIST_M
+  const abstractSuccess = flight.resolution?.success ?? null
+  return {
+    receiverMinDist3D,
+    assignedDefenderMinDist3D,
+    nearestDefenderId,
+    nearestDefenderMinDist3D: Number.isFinite(nearestDefenderMinDist3D)
+      ? nearestDefenderMinDist3D
+      : null,
+    poacherWasClosest: nearestDefenderId != null && nearestDefenderId !== flight.defenderId,
+    geometricSuccess,
+    abstractSuccess,
+    agreesWithAbstract: abstractSuccess == null ? null : geometricSuccess === abstractSuccess,
+  }
+}
+
+/**
+ * Faza 4b planu 3D: prawdziwa decyzja complete/block/drop na podstawie tego, kto
+ * faktycznie był najbliżej dysku w 3D pod koniec lotu (nie statycznie przypisanego
+ * obrońcy — patrz shadowContest, który śledzi WSZYSTKICH obrońców, więc poaczer bliżej
+ * dysku niż przypisana marka realnie przejmuje kredyt za blok). Uproszczony tie-break:
+ * obrońca WYRAŹNIE bliżej niż receiver (< 70% jego dystansu) wygrywa kontest mimo że
+ * receiver technicznie w zasięgu — realny skill (jump/reach) już wpływa na te dystanse
+ * przez Fazę 3 (prawdziwe łuki skoku), więc nie potrzeba tu osobnego rzutu kością.
+ */
+/** Mutowalny obiekt kalibracyjny — jak MISS_CALIBRATION w resolution.js, pozwala
+ * skryptowi kalibrującemu testować wiele wartości w jednym procesie Node. */
+export const GEOMETRIC_CALIBRATION = {
+  // Wykalibrowane empirycznie (tmp-calibrate-geometric.mjs, grid-search jak przy
+  // oryginalnej DISTANCE_GAP_TABLE) — DWIE rundy: pierwsza (catchReachM=3.0) trafiła
+  // ~89.4% overall, zanim naprawiono samouzgodniony dobór sufitu predykcji leadu
+  // (throwerBrain.js/discFlightPredict.js — patrz komentarz tam), co drastycznie
+  // poprawiło realną zbieżność receivera do celu (9.6%→0.8% czystych niepowodzeń
+  // geometrii dla standardowych rzutów). Po tej naprawie catchReachM=3.0 był już za
+  // hojny (97%+); domknięte ponownie do 1.6m — finalnie: overall 94.9%, standard 95.6%
+  // (baseline 94.9%), dump_swing 100% (dokładne trafienie).
+  catchReachM: 1.6,
+  contestRelativeThreshold: 0.15,
+  contestAbsoluteThreshold: 1.2,
+}
+
+function computeGeometricResolution(shadowContest, flight) {
+  const summary = summarizeShadowContest(shadowContest, flight)
+  if (!summary || summary.receiverMinDist3D == null) return null
+  const { catchReachM, contestRelativeThreshold, contestAbsoluteThreshold } = GEOMETRIC_CALIBRATION
+  const receiverInReach = summary.receiverMinDist3D <= catchReachM
+  const defenderInReach =
+    summary.nearestDefenderMinDist3D != null && summary.nearestDefenderMinDist3D <= catchReachM
+  // Próg 0.7x dawał zbyt dużo "wygranych" obrońcy przy krótkich, bliskich wymianach
+  // (dump/swing, krótki standard) — tam receiver i obrońca naturalnie klastrują się
+  // blisko dysku nawet przy normalnym, niezagrożonym złapaniu (realny dump prawie
+  // zawsze się udaje, mimo obrońcy o krok). Wymaga teraz WYRAŹNEJ I bezwzględnej
+  // przewagi — inaczej receiver zatrzymuje dysk. Dłuższych/kontestowanych
+  // rzutów to prawie nie dotyczy (naturalna separacja przy złapaniu większa).
+  const defenderWinsContest =
+    defenderInReach &&
+    summary.nearestDefenderMinDist3D < summary.receiverMinDist3D * contestRelativeThreshold &&
+    summary.nearestDefenderMinDist3D < contestAbsoluteThreshold
+  if (receiverInReach && !defenderWinsContest) {
+    return { success: true, isBlock: false, defenderId: null }
+  }
+  return {
+    success: false,
+    isBlock: defenderInReach,
+    defenderId: defenderInReach ? summary.nearestDefenderId : null,
+  }
 }
 
 /** Person-mark: obrońca → agent ofensywy (matchup, potem markTargetId, potem najbliższy). */
@@ -106,6 +211,8 @@ function layoutToAgents(layout, teamId, rosterLineup = [], tactics = null) {
       id: p.id,
       x: p.x,
       y: p.y,
+      z: 0,
+      vz: 0,
       teamId,
       fieldRole: p.fieldRole,
       stackIndex: p.stackIndex ?? stackIndex,
@@ -135,6 +242,8 @@ function snapshotAgentStates(offenseAgents, defenseAgents) {
         y: a.y,
         vx: a.vx ?? 0,
         vy: a.vy ?? 0,
+        z: 0,
+        vz: 0,
         state: a.state,
         stateMs: a.stateMs ?? 0,
         targetX: a.targetX ?? a.x,
@@ -155,6 +264,7 @@ function snapshotFrame(ms, offenseAgents, defenseAgents, throwerId, disc = null,
       teamId: a.teamId ?? 'home',
       x: a.x,
       y: a.y,
+      z: a.z ?? 0,
       vx: a.vx ?? 0,
       vy: a.vy ?? 0,
       role: a.isThrower ? 'thrower' : a.fieldRole ?? 'stack',
@@ -170,6 +280,7 @@ function snapshotFrame(ms, offenseAgents, defenseAgents, throwerId, disc = null,
         teamId: a.teamId ?? 'away',
         x: a.x,
         y: a.y,
+        z: a.z ?? 0,
         vx: a.vx ?? 0,
         vy: a.vy ?? 0,
         // Marker throwera + markTargetId z matchupu (nie tylko aktywny stall).
@@ -356,6 +467,8 @@ export function runContinuousThrowSimulation({
       pendingTarget: null,
       vx: carriesRole ? (seed.vx ?? 0) : 0,
       vy: carriesRole ? (seed.vy ?? 0) : 0,
+      z: 0,
+      vz: 0,
       markTargetId: a.markTargetId ?? null,
     }
   })
@@ -416,6 +529,12 @@ export function runContinuousThrowSimulation({
   let commitMeta = null
   let stallOut = false
   let holdMsAtEnd = holdStartMs
+  // Faza 4a planu 3D (shadow mode) — realny geometryczny kontest liczony z prawdziwych
+  // pozycji 3D w oknie tuż przed złapaniem, TYLKO do logowania/porównania z abstrakcyjnym
+  // resolveThrow (flight.resolution) — nie zmienia niczego w faktycznym wyniku gry. Śledzi
+  // WSZYSTKICH obrońców (nie tylko statycznie przypisanego), więc łapie realny wpływ
+  // poacha, jeśli faktycznie jest bliżej dysku niż przypisany obrońca.
+  let shadowContest = null
 
   for (let tick = 0; tick < resolvedMaxTicks; tick += 1) {
     const ms = tick * SIM_TICK_MS
@@ -516,6 +635,12 @@ export function runContinuousThrowSimulation({
         const isPrimary =
           defAgent.player?.id === flight.defenderId || defAgent.id === flight.defenderId
         if (isPrimary) {
+          // Reakcja na wypuszczony dysk zajmuje chwilę — dobrze pokonany obrońca (duży
+          // margines separacji) stoi dłużej, zanim zacznie gonić nowy cel (patrz komentarz
+          // w createFlightContext), zamiast biec pełną prędkością od pierwszego ticka lotu.
+          if (flight.elapsedMs < (flight.defenderReactionDelayMs ?? 0)) {
+            return { ...defAgent, state: DEFENDER_STATE.CONTESTING_DISC }
+          }
           const contested = tickFlightContestAgent(
             defAgent,
             intercept,
@@ -523,6 +648,7 @@ export function runContinuousThrowSimulation({
             'defense',
             discSample,
             rng,
+            flight.defenderSpeedMult ?? 1,
           )
           return {
             ...contested,
@@ -561,6 +687,32 @@ export function runContinuousThrowSimulation({
       )
       offenseAgents = adjusted.offenseAgents
       defenseAgents = adjusted.defenseAgents
+
+      if (discSample.timeToDisc <= CONTEST_WINDOW_MS) {
+        if (!shadowContest) {
+          shadowContest = { receiverMinDist3D: Infinity, defenders: new Map() }
+        }
+        const recvAgent = offenseAgents.find((a) => a.id === flight.receiverId)
+        if (recvAgent) {
+          const d3 = Math.hypot(
+            discSample.x - recvAgent.x,
+            discSample.y - recvAgent.y,
+            discSample.z - (recvAgent.z ?? 0),
+          )
+          if (d3 < shadowContest.receiverMinDist3D) shadowContest.receiverMinDist3D = d3
+        }
+        for (const dAgent of defenseAgents) {
+          const dId = agentPlayerId(dAgent)
+          if (dId == null) continue
+          const d3 = Math.hypot(
+            discSample.x - dAgent.x,
+            discSample.y - dAgent.y,
+            discSample.z - (dAgent.z ?? 0),
+          )
+          const prev = shadowContest.defenders.get(dId)
+          if (prev == null || d3 < prev) shadowContest.defenders.set(dId, d3)
+        }
+      }
 
       flight.elapsedMs += SIM_TICK_MS
     } else {
@@ -723,16 +875,25 @@ export function runContinuousThrowSimulation({
           offenseAgents.find((a) => a.player?.id === option.player?.id)
         const fromX = throwerAgent?.x ?? discX
         const fromY = throwerAgent?.y ?? discY
-        // Rzut w lead / punkt cutu (B), nie w bieżącą pozycję startu cutu (A).
+        // Rzut w lead / punkt cutu (B), nie w bieżącą pozycję startu cutu (A). Samouzgodniony
+        // dwuprzebiegowy dobór sufitu predykcji (ciasny -> hojny tylko jeśli WYNIK sam z
+        // siebie wychodzi huck-owy) — patrz komentarz przy analogicznym wywołaniu w
+        // throwerBrain.js.
         const catchPt =
           option.catchX != null && option.catchY != null
             ? { x: option.catchX, y: option.catchY }
-            : predictReceiverCatchPoint(
-                recvAgent,
-                fromX,
-                fromY,
-                recvAgent?.cutKind === 'deep' ? DEEP_CUT_FLIGHT_SPEED_MPS : undefined,
-              )
+            : (() => {
+                const tight = predictReceiverCatchPoint(recvAgent, fromX, fromY)
+                const tightDist = Math.hypot(tight.x - fromX, tight.y - fromY)
+                if (tightDist < HUCK_MIN_YARDS) return tight
+                return predictReceiverCatchPoint(
+                  recvAgent,
+                  fromX,
+                  fromY,
+                  DEEP_CUT_FLIGHT_SPEED_MPS,
+                  DEEP_CUT_MAX_LEAD_SEC,
+                )
+              })()
         const toX = catchPt.x
         const toY = catchPt.y
 
@@ -772,11 +933,17 @@ export function runContinuousThrowSimulation({
           if (commit?.throwType) throwDecision.throwType = commit.throwType
           if (commit?.defender) throwDecision.defender = commit.defender
           const flightDefender = throwDecision.defender ?? defender
+          // Faza 4b planu 3D: gorszy rzut (mały/ujemny margines throwScore-defenseScore)
+          // może przesunąć realny cel lotu (miss) — geometria po zakończeniu lotu decyduje
+          // wtedy naprawdę, czy taki tor kończy się złapaniem. Patrz resolution.js:
+          // computeMissDistanceM, point.js: onThrowCommitted.
+          const finalToX = commit?.adjustedToX ?? toX
+          const finalToY = commit?.adjustedToY ?? toY
           flight = createFlightContext({
             fromX,
             fromY,
-            toX,
-            toY,
+            toX: finalToX,
+            toY: finalToY,
             throwType: throwDecision.throwType,
             trajectory,
             receiverId: throwDecision.receiver.id,
@@ -784,6 +951,7 @@ export function runContinuousThrowSimulation({
             throwerId: thrower.id,
             receiver: throwDecision.receiver,
             receiverAgent: throwDecision.receiverAgent,
+            separationMargin: commit?.separation?.margin ?? throwDecision.separation?.margin ?? null,
             resolution: commit?.resolution ?? null,
             throwMs: ms,
             weather: wind,
@@ -855,6 +1023,24 @@ export function runContinuousThrowSimulation({
     discY,
     motionTrace,
     endStates: snapshotAgentStates(offenseAgents, defenseAgents),
+    geometricResolution: computeGeometricResolution(shadowContest, flight),
+    geometricShadow: (() => {
+      const g = summarizeShadowContest(shadowContest, flight)
+      if (g) {
+        const ra = throwDecision.receiverAgent
+        const predictedLeadDist =
+          ra != null ? Math.hypot(flight.toX - ra.x, flight.toY - ra.y) : null
+        __shadowContestLog.push({
+          ...g,
+          throwType: throwDecision.throwType,
+          receiverState: ra?.state ?? null,
+          predictedLeadDist,
+          totalFlightMs: flight.totalFlightMs,
+          throwDistanceM: Math.hypot(flight.toX - flight.fromX, flight.toY - flight.fromY),
+        })
+      }
+      return g
+    })(),
   }
 }
 

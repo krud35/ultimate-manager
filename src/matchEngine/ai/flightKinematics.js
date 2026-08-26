@@ -9,6 +9,13 @@ import {
   subStat,
 } from './statFormulas.js'
 import { windFlightOffset } from '../wind.js'
+import {
+  integrateDiscFlight3D,
+  sampleDiscFlight3D,
+  isDiscFlight3DValid,
+  solveDragPacing,
+  sampleDragPaceU,
+} from './discPhysics.js'
 
 export const FLIGHT_TICK_MS = 20
 const DT_SEC = FLIGHT_TICK_MS / 1000
@@ -44,6 +51,8 @@ export function samplePathAt(pts, u) {
   return { ...pts[pts.length - 1] }
 }
 
+/** Awaryjny łuk kosmetyczny (sinus) — używany tylko gdy integracja fizyczna (discPhysics.js)
+ * da niesensowny wynik (NaN/niestabilność); patrz flight3DValid w createFlightContext. */
 function discHeightAt(u, trajectory, jumpStat = 50) {
   const peak = discPeakHeightM(trajectory, jumpStat)
   return peak * Math.sin(Math.PI * Math.min(1, Math.max(0, u)))
@@ -58,14 +67,31 @@ export function sprintSpeedMps(player, role) {
   return base * 0.96 + bonus
 }
 
-function maybeLayout(agent, discX, discY, timeToDiscMs, player, rng, discZ = 2) {
-  if (agent.layout) return agent
+// Faza 3 planu 3D: layout przestał być bool flagą bez ruchu — to realny skok/wyskok:
+// grawitacja ściąga z powrotem do ziemi (z<=0 => wylądowany), wysokość wybicia skalowana
+// statem jump. Wciąż tylko wizualne/pozycyjne (dane wejściowe do resolveThrow nie
+// zależą od tego) — Faza 4 dopiero użyje tej realnej wysokości do realnego kontestu.
+const JUMP_GRAVITY_MPS2 = 9.81
+const JUMP_PEAK_BASE_M = 0.3
+const JUMP_PEAK_SCALE_M = 0.85
+
+function tickJumpArc(agent, discX, discY, timeToDiscMs, player, rng, discZ = 2) {
+  if (agent.layout) {
+    if (!agent.jumping) return agent
+    const vz = (agent.vz ?? 0) - JUMP_GRAVITY_MPS2 * DT_SEC
+    const z = (agent.z ?? 0) + vz * DT_SEC
+    if (z <= 0) return { ...agent, z: 0, vz: 0, jumping: false }
+    return { ...agent, z, vz }
+  }
   const dist = Math.hypot(discX - agent.x, discY - agent.y)
   if (dist >= LAYOUT_DIST_M || timeToDiscMs > LAYOUT_TIME_MS) return agent
   const isReceiver = agent.id === player?.id
   const chance = aerialContestChance(player, discZ, isReceiver)
   if (rng && rng.float() > chance + 0.12) return agent
-  return { ...agent, layout: true, layoutMs: timeToDiscMs }
+  const jumpStat = subStat(player, 'physical', 'jump')
+  const peakJumpM = JUMP_PEAK_BASE_M + (jumpStat / 100) * JUMP_PEAK_SCALE_M
+  const vz0 = Math.sqrt(2 * JUMP_GRAVITY_MPS2 * peakJumpM)
+  return { ...agent, layout: true, layoutMs: timeToDiscMs, jumping: true, z: 0, vz: vz0 }
 }
 
 // Granice prędkości dysku wg trajektorii — miękki łuk (deep) vs płaski, twardy rzut (standard).
@@ -90,6 +116,7 @@ export function createFlightContext({
   throwerId,
   receiver,
   receiverAgent,
+  separationMargin = null,
   resolution,
   throwMs,
   weather,
@@ -99,6 +126,29 @@ export function createFlightContext({
     buildThrowPathPoints(fromX, fromY, toX, toY, trajectory, throwType)
   const pathLen = pathLength(throwPath)
   const finalPt = throwPath[throwPath.length - 1] ?? { x: toX, y: toY }
+
+  // Separacja (resolveSeparation) to abstrakcyjna ocena statystyk (receiver vs defender),
+  // NIEZWIĄZANA z realną odległością na boisku — a obrońca w locie gonił dysk tą samą
+  // prostą ścieżką i tą samą prędkością co receiver, więc realny dystans między nimi
+  // (nawet przy "open") kurczył się do <1m niezależnie od tego, jak dobra była separacja
+  // (obrońca "na papierze" pokonany i tak dobiegał na czas). Mnożnik prędkości obrońcy
+  // w pościgu odzwierciedla margines separacji: dobrze pokonany obrońca realnie zostaje
+  // w tyle, a nie tylko na etykietce.
+  // Zmierzony rozkład marginesu (resolveSeparation): min -16, mediana 5.7, p90 17.7,
+  // max 28. "open" zaczyna się od marginesu 14 — czyli tylko górne ~15% rozkładu. Sam
+  // łagodny mnożnik (0.018/margines) prawie nie ruszał wyniku, bo przy długim locie
+  // (hucki 5-9s) nawet 30% wolniejszy obrońca i tak doganiał. Prędkość skaluje się teraz
+  // silniej i schodzi niżej (do 0.42x) — realnie pokonany obrońca ZOSTAJE w tyle przez
+  // cały lot, nie tylko na starcie.
+  const defenderSpeedMult =
+    separationMargin == null
+      ? 1
+      : Math.min(1.18, Math.max(0.42, 1 - separationMargin * 0.03))
+  // Opóźnienie reakcji na wypuszczony dysk — dodatkowy, krótszy efekt na starcie lotu
+  // (dominuje przy krótkich/średnich rzutach, gdzie mnożnik prędkości ma mniej czasu,
+  // żeby zadziałać).
+  const defenderReactionDelayMs =
+    separationMargin == null ? 0 : Math.min(700, Math.max(0, separationMargin * 30))
 
   // Receiver w locie biegnie WPROST do finalnego miejsca lądowania dysku (flight.toX/toY),
   // nie goni bieżącej pozycji dysku na ścieżce — pościg za ruchomym punktem matematycznie
@@ -131,6 +181,33 @@ export function createFlightContext({
     9500,
     Math.max(FLIGHT_TICK_MS * 4, Math.round((pathLen / flightSpeedMps) * 1000)),
   )
+  const recvJump = subStat(receiver, 'physical', 'jump')
+
+  // Faza 1 planu 3D: realna integracja wysokości (grawitacja+uniesienie) + ograniczony
+  // boczny dryf turn/fade, policzone raz tutaj i próbkowane co tick w sampleFlightDisc —
+  // ten sam wzorzec co throwPathPoints/samplePathAt. Celowo NIE zmienia totalFlightMs ani
+  // punktu lądowania (toX/toY) — tylko kształt toru w międzyczasie. Boczny dryf jest
+  // zerowany na obu końcach lotu i ograniczony do ułamka dystansu rzutu, więc nie może
+  // realnie przesunąć skalibrowanego punktu złapania.
+  const peakHeightM = discPeakHeightM(trajectory, recvJump)
+  const dxPath = finalPt.x - fromX
+  const dyPath = finalPt.y - fromY
+  const pathDirLen = Math.hypot(dxPath, dyPath) || 1
+  const perpX = -dyPath / pathDirLen
+  const perpY = dxPath / pathDirLen
+  const turnFadeAmplitudeM = Math.min(2.2, Math.max(0.4, pathLen * 0.035))
+  const flight3DSamples = integrateDiscFlight3D({
+    totalFlightMs,
+    peakHeightM,
+    turnFadeAmplitudeM,
+    turnFadeSign: 1,
+  })
+  const flight3DValid = isDiscFlight3DValid(flight3DSamples)
+
+  // Faza 2 planu 3D: realna całka ruchu pod oporem powietrza dla tempa wzdłuż ścieżki,
+  // zamiast dowolnego wykładnika ease-out — patrz discPhysics.js:solveDragPacing.
+  const dragPacing = solveDragPacing({ totalFlightMs, pathLenM: pathLen })
+
   return {
     throwPathPoints: throwPath,
     totalFlightMs,
@@ -146,9 +223,18 @@ export function createFlightContext({
     receiver,
     trajectory,
     resolution: resolution ?? null,
+    defenderSpeedMult,
+    defenderReactionDelayMs,
     weather,
     windTickBase: Math.round(throwMs / FLIGHT_TICK_MS),
-    recvJump: subStat(receiver, 'physical', 'jump'),
+    recvJump,
+    peakHeightM,
+    perpX,
+    perpY,
+    flight3DSamples,
+    flight3DValid,
+    pathLenM: pathLen,
+    dragPacing,
   }
 }
 
@@ -158,25 +244,40 @@ export function createFlightContext({
  * u(t) = 1-(1-t/T)^DISC_DECEL_POWER: pochodna (prędkość) maleje monotonicznie z
  * DISC_DECEL_POWER/T na starcie do 0 przy starcie dysku — łagodny ease-out.
  * Całkowity czas lotu (i średnia prędkość) niezmienione — sam kształt krzywej.
+ * AWARYJNY fallback gdy solveDragPacing (Faza 2, discPhysics.js) nie zbiegnie —
+ * patrz flight.dragPacing poniżej, które w normalnych warunkach zastępuje tę krzywą
+ * realną całką ruchu pod oporem powietrza.
  */
 const DISC_DECEL_POWER = 1.8
 
 export function sampleFlightDisc(flight, flightElapsedMs) {
   const ms = Math.min(flight.totalFlightMs, Math.max(0, flightElapsedMs))
   const tFrac = flight.totalFlightMs > 0 ? ms / flight.totalFlightMs : 1
-  const u = 1 - (1 - tFrac) ** DISC_DECEL_POWER
+  const pacedU = sampleDragPaceU(flight.dragPacing, ms / 1000, flight.totalFlightMs / 1000, flight.pathLenM)
+  const u = pacedU != null ? pacedU : 1 - (1 - tFrac) ** DISC_DECEL_POWER
   const wind = windFlightOffset(flight.weather, u)
   const base = samplePathAt(flight.throwPathPoints, u)
-  const discX = base.x + wind.dx
-  const discY = base.y + wind.dy
-  const discZ = discHeightAt(u, flight.trajectory, flight.recvJump)
+  let discZ
+  let lateral = 0
+  if (flight.flight3DValid && flight.flight3DSamples) {
+    // Fizyka próbkowana po REALNYM czasie lotu (ms), nie po u — u zawiera krzywą
+    // zwalniania dysku (DISC_DECEL_POWER) dla postępu x,y, a wysokość rządzi się
+    // rzeczywistym czasem od wypuszczenia, niezależnie od tego kształtu.
+    const sample3D = sampleDiscFlight3D(flight.flight3DSamples, ms)
+    discZ = sample3D.z
+    lateral = sample3D.lateral
+  } else {
+    discZ = discHeightAt(u, flight.trajectory, flight.recvJump)
+  }
+  const discX = base.x + wind.dx + (flight.perpX ?? 0) * lateral
+  const discY = base.y + wind.dy + (flight.perpY ?? 0) * lateral
   return { x: discX, y: discY, z: discZ, u, ms, timeToDisc: Math.max(0, flight.totalFlightMs - ms) }
 }
 
-export function tickFlightContestAgent(agent, intercept, player, role, discSample, rng) {
-  const speed = sprintSpeedMps(player, role)
+export function tickFlightContestAgent(agent, intercept, player, role, discSample, rng, speedMult = 1) {
+  const speed = sprintSpeedMps(player, role) * speedMult
   let next = { ...agent, ...integrateAgentMotion(agent, intercept.x, intercept.y, speed, DT_SEC, true) }
-  next = maybeLayout(next, discSample.x, discSample.y, discSample.timeToDisc, player, rng, discSample.z)
+  next = tickJumpArc(next, discSample.x, discSample.y, discSample.timeToDisc, player, rng, discSample.z)
   return next
 }
 

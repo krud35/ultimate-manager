@@ -43,6 +43,17 @@ const PLAY_W = LENGTH_M - 2 * ENDZONE_M
 
 const FULL_VIEW = `0 0 ${LENGTH_M} ${WIDTH_M}`
 
+/**
+ * Faza 6 planu 3D (wizualne, kosmetyczne — bez wpływu na rozgrywkę): realna wysokość
+ * dysku (frame.discZ, w metrach, już podłączona przez cały pipeline — flightKinematics.js
+ * → fieldMotion.js → playbackInterpolation.js) renderowana jako pionowe przesunięcie w
+ * górę widoku (pseudo-3D, standardowy trik gier z góry) + delikatne powiększenie
+ * (perspektywa) + cień na realnej pozycji naziemnej. Skale dobrane tak, żeby najwyższy
+ * huck (~8m) dawał widoczny, ale nieprzesadzony efekt na 37m szerokim boisku.
+ */
+const DISC_HEIGHT_OFFSET_SCALE = 0.4
+const DISC_HEIGHT_SCALE_BOOST = 0.05
+
 /** Współrzędne silnika wizualizacji: X/Y w metrach (0–100 × 0–37). */
 export function meterToSvg(x, y) {
   return { x, y }
@@ -213,6 +224,7 @@ export default function FieldView2D({
   homeColor = DEFAULT_HOME_FIELD_COLOR,
   awayColor = DEFAULT_AWAY_FIELD_COLOR,
   commentary = null,
+  className = '',
 }) {
   const { lang } = useUiLang()
   const t = matchStrings(lang)
@@ -230,13 +242,14 @@ export default function FieldView2D({
 
   if (!fieldState || !frame) {
     return (
-      <div className="field-view-2d field-view-2d--empty">
+      <div className={`field-view-2d field-view-2d--empty ${className}`}>
         <p className="text-sm text-ufa-muted">{t.emptyField}</p>
       </div>
     )
   }
 
   const discSvg = meterToSvg(frame.discX, frame.discY)
+  const discHeightM = Math.max(0, frame.discZ ?? 0)
   const thrower =
     frame.players.find((p) => p.id === frame.throwerId) ||
     frame.players.find((p) => p.role === 'thrower')
@@ -256,7 +269,7 @@ export default function FieldView2D({
   const showPath = frame.showPath && pathD
 
   return (
-    <div className="field-view-2d">
+    <div className={`field-view-2d ${className}`}>
       <div className="field-view-2d__header">
         <span className="field-team field-team--home" style={{ color: homeColor }}>
           {homeLabel}
@@ -369,11 +382,21 @@ export default function FieldView2D({
             )
           })}
 
+          {discHeightM > 0.05 && (
+            <ellipse
+              className="field-disc-shadow-svg"
+              cx={discSvg.x}
+              cy={discSvg.y}
+              rx={0.85}
+              ry={0.85 * 0.4}
+              opacity={Math.max(0.12, 0.4 - discHeightM * 0.03)}
+            />
+          )}
           <circle
             className={`field-disc-svg${frame.phase === 'flight' ? ' field-disc-svg--flight' : ''}`}
             cx={discSvg.x}
-            cy={discSvg.y}
-            r={0.85}
+            cy={discSvg.y - discHeightM * DISC_HEIGHT_OFFSET_SCALE}
+            r={0.85 * (1 + discHeightM * DISC_HEIGHT_SCALE_BOOST)}
           />
         </svg>
 

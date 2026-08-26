@@ -19,6 +19,21 @@ const MIN_CUT_SPEED_MPS = 4.5
 // koniec realnego zakresu.
 export const DEEP_CUT_FLIGHT_SPEED_MPS = 4.8
 
+/**
+ * Sufit zakładanego czasu lotu w predykcji leadu (s) — bez tego samouzgodniona iteracja
+ * (patrz reach/pathDist niżej) zbiega do coraz większego reach, gdy cel cutu jest daleko,
+ * bo dłuższy reach -> dłuższy pathDist -> więcej "dostępnego" czasu -> jeszcze dłuższy
+ * reach. Dla hucków to prawidłowe (rzut faktycznie może lecieć 9s+) — ale dla zwykłych
+ * rzutów prowadziło do przewidywań typu "odbiorca przebiegnie 22m w 3s" (zmierzone:
+ * tmp-phase4a-shadow.mjs, mediana predictedLeadDist=22.5m przy medianie totalFlightMs
+ * ~3.0s dla rozjeżdżających się case'ów — wymaga ~7.4 m/s utrzymanego, poza zasięgiem
+ * większości graczy). Standardowe rzuty dostają ciasny, realistyczny sufit; deep cut
+ * (wywołanie z DEEP_CUT_FLIGHT_SPEED_MPS) dostaje osobny, szeroki sufit blisko realnego
+ * 9.5s limitu lotu.
+ */
+const DEFAULT_MAX_LEAD_SEC = 2.0
+export const DEEP_CUT_MAX_LEAD_SEC = 8.5
+
 function isCuttingState(state) {
   return state === 'ACTIVE_CUT' || state === 'INITIATING_CUT'
 }
@@ -32,6 +47,7 @@ export function predictReceiverCatchPoint(
   fromX,
   fromY,
   flightSpeedMps = DEFAULT_FLIGHT_SPEED_MPS,
+  maxLeadSec = DEFAULT_MAX_LEAD_SEC,
 ) {
   if (!recvAgent) {
     return { x: (fromX ?? 0) + 8, y: fromY ?? 0 }
@@ -49,7 +65,7 @@ export function predictReceiverCatchPoint(
     const speed = Math.hypot(vx, vy)
     if (speed < 0.4) return { x: curX, y: curY }
     const dist = Math.hypot(curX - fromX, curY - fromY)
-    const flightSec = Math.max(0.25, dist / Math.max(1, flightSpeedMps))
+    const flightSec = Math.min(maxLeadSec, Math.max(0.25, dist / Math.max(1, flightSpeedMps)))
     return {
       x: clampFieldX(curX + vx * flightSec * 0.55),
       y: clampFieldY(curY + vy * flightSec * 0.55),
@@ -74,13 +90,16 @@ export function predictReceiverCatchPoint(
   let reach = Math.min(
     toTarget,
     recvSpeed *
-      Math.max(0.3, Math.hypot(tgtX - fromX, tgtY - fromY) / Math.max(1, flightSpeedMps)),
+      Math.min(
+        maxLeadSec,
+        Math.max(0.3, Math.hypot(tgtX - fromX, tgtY - fromY) / Math.max(1, flightSpeedMps)),
+      ),
   )
   for (let i = 0; i < 5; i += 1) {
     const catchX = curX + ux * reach
     const catchY = curY + uy * reach
     const pathDist = Math.hypot(catchX - fromX, catchY - fromY)
-    const flightSec = Math.max(0.3, pathDist / Math.max(1, flightSpeedMps))
+    const flightSec = Math.min(maxLeadSec, Math.max(0.3, pathDist / Math.max(1, flightSpeedMps)))
     const candidate = Math.min(toTarget, recvSpeed * flightSec)
     reach = (reach + candidate) / 2
   }

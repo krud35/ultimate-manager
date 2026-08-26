@@ -359,6 +359,34 @@ export function resolveThrow({
   }
 }
 
+/**
+ * Faza 4b planu 3D: margines throwScore-defenseScore (już skalibrowany przez cały
+ * aparat DISTANCE_GAP_TABLE/skill/stall/wind powyżej) przestaje być bezpośrednią bramką
+ * sukcesu — zamiast tego określa, o ile metrów dysk realnie "chybia" zamierzonego celu
+ * (gorszy rzut -> gorszy fizyczny tor). To, czy taki tor faktycznie kończy się złapaniem,
+ * blokiem czy dropem, decyduje potem realna geometria 3D (actionSimulator.js, po
+ * zakończeniu lotu) — nie ten margines wprost. margines>=CLEAN_MARGIN -> rzut trafia
+ * dokładnie w cel (miss=0); poniżej rośnie liniowo, z sufitem MAX_MISS_M.
+ */
+/** Mutowalny obiekt kalibracyjny — pozwala skryptowi kalibrującemu (tmp-calibrate-*.mjs)
+ * testować wiele wartości w jednym procesie Node, bez edycji pliku między przebiegami.
+ * Ten sam wzorzec co __debugGapOverride przy oryginalnej kalibracji DISTANCE_GAP_TABLE. */
+/** Wykalibrowane empirycznie (tmp-calibrate-geometric.mjs) — patrz komentarz przy
+ * GEOMETRIC_CALIBRATION w actionSimulator.js. */
+export const MISS_CALIBRATION = {
+  cleanMargin: 0,
+  missPerMarginPoint: 0.3,
+  maxMissM: 15,
+  missDistanceFractionCap: 0.4,
+}
+
+export function computeMissDistanceM(throwScore, defenseScore) {
+  const margin = (throwScore ?? 0) - (defenseScore ?? 0)
+  const { cleanMargin, missPerMarginPoint, maxMissM } = MISS_CALIBRATION
+  if (margin >= cleanMargin) return 0
+  return Math.min(maxMissM, (cleanMargin - margin) * missPerMarginPoint)
+}
+
 export function isInEndzone(discPosition, possessionTeam) {
   if (!possessionTeam) {
     return discPosition >= MATCH_CONFIG.field.max

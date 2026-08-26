@@ -160,6 +160,15 @@ body {
   }
 }
 
+.field-view-2d--fullscreen {
+  width: 100%;
+  max-width: 100%;
+}
+
+.field-view-2d--fullscreen .field-view-2d__stage {
+  max-height: min(78vh, 900px);
+}
+
 .field-view-2d--empty {
   min-height: 200px;
   display: flex;
@@ -289,6 +298,11 @@ body {
 .field-disc-svg--flight {
   filter: drop-shadow(0 0 2.5px rgba(255, 255, 255, 0.95))
     drop-shadow(0 0 1.5px rgba(15, 23, 42, 0.75));
+}
+
+.field-disc-shadow-svg {
+  fill: #0f172a;
+  stroke: none;
 }
 
 .field-player {
