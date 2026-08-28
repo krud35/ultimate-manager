@@ -236,6 +236,53 @@ function IncomingBidPanel({ message, career, onAction, busy }) {
   )
 }
 
+function IncomingLoanRequestPanel({ message, onAction, busy }) {
+  const { lang } = useUiLang()
+  const t = inboxStrings(lang)
+  const p = message.payload ?? {}
+  const pending = p.status === 'pending'
+
+  if (!pending) return null
+
+  return (
+    <div className="rounded-lg border border-ufa-gold/30 bg-ufa-gold/5 px-4 py-3 text-sm space-y-3">
+      <p className="text-ufa-text">
+        <span className="text-ufa-muted">{t.buyer}:</span> {p.destinationTeamName}
+      </p>
+      <p className="text-ufa-text">
+        <span className="text-ufa-muted">{t.currentOffer}:</span>{' '}
+        <span className="font-semibold tabular-nums text-ufa-gold">{formatUsd(p.fee)}</span>
+      </p>
+      <p className="text-xs text-ufa-muted">
+        {lang === UI_LANG.EN
+          ? `${p.wageSplitPct}% of wages on their side · until ${p.returnDate}`
+          : `${p.wageSplitPct}% pensji po ich stronie · do ${p.returnDate}`}
+      </p>
+      {p.expiresDate ? (
+        <p className="text-xs text-ufa-muted">{`${t.expires} ${formatDayLabel(p.expiresDate, lang)}`}</p>
+      ) : null}
+      <div className="flex flex-wrap gap-2 pt-1">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onAction({ action: 'accept', messageId: message.id })}
+          className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+        >
+          {t.accept}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onAction({ action: 'reject', messageId: message.id })}
+          className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover disabled:opacity-40"
+        >
+          {t.reject}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t }) {
   const [weeklyWage, setWeeklyWage] = useState(() =>
     String(demands?.minWeeklyWage ?? 1000),
@@ -945,6 +992,28 @@ function MessageDetail({
         <p className="text-xs text-ufa-muted">{t.dealSaved}</p>
       )}
 
+      {message.type === INBOX_TYPES.TRANSFER_OFFER && p.kind === 'loan_in_request_from_ai' && (
+        <IncomingLoanRequestPanel
+          key={`${message.id}-${p.status}`}
+          message={message}
+          busy={offerBusy}
+          onAction={onTransferOfferAction}
+        />
+      )}
+
+      {message.type === INBOX_TYPES.TRANSFER_OFFER &&
+        p.kind === 'loan_buy_clause_decision' &&
+        p.status === 'pending_decision' &&
+        onNavigate && (
+          <button
+            type="button"
+            onClick={() => onNavigate('club-transfers')}
+            className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
+          >
+            {t.goTo}: {lang === UI_LANG.EN ? 'Transfers' : 'Transfery'}
+          </button>
+        )}
+
       {message.type === INBOX_TYPES.MATCH_ANALYSIS && (
         <MatchAnalysisPanel message={message} />
       )}
@@ -1237,7 +1306,12 @@ export default function InboxView({
       const result = onTransferOfferAction(opts)
       if (result?.ok === false) {
         setFlash({ type: 'error', text: translateTransferError(result.error, lang) ?? tInbox.negotiateError })
-      } else if (result?.message) {
+      } else if (typeof result?.flash === 'string') {
+        // Some resolvers (e.g. queueOutgoingPlayerContract) return `message` as the
+        // full inbox-message OBJECT being queued, not display text — `flash` is
+        // always a plain string when present, so prefer it.
+        setFlash({ type: result.completed ? 'ok' : result.rejected ? 'warn' : 'ok', text: result.flash })
+      } else if (typeof result?.message === 'string') {
         setFlash({
           type: result.completed ? 'ok' : result.rejected ? 'warn' : 'ok',
           text: result.message,
@@ -1375,7 +1449,11 @@ export default function InboxView({
                     (message.payload?.status === 'counter' ||
                       message.payload?.status === 'rejected')) ||
                   (message.payload?.kind === 'pending_registration' &&
-                    message.payload?.status === 'pending_confirm')
+                    message.payload?.status === 'pending_confirm') ||
+                  (message.payload?.kind === 'loan_in_request_from_ai' &&
+                    message.payload?.status === 'pending') ||
+                  (message.payload?.kind === 'loan_buy_clause_decision' &&
+                    message.payload?.status === 'pending_decision')
                 return (
                   <li key={message.id}>
                     <SwipeableRow

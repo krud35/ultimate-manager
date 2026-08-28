@@ -81,6 +81,7 @@ import {
   processLoanReturnsForDateRange,
   generateIncomingLoanOffers,
   queueLoanOutOffer,
+  respondToIncomingLoanRequest,
   checkForcedTransferListDemands,
   messagesFromForcedTransferListDemands,
 } from './career'
@@ -1621,6 +1622,18 @@ export default function App() {
         const next = persistCareer(career, { inbox })
         syncCareer(next)
         return queued
+      }
+
+      // —— Prośba AI o wypożyczenie zawodnika gracza ——
+      if (p?.kind === 'loan_in_request_from_ai') {
+        const result = respondToIncomingLoanRequest(career, { messageId, action })
+        if (!result.ok) return result
+        const next = persistCareer(career, {
+          world: result.world ?? career.world,
+          inbox: result.inbox,
+        })
+        syncCareer(next)
+        return result
       }
 
       // —— Oferty przychodzące ——
