@@ -27,6 +27,8 @@ import {
   flightComplete,
   applyFlightResolutionToAgents,
   finalDiscAfterFlight,
+  interceptForFlight,
+  sprintSpeedMps,
   LAYOUT_DIST_M,
 } from './flightKinematics.js'
 import {
@@ -44,12 +46,23 @@ import {
   isStallOutHoldMs,
 } from '../stall.js'
 import { subRoleForAgent, HANDLER_SUB_ROLES } from '../playerSubRoles.js'
-import { HUCK_MIN_YARDS } from '../matchStats.js'
+import { HUCK_MIN_M } from '../matchStats.js'
+import { buildSpaceMap } from './spaceMap.js'
+import { subStat } from './statFormulas.js'
+import { catchSuccessChance } from './statFormulas.js'
+import { getTraitMods } from '../../models/playerTraits.js'
 
 export const SIM_TICK_MS = 20
 /** Stały krok symulacji (50 Hz); jedna ciągła pętla setup → lot */
 const DT_SEC = SIM_TICK_MS / 1000
 /** Pełny stall-out = 10 s krycia. */
+
+/** Co ile ms obrona przewartościowuje, której przestrzeni broni (ludzkie tempo, nie 50 Hz). */
+const DEFENSE_REASSESS_MS = 300
+/** O ile sekund poacher musi być SZYBSZY od odbiorcy, żeby uznać wypad za opłacalny. */
+const POACH_BEAT_MARGIN_SEC = 0.25
+/** Sufit szansy, że obrońca w ogóle dostrzeże okazję do poacha na lecący dysk. */
+const POACH_NOTICE_MAX = 0.75
 const MAX_SETUP_MS = STALL_MAX * STALL_SECOND_MS + SIM_TICK_MS
 // Musi być >= sufitu totalFlightMs w createFlightContext (flightKinematics.js) + margines,
 // inaczej dłuższe loty (miękkie, dalekie rzuty) nie mieszczą się w budżecie ticków.
@@ -63,6 +76,9 @@ const DEFENSE_REANCHOR_GAP_M = 5.5
  * każdego obrońcy/receivera do dysku — zbliżone do LAYOUT_TIME_MS (kiedy layout/skok
  * może się realnie zdarzyć). */
 const CONTEST_WINDOW_MS = 260
+/** Do tylu metrów od dysku obrońca realnie utrudnia CHWYT (ręce przy dysku), w odróżnieniu
+ *  od szerszego catchReachM, który mówi tylko „ktoś tam był". */
+const CONTESTED_CATCH_DIST_M = 1.0
 
 function agentPlayerId(agent) {
   return agent?.player?.id ?? agent?.id ?? null
@@ -134,34 +150,93 @@ export const GEOMETRIC_CALIBRATION = {
   // geometrii dla standardowych rzutów). Po tej naprawie catchReachM=3.0 był już za
   // hojny (97%+); domknięte ponownie do 1.6m — finalnie: overall 94.9%, standard 95.6%
   // (baseline 94.9%), dump_swing 100% (dokładne trafienie).
-  catchReachM: 1.6,
-  contestRelativeThreshold: 0.15,
+  // REKALIBRACJA po naprawie obrony (cushion + spójna czasowo separacja): krycie stało
+  // się realnie ciaśniejsze, więc przy dawnym 1.6 geometria zabierała za dużo — 86.8%
+  // completion i hold 61%. Ponowny sweep (tmp-recal-geo.mjs): 2.0 -> 92.5%/hold 65.7,
+  // 2.2 -> 93.7%/hold 74.3/bloki 8.1, 2.4 -> 94.4%/hold 75.7 przy spadku rzutów/punkt.
+  // 2.2 najlepiej trafia jednocześnie w hold% (70-85) i bloki (5-16).
+  // Ponowna korekta po uzależnieniu zmiany kierunku od statów (mobilityMultiplier w
+  // playerMovement.js): atak zyskał, więc 2.2 podbijało completion do ~94.7%. Sweep
+  // 1.8/1.95/2.1 -> 90.6/92.3/93.8% completion; 1.95 trafia jednocześnie w completion,
+  // bloki, hold% i rzuty/punkt.
+  // REKALIBRACJA po wprowadzeniu korekty biegu w locie (interceptForFlight w
+  // flightKinematics.js): odbiorca widzi lecący dysk i poprawia kierunek, więc chybiony
+  // rzut kosztuje tylko stracony grunt, nie automatyczną stratę. To przesunęło cały
+  // reżim — przy 2.3/0.22 completion spadło do 87.4% przy 0.96 TO/punkt. Sweep na
+  // szerokim rozrzucie seedów (tmp-sweep, 6 baz seedów, żeby próbka objęła też mocny
+  // wiatr): 2.5/0.10 -> 89.7% | 2.7/0.10 -> 91.0% | 2.9/0.10 -> 91.5% | 2.7/0.13 -> 90.9%
+  // przy 0.65 TO/punkt i 7.3 bloku/mecz. Wybrane 2.7/0.13: trafia jednocześnie w
+  // completion (90-93), turnovery (0.45-0.85) i bloki (5-16), zachowując wyższy próg
+  // względny, czyli realny wpływ jakości obrony na kontest.
+  catchReachM: 2.7,
+  // Próg „obrońca wygrywa kontest" — o ile bliżej dysku musi być od odbiorcy. To jest
+  // dźwignia, która decyduje, CZY obrona w ogóle wpływa na WYNIK, czy tylko na wybór
+  // opcji. Przy 0.15 obrońca musiał być ~6.7x bliżej, więc bramka prawie nie odpalała i
+  // turnovery brały się niemal wyłącznie z niecelnych rzutów (efekt OVR obrony na
+  // completion: 0.8 pp). Sweep (tmp-recal-geo.mjs, catchReachM=2.2):
+  // 0.15 -> 94.0%/8.0 bloków/hold 73.6 | 0.4 -> 91.7%/11.9/66.2 | 0.6 -> 86.6%/23.1/58.8.
+  // Po dowiązaniu prędkości dobiegu do dysku do umiejętności obronnych (sprintSpeedMps
+  // w flightKinematics.js) obrona zrobiła się mocniejsza i 0.3 zbijało completion; sweep
+  // 0.18/0.22/0.26 -> 92.8/92.5/92.0% completion przy 8.25/8.75/9.25 bloków. 0.22 trafia
+  // w środek pasma completion przy sensownej liczbie bloków.
+  contestRelativeThreshold: 0.13,
   contestAbsoluteThreshold: 1.2,
 }
 
-function computeGeometricResolution(shadowContest, flight) {
+function computeGeometricResolution(shadowContest, flight, rng = null) {
   const summary = summarizeShadowContest(shadowContest, flight)
   if (!summary || summary.receiverMinDist3D == null) return null
-  const { catchReachM, contestRelativeThreshold, contestAbsoluteThreshold } = GEOMETRIC_CALIBRATION
+  const { catchReachM } = GEOMETRIC_CALIBRATION
   const receiverInReach = summary.receiverMinDist3D <= catchReachM
   const defenderInReach =
     summary.nearestDefenderMinDist3D != null && summary.nearestDefenderMinDist3D <= catchReachM
-  // Próg 0.7x dawał zbyt dużo "wygranych" obrońcy przy krótkich, bliskich wymianach
-  // (dump/swing, krótki standard) — tam receiver i obrońca naturalnie klastrują się
-  // blisko dysku nawet przy normalnym, niezagrożonym złapaniu (realny dump prawie
-  // zawsze się udaje, mimo obrońcy o krok). Wymaga teraz WYRAŹNEJ I bezwzględnej
-  // przewagi — inaczej receiver zatrzymuje dysk. Dłuższych/kontestowanych
-  // rzutów to prawie nie dotyczy (naturalna separacja przy złapaniu większa).
+
+  // PRÓBA STOPNIOWANEGO KONTESTU — cofnięta, zostawiam wnioski, bo są nietrywialne.
+  // Zamiast twardej bramki liczone było prawdopodobieństwo bloku z marginesu odległości
+  // (receiver vs najbliższy obrońca) i z aerialContestChance. Zmierzone wyniki:
+  //  - przy agresywnym ustawieniu bloki 18.75/mecz i completion 86% (cel 90-93),
+  //  - przy łagodnym gradient open->tight SPADAŁ do 2.6 pp (twarda bramka daje 6.6 pp)
+  //    i przestawał być monotoniczny (contested 90.9% > open 86.8%).
+  // Przyczyna: `nearestDefenderMinDist3D` to odległość najbliższego obrońcy DO DYSKU, a
+  // nie miara tego, czy TEN odbiorca był kryty. Przy otwartych rzutach też często ktoś
+  // z obrony dobiega w pobliże dysku, więc kontest odpalał niezależnie od krycia i
+  // dokładał szum zamiast sygnału. Żeby to zrobić dobrze, trzeba najpierw wiedzieć, KTO
+  // realnie kontestował tego odbiorcę (obrońca blisko dysku ORAZ blisko odbiorcy),
+  // a tej informacji shadowContest dziś nie zbiera.
+  const { contestRelativeThreshold, contestAbsoluteThreshold } = GEOMETRIC_CALIBRATION
   const defenderWinsContest =
     defenderInReach &&
     summary.nearestDefenderMinDist3D < summary.receiverMinDist3D * contestRelativeThreshold &&
     summary.nearestDefenderMinDist3D < contestAbsoluteThreshold
   if (receiverInReach && !defenderWinsContest) {
+    // OSOBNY KROK CHWYTU — dysk doleciał w zasięg, ale trzeba go jeszcze utrzymać.
+    // Ta sama formuła co w fastMode (resolveThrow), tylko karmiona realną geometrią:
+    // wysokością dysku w chwili zbliżenia i tym, czy obrońca był przy nim.
+    // „Kontestowany chwyt" to obrońca realnie przy dysku, a nie ktokolwiek w promieniu
+    // catchReachM (1.95 m) — przy tym szerszym progu flaga odpalała na większości
+    // chwytów i dropy wychodziły 7.6% zamiast realnych ~2-4%.
+    const contestedCatch =
+      summary.nearestDefenderMinDist3D != null &&
+      summary.nearestDefenderMinDist3D <= CONTESTED_CATCH_DIST_M
+    const pCatch = catchSuccessChance(flight.receiver, {
+      discZ: shadowContest.discZAtClosest ?? 1.2,
+      contested: contestedCatch,
+      catchBonus: getTraitMods(flight.receiver).catchBonus ?? 0,
+      // Jak bardzo odbiorca musiał sięgać: 0 = dysk trafił w ręce, 1 = granica zasięgu.
+      reachStrain:
+        summary.receiverMinDist3D != null
+          ? Math.max(0, Math.min(1, summary.receiverMinDist3D / GEOMETRIC_CALIBRATION.catchReachM))
+          : 0,
+    })
+    if (rng?.float && rng.float() > pCatch) {
+      return { success: false, isBlock: false, isDrop: true, defenderId: null }
+    }
     return { success: true, isBlock: false, defenderId: null }
   }
   return {
     success: false,
     isBlock: defenderInReach,
+    isDrop: false,
     defenderId: defenderInReach ? summary.nearestDefenderId : null,
   }
 }
@@ -382,6 +457,8 @@ export function runContinuousThrowSimulation({
   )
   const forceSide = resolveMarkForceSide(defenseTeam, null)
   const attackSign = possessionTeam === 'home' ? 1 : -1
+  let spaceCellsCache = null
+  let spaceCellsCacheMs = -1e9
 
   const offenseLayout = layoutPlayersOnField(
     offenseLineup,
@@ -579,7 +656,32 @@ export function runContinuousThrowSimulation({
       player: a.player,
       x: a.x,
       y: a.y,
+      // vx/vy: tempo domykania luki (patrz closingMps w spatialEvaluator).
+      vx: a.vx ?? 0,
+      vy: a.vy ?? 0,
     }))
+
+    // Mapa przestrzeni dla obrony — przeliczana w LUDZKIM tempie, nie co tick.
+    //
+    // Tick to 20 ms, czyli 50 przeliczeń na sekundę. Człowiek nie przewartościowuje
+    // sytuacji pięćdziesiąt razy na sekundę — czas reakcji na zmianę kierunku to
+    // 112-175 ms (reactionDelayMs), a świadoma ocena „której przestrzeni teraz bronię"
+    // jest wolniejsza. Przeliczanie co tick dawało obronie nadludzką czujność i było
+    // przy okazji najdroższą częścią symulacji.
+    // Punkt odniesienia: w locie miejsce LĄDOWANIA (antycypacja), poza lotem sam dysk.
+    const spaceAnchor = flight
+      ? { x: flight.landingX ?? flight.toX, y: flight.landingY ?? flight.toY }
+      : disc
+    if (!spaceCellsCache || ms - spaceCellsCacheMs >= DEFENSE_REASSESS_MS) {
+      spaceCellsCache = buildSpaceMap({
+        disc: spaceAnchor,
+        attackSign,
+        teammates: offensePositions,
+        defenders: defensePositions,
+      })
+      spaceCellsCacheMs = ms
+    }
+    const spaceCells = spaceCellsCache
 
     let discForAi = disc
     let discSample = null
@@ -587,9 +689,10 @@ export function runContinuousThrowSimulation({
     if (flight) {
       discSample = sampleFlightDisc(flight, flight.elapsedMs)
       discForAi = { x: discSample.x, y: discSample.y, position: discPosition }
-      // Prosta linia do finalnego miejsca lądowania (flight.toX/toY), nie pościg za
-      // bieżącą pozycją dysku na ścieżce — patrz komentarz w createFlightContext.
-      const intercept = { x: flight.toX, y: flight.toY }
+      // Punkt dobiegu w tej chwili lotu: start na punkcie ZAMIERZONYM, korekta na REALNY
+      // w miarę czytania lotu (interceptForFlight). Zawsze z dryfem wiatru — bez tego przy
+      // silnym wietrze wszyscy biegli tam, gdzie dysk nigdy nie docierał.
+      const intercept = interceptForFlight(flight)
       const throwerPos = { x: flight.fromX, y: flight.fromY }
 
       offenseAgents = offenseAgents.map((agent, idx) => {
@@ -611,17 +714,68 @@ export function runContinuousThrowSimulation({
             isThrower: false,
           }
         }
+        // Rzucający zostaje przy punkcie wypuszczenia — jego zachowanie po rzucie to
+        // osobna sprawa i nie zmieniamy go przy okazji.
+        if (agent.id === thrower.id || agent.isThrower) {
+          return {
+            ...tickOffenseAgentDuringFlight(agent, {
+              discSample,
+              throwerId: thrower.id,
+              throwerPos,
+              forceSide,
+              possessionTeam,
+              flight,
+              anchor: spaceAnchor,
+              rng,
+              dtSec: DT_SEC,
+              teammates: offensePositions,
+            }),
+            teamId: possessionTeam,
+            fieldRole: agent.fieldRole,
+            stackIndex: agent.stackIndex,
+            isDump: agent.isDump,
+            isThrower: true,
+          }
+        }
+        // CUTY NIE ZATRZYMUJĄ SIĘ NA CZAS LOTU. Wcześniej w tej fazie cutterzy tylko
+        // przestawiali się strukturalnie (tickOffenseAgentDuringFlight), a cięcie
+        // zaczynało się dopiero, gdy ktoś trzymał dysk. Skutek: KAŻDY deep cut startował
+        // od zera po chwycie i potrzebował 4-5 s, więc huck powstawał tylko wtedy, gdy
+        // rzucający długo trzymał dysk. Stąd sztuczny kompromis „szybkie wypuszczanie
+        // albo hucki" — zmierzone: po urealnieniu czasu decyzji hucki spadły do 2.1%.
+        // Realnie cutterzy tną cały czas i dostosowują trasy do sytuacji, więc w chwili
+        // chwytu część cutów jest już rozwinięta. Rzucający, który zostaje
+        // (isThrower/receiver), nadal ma osobną obsługę wyżej.
         return {
-          ...tickOffenseAgentDuringFlight(agent, {
-            discSample,
+          ...tickCutterBrain({ ...agent, player: agent.player }, {
+            dtSec: DT_SEC,
+            // Cutterzy odnoszą się do miejsca, gdzie dysk BĘDZIE — tam zacznie się gra.
+            disc: spaceAnchor,
+            possessionTeam,
+            forceSide,
+            situation: evaluatePlayerSituation(agent.player ?? agent, {
+              x: agent.x,
+              y: agent.y,
+              offensePositions,
+              defensePositions,
+              disc: spaceAnchor,
+              forceSide,
+              possessionTeam,
+              throwerPos,
+            }),
+            rng,
+            stackIndex: agent.stackIndex ?? 0,
+            isThrower: false,
+            isDump: agent.isDump,
             throwerId: thrower.id,
             throwerPos,
-            forceSide,
-            possessionTeam,
-            flight,
-            rng,
-            dtSec: DT_SEC,
+            elapsedMs: ms,
             teammates: offensePositions,
+            defenders: defensePositions,
+            activeCutters: offenseAgents.filter((a) => a.state === CUTTER_STATE.ACTIVE_CUT).length,
+            attackStyle,
+            maxCutters: maxConcurrentCutters(attackStyle),
+            offenseTactics: offenseTeam?.tactics,
           }),
           teamId: possessionTeam,
           fieldRole: agent.fieldRole,
@@ -655,6 +809,35 @@ export function runContinuousThrowSimulation({
             state: DEFENDER_STATE.CONTESTING_DISC,
           }
         }
+        // POACH NA LECĄCY DYSK — obrońca nie swojego zawodnika może porzucić krycie i
+        // pójść po blok, jeśli oceni, że dobiegnie do dysku przed odbiorcą. Warunkiem
+        // jest, żeby w ogóle to ZAUWAŻYŁ: szansa dostrzeżenia skaluje się czytaniem gry,
+        // więc słabszy obrońca przegapi okazję, którą lepszy wykorzysta.
+        {
+          const dp = defAgent.player ?? defAgent
+          const recvAgentNow = offenseAgents.find((o) => o.id === flight.receiverId)
+          if (!globalThis.__OFF_FLIGHTPOACH && recvAgentNow && !defAgent.poachCommitted) {
+            const myT = Math.hypot(intercept.x - defAgent.x, intercept.y - defAgent.y) / Math.max(3, sprintSpeedMps(dp, 'defense'))
+            const hisT = Math.hypot(intercept.x - recvAgentNow.x, intercept.y - recvAgentNow.y) / Math.max(3, sprintSpeedMps(recvAgentNow.player ?? recvAgentNow, 'offense'))
+            const flightLeftSec = Math.max(0, (flight.totalFlightMs - flight.elapsedMs) / 1000)
+            const canBeatHim = myT + POACH_BEAT_MARGIN_SEC < hisT && myT <= flightLeftSec
+            if (canBeatHim) {
+              const read =
+                subStat(dp, 'mental', 'vision') * 0.35 +
+                subStat(dp, 'defensive', 'blocking') * 0.35 +
+                subStat(dp, 'mental', 'reactions') * 0.3
+              const notices = rng.float() < Math.max(0, Math.min(0.9, (read - 55) / 45)) * POACH_NOTICE_MAX
+              if (notices) defAgent.poachCommitted = true
+            }
+          }
+          if (defAgent.poachCommitted) {
+            const contested = tickFlightContestAgent(
+              defAgent, intercept, dp, 'defense', discSample, rng, 1,
+            )
+            return { ...contested, state: DEFENDER_STATE.CONTESTING_DISC, poachCommitted: true }
+          }
+        }
+
         const targetOff = personMark
           ? resolvePersonMarkTarget(defAgent, offenseAgents, personMatchups)
           : resolvePersonMarkTarget(defAgent, offenseAgents, null)
@@ -676,6 +859,7 @@ export function runContinuousThrowSimulation({
             .length,
           attackSign,
           defenseTactics: defenseTeam?.tactics,
+          spaceCells,
         })
       })
 
@@ -690,7 +874,7 @@ export function runContinuousThrowSimulation({
 
       if (discSample.timeToDisc <= CONTEST_WINDOW_MS) {
         if (!shadowContest) {
-          shadowContest = { receiverMinDist3D: Infinity, defenders: new Map() }
+          shadowContest = { receiverMinDist3D: Infinity, defenders: new Map(), discZAtClosest: 0 }
         }
         const recvAgent = offenseAgents.find((a) => a.id === flight.receiverId)
         if (recvAgent) {
@@ -699,7 +883,12 @@ export function runContinuousThrowSimulation({
             discSample.y - recvAgent.y,
             discSample.z - (recvAgent.z ?? 0),
           )
-          if (d3 < shadowContest.receiverMinDist3D) shadowContest.receiverMinDist3D = d3
+          if (d3 < shadowContest.receiverMinDist3D) {
+            shadowContest.receiverMinDist3D = d3
+            // wysokość dysku w chwili największego zbliżenia — realna wielkość fizyczna,
+            // wejście dla przyszłej logiki kontestu (sky battle / layout)
+            shadowContest.discZAtClosest = discSample.z ?? 0
+          }
         }
         for (const dAgent of defenseAgents) {
           const dId = agentPlayerId(dAgent)
@@ -730,6 +919,8 @@ export function runContinuousThrowSimulation({
         const situation = evaluatePlayerSituation(agent.player, {
           x: agent.x,
           y: agent.y,
+          vx: agent.vx ?? 0,
+          vy: agent.vy ?? 0,
           offensePositions,
           defensePositions,
           disc,
@@ -754,6 +945,9 @@ export function runContinuousThrowSimulation({
             postResetClearout,
             elapsedMs: ms,
             teammates: offensePositions,
+            // Cutter czyta WOLNĄ PRZESTRZEŃ (spaceMap.js), a obrońcy ją odbierają —
+            // bez ich pozycji mapa widziałaby tylko zatykanie przez kolegów.
+            defenders: defensePositions,
             activeCutters: activeCutterCount,
             attackStyle,
             maxCutters: maxConcurrentCutters(attackStyle),
@@ -791,6 +985,7 @@ export function runContinuousThrowSimulation({
           activePoachers,
           attackSign,
           defenseTactics: defenseTeam?.tactics,
+          spaceCells,
         })
       })
     }
@@ -860,6 +1055,7 @@ export function runContinuousThrowSimulation({
           crowded: option?.traffic?.crowded === true,
           teammateCrowd: option?.traffic?.teammateCrowd ?? 0,
           continuationUrgency: attackMods(atkStyle).continuationUrgency ?? 0.15,
+          thrower,
         }) *
           throwReleaseGateMultiplier(atkStyle, defStyle) *
           (throwerCoach.releaseGateMult ?? 1) +
@@ -867,6 +1063,21 @@ export function runContinuousThrowSimulation({
       // Jitter w górę częściej niż w dół — rzadziej „przyśpieszamy” set play.
       const releaseGateMs = gateBase * (0.95 + rng.float() * 0.25)
       if (option && ms >= Math.max(0, releaseGateMs)) {
+        if (globalThis.__DEC) {
+          globalThis.__DEC.push({
+            score: option.score,
+            isDump: !!option.isDump,
+            resetAvailable: !!option.resetAvailable,
+            resetScore: option.resetScore,
+            thr: option.acceptThreshold,
+            sep: option.situation?.separation ?? null,
+            crowd: option.traffic?.teammateCrowd ?? null,
+            lane: option.laneVal ?? null,
+            brk: option.breakVal ?? null,
+            arrival: option.arrivalVal ?? null,
+            phase: option.phaseVal ?? null,
+          })
+        }
         const defender = isPersonDefense(defenseStyle)
           ? defenderForPersonMark(personMatchups, option.player, defenseLineup, rng)
           : defenseLineup[0]
@@ -885,12 +1096,12 @@ export function runContinuousThrowSimulation({
             : (() => {
                 const tight = predictReceiverCatchPoint(recvAgent, fromX, fromY)
                 const tightDist = Math.hypot(tight.x - fromX, tight.y - fromY)
-                if (tightDist < HUCK_MIN_YARDS) return tight
+                if (tightDist < HUCK_MIN_M) return tight
                 return predictReceiverCatchPoint(
                   recvAgent,
                   fromX,
                   fromY,
-                  DEEP_CUT_FLIGHT_SPEED_MPS,
+                  DEEP_CUT_FLIGHT_SPEED_MPS(),
                   DEEP_CUT_MAX_LEAD_SEC,
                 )
               })()
@@ -910,6 +1121,7 @@ export function runContinuousThrowSimulation({
           // Stall z zegara posiadania (1 s = 1); nie podbijaj sztucznie do 1 przed 1. sekundą.
           stallCount: Math.max(1, liveStall || stallCountFromHoldMs(Math.max(holdMs, 1000))),
           optionScore: option.score,
+          flightSpeedMps: option.flightSpeedMps ?? null,
           catchX: toX,
           catchY: toY,
           laneThreats: option.laneThreats ?? option.traffic?.laneThreats ?? [],
@@ -944,14 +1156,22 @@ export function runContinuousThrowSimulation({
             fromY,
             toX: finalToX,
             toY: finalToY,
+            // ZAMIERZONY punkt (przed chybieniem) — to jego czytają zawodnicy i tam
+            // biegną. Dysk leci do finalToX/finalToY, czyli tam, gdzie realnie poleciał.
+            aimX: toX,
+            aimY: toY,
             throwType: throwDecision.throwType,
             trajectory,
             receiverId: throwDecision.receiver.id,
             defenderId: flightDefender?.id,
             throwerId: thrower.id,
+            thrower,
             receiver: throwDecision.receiver,
             receiverAgent: throwDecision.receiverAgent,
+            // Float wybrany przez rzucającego razem z punktem dostarczenia.
+            chosenFlightSpeedMps: throwDecision.flightSpeedMps ?? null,
             separationMargin: commit?.separation?.margin ?? throwDecision.separation?.margin ?? null,
+            rng,
             resolution: commit?.resolution ?? null,
             throwMs: ms,
             weather: wind,
@@ -1023,7 +1243,7 @@ export function runContinuousThrowSimulation({
     discY,
     motionTrace,
     endStates: snapshotAgentStates(offenseAgents, defenseAgents),
-    geometricResolution: computeGeometricResolution(shadowContest, flight),
+    geometricResolution: computeGeometricResolution(shadowContest, flight, rng),
     geometricShadow: (() => {
       const g = summarizeShadowContest(shadowContest, flight)
       if (g) {

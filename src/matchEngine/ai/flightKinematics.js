@@ -1,3 +1,4 @@
+import { pacedSpeedMps, speedRangeFor } from './flightSpeed.js'
 import { buildThrowPathPoints } from '../fieldViz.js'
 import { DISC_STATE, discPositionHeld, discPositionInFlight } from '../discState.js'
 import { integrateAgentMotion, waitingHoldSpeedMps } from './playerMovement.js'
@@ -58,13 +59,30 @@ function discHeightAt(u, trajectory, jumpStat = 50) {
   return peak * Math.sin(Math.PI * Math.min(1, Math.max(0, u)))
 }
 
+/**
+ * Prędkość dobiegu do dysku w fazie lotu.
+ *
+ * Po stronie OBRONY to właśnie tutaj rozstrzyga się kontest geometryczny (kto jest
+ * bliżej dysku w momencie chwytu — patrz computeGeometricResolution w actionSimulator.js),
+ * więc umiejętności obronne muszą tu realnie ważyć. Wcześniej bonus wynosił
+ * `blocking * 0.004`, czyli 0.28 m/s przy 70 i 0.38 m/s przy 95 — 0.1 m/s różnicy na
+ * bazie ~7 m/s, praktycznie zero. Efekt: wszyscy obrońcy gonili dysk tak samo i jakość
+ * obrony nie wpływała na wynik rzutu (zmierzone: OVR obrony 70 -> 95 zmieniało
+ * completion o ~0.6 pp, w granicach szumu).
+ * Teraz mnożnik zależy od czytania gry i zdolności do przechwytu — analogicznie do
+ * pościgu w defenderBrain.js: lepszy obrońca wcześniej rozpoznaje lot i biegnie
+ * krótszą drogą. 70 -> ~0.92x, 95 -> ~1.07x realnej prędkości.
+ */
 export function sprintSpeedMps(player, role) {
   const base = maxSpeedMps(player)
-  const bonus =
-    role === 'defense'
-      ? subStat(player, 'defensive', 'blocking') * 0.004
-      : subStat(player, 'offensive', 'catching') * 0.003
-  return base * 0.96 + bonus
+  if (role === 'defense') {
+    const readSkill =
+      subStat(player, 'defensive', 'blocking') * 0.5 +
+      subStat(player, 'defensive', 'defensiveCutterMovement') * 0.3 +
+      subStat(player, 'mental', 'reactions') * 0.2
+    return base * (0.50 + (readSkill / 100) * 0.6)
+  }
+  return base * 0.96 + subStat(player, 'offensive', 'catching') * 0.003
 }
 
 // Faza 3 planu 3D: layout przestał być bool flagą bez ruchu — to realny skok/wyskok:
@@ -97,26 +115,72 @@ function tickJumpArc(agent, discX, discY, timeToDiscMs, player, rng, discZ = 2) 
 // Granice prędkości dysku wg trajektorii — miękki łuk (deep) vs płaski, twardy rzut (standard).
 // Trzymane blisko wcześniej wykalibrowanych stałych (6.5/7.8/7.2), żeby "mocny rzut" nie
 // był tak szybki, że odbiera zapas czasu, który wcześniej pomagał domykać dystans.
-const SPEED_RANGE_BY_TRAJECTORY = {
-  deep: { min: 4.4, max: 7.8 },
-  overhead: { min: 6.2, max: 9.5 },
+/**
+ * Mnożnik prędkości lotu — dysk był ZA WOLNY i to jest najpewniej źródło tego, że
+ * separacja nie chroni przed stratą.
+ *
+ * Zmierzone czasy lotu przy dotychczasowych stałych: 20 m w 1.56 s, 30 m w 2.61 s,
+ * 40 m w 3.70 s — czyli płaskie ~9.2 m/s niezależnie od dystansu. Realny backhand czy
+ * forehand schodzi z ręki przy 15-25 m/s i przez cały lot trzyma średnio 12-18 m/s,
+ * więc obrońca dostawał u nas o ~60% więcej czasu na domknięcie, niż powinien.
+ *
+ * To spójnie tłumaczy trzy niezależne pomiary: krzywa completion wobec separacji jest
+ * płaska (86.9% przy 2-3 m, 91.2% przy 8+ m), bloki nie maleją z separacją, a przewaga
+ * odbiorcy przy dysku wynosi 1.3-1.5 m niezależnie od tego, jak wolny był w chwili rzutu.
+ * Wyjściowa przewaga po prostu zdąży wyparować w locie.
+ */
+
+
+/** Maks. względny błąd dozowania prędkości u NAJSŁABSZEGO rzucającego (przy stacie 60);
+ *  u elity (95+) spada do zera. Patrz komentarz przy flightSpeedMps. */
+const TOUCH_ERROR_MAX = 0.3
+
+/** Od jakiego ułamka lotu zawodnik zaczyna czytać realny tor dysku, i kiedy ma go już
+ *  w pełni odczytany (patrz interceptForFlight). */
+const READ_START_FRAC = 0.15
+const READ_FULL_FRAC = 0.55
+
+/**
+ * Umiejętność RZUCAJĄCEGO właściwa dla kształtu tego lotu — używana i do wysokości łuku,
+ * i do tego, jak mocno potrafi dysk posłać. To ten sam podział co w
+ * throwTechnique.js:techniqueAccuracyBase, tylko po stronie fizyki lotu.
+ */
+function throwerLoftStat(thrower, trajectory) {
+  if (!thrower) return 50
+  if (trajectory === 'deep') return subStat(thrower, 'throwing', 'huck')
+  if (trajectory === 'overhead') return subStat(thrower, 'throwing', 'hammer')
+  return (
+    subStat(thrower, 'throwing', 'backhand') * 0.5 + subStat(thrower, 'throwing', 'forehand') * 0.5
+  )
 }
-const SPEED_RANGE_DEFAULT = { min: 6.2, max: 9.2 }
 
 export function createFlightContext({
   fromX,
   fromY,
   toX,
   toY,
+  /** Punkt ZAMIERZONY przez rzucającego (bez chybienia) — do niego biegną zawodnicy. */
+  aimX = null,
+  aimY = null,
   throwType,
   trajectory,
   throwPathPoints,
   receiverId,
   defenderId,
   throwerId,
+  thrower,
   receiver,
   receiverAgent,
+  /**
+   * Prędkość lotu WYBRANA przez rzucającego razem z punktem dostarczenia (throwerBrain:
+   * chooseDeliveryPoint). Rzut dalej niż odbiorca sam dobiegnie jest opłacony floatem —
+   * jeśli wykonanie by tego nie uszanowało, dysk doleciałby twardo w miejsce, w którym
+   * odbiorcy jeszcze nie ma, czyli decyzja rzucającego byłaby fikcją.
+   */
+  chosenFlightSpeedMps = null,
   separationMargin = null,
+  /** Potrzebny do błędu dozowania prędkości (patrz flightSpeedMps niżej). */
+  rng = null,
   resolution,
   throwMs,
   weather,
@@ -158,9 +222,25 @@ export function createFlightContext({
   // daleko do celu (duży lead, np. huck) — rzut leci wolniej/miękcej, dając czas na dobieg;
   // gdy odbiorca jest już blisko celu — rzut leci szybko/płasko, bo i tak zdąży. Realny
   // odpowiednik decyzji "mocniej czy słabiej rzucić" w zależności od pozycji odbiorcy.
-  const speedRange = SPEED_RANGE_BY_TRAJECTORY[trajectory] ?? SPEED_RANGE_DEFAULT
-  let flightSpeedMps = speedRange.max
-  if (
+  // Prędkość dysku: umiejętnością jest TRAFIENIE W ODPOWIEDNIĄ prędkość, nie siła.
+  //
+  // `idealSpeedMps` (z dystansu i szybkości odbiorcy) to prędkość idealnie dozowana pod
+  // tego odbiorcę — czyli perfekcyjny touch. Dobry rzucający realizuje ją blisko co do
+  // metra na sekundę; słabszy się od niej odchyla, w OBIE strony: za mocno (odbiorca nie
+  // zdąży dobiec) albo za miękko (dysk wisi, obrona ma czas dojść do punktu lądowania).
+  //
+  // PRÓBOWANE I COFNIĘTE: uzależnienie SUFITU prędkości od mocy rzucającego. Efekt był
+  // ODWROTNY do zamierzonego (tmp-thrower-ovr.mjs): throwing 70 dawało 86.0% completion
+  // i 83% wygranych, a throwing 95 tylko 81.5% i 58% — bo wolniejszy dysk = dłuższy lot,
+  // a na tym zyskuje przede wszystkim ODBIORCA (więcej czasu na dobieg do znanego punktu
+  // lądowania). Słaba moc była więc premią. Błąd dozowania jest symetryczny, więc takiej
+  // premii nie tworzy — karą jest sam rozrzut.
+  const speedRange = speedRangeFor(trajectory)
+  let flightSpeedMps = pacedSpeedMps(trajectory, receiverAgent, fromX, fromY)
+  if (Number.isFinite(chosenFlightSpeedMps)) {
+    flightSpeedMps = Math.min(speedRange.max, Math.max(speedRange.min, chosenFlightSpeedMps))
+  }
+  if (!Number.isFinite(chosenFlightSpeedMps) &&
     receiverAgent != null &&
     Number.isFinite(receiverAgent.x) &&
     Number.isFinite(receiverAgent.y)
@@ -170,7 +250,19 @@ export function createFlightContext({
     const neededSec = Math.max(0.3, (distToTarget / receiverSpeedMps) * 1.15)
     const idealSpeedMps = pathLen / neededSec
     if (Number.isFinite(idealSpeedMps)) {
-      flightSpeedMps = Math.min(speedRange.max, Math.max(speedRange.min, idealSpeedMps))
+      const touchStat = throwerLoftStat(thrower, trajectory)
+      const touchFrac = Math.max(0, Math.min(1, (touchStat - 60) / 35))
+      const errorSpan = TOUCH_ERROR_MAX * (1 - touchFrac)
+      const deviation = rng?.float ? (rng.float() * 2 - 1) * errorSpan : 0
+      // Rzucający WYBIERA tempo wewnątrz realnego pasma: leading pass niżej (dysk czeka
+      // na odbiorcę w przestrzeni), in-cut wyżej (odbiorca wbiega w dysk, float zbędny).
+      // Potrzeba odbiorcy (idealSpeedMps) może jeszcze ZDJĄĆ moc poniżej tego wyboru, ale
+      // nie dodaje jej ponad — bo to sufit realnej fizyki, nie preferencja.
+      const chosenMps = pacedSpeedMps(trajectory, receiverAgent, fromX, fromY)
+      flightSpeedMps = Math.min(
+        chosenMps,
+        Math.max(speedRange.min, idealSpeedMps * (1 + deviation)),
+      )
     }
   }
   // Bezpieczny sufit — actionSimulator.js rezerwuje na fazę lotu stały budżet ticków
@@ -181,7 +273,37 @@ export function createFlightContext({
     9500,
     Math.max(FLIGHT_TICK_MS * 4, Math.round((pathLen / flightSpeedMps) * 1000)),
   )
-  const recvJump = subStat(receiver, 'physical', 'jump')
+  // Apex łuku wyznacza RZUCAJĄCY i rodzaj rzutu — nie skoczność odbiorcy. Wcześniej było
+  // tu subStat(receiver,'physical','jump'), czyli wysokość lotu dysku zależała od tego,
+  // jak wysoko skacze łapiący — fizyczny nonsens (skoczność odbiorcy nie zmienia toru
+  // lecącego dysku). Skoczność odbiorcy ma sens tam, gdzie zawsze była potrzebna: czy
+  // DOSIĘGNIE wysoko lecącego dysku (tickJumpArc / aerialContestChance).
+  // REALNY punkt lądowania = koniec ścieżki + dryf wiatru narosły przez cały lot.
+  // sampleFlightDisc dokłada windFlightOffset do pozycji dysku, ale gonieni przez agentów
+  // byli dotąd `toX/toY` — punkt BEZ dryfu. Przy silnym wietrze (19.5 mph → ~4.8 m dryfu
+  // na końcu lotu) odbiorca i obrońca biegli więc tam, gdzie dysk nigdy nie docierał:
+  // mediana odległości odbiorcy od dysku rosła z 0.87 m do 2.75 m, a 83-93% rzutów
+  // kończyło lot poza zasięgiem chwytu. Przy abstrakcyjnym resolverze było to niewidoczne
+  // (o wyniku decydował rzut kością, wiatr miał osobne accuracyDelta/dropChanceBonus),
+  // ale geometrycznie oznaczało mecze z completion ~10%.
+  // Realni zawodnicy czytają wiatr i biegną tam, gdzie dysk faktycznie doleci.
+  // Zawodnicy biegną do punktu ZAMIERZONEGO (+ dryf wiatru, bo wiatr się czyta), a NIE
+  // do punktu, w który dysk realnie poleciał po chybieniu rzucającego. Inaczej chybienie
+  // nic nie kosztuje: odbiorca biegnie dokładnie tam, gdzie wylądował źle rzucony dysk
+  // (zmierzone — `throwing` 70 vs 95 dawało identyczne completion, mimo że chybienie
+  // wynosiło odpowiednio 2.40 m i 1.00 m). Błąd rzucającego jest z definicji nieznany
+  // w chwili wypuszczenia; wiatr — przeciwnie — jest jawny i przewidywalny.
+  const landingDrift = windFlightOffset(weather, 1)
+  // Punkt ZAMIERZONY (tam biegnie odbiorca w pierwszej fazie lotu) i REALNY (tam dysk
+  // faktycznie ląduje po chybieniu). Odbiorca w locie płynnie przechodzi z jednego na
+  // drugi — patrz interceptForFlight: widzi lecący dysk i koryguje bieg, więc źle rzucony
+  // dysk kosztuje GRUNT STRACONY do momentu korekty, a nie automatyczną stratę.
+  const landingX = (aimX ?? finalPt.x) + landingDrift.dx
+  const landingY = (aimY ?? finalPt.y) + landingDrift.dy
+  const trueLandingX = finalPt.x + landingDrift.dx
+  const trueLandingY = finalPt.y + landingDrift.dy
+
+  const discLoftStat = throwerLoftStat(thrower, trajectory)
 
   // Faza 1 planu 3D: realna integracja wysokości (grawitacja+uniesienie) + ograniczony
   // boczny dryf turn/fade, policzone raz tutaj i próbkowane co tick w sampleFlightDisc —
@@ -189,7 +311,7 @@ export function createFlightContext({
   // punktu lądowania (toX/toY) — tylko kształt toru w międzyczasie. Boczny dryf jest
   // zerowany na obu końcach lotu i ograniczony do ułamka dystansu rzutu, więc nie może
   // realnie przesunąć skalibrowanego punktu złapania.
-  const peakHeightM = discPeakHeightM(trajectory, recvJump)
+  const peakHeightM = discPeakHeightM(trajectory, discLoftStat)
   const dxPath = finalPt.x - fromX
   const dyPath = finalPt.y - fromY
   const pathDirLen = Math.hypot(dxPath, dyPath) || 1
@@ -217,6 +339,11 @@ export function createFlightContext({
     fromY,
     toX: finalPt.x,
     toY: finalPt.y,
+    // Punkt, do którego realnie biegną zawodnicy — z dryfem wiatru (patrz wyżej).
+    landingX,
+    landingY,
+    trueLandingX,
+    trueLandingY,
     receiverId,
     defenderId,
     throwerId,
@@ -227,7 +354,7 @@ export function createFlightContext({
     defenderReactionDelayMs,
     weather,
     windTickBase: Math.round(throwMs / FLIGHT_TICK_MS),
-    recvJump,
+    discLoftStat,
     peakHeightM,
     perpX,
     perpY,
@@ -267,16 +394,36 @@ export function sampleFlightDisc(flight, flightElapsedMs) {
     discZ = sample3D.z
     lateral = sample3D.lateral
   } else {
-    discZ = discHeightAt(u, flight.trajectory, flight.recvJump)
+    discZ = discHeightAt(u, flight.trajectory, flight.discLoftStat)
   }
   const discX = base.x + wind.dx + (flight.perpX ?? 0) * lateral
   const discY = base.y + wind.dy + (flight.perpY ?? 0) * lateral
   return { x: discX, y: discY, z: discZ, u, ms, timeToDisc: Math.max(0, flight.totalFlightMs - ms) }
 }
 
+/**
+ * Punkt, do którego zawodnicy biegną w danej chwili lotu.
+ *
+ * Na starcie to punkt ZAMIERZONY przez rzucającego (tam odbiorca już biegł), ale w miarę
+ * lotu widać realny tor dysku i bieg jest korygowany na faktyczne miejsce lądowania.
+ * Dzięki temu chybiony rzut kosztuje dokładnie to, co powinien: dystans stracony zanim
+ * korekta nastąpi — a nie automatyczną stratę (gdy odbiorca jest ślepy na chybienie) ani
+ * zero (gdy od pierwszego ticku biegnie w faktyczne miejsce lądowania).
+ */
+export function interceptForFlight(flight) {
+  const aimX = flight.landingX ?? flight.toX
+  const aimY = flight.landingY ?? flight.toY
+  const trueX = flight.trueLandingX ?? aimX
+  const trueY = flight.trueLandingY ?? aimY
+  const total = flight.totalFlightMs || 1
+  const t = Math.max(0, Math.min(1, (flight.elapsedMs ?? 0) / total))
+  const read = Math.max(0, Math.min(1, (t - READ_START_FRAC) / (READ_FULL_FRAC - READ_START_FRAC)))
+  return { x: aimX + (trueX - aimX) * read, y: aimY + (trueY - aimY) * read }
+}
+
 export function tickFlightContestAgent(agent, intercept, player, role, discSample, rng, speedMult = 1) {
   const speed = sprintSpeedMps(player, role) * speedMult
-  let next = { ...agent, ...integrateAgentMotion(agent, intercept.x, intercept.y, speed, DT_SEC, true) }
+  let next = { ...agent, ...integrateAgentMotion(agent, intercept.x, intercept.y, speed, DT_SEC, true, role) }
   next = tickJumpArc(next, discSample.x, discSample.y, discSample.timeToDisc, player, rng, discSample.z)
   return next
 }
@@ -285,12 +432,13 @@ export function tickOffenseAgentDuringFlight(agent, ctx) {
   const {
     discSample,
     throwerId,
-    throwerPos,
     forceSide,
     possessionTeam,
     flight,
     rng,
     dtSec,
+    /** Przewidywany punkt LĄDOWANIA dysku — wokół niego atak się przestawia. */
+    anchor = null,
   } = ctx
   if (agent.isThrower || agent.id === throwerId) {
     return {
@@ -301,13 +449,24 @@ export function tickOffenseAgentDuringFlight(agent, ctx) {
   if (agent.id === flight.receiverId) {
     return agent
   }
+  // Atak przestawia się względem miejsca, gdzie dysk WYLĄDUJE, nie gdzie akurat leci.
+  // Wcześniej celem był `discSample`, czyli dysk w locie — zawodnik reorganizował się
+  // wokół punktu, który w chwili chwytu jest już nieaktualny, i po złapaniu struktura
+  // była rozjechana. Realni zawodnicy przestawiają stack, PATRZĄC na lecący dysk, tak
+  // żeby w momencie chwytu ustawienie było już gotowe. Symetryczne do antycypacji
+  // obrony (spaceAnchor w actionSimulator.js).
+  // UWAGA: computeDynamicOffenseTarget kotwiczy strukturę na `throwerPos`, a `disc` bierze
+  // tylko jako fallback (sprawdzone: ten sam cel dla dysku na x=40, 60 i 80). Sam podmiana
+  // `disc` nic więc nie dawała — trzeba podmienić KOTWICĘ. W locie następnym rozgrywającym
+  // będzie odbiorca, stojący w punkcie lądowania, i to wokół niego atak ma się ustawiać.
+  const reorgAnchor = anchor ?? { x: discSample.x, y: discSample.y }
   const pref = computeDynamicOffenseTarget({
     x: agent.x,
     y: agent.y,
-    disc: { x: discSample.x, y: discSample.y },
+    disc: reorgAnchor,
     throwerId,
     playerId: agent.id,
-    throwerPos,
+    throwerPos: reorgAnchor,
     forceSide,
     possessionTeam,
     inThrowLane: false,

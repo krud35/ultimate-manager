@@ -17,7 +17,7 @@ import {
   fieldCenterY,
   FIELD_DIMENSIONS,
 } from '../fieldDimensions.js'
-import { openSideSign } from './offenseReorganization.js'
+import { openSideSign , resetSlotTarget } from './offenseReorganization.js'
 import { mergeTraitAndCoachMods } from '../coachDirectives.js'
 import { subStat } from './statFormulas.js'
 
@@ -105,8 +105,25 @@ export function zoneStructuralTarget(
   return { x: clampFieldX(discX), y: clampFieldY(dY) }
 }
 
+/**
+ * Mnożnik czasu skanowania boiska przed wypuszczeniem dysku.
+ *
+ * Człon STYLU ATAKU został stąd usunięty (dawniej `attackMods(style).releaseGateMult`,
+ * wartości 0.62-1.25). Po naprawie doboru celu cutu przez mapę przestrzeni okazał się
+ * jedyną rzeczą, która realnie decydowała o udziale hucków — zmierzona korelacja przez
+ * wszystkie 7 stylów była monotoniczna: 1.25 -> 16.7% hucków, 1.20 -> 20.8, 1.15 -> 8.2,
+ * 1.05 -> 6.1, 0.95 -> 2.3, 0.72 -> 0.1, 0.62 -> 0.0. Formacja dyktowała więc wynik
+ * rzutowy z tabeli stałych, a nie przez to, co dzieje się na boisku: horizontal stack ma
+ * najwięcej pustej przestrzeni deep ze wszystkich stacków i mimo to hucował najmniej,
+ * bo rzucający wypuszczał dysk, zanim ktokolwiek zdążył tam wybiec.
+ *
+ * Zostaje ODCZYT OBRONY — to czytanie realnej sytuacji, nie tożsamość formacji. Tempo
+ * gry ma teraz wychodzić z tego, jak szybko pojawia się dobra opcja: przy ciasnym
+ * ustawieniu (motion/hex) bliska opcja pojawia się od razu, więc dysk i tak schodzi
+ * szybko — bez odgórnego skracania skanowania.
+ */
 export function throwReleaseGateMultiplier(attackStyle, defenseStyle = null) {
-  let m = attackMods(attackStyle).releaseGateMult ?? 1
+  let m = 1
   if (defenseStyle) {
     const def = defenseMods(defenseStyle)
     // Vs zone: więcej cierpliwości (swing / dziura).
@@ -223,10 +240,7 @@ export function formationStructuralTarget({
   // Dump/reset — tylko gdy layout / podrola oznaczyły dump (nie hardcoduj index==1:
   // zone O i horizontal mają handlery na 1–2 bez roli dump).
   if (isDump) {
-    return {
-      x: clampFieldX(ox - attackSign * (5.5 + r)),
-      y: clampFieldY(oy + openSign * (4 + r * 2)),
-    }
+    return resetSlotTarget({ disc, throwerPos: { x: ox, y: oy }, attackSign, forceSide, rng })
   }
 
   // Klasyczny 2-handler: index 1 = dump w layoutcie; gdy brak flagi, i tak trzymaj dump shape
@@ -236,10 +250,7 @@ export function formationStructuralTarget({
     attackStyle !== ATTACK_STYLES.HORIZONTAL_STACK &&
     attackStyle !== ATTACK_STYLES.MOTION_OFFENSE
   if (twoHandlerDumpFallback) {
-    return {
-      x: clampFieldX(ox - attackSign * (5.5 + r)),
-      y: clampFieldY(oy + openSign * (4 + r * 2)),
-    }
+    return resetSlotTarget({ disc, throwerPos: { x: ox, y: oy }, attackSign, forceSide, rng })
   }
 
   const cutterFrom2 = Math.max(0, (stackIndex ?? 2) - 2)
@@ -389,22 +400,27 @@ export function shouldAttemptPoach(defender, ctx) {
     defenseTactics = null,
   } = ctx
   const def = defenseMods(defenseStyle)
-  const tendency = def.poachTendency ?? 0
+  const traitMult = mergeTraitAndCoachMods(defender, defenseTactics, 'defense').poachChanceMult ?? 1
+  // Zawodnik z cechą `poacher` albo instrukcją `poach` poachuje NIEZALEŻNIE od stylu:
+  // w zwykłym person defence tendencja stylu to 0.09, więc cecha nie miała czego mnożyć.
+  // Taki zawodnik reaguje też na cuty daleko od dysku (deep help, zamykanie open side),
+  // czego dawna bramka „tylko blisko dysku lub lane'u" zabraniała z definicji.
+  const dedicatedPoacher = !globalThis.__OFF_PREPOACH && traitMult >= 1.3
+  const tendency = Math.max(def.poachTendency ?? 0, dedicatedPoacher ? 0.24 : 0)
   if (tendency <= 0) return false
-  if (!canPoachRole) return false
+  if (!canPoachRole && !dedicatedPoacher) return false
   const maxPoachers = def.maxPoachers ?? 1
   if (activePoachers >= maxPoachers) return false
 
-  // Tylko realnie blisko passing lane / dysku — nie „poach z deep stacka”.
-  if (distToDisc > 9 && distToLane > 3.5) return false
+  // Blisko lane'u/dysku — albo dedykowany poacher, który może pomóc też z głębi.
+  if (!dedicatedPoacher && distToDisc > 9 && distToLane > 3.5) return false
   // Nie zostawiaj człowieka, który już jest otwarty / którego gubisz.
   if (separationToMark > 3.2) return false
 
   const vision = subStatFromPlayer(defender, 'mental', 'vision')
   const reactions = subStatFromPlayer(defender, 'mental', 'reactions')
   const skill = (vision * 0.55 + reactions * 0.45) / 100
-  const traitPoach =
-    mergeTraitAndCoachMods(defender, defenseTactics, 'defense').poachChanceMult ?? 1
+  const traitPoach = traitMult
   // Elita (~80): ~tendency*0.35; przeciętny (~55): ~tendency*0.22 na probe.
   const chance =
     tendency *

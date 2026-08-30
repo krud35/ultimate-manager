@@ -218,7 +218,27 @@ export function deriveNestedFromLegacy(flat = {}) {
 /**
  * Buduje pełne skills z surowych danych (legacy flat, częściowe nested lub pełne nested).
  */
+/**
+ * Cache po TOŻSAMOŚCI obiektu `raw` — patrz analogiczny komentarz przy
+ * normalizeLinePlayerInstructions (playerInstructions.js). `getSubStat`/`subStat` wołają
+ * to w pętlach per-tick dla każdego zawodnika; profil pełnego meczu pokazał 14% czasu CPU
+ * na samym przeliczaniu tych samych, niezmiennych statystyk. Obiekty skills nie są
+ * mutowane w miejscu w trakcie meczu (zweryfikowane grepem), więc cache jest równoważny.
+ */
+const normalizedSkillsCache = new WeakMap()
+
 export function normalizePlayerSkills(raw = {}) {
+  if (raw && typeof raw === 'object') {
+    const cached = normalizedSkillsCache.get(raw)
+    if (cached) return cached
+    const computed = computeNormalizedPlayerSkills(raw)
+    normalizedSkillsCache.set(raw, computed)
+    return computed
+  }
+  return computeNormalizedPlayerSkills(raw)
+}
+
+function computeNormalizedPlayerSkills(raw = {}) {
   if (hasNestedShape(raw)) {
     const base = deriveNestedFromLegacy(readLegacyFlatFromRaw(raw))
     for (const [cat, keys] of Object.entries(PLAYER_STAT_CATEGORIES)) {

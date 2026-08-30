@@ -127,8 +127,20 @@ export function normalizeSubRoleId(id) {
 /**
  * @param {Record<string|number, string>|null|undefined} map
  */
+/** Cache po tożsamości mapy — patrz normalizeLinePlayerInstructions (playerInstructions.js);
+ * `storedSubRoleForPlayer` normalizuje całą mapę przy każdym odczycie jednego gracza. */
+const subRolesMapCache = new WeakMap()
+
 export function normalizePlayerSubRolesMap(map) {
   if (!map || typeof map !== 'object') return {}
+  const cached = subRolesMapCache.get(map)
+  if (cached) return cached
+  const computed = computePlayerSubRolesMap(map)
+  subRolesMapCache.set(map, computed)
+  return computed
+}
+
+function computePlayerSubRolesMap(map) {
   const out = {}
   for (const [key, raw] of Object.entries(map)) {
     const id = normalizeSubRoleId(raw)

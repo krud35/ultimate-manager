@@ -1,7 +1,19 @@
 import { MATCH_CONFIG } from './config.js'
 import { EVENT } from './events.js'
 
-export const HUCK_MIN_YARDS = 40
+/**
+ * Próg statystyczny hucka — w METRACH.
+ *
+ * Nazywał się HUCK_MIN_YARDS i miał wartość 40, ale porównywany był z wielkościami
+ * liczonymi w METRACH (yardsFromPositions zwraca różnicę pozycji w metrach, tak samo
+ * forwardProgress i distFromThrower w throwerBrain). Efektywny próg wynosił więc 40 m
+ * ≈ 44 jardy — powyżej realnej konwencji statystycznej (Ultiworld/USAU liczą hucka od
+ * 40 jardów ≈ 36,6 m) i, co gorsza, POWYŻEJ p99 zysku w pełnym silniku (34 m). Klasa
+ * „huck" była praktycznie nieosiągalna: 0,6-1,8% rzutów przy realnym paśmie 7-16%.
+ * 35 m ≈ 38 jardów i pokrywa się z drugim warunkiem w inferThrowType (discDist >= 35),
+ * który wcześniej mówił co innego niż ten próg.
+ */
+export const HUCK_MIN_M = 35
 
 /**
  * Rzut liczy się jako "pod presją", gdy pada przy tym lub wyższym stall foulcount.
@@ -191,7 +203,7 @@ export function yardsFromPositions(before, after) {
 }
 
 export function isHuckThrow(yards) {
-  return (Number(yards) || 0) >= HUCK_MIN_YARDS
+  return (Number(yards) || 0) >= HUCK_MIN_M
 }
 
 export function fieldMetersFromEnginePosition(pos) {

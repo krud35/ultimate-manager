@@ -1,8 +1,8 @@
 /** Predykcja punktu chwytu / przechwytu dysku w locie. */
 
 import { clampFieldX, clampFieldY } from '../fieldDimensions.js'
+import { deepCutFlightSpeedMps, predictFlightSpeedMps } from './flightSpeed.js'
 
-const DEFAULT_FLIGHT_SPEED_MPS = 10
 const MIN_CUT_SPEED_MPS = 4.5
 /**
  * Niższa prędkość predykcji WYŁĄCZNIE dla cutu 'deep' (huck lead). Globalne DEFAULT=10
@@ -17,7 +17,9 @@ const MIN_CUT_SPEED_MPS = 4.5
 // długich rzutach (55m+), więc sama predykcja ucinała target dużo wcześniej niż
 // wykonanie by na to pozwoliło. 4.8 lepiej odzwierciedla dolny (najbardziej wyczekujący)
 // koniec realnego zakresu.
-export const DEEP_CUT_FLIGHT_SPEED_MPS = 4.8
+// Wartości bazowe żyją teraz w flightSpeed.js razem z wykonaniem i decyzją — inaczej
+// skalowanie tempa rozjeżdża predykcję leadu z realnym lotem (patrz komentarz tam).
+export const DEEP_CUT_FLIGHT_SPEED_MPS = deepCutFlightSpeedMps
 
 /**
  * Sufit zakładanego czasu lotu w predykcji leadu (s) — bez tego samouzgodniona iteracja
@@ -39,51 +41,46 @@ function isCuttingState(state) {
 }
 
 /**
- * Punkt, w który thrower rzuca: lead wzdłuż cutu (B), nie bieżąca pozycja (A).
- * Stojący / dump — lekki lead z prędkości; cutter — punkt osiągalny na drodze do targetu.
+ * GEOMETRIA TRASY CUTU — rozwiązana raz, żeby rzucający mógł wybrać PUNKT na niej.
+ *
+ * Zwraca kierunek biegu odbiorcy, `reach` (dokąd sam dobiegnie w czasie lotu) oraz
+ * `toTarget` (dokąd w ogóle biegnie). Rozdzielenie tych dwóch jest istotne: `reach` to
+ * granica tego, co odbiorca złapie BEZ floatu, a `toTarget` to cała dostępna trasa.
+ * Rzut dalej niż `reach` nie jest błędem — jest decyzją, którą trzeba opłacić floatem
+ * (wolniejszym lotem), i to jest realny wybór rzucającego: bliżej i twardziej albo
+ * dalej i miękko.
+ *
+ * `reach` i czas lotu zależą od siebie nawzajem (dalszy punkt = dłuższy lot = więcej
+ * czasu = jeszcze dalszy punkt), więc rozwiązuje to 5 kroków iteracji z tłumieniem.
  */
-export function predictReceiverCatchPoint(
+export function receiverCutPath(
   recvAgent,
   fromX,
   fromY,
-  flightSpeedMps = DEFAULT_FLIGHT_SPEED_MPS,
+  flightSpeedMps = predictFlightSpeedMps(),
   maxLeadSec = DEFAULT_MAX_LEAD_SEC,
 ) {
-  if (!recvAgent) {
-    return { x: (fromX ?? 0) + 8, y: fromY ?? 0 }
-  }
-
-  const curX = recvAgent.x ?? fromX ?? 0
-  const curY = recvAgent.y ?? fromY ?? 0
-  const tgtX = recvAgent.targetX ?? curX
-  const tgtY = recvAgent.targetY ?? curY
+  const curX = recvAgent?.x ?? fromX ?? 0
+  const curY = recvAgent?.y ?? fromY ?? 0
+  const empty = { curX, curY, ux: 0, uy: 0, reach: 0, toTarget: 0, cutting: false }
+  if (!recvAgent) return empty
   const vx = recvAgent.vx ?? 0
   const vy = recvAgent.vy ?? 0
-  const cutting = isCuttingState(recvAgent.state)
 
-  if (!cutting) {
+  if (!isCuttingState(recvAgent.state)) {
+    // Stojący / dump: „trasa" to sam wektor prędkości, lead jest z niej krótki.
     const speed = Math.hypot(vx, vy)
-    if (speed < 0.4) return { x: curX, y: curY }
+    if (speed < 0.4) return empty
     const dist = Math.hypot(curX - fromX, curY - fromY)
     const flightSec = Math.min(maxLeadSec, Math.max(0.25, dist / Math.max(1, flightSpeedMps)))
-    return {
-      x: clampFieldX(curX + vx * flightSec * 0.55),
-      y: clampFieldY(curY + vy * flightSec * 0.55),
-    }
+    const lead = speed * flightSec * 0.55
+    return { curX, curY, ux: vx / speed, uy: vy / speed, reach: lead, toTarget: lead, cutting: false }
   }
 
+  const tgtX = recvAgent.targetX ?? curX
+  const tgtY = recvAgent.targetY ?? curY
   const toTarget = Math.hypot(tgtX - curX, tgtY - curY)
-  if (toTarget < 0.75) return { x: curX, y: curY }
-
-  // Lead w kierunku B: dysk leci tam, gdzie odbiorca dotrze w czasie lotu (max = target).
-  // Dostępny czas lotu (flightSec) zależy od dystansu rzucający→PUNKT RZUTU — ale punkt
-  // rzutu (catchPt) to właśnie to, co liczymy. Gdy odbiorca jest już daleko od rzucającego
-  // (typowe w trakcie cutu), liczenie flightSec od rzucający→surowy cel cutu (blisko
-  // rzucającego przy comeback cucie) dawało fałszywie krótki czas → mały reach → catchPt
-  // wciąż blisko odbiorcy, ale i tak daleko (~20m+) od rzucającego, bo odbiorca sam był
-  // tak daleko. Efekt: rzut realnie dłuższy niż czas, jaki formuła założyła. Samouzgodnione
-  // rozwiązanie: iteracja z tłumieniem (5 kroków zbiega się nawet przy oscylacji, patrz
-  // devtest) — pathDist liczony od AKTUALNEGO oszacowania catchPt, nie surowego celu.
+  if (toTarget < 0.75) return empty
   const recvSpeed = Math.max(Math.hypot(vx, vy), MIN_CUT_SPEED_MPS)
   const ux = (tgtX - curX) / toTarget
   const uy = (tgtY - curY) / toTarget
@@ -103,10 +100,31 @@ export function predictReceiverCatchPoint(
     const candidate = Math.min(toTarget, recvSpeed * flightSec)
     reach = (reach + candidate) / 2
   }
+  return { curX, curY, ux, uy, reach, toTarget, cutting: true }
+}
+
+/** Punkt na trasie cutu w zadanej odległości od odbiorcy (przycięty do boiska). */
+export function pointAlongCut(path, distM) {
   return {
-    x: clampFieldX(curX + ux * reach),
-    y: clampFieldY(curY + uy * reach),
+    x: clampFieldX(path.curX + path.ux * distM),
+    y: clampFieldY(path.curY + path.uy * distM),
   }
+}
+
+/**
+ * Punkt, w który thrower rzuca, przy DOMYŚLNYM dostarczeniu (dokąd odbiorca sam dobiegnie).
+ * Zachowane dla wywołań, które nie podejmują decyzji o floacie.
+ */
+export function predictReceiverCatchPoint(
+  recvAgent,
+  fromX,
+  fromY,
+  flightSpeedMps = predictFlightSpeedMps(),
+  maxLeadSec = DEFAULT_MAX_LEAD_SEC,
+) {
+  if (!recvAgent) return { x: (fromX ?? 0) + 8, y: fromY ?? 0 }
+  const path = receiverCutPath(recvAgent, fromX, fromY, flightSpeedMps, maxLeadSec)
+  return pointAlongCut(path, path.reach)
 }
 
 export function discPathVelocityMps(samplePathAt, pathPoints, u, totalFlightMs) {

@@ -11,7 +11,7 @@ import {
 import { readLegacySkill } from '../models/playerStats.js'
 import { applyMoraleToStat, getPlayerMorale } from '../models/playerMorale.js'
 import { mergeTraitAndCoachMods } from './coachDirectives.js'
-import { HUCK_MIN_YARDS } from './matchStats.js'
+import { HUCK_MIN_M } from './matchStats.js'
 
 export const THROW_TYPE = {
   STANDARD: 'standard',
@@ -32,7 +32,6 @@ const PROFILES = {
     label: 'Forehand/Backhand',
     shortLabel: 'Standard',
     baseYards: () => MATCH_CONFIG.field.advanceOnSuccess,
-    accuracyMod: 0,
     randomSpreadBonus: 0,
     blockRiskMod: 0,
     trajectory: THROW_TRAJECTORY.FORWARD,
@@ -41,7 +40,6 @@ const PROFILES = {
     label: 'Huck',
     shortLabel: 'Huck',
     baseYards: () => 32,
-    accuracyMod: -18,
     randomSpreadBonus: 12,
     blockRiskMod: 10,
     trajectory: THROW_TRAJECTORY.DEEP,
@@ -50,7 +48,6 @@ const PROFILES = {
     label: 'Dump/Swing',
     shortLabel: 'Dump',
     baseYards: () => -2,
-    accuracyMod: 14,
     randomSpreadBonus: -6,
     blockRiskMod: -6,
     trajectory: THROW_TRAJECTORY.LATERAL,
@@ -59,7 +56,6 @@ const PROFILES = {
     label: 'Hammer/Scoober',
     shortLabel: 'Over the top',
     baseYards: () => 16,
-    accuracyMod: -6,
     randomSpreadBonus: 8,
     blockRiskMod: 10,
     trajectory: THROW_TRAJECTORY.OVERHEAD,
@@ -121,14 +117,16 @@ export function pickThrowType({
   if (tier === 'high') {
     const roll = rng.float()
     if (roll < 0.42) return THROW_TYPE.DUMP_SWING
-    if (roll < 0.68) return THROW_TYPE.OVER_THE_TOP
+    // Desperacki hammer przy stallu 8-9 jest realny, ale to margines, nie co czwarty
+    // rzut — patrz komentarz przy wagach OTT niżej (audyt: 13% wszystkich rzutów).
+    if (roll < 0.45) return THROW_TYPE.OVER_THE_TOP
     if (roll < 0.88) return THROW_TYPE.STANDARD
     return THROW_TYPE.HUCK
   }
 
   if (tier === 'medium') {
     if (stallMods.badDecision) {
-      return rng.float() < 0.55 ? THROW_TYPE.HUCK : THROW_TYPE.OVER_THE_TOP
+      return rng.float() < 0.90 ? THROW_TYPE.HUCK : THROW_TYPE.OVER_THE_TOP
     }
     if (rng.float() < 0.52 + (stallCount - 4) * 0.04) {
       return THROW_TYPE.DUMP_SWING
@@ -139,11 +137,16 @@ export function pickThrowType({
     return rng.float() < 0.82 ? THROW_TYPE.DUMP_SWING : THROW_TYPE.STANDARD
   }
 
+  // Hammer/scoober to w realnym club ultimate (EUCF/USAU Nationals/WUCC) rzut
+  // marginalny — rzędu 1-3% wszystkich podań. Audyt silnika pokazał 13,3% w fastMode
+  // (i 15,1% w pełnym silniku): waga bazowa 6 dawała ~8%, a bonus `skill >= 70` (+6
+  // niżej) podwajał ją do ~13% u przeciętnego handlera z elity. Baza obniżona 6 -> 2;
+  // pozostałe dopalacze OTT przycięte proporcjonalnie w miejscach ich naliczania.
   const weights = {
     [THROW_TYPE.STANDARD]: 48,
     [THROW_TYPE.HUCK]: 8,
     [THROW_TYPE.DUMP_SWING]: 10,
-    [THROW_TYPE.OVER_THE_TOP]: 6,
+    [THROW_TYPE.OVER_THE_TOP]: 1.5,
   }
 
   const traitMods = mergeTraitAndCoachMods(thrower, tactics, 'offense')
@@ -162,8 +165,10 @@ export function pickThrowType({
   if (midField && skill >= 62) weights[THROW_TYPE.HUCK] += 12
 
   if (defenseStyle === DEFENSE_STYLES.ZONE_CUP) {
+    // Hammer/scoober nad cupem to realna, częsta broń przeciw zone — jedyne miejsce,
+    // gdzie OTT ma prawo być wyraźnie podbity (ale nie do 18 pkt przy bazie 2).
     const zoneBoost = traitMods.zoneOffenseWeightMult ?? 1
-    weights[THROW_TYPE.OVER_THE_TOP] += 18 * zoneBoost
+    weights[THROW_TYPE.OVER_THE_TOP] += 7 * zoneBoost
     weights[THROW_TYPE.STANDARD] -= 8
     if (zoneBoost > 1) {
       weights[THROW_TYPE.STANDARD] += 4 * (zoneBoost - 1)
@@ -173,7 +178,7 @@ export function pickThrowType({
 
   if (effectiveStall >= 4 && tier !== 'low') {
     weights[THROW_TYPE.DUMP_SWING] += 14 + traitMods.resetFirstStallBias * 4
-    weights[THROW_TYPE.OVER_THE_TOP] += 8
+    weights[THROW_TYPE.OVER_THE_TOP] += 1
   }
 
   if (discPosition < 28) {
@@ -181,7 +186,7 @@ export function pickThrowType({
     weights[THROW_TYPE.STANDARD] += 10
   }
 
-  if (skill >= 70) weights[THROW_TYPE.OVER_THE_TOP] += 6
+  if (skill >= 70) weights[THROW_TYPE.OVER_THE_TOP] += 1
 
   // Styl ataku: w pełnym silniku (tickowym) te same pola (tacticsBehavior.js,
   // applyAttackThrowBias/preferredCutKind) kierują wyborem cutu/rzutu; fastMode
@@ -301,8 +306,8 @@ export function computeThrowAdvance(
 }
 
 export function isHuckType(_throwType, yardsGained) {
-  // Statystyki: huck tylko przy realnym zysku ≥ 40 m (nie po samym typie / średnim deep).
-  return (Number(yardsGained) || 0) >= HUCK_MIN_YARDS
+  // Statystyki: huck tylko przy realnym zysku ≥ HUCK_MIN_M (nie po samym typie / średnim deep).
+  return (Number(yardsGained) || 0) >= HUCK_MIN_M
 }
 
 export function formatTeamTag(possessionTeam, homeName, awayName) {

@@ -8,6 +8,7 @@ import {
   subStat,
 } from './statFormulas.js'
 import { integrateAgentMotion } from './playerMovement.js'
+import { threatCellForMark, perceiveSpaceMap, poachTargetCell } from './spaceMap.js'
 import {
   defenseMods,
   shouldAttemptPoach,
@@ -30,8 +31,28 @@ export function reactionDelayMs(player) {
   return defenderReactionDelayMs(player)
 }
 
+/**
+ * Prędkość obrońcy w pościgu za swoim graczem.
+ *
+ * Symetryczna do prędkości cuttera w ACTIVE_CUT (cutterBrain.js), i to jest cały sens
+ * tej zmiany. Cutter biegnie `maxSpeed * (0.90 + cutterMovement/100 * 0.12)`, czyli
+ * 0.98-1.01x. Obrońca miał tu PŁASKIE 0.94x, niezależnie od umiejętności — był więc
+ * strukturalnie 4-6% wolniejszy od krytego zawodnika, zawsze. Przy 3-sekundowym cucie
+ * i 7 m/s to ~1 m separacji oddawanej ZA DARMO, zanim czas reakcji w ogóle wejdzie do
+ * gry. Zmierzony skutek: 81% pierwszych looków (stall 1) było zupełnie otwartych.
+ *
+ * Obrońca i cutter to ci sami atleci — przewaga atakującego bierze się z tego, że ZNA
+ * swój cut, a obrońca musi zareagować (reactionDelayMs) i obrócić biodra
+ * (mobilityMultiplier). To jest modelowane osobno i tam ma zostać. Sama prędkość
+ * maksymalna nie powinna dawać atakowi darmowej premii.
+ *
+ * UWAGA HISTORYCZNA: wcześniejszy komentarz w tym miejscu opisywał skalowanie
+ * `defensiveCutterMovement` z zakresem 0.90-1.05x, którego kod NIE realizował (zwracał
+ * płaskie 0.94) — została po wycofanej próbie i wprowadzała w błąd.
+ */
 function defenderSpeedMps(player) {
-  return maxSpeedMps(player) * 0.94
+  const craft = 0.9 + (subStat(player, 'defensive', 'defensiveCutterMovement') / 100) * 0.12
+  return maxSpeedMps(player) * craft
 }
 
 /** Dystans markera od throwera (m) — ręka / half-disc. */
@@ -83,7 +104,9 @@ export function forceMarkPosition(throwerX, throwerY, forceMark, attackSign = 1)
 }
 
 function moveToward(agent, tx, ty, maxSpeed, dtSec, limitTurn = true) {
-  const moved = integrateAgentMotion(agent, tx, ty, maxSpeed, dtSec, limitTurn)
+  // rola 'defense': praca nóg obrońcy (agility + defensiveCutterMovement) wpływa na to,
+  // ile gruntu traci przy zmianie kierunku cuttera — patrz mobilityMultiplier.
+  const moved = integrateAgentMotion(agent, tx, ty, maxSpeed, dtSec, limitTurn, 'defense')
   return { ...agent, ...moved }
 }
 
@@ -128,24 +151,44 @@ function cushionedMarkGoal(agent, targetX, targetY, desiredDistM, preferredDx = 
   }
 }
 
+/**
+ * Realny cushion krycia 1-na-1 (m) — o ile obrońca odpuszcza dystans do swojego gracza.
+ *
+ * UWAGA na historię tej funkcji: wcześniej kończyła się `Math.max(0, desired - 2.1)`, a
+ * wywołujący dodawał `+ 2.1` z powrotem. Ponieważ podstatystyki defensywne są clampowane
+ * do 70-95 (playerStats.js: CATEGORY_STAT_RANGES.defensive), `desired` wychodziło zawsze
+ * 0.79-1.24, czyli PO odjęciu 2.1 zawsze 0 — cała wariancja umiejętności (a także
+ * `cushionDeltaM`, czyli instrukcje tight_mark / loose_mark i dyrektywy trenera) była
+ * zerowana i KAŻDY obrońca krył z identycznym cushionem 2.1 m. Jedynym działającym
+ * czynnikiem było zmęczenie, bo tylko ono potrafiło przebić próg 2.1.
+ * Stąd „obrona nie zależy od OVR" w audycie (scripts/engine-parity.mjs: bloki 2/mecz,
+ * completion 95%+). Teraz zwracany jest wprost realny cushion.
+ */
 function coverageCushionM(player, defenseTactics = null) {
   const stamina = player?.currentStamina ?? 100
   const mods = mergeTraitAndCoachMods(player, defenseTactics, 'defense')
+  // 70 -> ~2.2 m, 80 -> ~1.8 m, 95 -> ~1.4 m: lepszy obrońca stoi bliżej i zostawia
+  // mniej miejsca, nie musząc jeszcze nic „wygrywać".
   let desired =
-    2.5 -
-    (subStat(player, 'defensive', 'defensiveCutterMovement') / 100) * 1.8 +
+    4.4 -
+    (subStat(player, 'defensive', 'defensiveCutterMovement') / 100) * 3.2 +
     (mods.cushionDeltaM ?? 0)
-  desired = Math.max(0.35, desired)
   if (stamina < 50) desired += 0.8 + ((50 - stamina) / 50) * 1.6
   // Od in (denyUnder): mniejszy cushion / bliżej under; od out: większy cushion.
   desired += (mods.denyUnderBias ?? 0) * -0.4
-  return Math.max(0, desired - 2.1)
+  return Math.max(0.9, desired)
 }
 
 /**
  * Tick obrońcy w fazie setup (przed rzutem).
  * Poach: rzadki high-risk leave assignment (głównie handler D przy lane).
  */
+/** Jak mocno force przechyla shade w bok względem kierunku na najgroźniejszą przestrzeń.
+ *  Obrona ma stronę, której broni — kierunek zagrożenia jej nie kasuje, tylko dominuje. */
+const SHADE_FORCE_BLEND = 0.35
+/** Jak mocno bias trenerski (shade deep/under) przechyla kierunek shade. */
+export const SHADE_BIAS_CAL = { gain: 1.2 }
+
 export function tickDefenderBrain(agent, ctx) {
   const {
     targetOffense,
@@ -161,6 +204,8 @@ export function tickDefenderBrain(agent, ctx) {
     rng = null,
     activePoachers = 0,
     defenseTactics = null,
+    /** Mapa przestrzeni z actionSimulator — budowana RAZ na tick dla całej obrony. */
+    spaceCells = null,
   } = ctx
 
   const player = agent.player ?? agent
@@ -217,9 +262,14 @@ export function tickDefenderBrain(agent, ctx) {
   // Aktywny poach — krótki wypad w lane, potem recover na marka.
   if (ms < poachUntil && poachedFromId) {
     state = DEFENDER_STATE.POACHING
+    // Cel poacha: realnie groźna, nieobsadzona przestrzeń — nie stały punkt przed dyskiem.
+    // Dzięki temu „deep help" i zamykanie open side wychodzą z układu boiska, a nie
+    // z reguły. Zostawiony zawodnik robi się przez to widoczny jako wolna opcja (jego
+    // cień znika z mapy), więc poach ma realną cenę.
     const attackSignPoach = ctx.attackSign ?? 1
-    const laneX = discPos ? discPos.x + attackSignPoach * 3.5 : agent.x
-    const laneY = discPos?.y ?? agent.y
+    const poachCell = spaceCells?.length ? poachTargetCell(spaceCells, agent) : null
+    const laneX = poachCell ? poachCell.x : discPos ? discPos.x + attackSignPoach * 3.5 : agent.x
+    const laneY = poachCell ? poachCell.y : discPos?.y ?? agent.y
     const next = moveToward(agent, laneX, laneY, defenderSpeedMps(player) * 1.05, dtSec)
     return {
       ...next,
@@ -315,22 +365,52 @@ export function tickDefenderBrain(agent, ctx) {
 
   const attackSign = ctx.attackSign ?? 1
   const layout = forceMarkLayoutSide(normalizeForceMark(forceSide), throwerAgent?.y)
-  const baseCushion = coverageCushionM(player, defenseTactics) + 2.1
+  // Bez sztucznego „+2.1" — coverageCushionM zwraca teraz realny cushion (patrz komentarz
+  // przy tej funkcji: poprzedni round-trip -2.1/+2.1 zerował wpływ statystyk i instrukcji).
+  const baseCushion = coverageCushionM(player, defenseTactics)
   const adjustedCushion =
     baseCushion * (1 - shadeOpen * 0.35)
+
+  // Której przestrzeni broni ten obrońca. Nie ma tu reguły „ostatni w stacku kryje deep" —
+  // to wychodzi z geometrii: ostatni w stacku ma wolne deep tuż obok siebie, więc deep jest
+  // dla niego najgroźniejsze; zawodnik z przodu ma deep 30 m dalej, więc jego obrońca stoi
+  // neutralniej. Ta sama mapa, którą atakujący czyta w cutterBrain.
+  const threatCell =
+    targetOffense && spaceCells?.length
+      ? threatCellForMark(targetOffense, perceiveSpaceMap(spaceCells, player, 'defense', rng), {
+          speed: maxSpeedMps(targetOffense.player ?? targetOffense),
+        })
+      : null
 
   /** Shade 1-na-1: cushion + lekki force / od-in / od-out — nie cel w środku torsu. */
   function shadeGoalAt(tx, ty, cushionM) {
     const preferDy = layout === 'home' ? -0.85 : layout === 'away' ? 0.85 : 0
     const preferDx = -attackSign * 0.9
-    let goal = cushionedMarkGoal(
-      agent,
-      tx,
-      ty,
-      Math.max(0.35, cushionM),
-      preferDx,
-      preferDy,
-    )
+    const cushion = Math.max(0.35, cushionM)
+    let goal = null
+    if (threatCell) {
+      // Stań MIĘDZY krytym zawodnikiem a przestrzenią, która jest dla niego najgroźniejsza.
+      let vx = threatCell.x - tx
+      let vy = threatCell.y - ty
+      const len = Math.hypot(vx, vy)
+      if (len > 1e-6) {
+        vx = vx / len + preferDx * SHADE_FORCE_BLEND
+        vy = vy / len + preferDy * SHADE_FORCE_BLEND
+        // BIAS TRENERSKI wzdłuż osi ataku — shade deep / shade under.
+        //
+        // Przy przepisaniu shadeGoalAt na kierunek ku komórce zagrożenia wypadł stąd
+        // dawny człon `deepShift - underShift` i instrukcje przestały działać KIERUNKOWO:
+        // zmieniały już tylko dystans krycia. Zmierzone: przesunięcie obrońcy wzdłuż osi
+        // ataku wynosiło +-0.03 m przy każdej instrukcji (czyli zero), a cushion rósł
+        // z 1.38 m przy shade_under do 1.97 m przy shade_deep. Obrońca stał więc DALEJ,
+        // ale nie GŁĘBIEJ — a cień zależy od rzutu przesunięcia na kierunek do
+        // przestrzeni, więc redystrybucja krycia nie zachodziła.
+        vx += ((coachMods.helpDeepBias ?? 0) - (coachMods.denyUnderBias ?? 0)) * attackSign * SHADE_BIAS_CAL.gain
+        const l2 = Math.hypot(vx, vy) || 1
+        goal = { x: tx + (vx / l2) * cushion, y: ty + (vy / l2) * cushion }
+      }
+    }
+    if (!goal) goal = cushionedMarkGoal(agent, tx, ty, cushion, preferDx, preferDy)
     if (layout === 'home') goal = { ...goal, y: goal.y + 0.35 }
     else if (layout === 'away') goal = { ...goal, y: goal.y - 0.35 }
     const deepShift = (coachMods.helpDeepBias ?? 0) * 1.1 * attackSign

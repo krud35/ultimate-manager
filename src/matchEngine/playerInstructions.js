@@ -290,7 +290,30 @@ export function normalizePlayerInstructionsMap(map) {
  * co `normalizeLineCoachDirectives` w coachDirectives.js.
  * @param {object|null|undefined} tactics
  */
+/**
+ * Cache po TOŻSAMOŚCI obiektu tactics. `instructionsForPlayer` normalizuje całą mapę
+ * instrukcji (wszystkich zawodników) przy każdym wywołaniu, tylko po to, by odczytać
+ * listę jednego gracza — a jest wołane z `mergeTraitAndCoachMods` w pętlach per-tick
+ * (14 agentów × 50 Hz). Profil pełnego meczu (node --cpu-prof): ten plik to 34% czasu
+ * CPU całej symulacji. Wynik jest czystą funkcją `tactics`, a obiekty tactics nigdy nie
+ * są mutowane w miejscu (podmieniane są w całości: matchSession.js autoRotateTactics...),
+ * więc cache po tożsamości jest równoważny obliczeniu na nowo. WeakMap: wpisy znikają
+ * razem z obiektem tactics, brak wycieku.
+ */
+const linePlayerInstructionsCache = new WeakMap()
+
 export function normalizeLinePlayerInstructions(tactics) {
+  if (tactics && typeof tactics === 'object') {
+    const cached = linePlayerInstructionsCache.get(tactics)
+    if (cached) return cached
+    const computed = computeLinePlayerInstructions(tactics)
+    linePlayerInstructionsCache.set(tactics, computed)
+    return computed
+  }
+  return computeLinePlayerInstructions(tactics)
+}
+
+function computeLinePlayerInstructions(tactics) {
   const legacy = tactics?.playerInstructions
 
   const oLinePlayerInstructions = normalizePlayerInstructionsMap(

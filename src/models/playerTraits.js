@@ -1141,7 +1141,28 @@ export function ensurePlayerTraits(player, options = {}) {
 }
 
 /** Agregowane modyfikatory do użycia w silniku. */
+/**
+ * Cache po TOŻSAMOŚCI obiektu player — patrz analogiczny komentarz przy
+ * normalizeLinePlayerInstructions (playerInstructions.js). Wynik zależy wyłącznie od
+ * `getPlayerTraits(player)` (cechy nie zmieniają się w trakcie meczu), a wołane jest
+ * w pętlach per-tick — profil pełnego meczu: 11% czasu CPU. Zweryfikowane, że żaden
+ * wywołujący nie mutuje zwróconego obiektu (tylko odczyty i spread), więc współdzielenie
+ * jednej instancji jest bezpieczne.
+ */
+const traitModsCache = new WeakMap()
+
 export function getTraitMods(player) {
+  if (player && typeof player === 'object') {
+    const cached = traitModsCache.get(player)
+    if (cached) return cached
+    const computed = computeTraitMods(player)
+    traitModsCache.set(player, computed)
+    return computed
+  }
+  return computeTraitMods(player)
+}
+
+function computeTraitMods(player) {
   const mods = {
     // morale / form
     lossMoraleMult: 1,

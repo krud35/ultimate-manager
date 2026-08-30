@@ -10,12 +10,12 @@ import { throwProfile, THROW_TYPE } from './throwTypes.js'
 import { discMetersFromState } from './fieldViz.js'
 import { FIELD_DIMENSIONS } from './fieldDimensions.js'
 import { stallThrowModifiers } from './stall.js'
-import { weightedLegacyStat } from '../models/playerStats.js'
+import { readLegacySkill } from '../models/playerStats.js'
 import {
   resolveThrowTechniqueForPlayer,
   techniqueAccuracyBase,
 } from './throwTechnique.js'
-import { stallComposureAccuracyPenalty, subStat } from './ai/statFormulas.js'
+import { stallComposureAccuracyPenalty, subStat, catchSuccessChance } from './ai/statFormulas.js'
 import {
   getTraitMods,
   throwTypeAccuracyTraitBonus,
@@ -116,7 +116,13 @@ const DISTANCE_GAP_TABLE_BASE = {
  * Wyskalowany empirycznie (tmp-recalibrate-match-completion.mjs) tak, by agregatowe
  * completion% w realnych meczach wylądowało w środku pasma 92-96%.
  */
-const MATCH_FRICTION_COMPENSATION = 11
+// Podniesione 11 -> 12 po odcięciu od throwStat statów, które nie miały wpływać na
+// celność (vision/catching/speed rzucającego oraz catching+speed odbiorcy). Odbiorca
+// wnosił wcześniej 15% do celności rzutu, więc jego usunięcie obniżyło completion
+// pełnego silnika o ~0.8 pp (89.97 przy 20 meczach — powtarzalnie, nie szum).
+// To jest właściwa dźwignia do takiej korekty: dodawana jednolicie do każdej komórki,
+// więc nie rusza relatywnej trudności między dystansami/stronami/separacjami.
+const MATCH_FRICTION_COMPENSATION = 13
 
 const DISTANCE_GAP_TABLE = Object.fromEntries(
   Object.entries(DISTANCE_GAP_TABLE_BASE).map(([cat, row]) => [
@@ -255,10 +261,26 @@ export function resolveThrow({
   let throwSkill = techniqueAccuracyBase(thrower, technique, throwType)
   throwSkill *= techniqueMods.accuracyMult ?? 1
 
+  // Celność rzutu zależy WYŁĄCZNIE od umiejętności rzucania rzucającego.
+  //
+  // Wcześniej wchodziły tu trzy rzeczy, które nie mają z celnością związku:
+  //  - `vision`, `catching` i `speed` RZUCAJĄCEGO (przez skillCheck.throwWeights, gdzie
+  //    mają wagi 0.25 / 0.1 / 0.1). Vision steruje już — i słusznie — czym innym:
+  //    zasięgiem skanu opcji (throwScanRadiusM), liczbą dostrzeganych opcji
+  //    (perceivedOptionLimit) i omijaniem obrońców na torze (placement w rollLaneBlock),
+  //    więc było liczone drugi raz, w niewłaściwym miejscu. Chwyt i sprint rzucającego
+  //    nie wpływają na to, jak celnie rzuca.
+  //  - `catching` + `speed` ODBIORCY (waga 0.15) — szybki odbiorca sprawiał, że RZUT
+  //    stawał się celniejszy. Odbiorca wpływa na wynik gdzie indziej i właściwie:
+  //    w pełnym silniku jego szybkość decyduje fizycznie o dobiegnięciu do dysku, a w
+  //    fastMode wchodzi przez resolveSeparation (catching 0.55 + speed 0.45).
+  //
+  // skillCheck.throwWeights zostaje nietknięte, bo służy też do WYBORU rzucającego
+  // (participants.js: pickThrower — tam vision jest jak najbardziej na miejscu).
+  // Wagi 0.85/0.15 sumują się do 1, żeby skala throwStat (a przez to skillAdjustment
+  // i kalibracja DISTANCE_GAP_TABLE) została ta sama co przy dawnych 0.72+0.13+0.15.
   const throwStat =
-    throwSkill * 0.72 +
-    weightedLegacyStat(thrower.skills, skillCheck.throwWeights) * 0.13 +
-    weightedLegacyStat(receiver.skills, { catching: 0.6, speed: 0.4 }) * 0.15
+    throwSkill * 0.85 + readLegacySkill(thrower.skills, 'throwing') * 0.15
 
   const throwerTraits = getTraitMods(thrower)
   const receiverTraits = getTraitMods(receiver)
@@ -275,7 +297,8 @@ export function resolveThrow({
     stallComposureAccuracyPenalty(stallCount, thrower) +
     throwTypeAccuracyTraitBonus(thrower, throwType) +
     (!isOpenSide ? throwerTraits.breakSideAccuracy : 0) +
-    (receiverTraits.catchBonus ?? 0) +
+    // receiverTraits.catchBonus przeniesione do osobnego kroku chwytu niżej — chwyt
+    // odbiorcy nie ma wpływu na to, jak CELNIE poleciał rzut.
     stallMods.accuracyBonus -
     stallMods.accuracyPenalty -
     throwerFatigue.throwAccuracyPenalty +
@@ -342,12 +365,39 @@ export function resolveThrow({
     }
   }
 
+  // OSOBNY KROK CHWYTU: dysk doleciał — czy odbiorca go utrzymał?
+  // Do tej pory `catching` nie miało własnego testu (podbijało tylko celność rzutu),
+  // więc nie istniał wynik „dobiegł, ale upuścił". To jest ścieżka fastMode; pełny
+  // silnik robi ten sam test na realnej geometrii (computeGeometricResolution).
+  let isDrop = false
+  if (success && rng?.float) {
+    // fastMode nie ma geometrii, więc trudność chwytu przybliżamy jakością separacji —
+    // to jedyna informacja o tym, jak czysto dysk doszedł. Pełny silnik używa realnego
+    // `reachStrain` z odległości odbiorcy od dysku w chwili chwytu.
+    const strainApprox =
+      separation?.outcome === 'open' ? 0.1 : separation?.outcome === 'tight' ? 0.8 : 0.45
+    const pCatch = catchSuccessChance(receiver, {
+      reachStrain: strainApprox,
+      contested: separation?.outcome === 'tight',
+      catchBonus: receiverTraits.catchBonus ?? 0,
+    })
+    if (rng.float() > pCatch) {
+      success = false
+      isBlock = false
+      isDrop = true
+    }
+  }
+
   return {
     success,
     throwScore: Math.round(throwScore),
     defenseScore: Math.round(defenseScore),
     isBlock,
+    /** Umiejętność rzutu użyta w teście — wejście do precyzji lądowania (computeMissDistanceM). */
+    throwStat: Math.round(throwStat),
     isLaneBlock,
+    /** Odbiorca dosięgnął dysku, ale go nie utrzymał — osobny wynik od bloku. */
+    isDrop,
     laneBlocker,
     stallTier: stallMods.tier,
     forcedContested: forcedContested || stallMods.forcedContested,
@@ -373,18 +423,90 @@ export function resolveThrow({
  * Ten sam wzorzec co __debugGapOverride przy oryginalnej kalibracji DISTANCE_GAP_TABLE. */
 /** Wykalibrowane empirycznie (tmp-calibrate-geometric.mjs) — patrz komentarz przy
  * GEOMETRIC_CALIBRATION w actionSimulator.js. */
+/**
+ * REKALIBRACJA po przebudowie modelu chwytu i całej mechaniki przestrzeni.
+ *
+ * Sweep (tmp-sweep/miss-sweep2.mjs, 8 rozproszonych seedów, pełny silnik):
+ *   0.1 /1.8/2.2 -> compl 88.5%  blok 4.7%  drop 3.5%  niecel 3.2%
+ *   0.07/1.2/1.6 -> compl 89.2%  blok 4.2%  drop 3.4%  niecel 3.2%   <- wybrane
+ *   0.045/0.8/1.2 -> compl 87.9%  blok 4.9%  drop 3.7%  niecel 3.5%
+ *   0.03/0.5/0.9 -> compl 89.0%  blok 4.9%  drop 3.7%  niecel 2.4%
+ *
+ * Zależność jest PŁASKA i niemonotoniczna, więc to nie jest wyznaczone optimum, tylko
+ * najlepszy z czterech punktów. Ważniejsza obserwacja: zacieśnianie celności NIE zmniejsza
+ * dropów (3.5 -> 3.4 -> 3.7 -> 3.7). Hipoteza, że dropy biorą się z niecelnych rzutów,
+ * jest więc błędna — `reachStrain` pochodzi głównie z tego, że odbiorca dobiega do
+ * przewidzianego punktu chwytu z własnym błędem, a nie z tego, gdzie dysk został posłany.
+ */
 export const MISS_CALIBRATION = {
-  cleanMargin: 0,
-  missPerMarginPoint: 0.3,
+  // Próg „rzut idealnie w cel". Był 0, a zmierzony rozkład marginesu
+  // (throwScore - defenseScore) w realnym meczu to mediana +30, p10 +6, p90 +53 —
+  // więc chybienie odpalało tylko na 4.8% rzutów, a na pozostałych 95% dysk lądował
+  // co do centymetra w celu. To był JEDYNY kanał, którym `throwing` wpływa na wynik w
+  // pełnym silniku (geometryczny resolver nie patrzy na result.success), więc
+  // umiejętność rzucania praktycznie nic nie robiła — zmierzone: throwing 70 vs 95
+  // dawało completion 82.5% vs 82.5%, płasko.
+  // Przy 40 mediana rzutu chybia ~0.6 m, słaby look (p10) ~2 m, świetny (p90) 0 m —
+  // czyli lepszy rzucający realnie kładzie dysk bliżej zamierzonego punktu.
+  cleanMargin: 12,
+  missPerMarginPoint: 0.14,
   maxMissM: 15,
   missDistanceFractionCap: 0.4,
+  /** Szansa realnej pomyłki rzucającego o umiejętności skillMissPivot; maleje liniowo
+   *  do minMissChance przy pivot+span. throwStat 60 -> 10%, 80 -> 5.6%, 95 -> 2.2%. */
+  missChanceAtPivot: 0.04,
+  minMissChance: 0.015,
+  skillMissPivot: 60,
+  skillMissSpan: 45,
+  /** Gdy pomyłka nastąpi — dysk ląduje 1.8–4.0 m od zamierzonego punktu. */
+  errorMissMinM: 0.7,
+  errorMissSpanM: 1.0,
 }
 
-export function computeMissDistanceM(throwScore, defenseScore) {
+export function computeMissDistanceM(throwScore, defenseScore, throwStat = null, rng = null) {
+  const {
+    cleanMargin,
+    missPerMarginPoint,
+    maxMissM,
+    missChanceAtPivot,
+    minMissChance,
+    skillMissPivot,
+    skillMissSpan,
+    errorMissMinM,
+    errorMissSpanM,
+  } = MISS_CALIBRATION
+
+  // 1) Trudność SYTUACJI (dystans, strona, krycie, stall, wiatr) — przez margines.
   const margin = (throwScore ?? 0) - (defenseScore ?? 0)
-  const { cleanMargin, missPerMarginPoint, maxMissM } = MISS_CALIBRATION
-  if (margin >= cleanMargin) return 0
-  return Math.min(maxMissM, (cleanMargin - margin) * missPerMarginPoint)
+  const situational = margin >= cleanMargin ? 0 : (cleanMargin - margin) * missPerMarginPoint
+
+  // 2) BŁĄD RZUCAJĄCEGO — umiejętność steruje CZĘSTOŚCIĄ pomyłki, nie stałym odchyleniem.
+  //
+  // Margines nie nadaje się na ten kanał: przechodzi przez skillAdjustment, gdzie
+  // SKILL_SENSITIVITY_SCALE (0.35) spłaszcza 25 punktów statystyki do ~0.7 punktu
+  // marginesu — przy rozrzucie ±22 to szum (zmierzone: throwing 70 vs 95 dawało
+  // completion 82.5% vs 82.5%).
+  //
+  // PRÓBOWANE I ODRZUCONE: stałe chybienie malejące z umiejętnością (2.4 m przy stacie
+  // 60, 1.0 m przy 95), doklejane do KAŻDEGO rzutu. Powstawał nierozwiązywalny konflikt:
+  // przy promieniu chwytu 2.3 m gradient umiejętności był widoczny (54.6% -> 70.1%
+  // completion), ale całość leciała daleko pod realne pasmo; po podniesieniu promienia do
+  // 3.0 m completion wracało (~85%), lecz gradient znikał zupełnie. Bo stałe odchylenie
+  // na każdym rzucie przesuwa CAŁY rozkład, zamiast różnicować zawodników.
+  //
+  // Realnie elita rzuca czysto niemal zawsze i myli się sporadycznie — więc to
+  // częstotliwość pomyłki zależy od umiejętności, a nie precyzja każdego rzutu.
+  const skill = throwStat == null ? skillMissPivot : throwStat
+  const missChance = Math.max(
+    minMissChance,
+    missChanceAtPivot * (1 - (skill - skillMissPivot) / skillMissSpan),
+  )
+  let errorMiss = 0
+  if (rng?.float && rng.float() < missChance) {
+    errorMiss = errorMissMinM + rng.float() * errorMissSpanM
+  }
+
+  return Math.min(maxMissM, situational + errorMiss)
 }
 
 export function isInEndzone(discPosition, possessionTeam) {

@@ -64,7 +64,6 @@ export const TACTICS_MODIFIERS = {
       cutConcurrency: 2,
       spaceCreateBias: 0.2,
       continuationUrgency: 0.1,
-      releaseGateMult: 1.2,
     },
     [ATTACK_STYLES.HORIZONTAL_STACK]: {
       label: 'Horizontal Stack',
@@ -79,7 +78,6 @@ export const TACTICS_MODIFIERS = {
       cutConcurrency: 3,
       spaceCreateBias: 0.1,
       continuationUrgency: 0.35,
-      releaseGateMult: 0.95,
     },
     [ATTACK_STYLES.SPLIT_STACK]: {
       label: 'Split Stack',
@@ -95,7 +93,6 @@ export const TACTICS_MODIFIERS = {
       spaceCreateBias: 0.25,
       continuationUrgency: 0.2,
       isoBias: 0.45,
-      releaseGateMult: 1.05,
     },
     [ATTACK_STYLES.SIDE_STACK]: {
       label: 'Side Stack',
@@ -111,7 +108,6 @@ export const TACTICS_MODIFIERS = {
       spaceCreateBias: 0.35,
       continuationUrgency: 0.15,
       isoBias: 0.7,
-      releaseGateMult: 1.15,
     },
     [ATTACK_STYLES.MOTION_OFFENSE]: {
       label: 'Motion / Flow',
@@ -126,7 +122,6 @@ export const TACTICS_MODIFIERS = {
       cutConcurrency: 3,
       spaceCreateBias: 0.15,
       continuationUrgency: 0.7,
-      releaseGateMult: 0.62,
     },
     [ATTACK_STYLES.HEX_OFFENSE]: {
       label: 'Hex / Hexagon',
@@ -141,7 +136,6 @@ export const TACTICS_MODIFIERS = {
       cutConcurrency: 3,
       spaceCreateBias: 0.3,
       continuationUrgency: 0.55,
-      releaseGateMult: 0.72,
     },
     [ATTACK_STYLES.ZONE_OFFENSE]: {
       label: 'Zone Offense',
@@ -157,7 +151,6 @@ export const TACTICS_MODIFIERS = {
       spaceCreateBias: 0.2,
       continuationUrgency: 0.4,
       swingBias: 0.45,
-      releaseGateMult: 1.25,
     },
   },
   defense: {

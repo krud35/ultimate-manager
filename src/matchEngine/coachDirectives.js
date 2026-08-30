@@ -355,7 +355,41 @@ export function coachDirectiveMods(tactics, player, role = 'offense', lineRole =
  * @param {CoachRole} [role]
  * @param {LineRole|null} [lineRole]
  */
+/**
+ * Cache po TOŻSAMOŚCI (player, tactics) + kluczu (role, lineRole) — patrz analogiczny
+ * komentarz przy normalizeLinePlayerInstructions (playerInstructions.js). To najgorętsza
+ * funkcja silnika po memoizacji warstwy niżej: buduje duży obiekt modyfikatorów i woła
+ * coachCompliance / coachDirectiveMods / instructionsForPlayer, a jest wywoływana w
+ * pętlach per-tick dla każdego agenta (profil: 33% czasu CPU pełnego meczu). Wszystkie
+ * wejścia są w trakcie meczu niezmienne, a wynik jest tylko odczytywany (zweryfikowane —
+ * `instructionModsForPlayer` mutuje własny, lokalny obiekt, nie ten zwracany tutaj).
+ */
+const mergedModsCache = new WeakMap()
+const NO_TACTICS = Object.freeze({})
+
 export function mergeTraitAndCoachMods(player, tactics = null, role = 'offense', lineRole = null) {
+  if (player && typeof player === 'object') {
+    const tacticsKey = tactics && typeof tactics === 'object' ? tactics : NO_TACTICS
+    let byTactics = mergedModsCache.get(player)
+    if (!byTactics) {
+      byTactics = new WeakMap()
+      mergedModsCache.set(player, byTactics)
+    }
+    let byRole = byTactics.get(tacticsKey)
+    if (!byRole) {
+      byRole = new Map()
+      byTactics.set(tacticsKey, byRole)
+    }
+    const roleKey = `${role}|${lineRole}`
+    if (byRole.has(roleKey)) return byRole.get(roleKey)
+    const computed = computeTraitAndCoachMods(player, tactics, role, lineRole)
+    byRole.set(roleKey, computed)
+    return computed
+  }
+  return computeTraitAndCoachMods(player, tactics, role, lineRole)
+}
+
+function computeTraitAndCoachMods(player, tactics = null, role = 'offense', lineRole = null) {
   const traits = getTraitMods(player)
   const emptyExtra = {
     denyUnderBias: 0,

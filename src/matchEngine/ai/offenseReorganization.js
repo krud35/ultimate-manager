@@ -66,7 +66,35 @@ export function pickBreakSideClearTarget(x, y, disc, attackSign, forceSide, rng)
 /** Geometria pionowego stacka: pierwszy cutter 9 m przed dyskiem, kolejni co 6 m. */
 const STACK_START_M = 9
 const STACK_SLOT_SPACING_M = 6
-const RESET_DEPTH_M = 6
+/**
+ * Reset handler stoi NA LINII DYSKU, nie za nim.
+ *
+ * Wcześniej cztery niezależne kopie geometrii stawiały go 5-8 m za dyskiem. To odbierało
+ * mu połowę gry: reset za dyskiem to wyłącznie podanie do tyłu, a reset NA LINII dysku
+ * daje dwie opcje — up-line albo do tyłu — których jeden marker fizycznie nie zakryje.
+ * To jest realna przewaga dumpa w ultimate i powód, dla którego wyjście spod wysokiego
+ * stallu prawie zawsze się udaje. Bez niej silnik dawał 0% otwartych ofert przy stallu 5.
+ */
+const RESET_LATERAL_M = 7
+/** Minimalne cofnięcie — reset stoi na linii dysku, lekko schowany za plecami marka. */
+const RESET_BEHIND_M = 1.5
+
+/** Strona, na którą schodzi reset: przeciwna do break side, z fallbackiem na połowę boiska. */
+export function resetLateralSign(forceSide, oy) {
+  return -breakSideSign(forceSide) || (oy >= fieldCenterY() ? -1 : 1)
+}
+
+/** JEDNA definicja miejsca resetu — używana przez formację, reorganizację i aktywny cut. */
+export function resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng }) {
+  const ox = throwerPos?.x ?? disc?.x ?? 0
+  const oy = throwerPos?.y ?? disc?.y ?? 0
+  const r = rng?.float ? rng.float() : 0.5
+  const lateral = resetLateralSign(forceSide, oy)
+  return {
+    x: clampFieldX(ox - attackSign * RESET_BEHIND_M),
+    y: clampFieldY(oy + lateral * (RESET_LATERAL_M + r * 2)),
+  }
+}
 
 /** Otwarta strona boiska względem ustawienia marka. */
 export function openSideSign(forceSide, y) {
@@ -112,10 +140,7 @@ export function computeDynamicOffenseTarget({
   const openSign = openSideSign(forceSide, y)
 
   if (isDump) {
-    return {
-      x: clampFieldX(ox - attackSign * RESET_DEPTH_M),
-      y: clampFieldY(oy + openSign * 4.5),
-    }
+    return resetSlotTarget({ disc, throwerPos: { x: ox, y: oy }, attackSign, forceSide, rng })
   }
 
   const slot = Math.max(0, (stackIndex ?? 2) - 2)

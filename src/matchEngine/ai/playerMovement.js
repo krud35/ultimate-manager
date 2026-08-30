@@ -1,7 +1,7 @@
 /**
  * Integracja ruchu zawodnika — prędkość z bezwładnością (fixed timestep).
  */
-import { maxSpeedMps } from './statFormulas.js'
+import { maxSpeedMps, subStat } from './statFormulas.js'
 
 export const REORG_SPEED_MIN_MPS = 2.2
 export const REORG_SPEED_MAX_MPS = 3.2
@@ -22,6 +22,57 @@ export const PLANT_TURN_BONUS_RAD_PER_SEC = 7.5
 
 /** @deprecated użyj maxTurnRadForSpeed — zostawione dla kompatybilności. */
 export const MAX_TURN_RAD_PER_TICK = MAX_TURN_RAD_PER_SEC * 0.02
+
+/**
+ * Zdolność zmiany kierunku (przyspieszenie, tempo skrętu, próg plantu) zależna od
+ * zawodnika.
+ *
+ * Do tej pory MAX_ACCEL_MPS2 i MAX_TURN_RAD_PER_SEC były globalnymi stałymi — jedyną
+ * różnicą fizyczną między zawodnikami była prędkość maksymalna. Skutek: każdy cut
+ * generował identyczny burst separacji niezależnie od tego, kto biegnie i kto kryje, a
+ * obrońca z 95 odzyskiwał pozycję dokładnie tak samo jak z 70. To był sufit, o który
+ * odbijały się wszystkie mechanizmy czytające separację (wybór opcji, kontest
+ * geometryczny, start cutu): pod spodem fizyka ruchu była bezosobowa.
+ * `agility` — statystyka wprost od zmiany kierunku — nie dotykała obrońcy ani razu
+ * (używana była tylko w plantStopMs cuttera, abstrakcyjnym rollLaneBlock i zmęczeniu).
+ *
+ * UWAGA: to celowo NIE jest ta sama sprawa co cushion krycia. Utrzymywany dystans to
+ * decyzja TAKTYCZNA (force, shade deep/under, tight/loose mark) i ma zostać sterowany
+ * instrukcjami. Tutaj skalowana jest wyłącznie FIZYCZNA zdolność do zmiany kierunku,
+ * symetrycznie dla ataku i obrony.
+ */
+const MOBILITY_PIVOT = 82.5
+const MOBILITY_PER_POINT = 0.012
+const MOBILITY_MIN = 0.8
+const MOBILITY_MAX = 1.2
+
+const mobilityCache = new WeakMap()
+
+export function mobilityMultiplier(player, role = null) {
+  if (!player || typeof player !== 'object') return 1
+  const key = role ?? 'neutral'
+  let byRole = mobilityCache.get(player)
+  if (byRole && byRole[key] != null) return byRole[key]
+
+  const agility = subStat(player, 'physical', 'agility')
+  let skill = agility
+  if (role === 'defense') {
+    // Praca nóg / czytanie cutu — obrońca utrzymuje kontakt przy zmianie kierunku.
+    skill = agility * 0.6 + subStat(player, 'defensive', 'defensiveCutterMovement') * 0.4
+  } else if (role === 'offense') {
+    skill = agility * 0.6 + subStat(player, 'offensive', 'cutterMovement') * 0.4
+  }
+  const mult = Math.max(
+    MOBILITY_MIN,
+    Math.min(MOBILITY_MAX, 1 + (skill - MOBILITY_PIVOT) * MOBILITY_PER_POINT),
+  )
+  if (!byRole) {
+    byRole = {}
+    mobilityCache.set(player, byRole)
+  }
+  byRole[key] = mult
+  return mult
+}
 
 export function reorganizeSpeedMps(player) {
   const stamina = player?.currentStamina ?? player?.player?.currentStamina ?? 100
@@ -85,7 +136,8 @@ function rotateToward(fromX, fromY, toX, toY, maxRad) {
 /**
  * Krok ruchu: docelowa prędkość → ograniczone przyspieszenie → pozycja.
  */
-export function integrateAgentMotion(agent, targetX, targetY, maxSpeed, dtSec, limitTurn) {
+export function integrateAgentMotion(agent, targetX, targetY, maxSpeed, dtSec, limitTurn, role = null) {
+  const mobility = mobilityMultiplier(agent?.player ?? agent, role)
   const dx = targetX - agent.x
   const dy = targetY - agent.y
   const dist = Math.hypot(dx, dy) || 1
@@ -115,7 +167,9 @@ export function integrateAgentMotion(agent, targetX, targetY, maxSpeed, dtSec, l
 
     // Ostry odwrót (>~75°): najpierw plant/hamowanie — inaczej 6 m/s + słaby turn
     // robi 15 m łuku w przeciwną stronę (obrońca „ucieka” od marka).
-    if (angleErr > 1.3) {
+    // Zwinniejszy zawodnik wytrzymuje ostrzejszy kąt bez pełnego plantu — to jest ta
+    // część, dzięki której cutter urywa się obrońcy (albo obrońca zostaje przy nim).
+    if (angleErr > 1.3 * mobility) {
       desiredSpd = 0
       targetVx = 0
       targetVy = 0
@@ -128,7 +182,7 @@ export function integrateAgentMotion(agent, targetX, targetY, maxSpeed, dtSec, l
         cvy,
         wantDir.x * desiredSpd,
         wantDir.y * desiredSpd,
-        maxTurnRadForSpeed(curSpd * (angleErr > 0.7 ? 0.55 : 1), dtSec),
+        maxTurnRadForSpeed(curSpd * (angleErr > 0.7 ? 0.55 : 1), dtSec) * mobility,
       )
       targetVx = limited.x * desiredSpd
       targetVy = limited.y * desiredSpd
@@ -138,7 +192,7 @@ export function integrateAgentMotion(agent, targetX, targetY, maxSpeed, dtSec, l
   // Przy plantcie (target≈0) mocniejsze hamowanie; bez limitu skrętu — szybsze dojście do wektora.
   const braking = desiredSpd < 0.15 && curSpd > 0.4
   const accelMult = braking ? 3.6 : limitTurn ? 1 : 2.15
-  const maxDelta = MAX_ACCEL_MPS2 * accelMult * dtSec
+  const maxDelta = MAX_ACCEL_MPS2 * accelMult * mobility * dtSec
   cvx += clamp(targetVx - cvx, -maxDelta, maxDelta)
   cvy += clamp(targetVy - cvy, -maxDelta, maxDelta)
 

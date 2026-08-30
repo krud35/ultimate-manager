@@ -16,6 +16,8 @@ export function createBoxScore(players) {
       throwMeters: 0,
       catches: 0,
       catchMeters: 0,
+      /** Dysk doleciał w zasięg, ale odbiorca go nie utrzymał (≠ blok obrony). */
+      drops: 0,
       runMeters: 0,
     }
   }
@@ -29,6 +31,11 @@ export function recordGoal(boxScore, throwerId, receiverId) {
 
 export function recordBlock(boxScore, defenderId) {
   if (boxScore[defenderId]) boxScore[defenderId].blocks += 1
+}
+
+/** Odbiorca dosięgnął dysku, ale go nie utrzymał — osobna kategoria od bloku. */
+export function recordDrop(boxScore, receiverId) {
+  if (boxScore[receiverId]) boxScore[receiverId].drops += 1
 }
 
 export function recordTurnover(boxScore, throwerId) {

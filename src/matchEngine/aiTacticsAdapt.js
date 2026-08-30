@@ -506,18 +506,31 @@ export function buildSkillBasedAiInstructions(players, identity, oSorted, dSorte
     const defense = getCategoryOverall(skills, 'defensive')
     const mental = getCategoryOverall(skills, 'mental')
     const strongThrower = throwing >= 76
+    // Apetyt trenera na hucki steruje WSZYSTKIMI trzema progami niżej. Wcześniej sterował
+    // tylko licencją `throw_hucks` (twarda bramka >= 0.15 / >= 0.4), a `no_hucks` jechało
+    // po stałym progu umiejętności bez żadnego odniesienia do apetytu. Efekt asymetrii:
+    // drużyna z apetytem 0.64 i tak dostawała 20 z 35 zawodników z `no_hucks`, a drużyna
+    // z apetytem 0.12 nie dostawała ANI JEDNEGO `throw_hucks` (0.12 < 0.15) niezależnie od
+    // tego, jak dobrych miała hucking handlerów. Zmierzone: udział hucków 6.2% przy stałej
+    // taktyce vs 2.5% po rotacji AI — generator ścinał głęboką grę o ~60%.
+    const appetite = coach.huckAppetite ?? 0
     const strongCutter = offense >= 76 && throwing < 78
 
-    // Słaby thrower — nie hucki, dump first jeśli silny thrower lub słaby rzut
-    if (huckSub < 70 || (huckSub < 76 && throwing < 72)) {
+    // Słaby thrower — nie hucki, dump first jeśli silny thrower lub słaby rzut.
+    // Próg skaluje się apetytem: -1 -> 80 (kneblujemy prawie wszystkich), 0 -> 70 (jak
+    // dawniej), +1 -> 60 (knebel tylko dla naprawdę słabych). Sam zły rzucający i tak jest
+    // karany osobno członem `(huckSkill - 50) * 0.2` w throwerBrain, więc knebel nie musi
+    // być jedynym zabezpieczeniem.
+    const noHuckBelow = 70 - appetite * 10
+    if (huckSub < noHuckBelow || (huckSub < noHuckBelow + 6 && throwing < 72)) {
       addO(p, 'no_hucks')
       if (strongThrower || throwing < 68) addO(p, 'dump_first')
     }
 
-    // Elita rzucająca + appetite
-    if (huckSub >= 86 && throwing >= 80 && (coach.huckAppetite ?? 0) >= 0.15) {
-      addO(p, 'throw_hucks')
-    } else if (huckSub >= 82 && throwing >= 78 && (coach.huckAppetite ?? 0) >= 0.4) {
+    // Licencja na hucki: zamiast urwiska na apetycie (0.15 / 0.4) próg UMIEJĘTNOŚCI
+    // maleje z apetytem. -1 -> 96 (nikt), 0 -> 86 (jak dawna górna bramka), +1 -> 76.
+    const huckLicenseAt = 86 - appetite * 10
+    if (huckSub >= huckLicenseAt && throwing >= 78) {
       addO(p, 'throw_hucks')
     }
 
@@ -526,8 +539,14 @@ export function buildSkillBasedAiInstructions(players, identity, oSorted, dSorte
       addO(p, 'dominate')
     }
 
-    // Deep cutter
-    if (strongCutter && offense >= 78 && (coach.huckAppetite ?? 0) >= 0.1) {
+    // Deep cutter. To jest NAJMOCNIEJSZA realna dźwignia udziału hucków w pełnym silniku
+    // (zmierzone przy stałej taktyce: cut_under 4.3% -> brak 6.8% -> cut_deep 8.8%, przy
+    // średnim zysku 10.8 -> 14.4 -> 17.7 m). Strona rzucającego prawie nie reaguje
+    // (`throw_hucks` dokładane do cut_deep nie zmienia nic: 8.4% vs 8.8%), bo huck powstaje
+    // wtedy, gdy ktoś REALNIE biegnie w głąb — nie wtedy, gdy rzucający ma na niego ochotę.
+    // Dlatego próg tej instrukcji też musi jechać apetytem: -1 -> 86, 0 -> 78, +1 -> 70.
+    const deepCutAt = 78 - appetite * 8
+    if (strongCutter && offense >= deepCutAt && appetite >= -0.3) {
       addO(p, 'cut_deep')
     }
 

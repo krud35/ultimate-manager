@@ -1,6 +1,6 @@
 import { MATCH_CONFIG } from './config.js'
-import { weightedLegacyStat, getSubStat, readLegacySkill } from '../models/playerStats.js'
-import { applyMoraleToStat, getPlayerMorale, moraleSkillMultiplier } from '../models/playerMorale.js'
+import { getSubStat, readLegacySkill } from '../models/playerStats.js'
+import { applyMoraleToStat, getPlayerMorale } from '../models/playerMorale.js'
 import { getTraitMods } from '../models/playerTraits.js'
 
 export const STALL_MAX = 10
@@ -49,11 +49,19 @@ export function throwerMentalStats(thrower) {
 
 /** Presja markera 0–30 — staty obrońcy + tight coverage. */
 export function markerPressureRating(defender, separation) {
-  const { defenseWeights } = MATCH_CONFIG.skillCheck
   const traitMods = getTraitMods(defender)
+  // Presja marka to praca nóg przy dysku, zamykanie linii rzutu i czytanie zamiaru —
+  // NIE sprint i nie chwytność. Wcześniej używane były tu skillCheck.defenseWeights
+  // (defense 0.55 / speed 0.3 / catching 0.15), ale te wagi służą do WYBORU obrońcy
+  // (participants.js: pickDefender), gdzie szybkość jest jak najbardziej zasadna.
+  // Marker stoi przy rzucającym — jego sprint nic tu nie wnosi.
+  const morale = getPlayerMorale(defender)
+  const sub = (cat, key) =>
+    applyMoraleToStat(getSubStat(defender?.skills ?? {}, cat, key), morale)
   const defSkill = defender
-    ? weightedLegacyStat(defender.skills ?? {}, defenseWeights) *
-      moraleSkillMultiplier(getPlayerMorale(defender))
+    ? sub('defensive', 'defensiveHandlerMovement') * 0.55 +
+      sub('defensive', 'blocking') * 0.3 +
+      sub('mental', 'reactions') * 0.15
     : 50
   let pressure = defSkill * 0.12 + (traitMods.markPressureBonus ?? 0)
   pressure *= traitMods.poachMarkPressureMult ?? 1

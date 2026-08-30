@@ -197,6 +197,15 @@ export function initMatchSession({
   homeTactics = null,
   awayTactics = null,
   seed = null,
+  /**
+   * Gotowy generator zamiast seeda. `simulatePoint` (point.js) przyjmuje `rng`, a ta
+   * funkcja historycznie tylko `seed` — przekazanie `rng` było po cichu ignorowane i
+   * `createRng(null)` wpadał w `Math.random()`, czyli mecz przestawał być powtarzalny
+   * bez żadnego sygnału. Liga (leagueEngine.js) zawsze podaje `seed`, więc produkcji to
+   * nie dotyczyło, ale każdy skrypt/test idący za wzorcem `simulatePoint` trafiał w tę
+   * pułapkę. Teraz oba wejścia działają; `rng` ma pierwszeństwo, gdy podane oba.
+   */
+  rng: rngOverride = null,
   wind: windOverride = null,
 }) {
   resetEventIds()
@@ -232,7 +241,7 @@ export function initMatchSession({
     }),
   ]
 
-  const rng = createRng(seed)
+  const rng = rngOverride ?? createRng(seed)
   const wind = normalizeWind(windOverride ?? generateWind(rng))
 
   return {

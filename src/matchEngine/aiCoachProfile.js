@@ -527,6 +527,40 @@ function blendDirective(base, bias, weight = 0.85) {
 const ROSTER_FIT_WEIGHT = 0.6
 
 /** Im wcześniej styl jest w liście preferencji, tym wyższe powinowactwo (100 → 40 floor). */
+/**
+ * Realna zdolność stylu do wygenerowania hucka (0-1), ZMIERZONA, nie deklarowana.
+ *
+ * Nominalny `throwDepthBias` z TACTICS_MODIFIERS jest w tej sprawie mylący — jest
+ * ANTYSKORELOWANY z faktycznym udziałem hucków. Pomiar (tmp-sweep/by-style.mjs, obie
+ * drużyny na tym samym stylu, 6 meczów, ~1000-1900 rzutów na styl):
+ *   vertical_stack   depthBias -0.15 -> huck 13.3%   (jedyny styl w realnym paśmie 7-16%)
+ *   zone_offense     depthBias -0.10 -> huck  3.7%
+ *   side_stack       depthBias +0.25 -> huck  3.2%
+ *   horizontal_stack depthBias +0.35 -> huck  2.3%
+ *   split_stack      depthBias +0.20 -> huck  2.3%
+ *   motion_offense   depthBias -0.05 -> huck  0.0%
+ *   hex_offense      depthBias -0.20 -> huck  0.0%
+ * Decyduje GEOMETRIA formacji, nie premia do wyniku opcji: pionowy stack ma kogoś
+ * naturalnie głęboko, a motion/hex trzymają wszystkich na pierścieniu 7-10 m wokół
+ * dysku, więc głębokiej opcji po prostu nie ma i nie ma czego premiować.
+ */
+const STYLE_DEEP_CAPABILITY = {
+  [ATTACK_STYLES.VERTICAL_STACK]: 1,
+  [ATTACK_STYLES.ZONE_OFFENSE]: 0.28,
+  [ATTACK_STYLES.SIDE_STACK]: 0.24,
+  [ATTACK_STYLES.HORIZONTAL_STACK]: 0.17,
+  [ATTACK_STYLES.SPLIT_STACK]: 0.17,
+  [ATTACK_STYLES.MOTION_OFFENSE]: 0,
+  [ATTACK_STYLES.HEX_OFFENSE]: 0,
+}
+
+/** Zdolność, przy której apetyt na hucki jest obojętny — środek zmierzonego rozkładu. */
+const DEEP_CAPABILITY_NEUTRAL = 0.25
+/** Waga członu spójności. Dobrana tak, by przy skrajnym apetycie przeważyć różnicę
+ *  jednego miejsca na liście preferencji archetypu (15 pkt affinity), ale NIE przebić
+ *  dopasowania do rosteru (fitWeight 0.6 na skali 0-100). */
+const DEEP_COHERENCE_WEIGHT = 34
+
 function styleAffinity(style, preferredList) {
   if (!preferredList?.length) return 50
   const idx = preferredList.indexOf(style)
@@ -550,7 +584,7 @@ const FIT_OVERRIDE_MARGIN = 20
  * patrz CRISIS_FIT_WEIGHT w applyAiCoachProfileToIdentity). `flatStart` (Geniusz
  * taktyczny) ignoruje tożsamość całkowicie i gra czystym fitem.
  */
-function pickStyleForSlot(preferredList, fitMap, fallback, flatStart = false, fitWeight = ROSTER_FIT_WEIGHT) {
+function pickStyleForSlot(preferredList, fitMap, fallback, flatStart = false, fitWeight = ROSTER_FIT_WEIGHT, huckAppetite = 0) {
   const candidates = fitMap ? Object.keys(fitMap) : preferredList
   if (!candidates?.length) return preferredList?.[0] ?? fallback ?? null
 
@@ -570,9 +604,19 @@ function pickStyleForSlot(preferredList, fitMap, fallback, flatStart = false, fi
   let bestScore = -Infinity
   for (const style of candidates) {
     const fit = fitOf(style)
+    // Spójność stylu z apetytem trenera na hucki. Bez tego trener z huckAppetite 0.64
+    // potrafił wylądować na motion_offense, który STRUKTURALNIE nie hucuje (0.0% na
+    // ~1700 rzutów) — deklarowana taktyka drużyny i to, co robi na boisku, rozjeżdżały
+    // się całkowicie. Zmierzone: podmiana samych stylów na te dobrane przez AI zbijała
+    // udział hucków z 6.2% na 1.6%, przy neutralnym wpływie dyrektyw, podról, składów
+    // i instrukcji.
+    const deepCoherence =
+      huckAppetite *
+      ((STYLE_DEEP_CAPABILITY[style] ?? DEEP_CAPABILITY_NEUTRAL) - DEEP_CAPABILITY_NEUTRAL) *
+      DEEP_COHERENCE_WEIGHT
     const score = flatStart
       ? fit
-      : styleAffinity(style, usablePreferred) * archetypeWeight + fit * fitWeight
+      : styleAffinity(style, usablePreferred) * archetypeWeight + fit * fitWeight + deepCoherence
     if (score > bestScore) {
       bestScore = score
       best = style
@@ -733,6 +777,7 @@ export function applyAiCoachProfileToIdentity(identity, profile, options = {}) {
       identity.oLineAttackStyle,
       flat,
       fitWeight,
+      oDirs.huckAppetite ?? 0,
     ),
     dLineAttackStyle: pickStyleForSlot(
       profile.dLineAttackStyles,
@@ -740,6 +785,7 @@ export function applyAiCoachProfileToIdentity(identity, profile, options = {}) {
       identity.dLineAttackStyle,
       flat,
       fitWeight,
+      dDirs.huckAppetite ?? 0,
     ),
     oLineDefenseStyle: pickStyleForSlot(
       profile.oLineDefenseStyles,

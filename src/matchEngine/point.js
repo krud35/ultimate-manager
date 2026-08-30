@@ -1,5 +1,5 @@
 import { MATCH_CONFIG } from './config.js'
-import { recordBlock, recordGoal, recordTurnover, recordThrowResult, recordRunMeters } from './boxScore.js'
+import { recordBlock, recordDrop, recordGoal, recordTurnover, recordThrowResult, recordRunMeters } from './boxScore.js'
 import {
   buildPointLineups,
   createPersonMatchups,
@@ -80,7 +80,7 @@ function playerLabel(p) {
  * (tmp-*.mjs balance harness) i nie zostanie świadomie włączone. Obiekt (nie zwykły
  * const) — pozwala skryptowi kalibrującemu przełączać flagę w locie, bez edycji pliku.
  */
-export const RESOLUTION_MODE = { useGeometric: false }
+export const RESOLUTION_MODE = { useGeometric: true }
 
 /**
  * Szacunek dystansu przebiegniętego przez zawodnika w punkcie (m) — cały ruch po
@@ -451,7 +451,8 @@ export function simulatePoint({
             : pickDefender(rng, defenseLineup))
 
         const separation =
-          decision.separation ?? resolveSeparation({ receiver: recv, defender, rng })
+          decision.separation ??
+          resolveSeparation({ receiver: recv, defender, rng, stallCount: stallForResolve })
 
         if (
           throwType !== THROW_TYPE.DUMP_SWING &&
@@ -533,7 +534,12 @@ export function simulatePoint({
           // krótkim dumpie/swingu (2-4m), gdzie ten sam miss to nierealny procent
           // dystansu (zmierzone: dump_swing completion 100%→76.9% po włączeniu geometrii,
           // zanim dodano ten cap).
-          const rawMissDistanceM = computeMissDistanceM(result.throwScore, result.defenseScore)
+          const rawMissDistanceM = computeMissDistanceM(
+            result.throwScore,
+            result.defenseScore,
+            result.throwStat,
+            rng,
+          )
           const missDistanceM = Math.min(
             rawMissDistanceM,
             throwDistanceM * MISS_CALIBRATION.missDistanceFractionCap,
@@ -552,7 +558,10 @@ export function simulatePoint({
             success: result.success,
             isBlock: result.isBlock,
             isOut: result.isOut,
-            isDrop: !result.success && !result.isBlock,
+            // Drop = odbiorca dosięgnął dysku i nie utrzymał (osobny krok chwytu albo
+            // wiatr), a nie „każde niepowodzenie, które nie było blokiem" — to ostatnie
+            // obejmowało też „nie dobiegł", czyli coś bez winy odbiorcy.
+            isDrop: !!(result.isDrop || result.isWindDrop),
             isLaneBlock: !!result.isLaneBlock,
           },
           trajectory: profile.trajectory,
@@ -699,11 +708,15 @@ export function simulatePoint({
     // PO geometrii, nie zamiast niej.
     let finalSuccess = result.success
     let finalIsBlock = result.isBlock
+    let finalIsDrop = !!result.isDrop || !!result.isWindDrop
     let finalDefender = defender
     if (RESOLUTION_MODE.useGeometric && !result.isLaneBlock && sim.geometricResolution) {
       const geo = sim.geometricResolution
       finalSuccess = geo.success && !result.isWindDrop
       finalIsBlock = finalSuccess ? false : geo.isBlock
+      // Drop = odbiorca dosięgnął dysku i go nie utrzymał (albo zdmuchnął go wiatr).
+      // W przeciwieństwie do „nie dobiegł" ma konkretnego winnego, więc idzie do statystyk.
+      finalIsDrop = !finalSuccess && !finalIsBlock && (!!geo.isDrop || !!result.isWindDrop)
       if (geo.defenderId != null && geo.defenderId !== defender.id) {
         finalDefender = defenseLineup.find((d) => d.id === geo.defenderId) ?? defender
       }
@@ -920,6 +933,9 @@ export function simulatePoint({
       if (boxScore && finalIsBlock) {
         recordBlock(boxScore, finalDefender.id)
       }
+      if (boxScore && finalIsDrop) {
+        recordDrop(boxScore, receiver.id)
+      }
       if (boxScore) {
         recordTurnover(boxScore, thrower.id)
       }
@@ -973,6 +989,7 @@ export function simulatePoint({
           trajectory: profile.trajectory,
           turnoverMeters,
           isBlock: finalIsBlock,
+          isDrop: finalIsDrop,
           isOpenSide: commitIsOpenSide,
           throwTechnique: commitThrowTechnique ?? sim.throwTechnique ?? null,
           windRelation: commitWindRelation,
@@ -1073,7 +1090,12 @@ function pickBestReceiverOption(rng, pickFn, offenseLineup, thrower, defenseLine
     const candidateDefender = isPersonDefense(defenseStyle)
       ? defenderForPersonMark(personMatchups, candidate, defenseLineup, rng)
       : pickDefender(rng, defenseLineup)
-    const separation = resolveSeparation({ receiver: candidate, defender: candidateDefender, rng })
+    const separation = resolveSeparation({
+      receiver: candidate,
+      defender: candidateDefender,
+      rng,
+      stallCount,
+    })
     if (!best || separation.margin > best.separation.margin) {
       best = { receiver: candidate, defender: candidateDefender, separation }
     }
@@ -1388,6 +1410,7 @@ export function simulatePointFast({
       }
     } else {
       if (boxScore && result.isBlock) recordBlock(boxScore, defender.id)
+      if (boxScore && (result.isDrop || result.isWindDrop)) recordDrop(boxScore, receiver.id)
 
       const isHuck = isHuckType(effectiveThrowType, 0)
       if (matchStats) {
@@ -1414,6 +1437,7 @@ export function simulatePointFast({
           isHuck,
           throwType: effectiveThrowType,
           isBlock: result.isBlock,
+          isDrop: !!(result.isDrop || result.isWindDrop),
           throwScore: result.throwScore,
           defenseScore: result.defenseScore,
         }),

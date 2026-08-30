@@ -1,6 +1,6 @@
-import { attackDirectionX } from '../fieldDimensions.js'
+import { attackDirectionX, FIELD_DIMENSIONS } from '../fieldDimensions.js'
 import { subStat } from './statFormulas.js'
-import { HUCK_MIN_YARDS } from '../matchStats.js'
+import { HUCK_MIN_M } from '../matchStats.js'
 
 /** Postęp w stronę strefy punktowej (metry), dodatni = do przodu. */
 export function forwardProgressMeters(fromX, toX, possessionTeam) {
@@ -149,23 +149,41 @@ export function optionPassesIsolationPolicy(traffic, stallCount, isDump = false)
 /**
  * Bonus/kara do oceny opcji zależnie od zdobytych metrów i stall count.
  */
+/**
+ * Balans „teren vs utrzymanie posiadania".
+ *
+ * `forwardScale` skaluje CAŁĄ wartość zysku terenu, `dumpBonus` podnosi wartość resetu.
+ * Zmierzone tło: standard i dump mają praktycznie identyczną skuteczność (90.3% vs
+ * 90.4%), ale standardy to 83% wszystkich podań — więc odpowiadają za większość strat w
+ * liczbach bezwzględnych, i każda z nich oddaje dysk w połowie boiska zamiast bezpiecznie
+ * z tyłu. Udział resetów 8.4% przy realnych 22-38% to zresztą osobny, niezależny powód.
+ */
+export const YARDAGE_BALANCE = { forwardScale: 1, dumpBonus: 0 }
+
 export function yardageScoreComponent(forwardProgress, stallCount, isDump = false) {
   const fp = forwardProgress ?? 0
   // Nasycenie: 25 m nie jest dwa razy lepsze niż 12 m, bo dłuższy rzut to większe ryzyko.
-  if (fp >= 15) return 26 + Math.min(12, (fp - 15) * 0.5)
-  if (fp >= 8) return 18 + (fp - 8) * 1.15
-  if (fp >= 5) return 12 + (fp - 5) * 1.2
-  if (fp >= 2) return 6 + (fp - 2) * 2
-  if (fp >= 0.5) return fp * 3
+  if (fp >= 15) return (26 + Math.min(12, (fp - 15) * 0.5)) * YARDAGE_BALANCE.forwardScale
+  if (fp >= 8) return (18 + (fp - 8) * 1.15) * YARDAGE_BALANCE.forwardScale
+  if (fp >= 5) return (12 + (fp - 5) * 1.2) * YARDAGE_BALANCE.forwardScale
+  if (fp >= 2) return (6 + (fp - 2) * 2) * YARDAGE_BALANCE.forwardScale
+  if (fp >= 0.5) return fp * 3 * YARDAGE_BALANCE.forwardScale
 
+  // Reset/swing przy niskim stallu NIE jest zagraniem z natury złym — w realnym club
+  // ultimate to ~25-35% wszystkich podań i normalny element flow (zeruje liczenie,
+  // utrzymuje posiadanie, przestawia dysk na drugą stronę). Poprzednie -14/-26 przy
+  // stallu <4 sprawiały, że nawet zupełnie otwarty reset przegrywał z przeciętnym
+  // zyskiem 5-8 m o 26-44 pkt, więc pełny silnik (mediana stallu 2!) praktycznie nigdy
+  // nie resetował — 1,9% resetów zamiast realnych ~30% (patrz scripts/engine-parity.mjs).
+  // Reset ma być nadal gorszy od dobrego zysku terenu, ale ma wygrywać ze słabym lookiem.
   if (fp >= -0.75) {
-    if (stallCount >= 4 && stallCount < 7 && isDump) return 6
+    if (stallCount >= 4 && stallCount < 7 && isDump) return 6 + YARDAGE_BALANCE.dumpBonus
     if (stallCount >= 7) return isDump ? 2 : -8
-    return isDump ? -14 : -26
+    return isDump ? -2 + YARDAGE_BALANCE.dumpBonus : -12
   }
 
   if (stallCount >= 7) return isDump ? -4 : -10
-  return -32
+  return isDump ? -6 : -20
 }
 
 /**
@@ -191,8 +209,17 @@ export function requiredSeparationMeters(
   // Przy głębokim cutcie odbiorca biegnie na dysk — wystarczy półtora kroku zapasu.
   let req = dist <= 8 ? 1.6 : dist <= 16 ? 2.5 : dist <= 22 ? 2.8 : 2.4
 
-  // Podanie bez zysku musi być praktycznie pewne, inaczej nie warto ryzykować straty.
-  if (fp < 0.5) req = Math.max(req, isDump ? 3.2 : 4.6)
+  // Podanie bez zysku musi być pewniejsze niż zysk terenu, ale KRÓTKI reset do handlera
+  // jest w realnym ultimate zagraniem rutynowym, nie awaryjnym: dysk leci 5-10 m, rzucający
+  // kładzie go po bezpiecznej stronie odbiorcy, więc 1,5-2 m zapasu w zupełności wystarcza.
+  // Próg 3,2 m sprawiał, że przy typowym dla pełnego silnika stallu 2 reset praktycznie nie
+  // przechodził bramki i atak grał wyłącznie do przodu (3,8% resetów przy realnych 25-35%
+  // — patrz scripts/engine-parity.mjs). Wymóg skalowany dystansem: krótki reset łatwo,
+  // długie podanie w bok / do tyłu nadal wymaga sporo miejsca.
+  if (fp < 0.5) {
+    const shortReset = dist <= 12
+    req = Math.max(req, isDump ? (shortReset ? 1.8 : 3.2) : shortReset ? 3.0 : 4.6)
+  }
 
   // Głęboki zysk z rozsądną separacją jest dopuszczalny wcześniej niż krótki reset.
   if (fp >= 18) req = Math.min(req, 2.2)
@@ -241,10 +268,14 @@ export function optionPassesStallPolicy(
     return false
   }
 
+  // Druga, twardsza bramka na wczesnym stallu — ta sama korekta co w
+  // requiredSeparationMeters: krótki reset do handlera jest rutyną także przy stallu 1-3
+  // (to normalny sposób resetowania liczenia, nie ostatnia deska ratunku).
   if (stallCount < 4 && fp < 0.5) {
     const openBias = Math.max(0, Math.min(1, sepPolicy?.openLookBias ?? 0))
-    const dumpMin = 3.4 + openBias * 0.6
-    const otherMin = 5 + openBias * 1.2
+    const shortReset = (throwDistanceM ?? 0) <= 12
+    const dumpMin = (shortReset ? 1.9 : 3.4) + openBias * 0.6
+    const otherMin = (shortReset ? 3.2 : 5) + openBias * 1.2
     return sep >= (isDump ? dumpMin : otherMin)
   }
 
@@ -254,6 +285,76 @@ export function optionPassesStallPolicy(
 /**
  * Skorygowana ocena opcji (yardage + eskalacja ryzyka od stall).
  */
+/**
+ * Kara za KRYCIE, niezależna od dystansu.
+ *
+ * Wcześniej ryzyko liczyło się wyłącznie dla rzutów powyżej 16 m (`dist > 16` niżej),
+ * więc kryty rzut na 12 m nie dostawał ŻADNEJ kary, a inkasował pełne +22.6 za zysk
+ * terenu. Bilans wychodził skrzywiony: teren wart do 48 pkt (yardageScoreComponent do
+ * 38 + 10 za forwardProgress >= 5), a bycie otwartym maksymalnie 20
+ * (`min(20, (separation - 3) * 4.5)`). Skutkiem był zmierzony rozjazd: opcja do przodu
+ * średnio 121 pkt przeciw 79 dla dumpa, przy progu akceptacji 75 — dump był
+ * akceptowalny i często najlepszy w skanie, ale w chwili realnego wypuszczenia dysku
+ * przegrywał z krytą grą do przodu. Stąd 4.8% resetów zamiast realnych 22-38%.
+ *
+ * W ultimate kryty rzut na 12 m to realne ryzyko straty niezależnie od tego, że nie
+ * jest długi — dlatego kara musi działać na każdym dystansie.
+ */
+/**
+ * Wagi ATRAKCYJNOŚCI OFERTY.
+ *
+ * Nadrzędny priorytet ataku to UTRZYMANIE POSIADANIA — dlatego kara za krycie jest
+ * najcięższym pojedynczym członem, a wartość terenu ma sufit. Zdobycie punktu jest
+ * osobną, dużą premią, bo kończy posiadanie z zyskiem i nie da się go wycenić metrami.
+ *
+ * Break side dostaje premię, bo zysk poprzeczny wobec krycia realnie otwiera boisko na
+ * kolejne zagranie. Rzut pod linię jest karany, bo linia boczna działa jak dodatkowy
+ * obrońca — łatwiej tam zamknąć atak w kolejnym posiadaniu.
+ */
+export const OPTION_VALUE = {
+  /** Szansa na zdobycie punktu tym rzutem — bardzo mocno. */
+  scoreChanceBonus: 55,
+  /** Metry do przodu; sufit, bo 30 m nie jest trzy razy lepsze niż 10 m. */
+  forwardPerM: 1.15,
+  forwardCapPts: 26,
+  /** Zagranie na break side — otwiera boisko. */
+  breakSideBonus: 14,
+  /** Kara za odbiór blisko linii bocznej i szerokość pasa, w którym działa. */
+  sidelinePenalty: 18,
+  sidelineBandM: 7,
+}
+
+/**
+ * TRUDNOŚĆ RZUTU rosnąca z dystansem — niezależnie od tego, ile ten rzut daje.
+ *
+ * Dotąd odległość wchodziła do oceny wyłącznie jako nagroda (yardageScoreComponent) oraz
+ * jako ryzyko, ale dopiero powyżej 16 m i tylko w interakcji z kryciem. Krótki i średni
+ * rzut w to samo krycie kosztowały więc tyle samo z tytułu samej odległości, co jest
+ * nieprawdą: dłuższy lot to więcej czasu dla obrony na domknięcie, większy błąd
+ * dozowania prędkości, silniejszy wpływ wiatru i trudniejsze wyprowadzenie na lead.
+ *
+ * Krzywa jest ponadliniowa (wykładnik > 1), bo te czynniki nakładają się na siebie:
+ * przy 5 m kara ~3 pkt, przy 15 m ~11, przy 25 m 22, przy 40 m ~41.
+ *
+ * Człon wchodzi do riskPenalty, więc jest filtrowany przez `decisionMaking` — słaby
+ * decydent NIE DOSTRZEGA, o ile trudniejszy jest długi rzut, i przez to go wybiera.
+ * To jest właściwe miejsce na tę różnicę między zawodnikami.
+ */
+export const THROW_DIFFICULTY = {
+  pointsAtRef: 22,
+  refM: 25,
+  exponent: 1.3,
+}
+
+export const COVERAGE_RISK = {
+  /** Separacja, powyżej której rzut uznajemy za czysty i kary nie ma. */
+  cleanSepM: 6,
+  /** Punkty kary za każdy metr separacji poniżej progu. */
+  perMeter: 7,
+  /** Udział kary przy rzucie bardzo krótkim; rośnie liniowo do 1.0 przy 16 m. */
+  shortThrowFloor: 0.35,
+}
+
 export function evaluateThrowOptionScore(baseScore, ctx) {
   const {
     forwardProgress = 0,
@@ -263,6 +364,12 @@ export function evaluateThrowOptionScore(baseScore, ctx) {
     isOpenSide = true,
     throwWindowScore = 0,
     throwDistanceM = null,
+    /** Czy ten odbiór kończy się punktem (catch w strefie). */
+    scoresPoint = false,
+    /** Y punktu odbioru — do kary za grę pod linią. */
+    receiverY = null,
+    /** Ocena sytuacyjna rzucającego (0-100) — filtruje CZŁONY RYZYKA, nie nagrody. */
+    decisionMaking = 75,
   } = ctx
 
   let score = baseScore
@@ -270,15 +377,26 @@ export function evaluateThrowOptionScore(baseScore, ctx) {
 
   // Długi rzut w ciasne krycie to prosta droga do straty — karz proporcjonalnie.
   const dist = throwDistanceM ?? Math.abs(forwardProgress)
+  // Człony RYZYKA zbierane osobno — na końcu skalowane przez decisionMaking. Nagrody
+  // (teren, punkt, break side) widzi każdy; ryzyko dostrzega się tym lepiej, im lepszą
+  // ma się ocenę sytuacyjną. Słaby decydent nie rzuca „gorzej" losowo — rzuca w opcje,
+  // które WYGLĄDAJĄ dobrze, a są ryzykowne.
+  let riskPenalty = 0
+  // Sama odległość jest trudnością — bliższa przestrzeń to ŁATWIEJSZA decyzja.
+  riskPenalty +=
+    THROW_DIFFICULTY.pointsAtRef *
+    Math.pow(Math.max(0, dist) / THROW_DIFFICULTY.refM, THROW_DIFFICULTY.exponent)
   if (dist > 16) {
     const risk = (dist - 16) * 0.9
     const sepFactor = separation >= 6 ? 0.3 : separation >= 3.5 ? 0.9 : 2.4
-    score -= risk * sepFactor
+    riskPenalty += risk * sepFactor
   }
 
   if (stallCount < 4) {
     if (forwardProgress >= 5) score += 10
-    if (forwardProgress < 1 && !isDump) score -= 18
+    // Druga kara za brak zysku przy niskim stallu — złagodzona z tego samego powodu co
+    // yardageScoreComponent wyżej (reset to element flow, nie ostateczność).
+    if (forwardProgress < 1 && !isDump) score -= 10
     if (!isOpenSide && forwardProgress < 3) score *= 0.72
   }
 
@@ -302,6 +420,33 @@ export function evaluateThrowOptionScore(baseScore, ctx) {
   // najczęściej kończy się stratą, więc nie może wygrywać z bezpieczniejszą opcją.
   score += Math.min(20, Math.max(0, separation - 3) * 4.5)
 
+  // Punkt kończy posiadanie z zyskiem — nie da się tego wycenić metrami.
+  if (scoresPoint) score += OPTION_VALUE.scoreChanceBonus
+
+  // Break side: zysk poprzeczny wobec krycia otwiera boisko na kolejne zagranie.
+  if (!isOpenSide && forwardProgress >= 0) score += OPTION_VALUE.breakSideBonus
+
+  // Gra pod linią: linia boczna działa jak dodatkowy obrońca, więc odbiór przy niej
+  // jest wart mniej, nawet gdy sam rzut jest czysty.
+  if (receiverY != null) {
+    const w = FIELD_DIMENSIONS.widthM
+    const toLine = Math.min(receiverY, w - receiverY)
+    if (toLine < OPTION_VALUE.sidelineBandM) {
+      riskPenalty += OPTION_VALUE.sidelinePenalty * (1 - toLine / OPTION_VALUE.sidelineBandM)
+    }
+  }
+
+  // Kara za krycie na KAŻDYM dystansie (patrz COVERAGE_RISK).
+  {
+    const under = Math.max(0, COVERAGE_RISK.cleanSepM - separation)
+    if (under > 0 && !isDump) {
+      const distFactor =
+        COVERAGE_RISK.shortThrowFloor +
+        (1 - COVERAGE_RISK.shortThrowFloor) * Math.min(1, Math.max(0, dist) / 16)
+      riskPenalty += under * COVERAGE_RISK.perMeter * distFactor
+    }
+  }
+
   if (forwardProgress >= 5 && separation >= 4.5) {
     score += Math.min(12, forwardProgress * 0.6)
   }
@@ -313,6 +458,10 @@ export function evaluateThrowOptionScore(baseScore, ctx) {
   }
 
   if (throwWindowScore > 55 && forwardProgress >= 3) score += 5
+
+  // Ocena sytuacyjna: 50 -> widzi 70% ryzyka, 75 -> 85%, 95 -> 97%.
+  const dmFactor = 0.4 + 0.6 * Math.max(0, Math.min(1, decisionMaking / 100))
+  score -= riskPenalty * dmFactor
 
   return score
 }
@@ -328,6 +477,60 @@ export function evaluateThrowOptionScore(baseScore, ctx) {
  *
  * 3. arg może być boolean (legacy postCatchReorg) albo obiektem kontekstu.
  */
+/**
+ * Czas od chwytu do wypuszczenia dysku — SKŁADANY, nie stała bramka.
+ *
+ * Rzut natychmiast po złapaniu jest nierealistyczny, ale nierealistyczna jest też stała
+ * ~2.5 s przed każdym podaniem (tak było wcześniej: „minimum ~2.1 s (stall 2+)" wpisane
+ * wprost w kod, żeby trafić w pasmo stallu). Realny czas to suma trzech rzeczy:
+ *
+ *   1. WYKONANIE — pivot, zamach, wypuszczenie. Krótkie i niemal stałe, bo to mechanika.
+ *   2. PERCEPCJA — dostrzeżenie oferty. Skaluje się `vision`.
+ *   3. DECYZJA — ocena i wybór spośród tego, co widać. Skaluje się `decisionMaking`.
+ *
+ * Percepcja i decyzja rosną, gdy look jest niejednoznaczny: odkrytego odbiorcę widać od
+ * razu, a wybór między trzema przeciętnymi opcjami zajmuje realnie dłużej.
+ *
+ * Dzięki temu rozkład stallu wychodzi z zawodników i sytuacji, a nie z tabeli stałych:
+ * elita z czystym lookiem wypuszcza w ~0.6 s (stall 1), przeciętny gracz z solidnym
+ * lookiem ~1.2 s (stall 2), słaby gracz bez looku ~4 s (stall 4-5).
+ */
+/**
+ * SKALA: stallCountFromHoldMs to floor(holdMs / 1000), więc czasy 1100-1900 ms mapują się
+ * w CAŁOŚCI na stall 1. Pierwsza kalibracja tego nie uwzględniała i mediana stallu tkwiła
+ * na 1 mimo sensownie wyglądających milisekund. Teraz typowy zawodnik: czysty look ~1.7 s
+ * (stall 1), solidny ~2.4 s (stall 2), przeciętny ~3.1 s (stall 3), brak looku ~5 s.
+ */
+export const DECISION_TIME = {
+  /** Sama mechanika wypuszczenia — pivot, zamach, release. */
+  executionMs: 200,
+  /** Percepcja przy vision 50 -> 95. */
+  perceptionSlowMs: 1500,
+  perceptionFastMs: 600,
+  /** Decyzja przy decisionMaking 50 -> 95. */
+  decisionSlowMs: 1700,
+  decisionFastMs: 650,
+  /** Mnożnik czasu wg czytelności looku. */
+  clarityGolden: 0.7,
+  claritySolid: 1,
+  clarityDecent: 1.3,
+  clarityWeak: 1.7,
+  clarityNothing: 2.2,
+}
+
+function lerpStat(slowMs, fastMs, statValue) {
+  const t = Math.max(0, Math.min(1, (statValue - 50) / 45))
+  return slowMs + (fastMs - slowMs) * t
+}
+
+/** Czas decyzji dla konkretnego rzucającego przy danej czytelności looku. */
+export function throwerDecisionTimeMs(thrower, clarityMult) {
+  const D = DECISION_TIME
+  const perception = lerpStat(D.perceptionSlowMs, D.perceptionFastMs, subStat(thrower, 'mental', 'vision'))
+  const decision = lerpStat(D.decisionSlowMs, D.decisionFastMs, subStat(thrower, 'mental', 'decisionMaking'))
+  return Math.round(D.executionMs + (perception + decision) * clarityMult)
+}
+
 export function throwReleaseGateMs(stallCount, forwardProgress = 0, ctx = {}) {
   const opts =
     typeof ctx === 'boolean'
@@ -342,6 +545,8 @@ export function throwReleaseGateMs(stallCount, forwardProgress = 0, ctx = {}) {
     crowded = false,
     teammateCrowd = 0,
     continuationUrgency = 0.15,
+    /** Rzucający — czas decyzji zależy od jego vision i decisionMaking. */
+    thrower = null,
   } = opts
 
   if (stallCount >= 8) return 0
@@ -365,20 +570,36 @@ export function throwReleaseGateMs(stallCount, forwardProgress = 0, ctx = {}) {
     return 3600
   }
 
-  // Lock-in na realnie otwarty huck (≥ HUCK_MIN_YARDS, sep ≥ 3): scanThrowOptions
+  // Lock-in na realnie otwarty huck (≥ HUCK_MIN_M, sep ≥ 3): scanThrowOptions
   // przelicza best opcję na nowo co tick, więc otwarte okno na hucka regularnie
   // znikało (cutter biegnie dalej, szum decyzyjny), zanim minął zwykły gate
   // (2100ms+ dla goldenOpen — ta sama wartość co dla zwykłego dobrego looku).
   // Prawdziwy rzucający na tak otwarty deep strzela od razu, nie czeka.
-  if (fp >= HUCK_MIN_YARDS && sep >= 3) return 260
+  if (fp >= HUCK_MIN_M && sep >= 3) return 260
 
-  // Set play — minimum ~2.1 s (stall 2+), dłużej przy słabszym looku.
-  if (goldenOpen && fp >= 8) return 2100
-  if (solidOpen && fp >= 5) return 2600
-  if (isContinuationCut && solidOpen) return 2400
-  if (fp >= 3 && sep >= 3) return 3100
-  if (fp >= 1) return 3600
-  return stallCount >= 4 ? 2000 : 4200
+  // Czas decyzji, nie wymuszony stall.
+  //
+  // Poprzednie wartości (2100 / 2600 / 2400 / 3100 / 3600) były dobrane pod METRYKĘ:
+  // komentarz mówił wprost „minimum ~2.1 s (stall 2+)". Skutkiem było to, że nawet
+  // zupełnie odkryty odbiorca 8 m w polu czekał 2,1 s — a w ultimate taki look leci od
+  // razu. Ta jedna stała ustawiała cały rozkład gry: rzucający trzymał dysk 2,5 s przed
+  // KAŻDYM podaniem, więc opcje do przodu zdążały dojrzeć i wyprzedzić reset. Zmierzone
+  // skutki: średni zysk 16,5 m (realnie 6-10), 4,8% resetów (realnie 22-38), 5,1 podania
+  // na punkt (realnie 7-12), i tylko 2,7% podań cofających dysk.
+  //
+  // Sweep bramki (tmp-sweep/gate-sweep.mjs) potwierdził kierunek: skalowanie jej w dół
+  // przesuwało JEDNOCZEŚNIE wszystkie trzy uparte metryki we właściwą stronę, a przy
+  // pełnym usunięciu dumpy (28,2%) i podania na punkt (9,61) wchodziły w pasmo — kosztem
+  // strat 0,98/punkt i mediany stallu 1. Dlatego nie usuwamy bramki, tylko urealniamy jej
+  // magnitudy: czysty look wypuszczany od razu, brak looku nadal trzymany długo.
+  const D = DECISION_TIME
+  const t = (mult) => (thrower ? throwerDecisionTimeMs(thrower, mult) : Math.round(1200 * mult))
+  if (goldenOpen && fp >= 8) return t(D.clarityGolden)
+  if (solidOpen && fp >= 5) return t(D.claritySolid)
+  if (isContinuationCut && solidOpen) return t(D.claritySolid * 0.85)
+  if (fp >= 3 && sep >= 3) return t(D.clarityDecent)
+  if (fp >= 1) return t(D.clarityWeak)
+  return t(stallCount >= 4 ? D.clarityWeak : D.clarityNothing)
 }
 
 /**
