@@ -10,6 +10,7 @@ import {
 } from './fieldViz.js'
 import { motionFatigueModifiers } from './stamina.js'
 import { THROW_TYPE } from './throwTypes.js'
+import { THROW_TECHNIQUE } from './throwTechnique.js'
 import { ATTACK_STYLES, FORCE_SIDES } from './tacticsModifiers.js'
 import { forceMarkLayoutSide, normalizeForceMark } from './throwTechnique.js'
 import { forceMarkPosition } from './ai/defenderBrain.js'
@@ -1718,15 +1719,39 @@ export function buildThrowActionClip(
   }
 }
 
+/**
+ * Etykieta rzutu w tekście meczowym nad boiskiem 2D.
+ *
+ * Rozróżnia trzy wymiary, bo w ultimate to są realnie różne zagrania:
+ *  - TECHNIKA (backhand / forehand) — którą ręką i którą stroną marka,
+ *  - DYSTANS (huck) — czy to rzut głęboki,
+ *  - KIERUNEK BIEGU ODBIORCY (leading) — czy dysk czekał na odbiorcę w przestrzeni,
+ *    czy odbiorca wbiegł w lecący dysk. Ta sama miara, którą rzucający dobiera tempo
+ *    lotu (flightSpeed.js: leading = float, in-cut = płasko).
+ *
+ * Hammer jest osobną kategorią, bo rzut górny nie ma sensownego podziału na
+ * backhand/forehand w tym sensie — leci nad zawodnikami niezależnie od marka.
+ */
 function actionLabelForClip(attemptEv, resultEv) {
   if (resultEv.type === 'throw_fail' && resultEv.isBlock) {
     return attemptEv.throwType === THROW_TYPE.OVER_THE_TOP ? 'Przechwyt!' : 'D-Block!'
   }
   const t = attemptEv.throwType
-  if (t === THROW_TYPE.HUCK) return 'Huck!'
-  if (t === THROW_TYPE.DUMP_SWING) return 'Dump Reset'
   if (t === THROW_TYPE.OVER_THE_TOP) return 'Hammer!'
-  return 'Rzut!'
+  if (t === THROW_TYPE.DUMP_SWING) return 'Dump Reset'
+
+  const tech = attemptEv.throwTechnique
+  const hand =
+    tech === THROW_TECHNIQUE.BACKHAND
+      ? 'Backhand'
+      : tech === THROW_TECHNIQUE.FOREHAND
+        ? 'Forehand'
+        : null
+  // Bez znanej techniki nie zgadujemy — lepiej ogólna etykieta niż zmyślona ręka.
+  if (!hand) return t === THROW_TYPE.HUCK ? 'Huck!' : 'Rzut!'
+  if (t === THROW_TYPE.HUCK) return `${hand} huck!`
+  if (attemptEv.leadingPass) return `Leading ${hand.toLowerCase()}!`
+  return `${hand}!`
 }
 
 function findTurnoverPickupId(initial, tacticalAll, discX, discY, offenseTeamId) {

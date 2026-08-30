@@ -31,6 +31,7 @@ import {
   sprintSpeedMps,
   LAYOUT_DIST_M,
 } from './flightKinematics.js'
+import { paceFracFor } from './flightSpeed.js'
 import {
   drainAgentsTickStamina,
   syncPlayerFromStaminaMap,
@@ -1122,6 +1123,10 @@ export function runContinuousThrowSimulation({
           stallCount: Math.max(1, liveStall || stallCountFromHoldMs(Math.max(holdMs, 1000))),
           optionScore: option.score,
           flightSpeedMps: option.flightSpeedMps ?? null,
+          // LEADING PASS = odbiorca oddalał się od rzucającego, więc dysk musiał
+          // poczekać na niego w przestrzeni. IN-CUT = wbiegał w lecący dysk.
+          // Ta sama miara, którą wykonanie dobiera tempo lotu (flightSpeed.js).
+          leadingPass: paceFracFor(recvAgent, fromX, fromY) < 0.5,
           catchX: toX,
           catchY: toY,
           laneThreats: option.laneThreats ?? option.traffic?.laneThreats ?? [],
@@ -1229,6 +1234,7 @@ export function runContinuousThrowSimulation({
     receiver: throwDecision.receiver,
     throwType: throwDecision.throwType,
     throwTechnique: throwDecision.throwTechnique,
+    leadingPass: throwDecision.leadingPass ?? null,
     isOpenSide: throwDecision.isOpenSide,
     defender: throwDecision.defender,
     separation: throwDecision.separation,
