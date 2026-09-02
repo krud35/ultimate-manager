@@ -7,7 +7,6 @@ import {
   listPointIndices,
   MATCH_CONFIG,
   playNextPoint,
-  runRemainingMatch,
   sessionToResult,
   simulateMatch,
   slicePointEvents,
@@ -42,6 +41,7 @@ import { BoxScoreTable } from './BoxScoreTable'
 import PointHistory from './PointHistory'
 import LineupSelector from './LineupSelector'
 import PointStaminaPanel from './PointStaminaPanel'
+import AutoSimOverlay from './match/AutoSimOverlay'
 import FieldView2D from './FieldView2D'
 import { resolveMatchColors } from '../data/teamColors.js'
 import MatchDashboard from './MatchDashboard'
@@ -197,6 +197,29 @@ export default function MatchView({
   const playbackPointRef = useRef(null)
   const leagueSubmittedRef = useRef(false)
   const fastForwardSkipRef = useRef(false)
+  /**
+   * AUTO-SYMULACJA DO KOŃCA — punkt po punkcie pełnym silnikiem, jako ekran ładowania.
+   *
+   * Wcześniej ten przycisk przełączał mecz na silnik statystyczny (fastMode) w połowie
+   * gry. Zmierzone: te same drużyny i seedy dawały 87.5% wygranych gospodarza w pełnym
+   * ticku i 58.3% w fastMode — przy czym wynik silniejszej drużyny się nie zmieniał,
+   * a SŁABSZA dostawała ~4 punkty na mecz. Prowadzenie zbudowane w jednym silniku było
+   * więc oddawane w drugim.
+   */
+  const autoSimRef = useRef(false)
+  const autoSimTimerRef = useRef(null)
+  /** Migawki policzonych punktów czekające na pokazanie — liczenie wyprzedza ekran. */
+  const autoSimQueueRef = useRef([])
+  const autoSimComputingRef = useRef(false)
+  const [autoSimProgress, setAutoSimProgress] = useState(null)
+  useEffect(
+    () => () => {
+      autoSimRef.current = false
+      if (autoSimTimerRef.current != null) window.clearTimeout(autoSimTimerRef.current)
+      autoSimQueueRef.current = []
+    },
+    [],
+  )
   /** Numer punktu, dla którego już otworzyliśmy modal taktyki automatycznie (bez powtórek). */
   const tacticsAutoOpenedForRef = useRef(null)
   /** Tryb "punkt po punkcie": bez animacji boiska, ręczne tempo (gracz klika kolejny punkt). */
@@ -444,7 +467,7 @@ export default function MatchView({
     setFieldPlaying(false)
     setPointPlaybackComplete(true)
     try {
-      playNextPoint(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions({ fastMode: true }))
+      playNextPoint(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions())
     } catch (err) {
       console.error('[MatchView] simulate next point failed:', err)
       fastForwardSkipRef.current = false
@@ -472,20 +495,19 @@ export default function MatchView({
     setStage('teamNews')
   }
 
-  /** Etap "team news": faktyczne rozegranie punktu 1, zgodnie z wybranym trybem (animowany / punkt po punkcie). */
+  /** Etap "szatnia": wchodzimy w mecz i otwieramy wybór taktyki na PIERWSZY punkt.
+   *  Punkt 1 nie startuje sam — gracz najpierw ustawia skład i taktykę, tak samo jak
+   *  przed każdym kolejnym punktem. */
   function handleKickoff() {
-    if (pointByPointMode) {
-      handleSimulateNextPoint()
-    } else {
-      handlePlayNextPoint()
-    }
+    tacticsAutoOpenedForRef.current = null
     setStage('live')
+    setTacticsModalOpen(true)
   }
 
   function handleSimulateAll() {
     const finished = simulateMatch({
       ...matchOptions(),
-      ...pointAiOptions({ rotateHome: true, rotateAway: true, fastMode: true }),
+      ...pointAiOptions({ rotateHome: true, rotateAway: true }),
     })
     setInstantResult(finished)
     publishStamina(finished)
@@ -495,9 +517,155 @@ export default function MatchView({
     bump()
   }
 
-  /** Symuluje wszystkie pozostałe punkty naraz (fastMode) i skacze od razu do wyniku. */
+  /** Odstęp między punktami auto-symulacji. Sam punkt liczy się ~0.4 s (blokująco),
+   *  więc odliczamy od CHWILI POKAZANIA poprzedniego, a nie stałym interwałem — inaczej
+   *  wolniejszy punkt nakładałby się na następny. */
+  const AUTO_SIM_POINT_MS = 1000
+
+  const autoSimLabels = useMemo(
+    () => ({
+      title: t.autoSimTitle,
+      pointsPlayed: t.autoSimPointsPlayed,
+      stop: t.autoSimStop,
+      completion: t.autoSimCompletion,
+      throws: t.autoSimThrows,
+      turnovers: t.autoSimTurnovers,
+      hucks: t.autoSimHucks,
+      yards: t.autoSimYards,
+      goal: t.autoSimGoal,
+      goalShort: t.autoSimGoalShort,
+      assist: t.autoSimAssist,
+      assistShort: t.autoSimAssistShort,
+    }),
+    [t],
+  )
+
+  function stopAutoSim() {
+    autoSimQueueRef.current = []
+    autoSimRef.current = false
+    if (autoSimTimerRef.current != null) {
+      window.clearTimeout(autoSimTimerRef.current)
+      autoSimTimerRef.current = null
+    }
+    setAutoSimProgress(null)
+  }
+
+  /** Siódemka z danego punktu jako gotowa lista zawodników — rozwiązywana ze składu
+   *  SESJI w chwili liczenia, żeby ekran nie musiał dopasowywać identyfikatorów. */
+  function sevenFrom(team, ids) {
+    const byId = new Map((team?.players ?? []).map((p) => [p.id, p]))
+    return (ids ?? [])
+      .map((id) => byId.get(id))
+      .filter(Boolean)
+      // Zawodnik nie ma pola `name` — nazwisko składa się z firstName/lastName
+      // (patrz playerLabel w point.js). Skrót „J. Zuraw" jak w panelu składu.
+      .map((p) => ({
+        id: p.id,
+        name: `${p.firstName?.[0] ?? ''}. ${p.lastName ?? ''}`.trim(),
+        jersey: p.jersey ?? null,
+      }))
+  }
+
+  /** PRODUCENT: liczy kolejny punkt i odkłada migawkę. Oddaje wątek między punktami,
+   *  żeby przeglądarka zdążyła przerysować ekran (punkt to ~0.4 s blokującego CPU). */
+  function autoSimProduce() {
+    if (!autoSimRef.current || autoSimComputingRef.current) return
+    const session = sessionRef.current
+    if (!session || session.status === 'finished') return
+    if (autoSimQueueRef.current.length >= 3) return
+    autoSimComputingRef.current = true
+    try {
+      // rotate: true po OBU stronach — automatyczne zmiany ze zmęczenia
+      // (autoSubstituteTacticsForTeam). ai zostaje per strona, więc taktyka gracza
+      // nie jest nadpisywana przez AI; gracz po prostu nie jest o nic pytany.
+      playNextPoint(
+        sessionRef.current,
+        tacticsUpdateForPoint(),
+        pointAiOptions({ rotateHome: true, rotateAway: true }),
+      )
+    } catch (err) {
+      console.error('[MatchView] auto sim step failed:', err)
+      autoSimComputingRef.current = false
+      stopAutoSim()
+      return
+    }
+    const s2 = sessionRef.current
+    const pointIndex = s2.pointIndex - 1
+    // Siódemki bierzemy z tego samego źródła co normalna gra — ze zdarzenia point_start.
+    const pointEvents = slicePointEvents(s2.events ?? [], pointIndex)
+    const lineups = fieldLineupIdsFromPointEvents(pointEvents)
+    // Zdarzenie SCORE niesie throwerId (asysta) i receiverId (zdobywca). Punkt przyznany
+    // z limitu rzutów żadnego z nich nie ma — wtedy po prostu nikogo nie oznaczamy.
+    const scoreEv = pointEvents.find((e) => e.type === EVENT.SCORE)
+    autoSimQueueRef.current.push({
+      home: s2.homeScore ?? 0,
+      away: s2.awayScore ?? 0,
+      points: pointIndex,
+      pointIndex,
+      homeSeven: sevenFrom(s2.home, lineups.homeLineupIds),
+      awaySeven: sevenFrom(s2.away, lineups.awayLineupIds),
+      scorerId: scoreEv?.receiverId ?? null,
+      assistId: scoreEv?.throwerId ?? null,
+      finished: s2.status === 'finished',
+    })
+    autoSimComputingRef.current = false
+    // Kolejny punkt liczymy dopiero po oddaniu wątku — inaczej seria długich punktów
+    // zamroziłaby ekran na kilka sekund.
+    window.setTimeout(autoSimProduce, 0)
+  }
+
+  /** KONSUMENT: pokazuje jedną migawkę na sekundę, niezależnie od tego, jak długo
+   *  liczył się dany punkt. Wcześniej ekran szedł w tempie LICZENIA (max(0, 1000-spent)),
+   *  więc długie punkty odpalały następny natychmiast — stąd nierówne przeskoki
+   *  i "dwa naraz". */
+  function autoSimShow() {
+    if (!autoSimRef.current) return
+    const next = autoSimQueueRef.current.shift()
+    if (next) {
+      // Każdy pokazany punkt musi przeskoczyć na SWÓJ koniec, inaczej playbackStep
+      // zostaje na 0 i computeDisplayedMatchScore nie zalicza zdobyczy tego punktu —
+      // wynik szedł wtedy stale o jeden do tyłu (14 zamiast 15 po ostatnim punkcie).
+      // Ten sam mechanizm, którego używa pominięcie animacji w normalnej grze.
+      fastForwardSkipRef.current = true
+      scrubInjuredFromPlayerTactics()
+      setReviewPointIndex(next.pointIndex)
+      publishStamina(sessionRef.current)
+      setAutoSimProgress(next)
+      bump()
+      if (next.finished && autoSimQueueRef.current.length === 0) {
+        // Ostatni punkt ma zostać na ekranie przez pełny takt — inaczej wynik końcowy
+        // mignąłby i zniknął w tej samej klatce, w której się pojawił.
+        autoSimTimerRef.current = window.setTimeout(() => {
+          autoSimRef.current = false
+          autoSimTimerRef.current = null
+          setAutoSimProgress(null)
+          bump()
+        }, AUTO_SIM_POINT_MS)
+        return
+      }
+    }
+    // Nie ma czego pokazać, nie ma czego liczyć i nikt nie liczy — koniec.
+    if (
+      !next &&
+      autoSimQueueRef.current.length === 0 &&
+      !autoSimComputingRef.current &&
+      sessionRef.current?.status === 'finished'
+    ) {
+      autoSimRef.current = false
+      autoSimTimerRef.current = null
+      setAutoSimProgress(null)
+      bump()
+      return
+    }
+    autoSimProduce()
+    autoSimTimerRef.current = window.setTimeout(autoSimShow, AUTO_SIM_POINT_MS)
+  }
+
+  /** Symuluje pozostałe punkty PEŁNYM silnikiem, punkt po punkcie, jako ekran ładowania
+   *  wyniku końcowego — z podglądem postępu, bez pytania gracza o taktykę. */
   function handleSimulateToEnd() {
     if (!sessionRef.current || sessionRef.current.status === 'finished') return
+    if (autoSimRef.current) return
     const lineupCheck = validatePlayerLineup()
     if (!lineupCheck.ok) return
     fastForwardSkipRef.current = true
@@ -505,17 +673,26 @@ export default function MatchView({
     setHoldPose(null)
     setFieldPlaying(false)
     setPointPlaybackComplete(true)
-    try {
-      runRemainingMatch(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions({ fastMode: true }))
-    } catch (err) {
-      console.error('[MatchView] simulate to end failed:', err)
-      fastForwardSkipRef.current = false
-      return
-    }
-    scrubInjuredFromPlayerTactics()
-    setReviewPointIndex(sessionRef.current.pointIndex - 1)
-    publishStamina(sessionRef.current)
-    bump()
+    setTacticsModalOpen(false)
+    autoSimRef.current = true
+    const startIdx = Math.max(1, sessionRef.current.pointIndex - 1)
+    const startLineups = fieldLineupIdsFromPointEvents(
+      slicePointEvents(sessionRef.current.events ?? [], startIdx),
+    )
+    setAutoSimProgress({
+      home: sessionRef.current.homeScore ?? 0,
+      away: sessionRef.current.awayScore ?? 0,
+      points: sessionRef.current.pointIndex - 1,
+      pointIndex: startIdx,
+      homeSeven: sevenFrom(sessionRef.current.home, startLineups.homeLineupIds),
+      awaySeven: sevenFrom(sessionRef.current.away, startLineups.awayLineupIds),
+      scorerId: null,
+      assistId: null,
+      finished: false,
+    })
+    autoSimQueueRef.current = []
+    autoSimProduce()
+    autoSimShow()
   }
 
   const oAttackLabel =
@@ -948,10 +1125,20 @@ export default function MatchView({
   useEffect(() => {
     if (stage !== 'live') return
     if (!matchLive || !canPlayPoint || !pointPlaybackComplete || fieldPlaying) return
+    // W trakcie auto-symulacji gracz nic nie wybiera — okno taktyk by tylko migało.
+    if (autoSimProgress) return
     if (tacticsAutoOpenedForRef.current === activeReviewPoint) return
     tacticsAutoOpenedForRef.current = activeReviewPoint
     setTacticsModalOpen(true)
-  }, [stage, matchLive, canPlayPoint, pointPlaybackComplete, fieldPlaying, activeReviewPoint])
+  }, [
+    stage,
+    matchLive,
+    canPlayPoint,
+    pointPlaybackComplete,
+    fieldPlaying,
+    activeReviewPoint,
+    autoSimProgress,
+  ])
 
   const homeNextPointRole = session
     ? pointStartRoleForTeam(playerSide, session.pullTeam)
@@ -1030,6 +1217,22 @@ export default function MatchView({
 
   return (
     <div className={`space-y-6 ${returnPulse ? 'opacity-0 transition-opacity duration-300' : ''}`}>
+      {autoSimProgress && (
+        <AutoSimOverlay
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          homeScore={autoSimProgress.home}
+          awayScore={autoSimProgress.away}
+          pointsPlayed={autoSimProgress.points}
+          stats={matchStats}
+          homeSeven={autoSimProgress.homeSeven}
+          awaySeven={autoSimProgress.awaySeven}
+          scorerId={autoSimProgress.scorerId}
+          assistId={autoSimProgress.assistId}
+          onStop={stopAutoSim}
+          labels={autoSimLabels}
+        />
+      )}
       {isLeagueMatch && (
         <div className="rounded-lg border border-ufa-gold/40 bg-ufa-panel/80 px-4 py-2 text-sm text-ufa-muted">
           {t.leagueMatch} ·  {leagueFixture.round} ·{' '}
