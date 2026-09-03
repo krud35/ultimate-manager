@@ -25,7 +25,7 @@ import {
 } from './playerNegotiation.js'
 import { formatUsd, getPlayerMarketValue, refreshPlayerMarketValue } from './playerValue.js'
 import { isTransferWindowOpen } from './transferWindow.js'
-import { playerOvrRank } from './negotiation.js'
+import { buildOvrRankMap } from './negotiation.js'
 
 export const PLAYER_STATUS = {
   ACTIVE: 'active',
@@ -281,6 +281,7 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
     const avg =
       players.reduce((s, p) => s + getOverallRating(p.skills), 0) / players.length
     const budget = getTransferBudget(team)
+    const rankMap = buildOvrRankMap(players)
     const desperate = budget <= 0
 
     // Sort: worst first for release consideration
@@ -288,7 +289,7 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
       .map((p) => ({
         p,
         ovr: getOverallRating(p.skills),
-        rank: playerOvrRank(players, p.id),
+        rank: rankMap.get(String(p.id)) ?? players.length,
         pot: Number.isFinite(p.potential) ? p.potential : getOverallRating(p.skills),
         age: p.age ?? 25,
         wage: p.contract?.weeklyWage ?? 0,

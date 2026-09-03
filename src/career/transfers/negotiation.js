@@ -69,16 +69,32 @@ export function classifyTransferTarget(player, buyerTeam = null) {
 }
 
 /**
+ * Mapa `playerId → ranking OVR` (0 = najlepszy) — jeden sort na cały skład.
+ *
+ * Używaj tego zamiast `playerOvrRank` w pętli po zawodnikach: pojedyncze wywołanie
+ * sortuje skład od nowa, więc pętla po N zawodnikach to N sortów tej samej listy.
+ * @param {object[]} players
+ * @returns {Map<string, number>}
+ */
+export function buildOvrRankMap(players) {
+  const ranked = [...(players ?? [])]
+    .map((p) => ({ id: String(p?.id), ovr: getOverallRating(p?.skills) }))
+    .sort((a, b) => b.ovr - a.ovr)
+  const map = new Map()
+  ranked.forEach((entry, index) => {
+    if (!map.has(entry.id)) map.set(entry.id, index)
+  })
+  return map
+}
+
+/**
  * Ranking zawodnika w składzie po OVR (0 = najlepszy).
  * @param {object[]} players
  * @param {string|number} playerId
  */
 export function playerOvrRank(players, playerId) {
-  const ranked = [...(players ?? [])].sort(
-    (a, b) => getOverallRating(b.skills) - getOverallRating(a.skills),
-  )
-  const idx = ranked.findIndex((p) => String(p.id) === String(playerId))
-  return idx < 0 ? ranked.length : idx
+  const rank = buildOvrRankMap(players).get(String(playerId))
+  return rank ?? (players ?? []).length
 }
 
 /**
@@ -104,11 +120,16 @@ export const TRANSFER_LIST_ACCEPT_BONUS = 0.12
  * Cena wywoławcza sprzedającego.
  * @param {object} player
  * @param {object} sellerTeam
+ * @param {number|null} [precomputedRank] — ranking OVR z `buildOvrRankMap`; podaj
+ *   go w pętli po składzie, inaczej każdy zawodnik sortuje skład od nowa.
  */
-export function computeAskPrice(player, sellerTeam) {
+export function computeAskPrice(player, sellerTeam, precomputedRank = null) {
   const value = getPlayerMarketValue(player)
   const policy = getTransferPolicy(sellerTeam)
-  const rank = playerOvrRank(sellerTeam.players, player.id)
+  const rank =
+    Number.isFinite(precomputedRank) && precomputedRank >= 0
+      ? precomputedRank
+      : playerOvrRank(sellerTeam.players, player.id)
   const premium = starPremium(rank, sellerTeam.players?.length ?? 1)
   const ask = value * (policy.askPriceMultiplier ?? 1.12) * premium
   const base = Math.max(value, Math.round(ask / 1000) * 1000)

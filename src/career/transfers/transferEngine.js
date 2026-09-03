@@ -13,7 +13,13 @@ import {
   getTransferPolicy,
   canBuyPlayers,
 } from './clubFinances.js'
-import { evaluateBuyOffer, computeAskPrice, playerOvrRank, evaluateSellerCounter } from './negotiation.js'
+import {
+  buildOvrRankMap,
+  evaluateBuyOffer,
+  computeAskPrice,
+  playerOvrRank,
+  evaluateSellerCounter,
+} from './negotiation.js'
 import {
   formatUsd,
   getPlayerMarketValue,
@@ -138,14 +144,18 @@ export function listTransferMarket(world, buyerTeamId) {
     if (team.id === buyerTeamId) continue
     refreshTeamMarketValues(team)
     const policy = getTransferPolicy(team)
+    // Jeden sort na klub — inaczej każdy zawodnik sortowałby cały skład dwa razy
+    // (raz na ranking, raz w środku `computeAskPrice`).
+    const rankMap = buildOvrRankMap(team.players)
+    const rosterSize = (team.players ?? []).length
     for (const player of team.players ?? []) {
       // Wypożyczony zawodnik nie może pojawić się na rynku pod klubem docelowym —
       // wyglądałoby jakby destination był jego właścicielem.
       if (player.loan) continue
       const ovr = getOverallRating(player.skills)
       const value = getPlayerMarketValue(player)
-      const ask = computeAskPrice(player, team)
-      const rank = playerOvrRank(team.players, player.id)
+      const rank = rankMap.get(String(player.id)) ?? rosterSize
+      const ask = computeAskPrice(player, team, rank)
       ensurePlayerContract(player)
       const weeklyWage = player.contract?.weeklyWage ?? 0
       const contractYears = player.contract?.years ?? null
@@ -235,6 +245,7 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
     const { team, player } = found
     const policy = getTransferPolicy(team)
     ensurePlayerContract(player)
+    const rank = playerOvrRank(team.players, player.id)
     return {
       player,
       playerId: player.id,
@@ -243,8 +254,8 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
       ovr: getOverallRating(player.skills),
       age: player.age ?? null,
       marketValue: getPlayerMarketValue(player),
-      askPrice: computeAskPrice(player, team),
-      rank: playerOvrRank(team.players, player.id),
+      askPrice: computeAskPrice(player, team, rank),
+      rank,
       teamId: team.id,
       teamName: team.name,
       teamShort: team.shortName ?? team.name,
@@ -658,7 +669,7 @@ export function acceptCounterOffer(career, { playerId, counterAmount }) {
       phase: 'club',
       evaluation: {
         status: 'rejected',
-        askPrice: computeAskPrice(found.player, found.team),
+        askPrice: computeAskPrice(found.player, found.team, rank),
         offerAmount: fee,
         chance: 0,
         message: `${found.team.name} wycofuje się z negocjacji w ostatniej chwili. Spróbuj ponownie z wyższą ofertą.`,
@@ -681,7 +692,7 @@ export function acceptCounterOffer(career, { playerId, counterAmount }) {
     needsPlayerNegotiation: true,
     evaluation: {
       status: 'accepted',
-      askPrice: computeAskPrice(found.player, found.team),
+      askPrice: computeAskPrice(found.player, found.team, rank),
       offerAmount: fee,
       chance: 1,
       message: `${found.team.name} finalizuje zgodę na transfer za ${formatUsd(fee)}. Teraz negocjacje z zawodnikiem.`,

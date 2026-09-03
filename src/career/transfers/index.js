@@ -75,6 +75,7 @@ export {
 export { getTransferWindowState, isTransferWindowOpen } from './transferWindow.js'
 
 export {
+  buildOvrRankMap,
   playerOvrRank,
   starPremium,
   computeAskPrice,

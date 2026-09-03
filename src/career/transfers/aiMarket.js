@@ -11,7 +11,13 @@ import {
   getTransferPolicy,
   canBuyPlayers,
 } from './clubFinances.js'
-import { computeAskPrice, evaluateBuyOffer, playerOvrRank, classifyTransferTarget } from './negotiation.js'
+import {
+  buildOvrRankMap,
+  computeAskPrice,
+  evaluateBuyOffer,
+  playerOvrRank,
+  classifyTransferTarget,
+} from './negotiation.js'
 import { refreshPlayerMarketValue } from './playerValue.js'
 import { getTransferWindowState, isTransferWindowOpen } from './transferWindow.js'
 import { completeTransferBetweenClubs } from './transferEngine.js'
@@ -57,6 +63,7 @@ function refreshAiTransferListings(world, { date, seed, excludeTeamId = null } =
     if (!players.length) continue
     const avg = teamAvgOvr(team)
     const policy = getTransferPolicy(team)
+    const rankMap = buildOvrRankMap(players)
 
     for (const player of players) {
       if (player.loan) {
@@ -64,7 +71,7 @@ function refreshAiTransferListings(world, { date, seed, excludeTeamId = null } =
         continue
       }
       const ovr = getOverallRating(player.skills)
-      const rank = playerOvrRank(players, player.id)
+      const rank = rankMap.get(String(player.id)) ?? players.length
       const isStar = rank <= 1 || ovr >= avg + 5
       if (isStar) {
         player.transferListed = false
@@ -103,6 +110,7 @@ function refreshAiLoanListings(world, { date, seed, excludeTeamId = null } = {})
     const players = team.players ?? []
     if (!players.length) continue
     const avg = teamAvgOvr(team)
+    const rankMap = buildOvrRankMap(players)
 
     for (const player of players) {
       if (player.loan || player.transferListed) {
@@ -110,7 +118,7 @@ function refreshAiLoanListings(world, { date, seed, excludeTeamId = null } = {})
         continue
       }
       const ovr = getOverallRating(player.skills)
-      const rank = playerOvrRank(players, player.id)
+      const rank = rankMap.get(String(player.id)) ?? players.length
       const isStar = rank <= 1 || ovr >= avg + 5
       if (isStar) {
         player.loanListed = false
@@ -214,13 +222,16 @@ function shuffle(arr, rng) {
 /**
  * Czy AI kupujący powinien interesować się tym zawodnikiem.
  */
-function aiWantsPlayer(buyer, player, seller, ask, budget, rng) {
+function aiWantsPlayer(buyer, player, seller, ask, budget, rng, precomputedRank = null) {
   if (ask > budget) return false
   if ((seller.players?.length ?? 0) <= MIN_ROSTER) return false
 
   const ovr = getOverallRating(player.skills)
   const buyerAvg = teamAvgOvr(buyer)
-  const rank = playerOvrRank(seller.players, player.id)
+  const rank =
+    Number.isFinite(precomputedRank) && precomputedRank >= 0
+      ? precomputedRank
+      : playerOvrRank(seller.players, player.id)
   const target = classifyTransferTarget(player, buyer)
   const { age, room, prospect, strongProspect, veteranBargain, veteran } = target
 
@@ -305,11 +316,14 @@ function tryOneAiDeal(career, rng, excludePlayerIds) {
         rng,
       )
       const candidates = [...listed, ...rest].slice(0, 8)
+      const sellerRanks = buildOvrRankMap(seller.players)
+      const sellerRosterSize = (seller.players ?? []).length
 
       for (const player of candidates) {
         refreshPlayerMarketValue(player)
-        const ask = computeAskPrice(player, seller)
-        if (!aiWantsPlayer(buyer, player, seller, ask, budget, rng)) continue
+        const rank = sellerRanks.get(String(player.id)) ?? sellerRosterSize
+        const ask = computeAskPrice(player, seller, rank)
+        if (!aiWantsPlayer(buyer, player, seller, ask, budget, rng, rank)) continue
 
         const offer = pickAiOffer(ask, budget, rng)
         if (offer < ask * 0.7) continue
