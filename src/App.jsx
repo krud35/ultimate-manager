@@ -640,7 +640,7 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
   )
 
   const uw = processUltiworldTick(
-    { ...career, league: nextLeague, world, ultiworld: career.ultiworld },
+    { ...career, league: nextLeague, world, transferLog, loanLog, ultiworld: career.ultiworld },
     { date: offerDate },
   )
   world = uw.world ?? world
@@ -1223,7 +1223,7 @@ export default function App() {
       ]
 
       const uw = processUltiworldTick(
-        { ...career, league: nextLeague, world, ultiworld: career.ultiworld },
+        { ...career, league: nextLeague, world, transferLog, loanLog, ultiworld: career.ultiworld },
         { date: nextLeague.currentDate },
       )
       world = uw.world ?? world
@@ -1415,7 +1415,7 @@ export default function App() {
         ]
 
         const uw = processUltiworldTick(
-          { ...career, league: nextLeague, world, ultiworld: career.ultiworld },
+          { ...career, league: nextLeague, world, transferLog, loanLog, ultiworld: career.ultiworld },
           { date: nextLeague.currentDate },
         )
         world = uw.world ?? world

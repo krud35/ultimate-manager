@@ -15,6 +15,8 @@ const CATEGORY_STYLE = {
   cup: 'border-ufa-gold/40 bg-ufa-gold/10 text-ufa-gold',
   awards: 'border-sky-400/40 bg-sky-400/10 text-sky-300',
   power_rankings: 'border-violet-400/40 bg-violet-500/10 text-violet-300',
+  transfer: 'border-amber-400/40 bg-amber-500/10 text-amber-300',
+  rumor: 'border-fuchsia-400/40 bg-fuchsia-500/10 text-fuchsia-300',
   feature: 'border-ufa-border bg-ufa-bg text-ufa-muted',
   breaking: 'border-red-400/40 bg-red-500/10 text-red-300',
 }
@@ -22,6 +24,8 @@ const CATEGORY_STYLE = {
 const FILTER_IDS = [
   'all',
   'unread',
+  'transfer',
+  'rumor',
   'match',
   'round',
   'cup',

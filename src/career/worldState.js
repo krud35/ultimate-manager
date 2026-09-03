@@ -359,12 +359,27 @@ export function rehydrateCareerWorld(career) {
                 ? career.ultiworld.powerRankingsSnapshot
                 : null,
             lastPowerRankingMonth: career.ultiworld.lastPowerRankingMonth ?? null,
+            // Newsy transferowe: kursory po transferLog/loanLog + pamięć plotek.
+            coveredTransferKeys: Array.isArray(career.ultiworld.coveredTransferKeys)
+              ? career.ultiworld.coveredTransferKeys
+              : [],
+            coveredLoanKeys: Array.isArray(career.ultiworld.coveredLoanKeys)
+              ? career.ultiworld.coveredLoanKeys
+              : [],
+            transferRumors: Array.isArray(career.ultiworld.transferRumors)
+              ? career.ultiworld.transferRumors
+              : [],
+            transferNewsSeeded: !!career.ultiworld.transferNewsSeeded,
           }
         : {
             articles: [],
             lastRoundCovered: 0,
             lastPomMonth: null,
             coveredFixtureIds: [],
+            coveredTransferKeys: [],
+            coveredLoanKeys: [],
+            transferRumors: [],
+            transferNewsSeeded: false,
           },
   }
 }

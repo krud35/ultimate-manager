@@ -15,11 +15,11 @@ import {
   formatUsd,
   getPlayerMarketValue,
   getTransferBudget,
-  getTransferPolicy,
   isTransferWindowOpen,
   refreshPlayerMarketValue,
   classifyTransferTarget,
   computeLoanReturnDate,
+  aiIncomingInterestChance,
 } from './transfers/index.js'
 import {
   pickRandomEventMessage,
@@ -793,82 +793,9 @@ export function messagesFromForcedTransferListDemands(forced, career) {
   })
 }
 
-/**
- * Czy AI kupujący zainteresuje się zawodnikiem gracza.
- * Cele: jakość/upgrade, młody talent, weteran-okazja; forma; morale otwiera drzwi.
- * @returns {number} 0–1 szansa zainteresowania
- */
 // Zawodnik na liście transferowej: AI wie, że klub chce go sprzedać.
-const TRANSFER_LIST_AI_INTEREST_MULT = 1.6
 const TRANSFER_LIST_WEIGHT_MULT = 2.2
 const TRANSFER_LIST_DAY_CHANCE_MULT = 1.5
-
-function aiIncomingInterestChance(buyer, player, seller, rng) {
-  const form = getPlayerForm(player)
-  const morale = getPlayerMorale(player)
-  const target = classifyTransferTarget(player, buyer)
-  const { ovr, age, pot, room, buyerAvg, prospect, strongProspect, veteran, veteranBargain } =
-    target
-  const avg = buyerAvg ?? 70
-  const rank = [...(seller.players ?? [])]
-    .sort((a, b) => getOverallRating(b.skills) - getOverallRating(a.skills))
-    .findIndex((p) => String(p.id) === String(player.id))
-
-  // Twarde odrzucenia: dołek formy / zupełnie słabi (z wyjątkiem mocnych talentów).
-  if (form < 50) return 0
-  if (ovr < 66 && !strongProspect) return 0
-  if (ovr < 70 && form < 62 && !prospect) return 0
-  if (ovr < avg - 5 && !prospect && !veteranBargain) return 0
-  if (ovr < 68 && !prospect) return 0
-  // Weterani bez poziomu — nie.
-  if (veteran && ovr < 70) return 0
-  if (age >= 37) return 0
-
-  let chance = 0.1
-
-  if (ovr >= avg + 3) chance += 0.28
-  else if (ovr >= avg + 1) chance += 0.2
-  else if (ovr >= avg - 1) chance += 0.14
-  else if (ovr >= avg - 3) chance += 0.06
-  else chance += 0.015
-
-  if (form >= 82) chance += 0.14
-  else if (form >= 72) chance += 0.07
-  else if (form >= 62) chance += 0.02
-  else chance -= 0.12
-
-  // Młody z potencjałem — osobny tor zakupowy.
-  if (strongProspect) chance += 0.34
-  else if (prospect) {
-    chance += 0.22
-    if (room >= 6) chance += 0.08
-    if (pot >= avg + 4) chance += 0.06
-  }
-
-  // Starsi: tańsi względem OVR, depth / krótkoterminowa jakość.
-  if (veteranBargain) chance += 0.2
-  else if (veteran && ovr >= avg - 1) chance += 0.12
-  else if (veteran && ovr >= avg - 3) chance += 0.06
-
-  // Niskie morale → zawodnik „chce odejść” / agent szuka wyjścia.
-  if (morale < 42) chance += 0.26
-  else if (morale < 50) chance += 0.16
-  else if (morale < 58) chance += 0.07
-  else if (morale >= 88 && rank <= 1 && !prospect) chance -= 0.08
-
-  if (rank === 0) chance *= prospect ? 0.7 : 0.55
-  else if (rank <= 2) chance *= prospect || veteranBargain ? 0.85 : 0.75
-
-  const policy = getTransferPolicy(buyer)
-  if (policy.id === 'buy') chance += 0.06
-  if (policy.id === 'hardline') chance -= 0.04
-  // Kluby „sell” chętniej biorą tanie weterany.
-  if (policy.id === 'sell' && veteranBargain) chance += 0.05
-
-  if (player.transferListed) chance *= TRANSFER_LIST_AI_INTEREST_MULT
-
-  return Math.max(0, Math.min(0.88, chance + (rng() - 0.5) * 0.04))
-}
 
 function pendingBidPlayerIds(inbox) {
   const ids = new Set()

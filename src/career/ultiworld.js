@@ -16,6 +16,7 @@ import { worldTeamById, worldTeamsList } from './worldState.js'
 import { getTeamElo } from '../models/teamElo.js'
 import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/index.js'
 import { UI_LANG } from '../ui/locale.js'
+import { ensureTransferNewsState, transferNewsForTick } from './ultiworldTransfers.js'
 
 const ARTICLES_MAX = 80
 const WORLD_EVENT_CHANCE = 0.24
@@ -182,6 +183,7 @@ export function ensureUltiworld(career) {
   if (!u.worldEventCooldowns || typeof u.worldEventCooldowns !== 'object') u.worldEventCooldowns = {}
   if (u.powerRankingsSnapshot === undefined) u.powerRankingsSnapshot = null
   if (u.lastPowerRankingMonth === undefined) u.lastPowerRankingMonth = null
+  ensureTransferNewsState(u)
   return u
 }
 
@@ -2744,6 +2746,37 @@ function runWorldEventArticle(event, career, world, league, simDate, rng, inboxM
 }
 
 /**
+ * Spec artykułu (`{ article, inboxHint?, inboxHintEn? }`) → gotowy artykuł.
+ * Newsy transferowe nie zmieniają stanu świata, więc — inaczej niż world-eventy —
+ * nie potrzebują klonowania `world`/`league`.
+ */
+function articleFromSpec(spec, career, simDate, inboxMessages) {
+  if (!spec?.article) return null
+  const art = makeArticle({ ...spec.article, date: simDate, career })
+  if (spec.inboxHint) {
+    inboxMessages.push({
+      id: newId('msg-uw'),
+      type: 'random_event',
+      createdAt: new Date().toISOString(),
+      date: simDate,
+      seasonIndex: career.seasonIndex,
+      seasonYear: career.seasonYear,
+      read: false,
+      title: `Ultiworld · ${spec.article.headline}`,
+      ...(spec.article.headlineEn ? { titleEn: `Ultiworld · ${spec.article.headlineEn}` } : {}),
+      body: spec.inboxHint,
+      ...(spec.inboxHintEn ? { bodyEn: spec.inboxHintEn } : {}),
+      payload: {
+        kind: 'ultiworld_notice',
+        status: 'resolved',
+        articleId: art.id,
+      },
+    })
+  }
+  return art
+}
+
+/**
  * Generuje artykuły Ultiworld po dniu / FF.
  * Może mutować world + league (efekty wydarzeń).
  *
@@ -2859,7 +2892,26 @@ export function processUltiworldTick(career, { date = null } = {}) {
     ultiworld.lastPowerRankingMonth = curMonth
   }
 
-  // 4) Losowe wydarzenie świata (+ osobna szansa na ciekawostkę)
+  // 4) Rynek transferowy — faktyczne ruchy z logów + plotki o zainteresowaniu
+  const transferNews = transferNewsForTick({
+    career: { ...career, world, league },
+    league,
+    simDate,
+    rng,
+    namesPl,
+    namesEn,
+    ultiworld,
+  })
+  ultiworld.coveredTransferKeys = transferNews.coveredTransferKeys
+  ultiworld.coveredLoanKeys = transferNews.coveredLoanKeys
+  ultiworld.transferRumors = transferNews.transferRumors
+  ultiworld.transferNewsSeeded = transferNews.transferNewsSeeded
+  for (const spec of transferNews.specs) {
+    const art = articleFromSpec(spec, career, simDate, inboxMessages)
+    if (art) newArticles.push(art)
+  }
+
+  // 5) Losowe wydarzenie świata (+ osobna szansa na ciekawostkę)
   const usedEventIds = new Set()
   const cooldowns = { ...(ultiworld.worldEventCooldowns ?? {}) }
   if (rng() < WORLD_EVENT_CHANCE) {

@@ -4,7 +4,7 @@ const pl = {
   brand: 'Ultizone',
   tagline: 'ultimate media',
   intro:
-    'Krótkie newsy z ligi i Pucharu: hity kolejek, siódemki, zawodnik miesiąca i wydarzenia, które czasem ruszają nawet budżetem.',
+    'Krótkie newsy z ligi i Pucharu: hity kolejek, siódemki, zawodnik miesiąca, ruchy transferowe i plotki — plus wydarzenia, które czasem ruszają nawet budżetem.',
   unread: (n) => ` · ${n} nieprzeczytanych`,
   markRead: 'Oznacz przeczytane',
   emptyAll: 'Redakcja milczy — graj kolejkę albo przewiń kalendarz, a Ultizone zacznie pisać.',
@@ -15,6 +15,8 @@ const pl = {
   filters: {
     all: 'Wszystkie',
     unread: 'Nowe',
+    transfer: 'Transfery',
+    rumor: 'Plotki',
     match: 'Mecze',
     round: 'Kolejki',
     cup: 'Puchar',
@@ -24,6 +26,8 @@ const pl = {
     feature: 'Feature',
   },
   categories: {
+    transfer: 'Transfer',
+    rumor: 'Plotka',
     match: 'Mecz',
     round: 'Kolejka',
     cup: 'Puchar',
@@ -38,7 +42,7 @@ const en = {
   brand: 'Ultiworld',
   tagline: 'ultimate media',
   intro:
-    'Short league and Cup news: round highlights, top sevens, player of the month, and events that sometimes move the budget.',
+    'Short league and Cup news: round highlights, top sevens, player of the month, transfer moves and rumors — plus events that sometimes move the budget.',
   unread: (n) => ` · ${n} unread`,
   markRead: 'Mark all read',
   emptyAll: 'The newsroom is quiet — play a round or advance the calendar and Ultiworld will start writing.',
@@ -49,6 +53,8 @@ const en = {
   filters: {
     all: 'All',
     unread: 'New',
+    transfer: 'Transfers',
+    rumor: 'Rumors',
     match: 'Matches',
     round: 'Rounds',
     cup: 'Cup',
@@ -58,6 +64,8 @@ const en = {
     feature: 'Feature',
   },
   categories: {
+    transfer: 'Transfer',
+    rumor: 'Rumor',
     match: 'Match',
     round: 'Round',
     cup: 'Cup',

@@ -84,6 +84,7 @@ export {
   aiBuyerMaxFee,
   evaluateSellerCounter,
   classifyTransferTarget,
+  aiIncomingInterestChance,
 } from './negotiation.js'
 
 export {
