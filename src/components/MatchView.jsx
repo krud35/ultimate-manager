@@ -38,6 +38,8 @@ import {
   normalizeTactics,
 } from '../matchEngine'
 import { BoxScoreTable } from './BoxScoreTable'
+import { MATCH_STAGE_TO_SCENE } from '../ui/backgrounds/scenes.js'
+import { useSceneOverride } from '../ui/backgrounds/sceneOverride.js'
 import PointHistory from './PointHistory'
 import LineupSelector from './LineupSelector'
 import PointStaminaPanel from './PointStaminaPanel'
@@ -228,6 +230,8 @@ export default function MatchView({
   /** Etapy dnia meczowego: przygotowanie -> team news -> mecz -> po meczu. */
   const [stage, setStage] = useState('prep')
   const [tacticsModalOpen, setTacticsModalOpen] = useState(false)
+  // Tło ekranu podąża za etapem dnia meczowego (tunel → szatnia → boisko → zmierzch).
+  useSceneOverride(MATCH_STAGE_TO_SCENE[stage])
   const [showFullStats, setShowFullStats] = useState(false)
 
   /** Poza "prep" blokujemy nawigację w App.jsx — nie da się porzucić meczu w trakcie. */

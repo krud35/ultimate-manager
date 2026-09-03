@@ -137,6 +137,9 @@ import { buildSeasonStateFromLeague } from './seasonEngine/seasonStateFromLeague
 import { displaySeasonLabel, pickLabel, pickCopy, UI_LANG } from './ui/locale'
 import { useUiLang } from './ui/UiLangContext'
 import { LangSwitch } from './ui/LangSwitch'
+import { ScreenBackground } from './ui/backgrounds/ScreenBackground.jsx'
+import { sceneForTab } from './ui/backgrounds/scenes.js'
+import { useBackgroundPref } from './ui/backgrounds/backgroundPref.js'
 import { careerFlowStrings } from './ui/strings/careerFlow'
 import { shellStrings } from './ui/strings/shell'
 import { hubStrings } from './ui/strings/hub'
@@ -296,6 +299,17 @@ function IconAlert({ className }) {
       <path d="M12 9v4" />
       <path d="M10.3 3.9 2.7 17a1.8 1.8 0 0 0 1.55 2.7h15.5A1.8 1.8 0 0 0 21.3 17L13.7 3.9a1.8 1.8 0 0 0-3.4 0Z" />
       <path d="M12 16.2h.01" />
+    </svg>
+  )
+}
+
+function IconBackdrop({ className, off = false }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="m3 16 4.5-5 3.5 4 3-3 7 6" />
+      <circle cx="9" cy="9" r="1.4" />
+      {off ? <path d="m4 20 16-16" /> : null}
     </svg>
   )
 }
@@ -663,6 +677,7 @@ export default function App() {
   const { lang: uiLang, setLang: setUiLang } = useUiLang()
   const tShell = shellStrings(uiLang)
   const [screen, setScreen] = useState('slots') // slots | new | play
+  const [bgEnabled, toggleBg] = useBackgroundPref()
   const [slots, setSlots] = useState(() => listSlots())
   const [pendingSlot, setPendingSlot] = useState(null)
   const [career, setCareer] = useState(null)
@@ -2091,42 +2106,48 @@ export default function App() {
 
   if (screen === 'slots') {
     return (
-      <div className="min-h-screen bg-ufa-bg">
-        <CareerSelectScreen
-          slots={slots}
-          lang={uiLang}
-          onLangChange={setUiLang}
-          onNew={handleNewSlot}
-          onLoad={handleLoadSlot}
-          onDelete={handleDeleteSlot}
-        />
-      </div>
+      <>
+        <ScreenBackground scene="career-select" enabled={bgEnabled} />
+        <div className="relative z-10 min-h-screen">
+          <CareerSelectScreen
+            slots={slots}
+            lang={uiLang}
+            onLangChange={setUiLang}
+            onNew={handleNewSlot}
+            onLoad={handleLoadSlot}
+            onDelete={handleDeleteSlot}
+          />
+        </div>
+      </>
     )
   }
 
   if (screen === 'new' && pendingSlot != null) {
     return (
-      <div className="min-h-screen bg-ufa-bg">
-        <NewCareerScreen
-          slotIndex={pendingSlot}
-          lang={uiLang}
-          onCancel={() => {
-            if (creatingCareer) return
-            setPendingSlot(null)
-            setScreen('slots')
-          }}
-          onCreate={handleCreateCareer}
-          submitting={creatingCareer}
-          externalError={careerCreateError}
-        />
-        <SimulationProgressOverlay
-          progress={
-            creatingCareer
-              ? { label: careerFlowStrings(uiLang).startingCareer, indeterminate: true }
-              : null
-          }
-        />
-      </div>
+      <>
+        <ScreenBackground scene="career-new" enabled={bgEnabled} />
+        <div className="relative z-10 min-h-screen">
+          <NewCareerScreen
+            slotIndex={pendingSlot}
+            lang={uiLang}
+            onCancel={() => {
+              if (creatingCareer) return
+              setPendingSlot(null)
+              setScreen('slots')
+            }}
+            onCreate={handleCreateCareer}
+            submitting={creatingCareer}
+            externalError={careerCreateError}
+          />
+          <SimulationProgressOverlay
+            progress={
+              creatingCareer
+                ? { label: careerFlowStrings(uiLang).startingCareer, indeterminate: true }
+                : null
+            }
+          />
+        </div>
+      </>
     )
   }
 
@@ -2150,8 +2171,10 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-ufa-bg md:flex-row">
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-ufa-border bg-ufa-panel/60 md:flex">
+    <>
+    <ScreenBackground scene={sceneForTab(activeTab)} enabled={bgEnabled} />
+    <div className="relative z-10 flex min-h-screen flex-col md:flex-row">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-ufa-border bg-ufa-panel/85 md:flex">
         <div className="flex items-center gap-2.5 border-b border-ufa-border px-4 py-4">
           <UfaMark className="h-8 w-8 shrink-0" />
           <div className="min-w-0">
@@ -2226,7 +2249,23 @@ export default function App() {
         </nav>
 
         <div className="flex flex-col gap-2 border-t border-ufa-border p-3">
-          <LangSwitch lang={uiLang} onChange={setUiLang} />
+          <div className="flex items-center gap-2">
+            <LangSwitch lang={uiLang} onChange={setUiLang} />
+            <button
+              type="button"
+              onClick={toggleBg}
+              aria-pressed={bgEnabled}
+              aria-label={bgEnabled ? tShell.bgOn : tShell.bgOff}
+              title={bgEnabled ? tShell.bgOn : tShell.bgOff}
+              className={`ml-auto flex h-8 w-8 items-center justify-center rounded-md border transition-colors ${
+                bgEnabled
+                  ? 'border-ufa-accent/50 text-ufa-accent'
+                  : 'border-ufa-border text-ufa-muted hover:text-ufa-text'
+              }`}
+            >
+              <IconBackdrop className="h-4 w-4" off={!bgEnabled} />
+            </button>
+          </div>
           <button
             type="button"
             onClick={handleExitToSlots}
@@ -2594,6 +2633,7 @@ export default function App() {
       )}
       <TutorialGuide open={tutorialOpen} onClose={() => setTutorialOpen(false)} lang={uiLang} />
     </div>
+    </>
   )
 }
 
