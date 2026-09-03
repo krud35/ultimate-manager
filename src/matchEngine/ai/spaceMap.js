@@ -1,5 +1,5 @@
 import { FIELD_DIMENSIONS, clampFieldX, clampFieldY } from '../fieldDimensions.js'
-import { subStat } from './statFormulas.js'
+import { maxSpeedMps, subStat } from './statFormulas.js'
 
 /**
  * Mapa WOLNEJ PRZESTRZENI wokół dysku — podstawa decyzji cutterów.
@@ -143,6 +143,36 @@ function occupancyContribution(px, py, cx, cy) {
 /** Ile waży NAJGROŹNIEJSZY z pozostałych obrońców — kontekst i pomoc, nie krycie. */
 /** Ile tłok waży przy ocenie, czy da się tam WBIEC (przy podaniu waży więcej). */
 const CROWD_MOVE_WEIGHT = 0.45
+/**
+ * Ile waży przestrzeń ZAKLEPANA przez kolegę, który już tam biegnie, względem kolegi,
+ * który fizycznie tam stoi.
+ *
+ * Bez tego członu `crowd` mierzy wyłącznie bieżące pozycje, a więc trzech cutterów
+ * oceniających tę samą pustą głębię widzi ją jako wolną — każdy osobno — i ruszają tam
+ * wszyscy naraz. Zmierzone po zdjęciu kary za dobieg: udział hucków 31.7% przy celu
+ * 7-16 i completion 77.1%. W realnym ultimate nie tniesz deep, gdy kolega właśnie tam
+ * poszedł; widzisz jego bieg, nie tylko jego pozycję.
+ *
+ * 1.0 = zaklepana przestrzeń odstrasza tak samo jak zajęta.
+ */
+export const CLAIM_WEIGHT = { value: 1 }
+
+/**
+ * Ile z zaklepanej przestrzeni ten zawodnik DOSTRZEGA — 0 = nie widzi biegu kolegi
+ * wcale, 1 = czyta go w pełni.
+ *
+ * Kilku cutujących naraz jest poprawne; kilku cutujących w TĘ SAMĄ przestrzeń jest
+ * błędem — i ma być błędem SŁABYCH zawodników, nie wszystkich. Dobry cutter widzi, że
+ * kolega już tam poszedł, i szuka innej przestrzeni. Ta sama para statystyk, którą
+ * perceiveSpaceMap zaszumia odczyt mapy, bo to jest ta sama umiejętność: czytanie gry.
+ */
+export function claimAwarenessFor(player) {
+  if (!player) return 1
+  const read =
+    subStat(player, 'mental', 'vision') * 0.5 +
+    subStat(player, 'offensive', 'offensiveSystemsKnowledge') * 0.5
+  return Math.max(0, Math.min(1, (read - 40) / 45))
+}
 
 /**
  * CIEŃ obrońcy — jego ZAANGAŻOWANIE w daną przestrzeń.
@@ -161,27 +191,47 @@ const CROWD_MOVE_WEIGHT = 0.45
  * bo domyślnie obrońca nie oddaje ani nie zabiera żadnej z tych przestrzeni z góry, to
  * atakujący musi sobie okazję wypracować.
  */
-/** Przesunięcie obrońcy (m), przy którym zaangażowanie jest pełne. */
-const COMMIT_REF_M = 3
+/** Różnica czasów dobiegu (s), przy której przestrzeń jest już jednoznacznie czyja. */
+const RACE_REF_SEC = 1.1
 
-function shadowFor(defender, cell, viewer) {
-  const dx = cell.x - viewer.x
-  const dy = cell.y - viewer.y
-  const len = Math.hypot(dx, dy)
-  if (len < 1e-6) return 1
-  const ox = defender.x - viewer.x
-  const oy = defender.y - viewer.y
-  // Rzut przesunięcia obrońcy na kierunek do tej przestrzeni.
-  const proj = (ox * dx + oy * dy) / len
-  const commit = 0.5 + (proj / COMMIT_REF_M) * 0.5
-  return Math.max(0, Math.min(1, commit))
+/**
+ * KTO BĘDZIE TAM PIERWSZY — 0 = przestrzeń moja, 1 = obrony, 0.5 = wyścig remisowy.
+ *
+ * Poprzednia wersja liczyła rzut przesunięcia własnego obrońcy na kierunek do komórki.
+ * Było to NIEWRAŻLIWE NA SKALĘ: komórka 5 m i 60 m w tym samym kierunku dostawały
+ * identyczny cień, więc cała głębia boiska miała tę samą wartość. Zmierzone skutki
+ * (tmp-sweep/mid-band.mjs, 6171 decyzji): mediana wybranej przestrzeni wynosiła 64.0 m
+ * do przodu dla KAŻDEJ roli, łącznie z resetowym handlerem, a 82.3% decyzji celowało
+ * w przestrzeń ≥25 m. Freeness nie odróżniało dwóch pustych komórek odległych o 30 m,
+ * więc rozstrzygał jedyny człon z rozrzutem — monotoniczna nagroda za teren.
+ *
+ * Wyścig przywraca wymiar odległości i przy okazji POCHŁANIA dawny rzut kierunkowy:
+ * obrońca ustawiony głębiej ma krótszy dobieg do komórek głębokich i dłuższy do under,
+ * więc shading wychodzi z samej geometrii, zamiast być osobnym członem. Zachowana
+ * zostaje własność bazowa: obrońca stojący przy zawodniku daje remis (0.5) w każdym
+ * kierunku — to jest specyfikacja "0.5 na under i 0.5 na deep".
+ */
+function contestFor(cell, viewer, viewerSpeed, defenders, defSpeeds) {
+  const myTime = Math.hypot(cell.x - viewer.x, cell.y - viewer.y) / viewerSpeed
+  let defTime = Infinity
+  for (let i = 0; i < defenders.length; i += 1) {
+    const d = defenders[i]
+    const t = Math.hypot(cell.x - d.x, cell.y - d.y) / defSpeeds[i]
+    if (t < defTime) defTime = t
+  }
+  if (!Number.isFinite(defTime)) return 0
+  const margin = defTime - myTime
+  return Math.max(0, Math.min(1, 0.5 - (margin / RACE_REF_SEC) * 0.5))
 }
-export function buildSpaceMap({ disc, attackSign, teammates = [], defenders = [], ignoreId = null, viewer = null }) {
+export function buildSpaceMap({ disc, attackSign, teammates = [], defenders = [], ignoreId = null, viewer = null, claimAwareness = 1 }) {
   const cells = []
   if (!disc) return cells
 
   // Obrońca stojący najbliżej oceniającego = jego kryjący. Wyznaczany po odległości, bo
   // to jest dokładnie ten, „który stoi przy nim" — niezależnie od formalnego przydziału.
+  // Prędkości liczone RAZ na budowę mapy — nie per komórka (79 komórek x 7 obrońców).
+  const viewerSpeed = Math.max(3, viewer?.player ? maxSpeedMps(viewer.player) : 6.5)
+  const defSpeeds = defenders.map((d) => Math.max(3, d.player ? maxSpeedMps(d.player) : 6.5))
   let ownDefender = null
   if (viewer && defenders.length) {
     let bestD = Infinity
@@ -223,8 +273,19 @@ export function buildSpaceMap({ disc, attackSign, teammates = [], defenders = []
           if (dfn === ownDefender) continue
           crowd += occupancyContribution(dfn.x, dfn.y, px, py)
         }
+        // Koledzy, którzy JUŻ BIEGNĄ w tę przestrzeń, zajmują ją na przyszłość.
+        for (const mate of teammates) {
+          if (mate.id === ignoreId) continue
+          if (!Number.isFinite(mate.claimX) || !Number.isFinite(mate.claimY)) continue
+          crowd +=
+            occupancyContribution(mate.claimX, mate.claimY, px, py) *
+            CLAIM_WEIGHT.value *
+            claimAwareness
+        }
         const teamOccupancy = crowd
-        const shadow = viewer && ownDefender ? shadowFor(ownDefender, { x: px, y: py }, viewer) : 0
+        const shadow = viewer
+          ? contestFor({ x: px, y: py }, viewer, viewerSpeed, defenders, defSpeeds)
+          : 0
         const defPressure = viewer
           ? shadow
           : defenders.reduce((acc2, dfn) => acc2 + occupancyContribution(dfn.x, dfn.y, px, py), 0)

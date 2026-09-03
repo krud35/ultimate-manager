@@ -504,12 +504,23 @@ export function evaluateThrowOptionScore(baseScore, ctx) {
 export const DECISION_TIME = {
   /** Sama mechanika wypuszczenia — pivot, zamach, release. */
   executionMs: 200,
-  /** Percepcja przy vision 50 -> 95. */
-  perceptionSlowMs: 1500,
-  perceptionFastMs: 600,
+  /**
+   * Percepcja i decyzja: WOLNY koniec skali był nierealistyczny. Zawodnik przeciętny
+   * (50/50) potrzebował 200 + 3200 = 3.4 s na wypuszczenie solidnego looku; w klubowym
+   * ultimate to jest 1.5-2.5 s. Elita (95/95) miała 1.1 s i to było poprawne — dlatego
+   * skracamy wyłącznie wolny koniec, zamiast skalować całą bramkę (globalny mnożnik
+   * zjechałby elicie do ~0.3 s, co jest bez sensu).
+   *
+   * Zmierzony wpływ magnitudy bramki (tmp-sweep, mnożnik globalny): 1.0 -> hucki 24.0%,
+   * rzuty/punkt 5.86, hold 79.3; 0.25 -> hucki 10.3%, rzuty/punkt 8.64, hold 65.4.
+   * Szybsze wypuszczanie urealnia rozkład rzutów kosztem hold% — bo więcej podań na
+   * punkt to więcej okazji do straty.
+   */
+  perceptionSlowMs: 850,
+  perceptionFastMs: 450,
   /** Decyzja przy decisionMaking 50 -> 95. */
-  decisionSlowMs: 1700,
-  decisionFastMs: 650,
+  decisionSlowMs: 950,
+  decisionFastMs: 500,
   /** Mnożnik czasu wg czytelności looku. */
   clarityGolden: 0.7,
   claritySolid: 1,
@@ -531,6 +542,9 @@ export function throwerDecisionTimeMs(thrower, clarityMult) {
   return Math.round(D.executionMs + (perception + decision) * clarityMult)
 }
 
+/** Globalna skala bramki wypuszczenia — 0 = rzut w chwili znalezienia opcji. */
+export const GATE_SCALE = { value: 1 }
+
 export function throwReleaseGateMs(stallCount, forwardProgress = 0, ctx = {}) {
   const opts =
     typeof ctx === 'boolean'
@@ -549,9 +563,12 @@ export function throwReleaseGateMs(stallCount, forwardProgress = 0, ctx = {}) {
     thrower = null,
   } = opts
 
-  if (stallCount >= 8) return 0
-  if (stallCount >= 7) return 280
-  if (stallCount >= 5) return 700
+  // Skala bramki — patrz GATE_SCALE.
+  const G = (ms) => Math.round(ms * GATE_SCALE.value)
+
+  if (stallCount >= 8) return G(0)
+  if (stallCount >= 7) return G(280)
+  if (stallCount >= 5) return G(700)
 
   const sep = separation ?? 0
   const fp = forwardProgress ?? 0
@@ -561,13 +578,13 @@ export function throwReleaseGateMs(stallCount, forwardProgress = 0, ctx = {}) {
 
   // Point-five tylko w stylach flow (motion / hex).
   if (flowOffense && postCatchReorg && isContinuationCut && solidOpen) {
-    return goldenOpen ? 420 : 700
+    return G(goldenOpen ? 420 : 700)
   }
 
   // Chaos: najpierw napraw strukturę.
   if ((crowded || (teammateCrowd ?? 0) >= 1.8) && !goldenOpen) {
-    if (stallCount >= 4) return 1600
-    return 3600
+    if (stallCount >= 4) return G(1600)
+    return G(3600)
   }
 
   // Lock-in na realnie otwarty huck (≥ HUCK_MIN_M, sep ≥ 3): scanThrowOptions
@@ -575,7 +592,7 @@ export function throwReleaseGateMs(stallCount, forwardProgress = 0, ctx = {}) {
   // znikało (cutter biegnie dalej, szum decyzyjny), zanim minął zwykły gate
   // (2100ms+ dla goldenOpen — ta sama wartość co dla zwykłego dobrego looku).
   // Prawdziwy rzucający na tak otwarty deep strzela od razu, nie czeka.
-  if (fp >= HUCK_MIN_M && sep >= 3) return 260
+  if (fp >= HUCK_MIN_M && sep >= 3) return G(260)
 
   // Czas decyzji, nie wymuszony stall.
   //
@@ -593,7 +610,7 @@ export function throwReleaseGateMs(stallCount, forwardProgress = 0, ctx = {}) {
   // strat 0,98/punkt i mediany stallu 1. Dlatego nie usuwamy bramki, tylko urealniamy jej
   // magnitudy: czysty look wypuszczany od razu, brak looku nadal trzymany długo.
   const D = DECISION_TIME
-  const t = (mult) => (thrower ? throwerDecisionTimeMs(thrower, mult) : Math.round(1200 * mult))
+  const t = (mult) => G(thrower ? throwerDecisionTimeMs(thrower, mult) : Math.round(1200 * mult))
   if (goldenOpen && fp >= 8) return t(D.clarityGolden)
   if (solidOpen && fp >= 5) return t(D.claritySolid)
   if (isContinuationCut && solidOpen) return t(D.claritySolid * 0.85)

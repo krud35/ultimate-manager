@@ -60,6 +60,8 @@ const DT_SEC = SIM_TICK_MS / 1000
 
 /** Co ile ms obrona przewartościowuje, której przestrzeni broni (ludzkie tempo, nie 50 Hz). */
 const DEFENSE_REASSESS_MS = 300
+/** Próg percepcji rzucającego — jak często w ogóle przegląda boisko (ms). */
+const THROWER_SCAN_MS = 250
 /** O ile sekund poacher musi być SZYBSZY od odbiorcy, żeby uznać wypad za opłacalny. */
 const POACH_BEAT_MARGIN_SEC = 0.25
 /** Sufit szansy, że obrońca w ogóle dostrzeże okazję do poacha na lecący dysk. */
@@ -460,6 +462,17 @@ export function runContinuousThrowSimulation({
   const attackSign = possessionTeam === 'home' ? 1 : -1
   let spaceCellsCache = null
   let spaceCellsCacheMs = -1e9
+  /**
+   * Rzucający SKANUJE boisko co THROWER_SCAN_MS, a nie co tick (20 ms).
+   *
+   * Człowiek nie przelicza opcji pięćdziesiąt razy na sekundę. Przy skanie co tick
+   * rzucający widział każde, nawet ułamkowe okno — a ponieważ rzut wychodzi dopiero po
+   * minięciu bramki wypuszczenia, do wykonania dożywały tylko opcje DŁUGOTRWAŁE, czyli
+   * głębokie. Zmierzone: rozkład DECYZJI to 45.9% krótkich i 7.3% głębokich, a rozkład
+   * WYKONANYCH rzutów 29.1% i 33.5% — te same opcje, przefiltrowane przez czas.
+   */
+  let scanCache = null
+  let scanCacheMs = -1e9
 
   const offenseLayout = layoutPlayersOnField(
     offenseLineup,
@@ -652,6 +665,17 @@ export function runContinuousThrowSimulation({
       player: a.player,
       x: a.x,
       y: a.y,
+      // PRZESTRZEŃ ZAKLEPANA: dokąd ten kolega już biegnie. Mapa liczyła dotąd wyłącznie
+      // bieżące pozycje, więc trzech cutterów oceniających tę samą pustą głębię widziało
+      // ją jako wolną — każdy z nich osobno — i biegli tam wszyscy naraz.
+      claimX:
+        a.state === CUTTER_STATE.ACTIVE_CUT || a.state === CUTTER_STATE.INITIATING_CUT
+          ? (a.targetX ?? null)
+          : null,
+      claimY:
+        a.state === CUTTER_STATE.ACTIVE_CUT || a.state === CUTTER_STATE.INITIATING_CUT
+          ? (a.targetY ?? null)
+          : null,
     }))
     const defensePositions = defenseAgents.map((a) => ({
       player: a.player,
@@ -752,6 +776,10 @@ export function runContinuousThrowSimulation({
             dtSec: DT_SEC,
             // Cutterzy odnoszą się do miejsca, gdzie dysk BĘDZIE — tam zacznie się gra.
             disc: spaceAnchor,
+            // Czy dysk jest w powietrzu i czy leci DO MNIE — cutter po rozpoczęciu
+            // deep cutu ogląda się i na tej podstawie biegnie dalej albo zawraca.
+            discInFlight: !!flight,
+            flightIsForMe: !!flight && flight.receiverId === (agent.player?.id ?? agent.id),
             possessionTeam,
             forceSide,
             situation: evaluatePlayerSituation(agent.player ?? agent, {
@@ -1028,22 +1056,26 @@ export function runContinuousThrowSimulation({
     )
 
     if (!flight) {
-      const option = scanThrowOptions(thrower, offenseAgents, defenseAgents, {
-        disc,
-        stallCount: decisionStall,
-        forceSide,
-        possessionTeam,
-        wind,
-        rng,
-        setupElapsedMs: ms,
-        postCatchReorg,
-        lastThrowerId,
-        hardStallCount: Math.max(hardStallCount ?? 1, decisionStall),
-        requireForwardPass,
-        attackStyle,
-        defenseStyle,
-        offenseTactics: offenseTeam?.tactics,
-      })
+      if (ms - scanCacheMs >= THROWER_SCAN_MS || scanCache === null) {
+        scanCacheMs = ms
+        scanCache = scanThrowOptions(thrower, offenseAgents, defenseAgents, {
+          disc,
+          stallCount: decisionStall,
+          forceSide,
+          possessionTeam,
+          wind,
+          rng,
+          setupElapsedMs: ms,
+          postCatchReorg,
+          lastThrowerId,
+          hardStallCount: Math.max(hardStallCount ?? 1, decisionStall),
+          requireForwardPass,
+          attackStyle,
+          defenseStyle,
+          offenseTactics: offenseTeam?.tactics,
+        })
+      }
+      const option = scanCache
 
       const atkStyle = attackStyle
       const defStyle = defenseStyle

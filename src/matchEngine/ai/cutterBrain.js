@@ -12,7 +12,11 @@ import {
   ATTACK_STYLES,
 } from './tacticsBehavior.js'
 import { maxSpeedMps, plantStopMs, subStat } from './statFormulas.js'
-import { buildSpaceMap, perceiveSpaceMap, YARD_REF_M } from './spaceMap.js'
+import {
+  buildSpaceMap,
+  claimAwarenessFor,
+  perceiveSpaceMap,
+} from './spaceMap.js'
 import { mergeTraitAndCoachMods } from '../coachDirectives.js'
 import { integrateAgentMotion, repositionSpeedMps, waitingHoldSpeedMps } from './playerMovement.js'
 import {
@@ -48,6 +52,18 @@ const CUT_REVIEW_MS = 300
 const CUT_RETARGET_MARGIN = 18
 /** Poniżej tego wyniku najlepszej opcji cutter rezygnuje i schodzi w clearing. */
 const CUT_ABANDON_SCORE = 42
+/**
+ * OKNO ZAANGAŻOWANIA w deep cut. Przez ten czas zawodnik biegnie i NIE rozważa
+ * zawracania — dopiero potem ogląda się, czy rzut leci. Bez tego okna przegląd co 300 ms
+ * kasowałby każdy głęboki cut w pierwszej sekundzie, bo daleka przestrzeń wygląda gorzej
+ * dopóki się do niej nie zbliżysz.
+ */
+const DEEP_LOOK_MS = 1500
+/** Po ilu ms bez rzutu deep cut jest uznany za spalony i zawodnik zawraca. */
+const DEEP_GIVE_UP_MS = 2600
+/** Zasięg zawrotki pod dysk i ile metrów zostawić przed rzucającym (nie wbiegamy w niego). */
+const UNDER_CUT_MAX_M = 18
+const UNDER_CUT_KEEP_M = 4
 
 /**
  * Opóźnienie startu cutu i błąd ustawienia w formacji — czyli NIEIDEALNOŚĆ ATAKU.
@@ -167,13 +183,71 @@ function estimateOpenSpaceTarget(agent, disc, attackSign, situation, rng) {
  * Krótkie zostają na 24.7% wobec celu 50-60% — reszta luki jest w GEOMETRII pasm
  * (trzy z pięciu środków leżą powyżej 15 m), nie w tych wagach.
  */
-export const SPACE_BALANCE = { yard: 12, reach: 26 }
+/**
+ * KARA ZA DOBIEG USUNIĘTA (reach: 0) — była głównym powodem, dla którego atak nie
+ * chodził głęboko.
+ *
+ * Zmierzone przed zmianą (tmp-sweep/cut-depth.mjs, 15 514 decyzji cutu): komórka
+ * głęboka (≥35 m do przodu) istniała na mapie w 100% decyzji i nie wygrała ANI RAZU.
+ * Mediana score: -83.7 dla głębokiej wobec +61.6 dla wybranej, przy freeness 0.59 vs
+ * 0.69 — czyli głęboka przestrzeń NIE była bardziej zatłoczona, tylko dalsza. Kara
+ * 26 pkt za każdą sekundę biegu dawała 145 pkt różnicy, przy rozrzucie freeness ~10 pkt
+ * i terenu ~12 pkt. Formuła "wolna przestrzeń kontra koszt dobiegu" zdegenerowała się
+ * do "wybierz najbliższą komórkę": mediana celu leżała 3.8 m ZA dyskiem, przy dobiegu
+ * 3.4 m.
+ *
+ * Realnie koszt dobiegu nie istnieje w tym sensie — cut MA trwać kilka sekund. Zawodnik
+ * rusza w głąb, po ~1.5 s ogląda się, czy rzut leci, i albo biegnie dalej, albo zawraca
+ * (patrz DEEP_LOOK_MS niżej). Ryzyko biegu donikąd jest ponoszone przez ten mechanizm,
+ * nie przez karę w scoringu.
+ */
+export const SPACE_BALANCE = { yard: 12, reach: 0 }
 const SPACE_FREE_WEIGHT = 100
 /** Osobista preferencja z cech (deep_threat / under_cutter) — cecha ZAWODNIKA, nie
  *  mnożnik taktyki, więc zostaje. */
 const SPACE_BIAS_WEIGHT = 40
 /** Szum decyzyjny — żeby dwóch cutterów nie wybierało zawsze tej samej komórki. */
 const SPACE_NOISE = 12
+
+/**
+ * WARTOŚĆ TERENU nie rośnie w nieskończoność — przestrzeń, do której nie da się rzucić,
+ * jest bezwartościowa, a nie najcenniejsza.
+ *
+ * Poprzednio było to `ahead / 48`, czyli funkcja monotoniczna bez ograniczenia: komórka
+ * 64 m przed dyskiem dostawała 16 pkt, komórka 13 m — 3.3 pkt. Ponieważ freeness ma na
+ * otwartym boisku znikomy rozrzut (wyścig do dalekiej komórki jest remisowy, bo obrońca
+ * biegnie tam tyle samo co atakujący), ten jeden człon wyznaczał argmax. Zmierzone:
+ * mediana wybranej przestrzeni 64.0 m dla KAŻDEJ roli, 78-82% decyzji celowało w ≥25 m,
+ * a w pas 0-12 m trafiało 3-5%.
+ *
+ * Cutter biegnie w głąb po to, żeby stać się ŁAPALNY, a nie żeby dobiec do strefy
+ * na piechotę. Wartość rośnie więc do realnego zasięgu podania i za nim opada.
+ */
+/**
+ * Pasmo, w którym zawodnik szuka przestrzeni, wynika z POZYCJI, z której gra — nie
+ * z jego podroli.
+ *
+ * Podrole cutterskie (primary / secondary / continuation / filler) opisują KOLEJNOŚĆ
+ * i PRIORYTET wchodzenia w akcję, a nie miejsce na boisku. Primary cutter to często
+ * zawodnik, którego chce się mieć pod dyskiem, bo wypracowuje przewagę — przypisanie mu
+ * pasma głębokiego było błędem projektowym.
+ *
+ * Kierunek (deep vs under) pochodzi z ROZKAZÓW zawodnika (cut_deep / cut_under, ±0.55)
+ * i jego PREFERENCJI z cech (deep_threat / under_cutter, ±0.35), przeliczanych przez
+ * SPACE_BIAS_WEIGHT — czyli 22 i 14 punktów, mocniej niż wartość terenu (12).
+ *
+ * Podział handlerzy/cutterzy działa przez USTAWIENIE: handler stoi przy dysku i stamtąd
+ * atakuje, cutter stoi dalej i atakuje ze swojej pozycji. Przestrzeń, w którą realnie
+ * pobiegną, wychodzi więc z formacji, a nie z osobnej tabeli ról.
+ */
+const YARD_SPREAD_M = 26
+/** Cut z reguły trochę zyskuje teren — stąd przesunięcie środka do przodu. */
+const YARD_FORWARD_TILT_M = 6
+
+function yardValue(cellAhead, selfAhead) {
+  const peak = selfAhead + YARD_FORWARD_TILT_M
+  return Math.max(0, 1 - Math.abs(cellAhead - peak) / YARD_SPREAD_M)
+}
 
 function pickCutTarget(
   agent,
@@ -188,6 +262,7 @@ function pickCutTarget(
   teammates = null,
   defenders = null,
   throwerPos = null,
+  possessionTeam = null,
 ) {
   const traitMods = mergeTraitAndCoachMods(agent?.player ?? agent, offenseTactics, 'offense')
   const selfId = agent?.id ?? agent?.player?.id ?? null
@@ -199,8 +274,9 @@ function pickCutTarget(
       teammates: teammates ?? [],
       defenders: defenders ?? [],
       ignoreId: selfId,
+      claimAwareness: claimAwarenessFor(agent?.player ?? agent),
       // Cutter ocenia przestrzeń ZE SWOJEJ pozycji — kto będzie tam pierwszy.
-      viewer: { x: agent.x, y: agent.y },
+      viewer: { x: agent.x, y: agent.y, player: agent?.player ?? agent },
     }),
     agent?.player ?? agent,
     'offense',
@@ -213,8 +289,27 @@ function pickCutTarget(
     return legacyStyleCutTarget(agent, disc, attackSign, situation, rng, forceSide, attackStyle, stackIndex, traitMods)
   }
 
-  const maxAhead = YARD_REF_M
   const speed = Math.max(3, maxSpeedMps(agent?.player ?? agent))
+  // Środek pasma to SLOT W FORMACJI, nie bieżąca pozycja zawodnika.
+  //
+  // Centrowanie na bieżącej pozycji tworzyło sprzężenie zwrotne: opłacało się zostać
+  // tam, gdzie się jest, więc stack zapadał się w stronę dysku i centrował się coraz
+  // bliżej. Zmierzone: mediana wybranej przestrzeni -2.5 m, czyli ZA dyskiem, przy
+  // udziale głębi 15.3%. Slot formacji jest stabilny — handler ma go przy dysku,
+  // cutter dalej — więc pasmo poszukiwań bierze się z ustawienia, a nie z dryfu.
+  const slot = formationStructuralTarget({
+    attackStyle,
+    x: agent.x,
+    y: agent.y,
+    disc,
+    throwerPos,
+    forceSide,
+    possessionTeam,
+    stackIndex,
+    isDump: agent.isDump === true,
+    rng,
+  })
+  const selfAhead = ((slot?.x ?? agent.x) - (disc?.x ?? agent.x)) * attackSign
   const deepBias = traitMods.deepCutBias ?? 0
   const underBias = traitMods.underCutBias ?? 0
 
@@ -224,7 +319,7 @@ function pickCutTarget(
     // 1. Wolna przestrzeń — to jest istota decyzji.
     let score = cell.freeness * SPACE_FREE_WEIGHT
     // 2. Ile metrów da zdobycie tej przestrzeni.
-    score += (cell.ahead / maxAhead) * SPACE_BALANCE.yard
+    score += yardValue(cell.ahead, selfAhead) * SPACE_BALANCE.yard
     // 3. Czy zdążę tam dobiec.
     const runM = Math.hypot(cell.x - agent.x, cell.y - agent.y)
     score -= (runM / speed) * SPACE_BALANCE.reach
@@ -404,6 +499,8 @@ export function tickCutterBrain(agent, tickCtx) {
     attackStyle = ATTACK_STYLES.VERTICAL_STACK,
     maxCutters = MAX_CONCURRENT_CUTTERS,
     offenseTactics = null,
+    discInFlight = false,
+    flightIsForMe = false,
   } = tickCtx
 
   if (isThrower) {
@@ -479,6 +576,7 @@ export function tickCutterBrain(agent, tickCtx) {
         teammates,
         defenders,
         throwerPos,
+        possessionTeam,
       )
       targetX = tgt.x
       targetY = tgt.y
@@ -575,6 +673,7 @@ export function tickCutterBrain(agent, tickCtx) {
         teammates,
         defenders,
         throwerPos,
+        possessionTeam,
       )
       targetX = tgt.x
       targetY = tgt.y
@@ -593,13 +692,52 @@ export function tickCutterBrain(agent, tickCtx) {
   } else if (state === CUTTER_STATE.ACTIVE_CUT) {
     const player = agent.player ?? agent
     // Przegląd cutu w biegu — patrz CUT_REVIEW_MS.
-    if (!globalThis.__OFF_CUTREVIEW && stateMs - (agent.cutReviewMs ?? 0) >= CUT_REVIEW_MS) {
+    const goingDeep = agent.cutKind === 'deep'
+    // Rzut do MNIE jest w powietrzu — nie ma czego rozważać, biegnij pod dysk.
+    const committedToFlight = flightIsForMe
+    // Deep cut dostaje okno zaangażowania; pod nie podlega też pierwsze spojrzenie.
+    const inCommitWindow = goingDeep && stateMs < DEEP_LOOK_MS
+    if (
+      !globalThis.__OFF_CUTREVIEW &&
+      !committedToFlight &&
+      !inCommitWindow &&
+      stateMs - (agent.cutReviewMs ?? 0) >= CUT_REVIEW_MS
+    ) {
       agent.cutReviewMs = stateMs
       const fresh = pickCutTarget(
         agent, disc, attackSign, situation, rng, forceSide, attackStyle, stackIndex,
-        offenseTactics, teammates, defenders, throwerPos,
+        offenseTactics, teammates, defenders, throwerPos, possessionTeam,
       )
-      if (fresh.score < CUT_ABANDON_SCORE) {
+      // ZAWRÓĆ: biegłem deep, rzut nie przyszedł. W realnym ultimate to nie jest
+      // zejście z gry — zawodnik hamuje i wraca po dysk (under cut), a dopiero gdy
+      // i to jest zamknięte, czyści przestrzeń.
+      if (goingDeep && !discInFlight && stateMs >= DEEP_GIVE_UP_MS) {
+        agent.cutReviewMs = stateMs
+        if (fresh.score < CUT_ABANDON_SCORE) {
+          // Nic nie ma — zejdź i zwolnij przestrzeń.
+          state = CUTTER_STATE.CLEARING
+          stateMs = 0
+          agent.cutReviewMs = 0
+          const clr = structuralTarget()
+          targetX = clr.x
+          targetY = clr.y
+        } else {
+          // UNDER CUT: kierunek jest wyznaczony przez RZUCAJĄCEGO, nie przez ponowny
+          // wybór z mapy. Mapa bez kary za dobieg wskazałaby znowu głęboko i zawodnik
+          // zapętliłby się w nieskończonym deep cucie.
+          const tx = throwerPos?.x ?? disc?.x ?? agent.x
+          const ty = throwerPos?.y ?? disc?.y ?? agent.y
+          const dx = tx - agent.x
+          const dy = ty - agent.y
+          const d = Math.hypot(dx, dy)
+          const runM = Math.min(UNDER_CUT_MAX_M, Math.max(0, d - UNDER_CUT_KEEP_M))
+          targetX = clampFieldX(agent.x + (d > 1e-6 ? dx / d : 0) * runM)
+          targetY = clampFieldY(agent.y + (d > 1e-6 ? dy / d : 0) * runM)
+          agent.cutKind = 'in'
+          agent.cutScore = fresh.score
+          stateMs = 0
+        }
+      } else if (fresh.score < CUT_ABANDON_SCORE) {
         // Przykryty i nic lepszego nie ma — zejdź, zwolnij przestrzeń.
         state = CUTTER_STATE.CLEARING
         stateMs = 0

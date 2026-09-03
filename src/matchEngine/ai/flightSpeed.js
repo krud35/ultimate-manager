@@ -50,7 +50,13 @@ export function speedRangeFor(trajectory) {
 }
 
 /** Wystawione do sweepu: predykcja leadu MUSI odpowiadać realnemu tempu lotu. */
-export const PREDICT_MPS = { standard: 16, deep: 7.7 }
+/**
+ * Predykcja leadu musi zakładać to, czym dysk REALNIE leci — środek pasma, a nie jego
+ * górny koniec. 16 m/s odpowiadało najszybszemu możliwemu rzutowi, podczas gdy zmierzona
+ * mediana w paśmie 20-30 m to 10.3 m/s (25.4 m w 2.46 s). Trzeci zegar rozjechany z
+ * dwoma pozostałymi — patrz komentarz na górze pliku.
+ */
+export const PREDICT_MPS = { standard: 12.3, deep: 7.7 }
 
 /** Prędkość zakładana przy wyznaczaniu leadu dla zwykłego rzutu. */
 export function predictFlightSpeedMps() {

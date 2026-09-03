@@ -340,6 +340,17 @@ const OTT_LANE_DISCOUNT = 0.15
  * który tnie krótko, i to jest zły rzut także w realnym ultimate. Wrócić do tego po
  * naprawie głębokiego ustawienia ataku.
  */
+/**
+ * Ile z prędkości odbiorcy wolno założyć przy sprawdzaniu, czy zdąży na punkt
+ * dostarczenia. 0.85 = musi mu zostać 15% zapasu.
+ *
+ * Bez tego sprawdzenia rzucający wybierał punkty, do których NIKT nie docierał.
+ * Zmierzone z resolvera (tmp-sweep/geom-truth.mjs, 702 rzuty): w paśmie 20-30 m tylko
+ * 40.8% rzutów kończyło się chwytem, a przy stratach odbiorca był w najbliższym
+ * momencie lotu 9.42 m od dysku, najbliższy obrońca 8.91 m, a chybienie rzucającego
+ * 0.00 m. Dysk leciał dokładnie tam, gdzie celowano — tyle że w pustkę.
+ */
+const DELIVERY_FEASIBLE_FRAC = 0.85
 export const DELIVERY = { yardWeight: 1.6, beyondFrac: 0 }
 
 function chooseDeliveryPoint(agent, throwerX, throwerY, defenders, possessionTeam, path) {
@@ -369,6 +380,12 @@ function chooseDeliveryPoint(agent, throwerX, throwerY, defenders, possessionTea
     const timed = Math.min(band.max, Math.max(band.min, pathDist / neededSec))
     const speed = needsFloat ? timed : null
     const evalSpeed = speed ?? pacedSpeedMps(pathDist >= HUCK_MIN_M ? 'deep' : null, agent, throwerX, throwerY)
+    // WYKONALNOŚĆ: czy odbiorca w ogóle zdąży, licząc REALNYM czasem lotu tego rzutu.
+    // Kandydat, na który musiałby biec szybciej niż potrafi, nie jest opcją ryzykowną —
+    // jest niewykonalny, i rzucający ma go nie rozważać.
+    const tFlight = pathDist / Math.max(1, evalSpeed)
+    const needMps = d / Math.max(0.15, tFlight)
+    if (needMps > recvSpeed * DELIVERY_FEASIBLE_FRAC) continue
     const gain = forwardProgressMeters(throwerX, pt.x, possessionTeam)
     const arrival = arrivalMarginM(agent, pt, defenders, throwerPos, evalSpeed)
     const lane = laneObstruction(throwerX, throwerY, pt, defenders, null, evalSpeed)
@@ -378,6 +395,7 @@ function chooseDeliveryPoint(agent, throwerX, throwerY, defenders, possessionTea
       lane * LANE_BLOCK_WEIGHT
     if (score > bestScore) { bestScore = score; best = { x: pt.x, y: pt.y, flightSpeedMps: speed } }
   }
+  // Nic wykonalnego — dysk pod nogi odbiorcy, zamiast w przestrzeń, do której nie dobiegnie.
   return best ?? { x: agent.x, y: agent.y, flightSpeedMps: null }
 }
 
