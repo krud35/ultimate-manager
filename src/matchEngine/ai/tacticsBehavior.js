@@ -47,61 +47,192 @@ export const ZONE_SLOT_ORDER = [
 ]
 
 /**
- * Pozycja slotu strefowego względem AKTUALNEJ pozycji dysku — przeliczana co tick
- * (patrz ai/defenderBrain.js tickZoneDefenderBrain), nie tylko raz na starcie
- * posiadania jak wcześniej (layoutDefenseZoneCup dawało tylko seed na klatkę 0,
- * a późniejszy ruch spadał do "goń najbliższego napastnika" — swarm bug). Marker
- * ma tu tylko przybliżony seed; realny ruch markera liczy forceMarkPosition
- * (tickDefenderBrain, isMarkerOnThrower) bo śledzi konkretnie throwera.
+ * KSZTAŁT STREFY — trzy ciała na łuku wokół rzucającego, plus druga linia i deep.
+ *
+ * Cup jest ROZSZERZENIEM MARKERA, nie osobną formacją: marker stoi na rzucającym
+ * (forceMarkPosition, ~0.55 m), a dwaj „cupowcy" domykają łuk po jego bokach. Razem
+ * zasłaniają ciałami konkretną przestrzeń rzutu do przodu — bramka między sąsiednimi
+ * ciałami wychodzi ~3 m, czyli tyle, ile realnie trzeba przerzucić albo obejść.
+ *
+ * Poprzedni kształt (2 sloty po ±5 m od ŚRODKA BOISKA, na sztywno 3 m przed dyskiem)
+ * dawał zmierzony rozstaw 9.97 m — dziesięciometrową bramę prosto przed rzucającym,
+ * przez którą przechodziło 82% podań przy 96% skuteczności. Sloty były też kotwiczone
+ * do osi boiska, nie do dysku, więc przy dysku na linii bocznej cup w ogóle nie stał
+ * przed rzucającym.
+ *
+ * Druga linia (wing/middle) i deep NIE stoją już na stałych offsetach: dostają
+ * `threats` (pozycje ataku) i przesuwają się w stronę realnego zagrożenia w swoim
+ * rejonie — to jest cały sens strefy („bronię przestrzeni, ale patrzę, kto w nią
+ * wbiega"). Bez `threats` (seed na klatkę 0 w fieldViz.layoutDefenseZoneCup) wychodzi
+ * czysta geometria, jak dawniej.
+ *
  * `roleSlotIndex` odróżnia lewy/prawy człon cup i wing — 0-based indeks W OBRĘBIE
  * roli (który z dwóch "zone_cup", nie surowy stackIndex w linii), bo gracz może być
  * ręcznie przypisany do cupa/winga z dowolnej pozycji w lineup (patrz
  * defenseZoneRoles.js resolveTeamZoneSlots).
- * `zoneKind`: 'cup' (3-osobowy cup, ciasny) | 'wall' (junk/arrowhead, płytszy).
+ * `zoneKind`: 'cup' (ciasny łuk 3 m) | 'wall' (junk/arrowhead — szerszy i płytszy).
  */
+export const ZONE_SHAPE = {
+  cup: {
+    /** Promień łuku cupa od dysku (m) — marker jest trzecim ciałem tego łuku. */
+    cupRadiusM: 3.6,
+    /** Rozwarcie łuku: kąt cupowca od osi ataku (rad). 0.85 ≈ 49° → rozstaw ~5.4 m. */
+    cupHalfAngleRad: 0.85,
+    /** Obrót całego łuku w stronę open side — cup zabiera lane, na który force wypycha. */
+    cupForceRotationRad: 0.22,
+    /** W jakim promieniu cupowiec szuka wbiegającego, żeby przesunąć się po łuku (m). */
+    cupShadeRadiusM: 5,
+    /** Maksymalne przesunięcie po łuku DO ŚRODKA (rad): 0.35 ≈ 20°, ~1.2 m wzdłuż łuku. */
+    cupShadeMaxRad: 0.35,
+    /** Na zewnątrz łuku — dużo mniej, bo krok w bok jest jednocześnie krokiem do tyłu. */
+    cupShadeOutRad: 0.12,
+    secondLineM: 9,
+    /** Rozstaw wingów od LANE DYSKU (nie od osi boiska). */
+    wingSpreadM: 8.5,
+    /** Jak daleko za najgłębszym atakującym stoi deep. */
+    deepBehindM: 5,
+    deepMinAheadM: 16,
+    deepMaxAheadM: 32,
+  },
+  wall: {
+    cupRadiusM: 4.8,
+    cupHalfAngleRad: 1.12,
+    cupForceRotationRad: 0.14,
+    cupShadeRadiusM: 6,
+    cupShadeMaxRad: 0.3,
+    cupShadeOutRad: 0.1,
+    secondLineM: 11,
+    wingSpreadM: 10,
+    deepBehindM: 5,
+    deepMinAheadM: 18,
+    deepMaxAheadM: 32,
+  },
+}
+
+/** Najgroźniejszy atakujący dla danego slotu: najbliższy kotwicy, w promieniu. */
+function nearestThreat(threats, atX, atY, radiusM) {
+  let best = null
+  let bestD = radiusM
+  for (const t of threats) {
+    if (!t || t.isThrower) continue
+    const d = Math.hypot(t.x - atX, t.y - atY)
+    if (d < bestD) {
+      bestD = d
+      best = t
+    }
+  }
+  return best
+}
+
+/** Przesuwa kotwicę w stronę zagrożenia, osobno wzdłuż i w poprzek boiska. */
+function shadeToward(base, threat, alongFrac, acrossFrac) {
+  if (!threat) return base
+  return {
+    x: base.x + (threat.x - base.x) * alongFrac,
+    y: base.y + (threat.y - base.y) * acrossFrac,
+  }
+}
+
 export function zoneStructuralTarget(
   fieldRole,
   roleSlotIndex,
-  { discX = 0, discY = null, attackSign = 1, zoneKind = 'cup' } = {},
+  {
+    discX = 0,
+    discY = null,
+    attackSign = 1,
+    zoneKind = 'cup',
+    /** ±1: w którą stronę boiska force wypuszcza rzut (openSideSign). 0 = brak force. */
+    openSideSign = 0,
+    /** [{ id, x, y, isThrower }] — pozycje ataku w tym ticku. */
+    threats = null,
+  } = {},
 ) {
   const cy = fieldCenterY()
-  const w = FIELD_DIMENSIONS.widthM
   const dY = discY ?? cy
-  const lateralBias = dY - cy
-
-  const cupOffsetM = zoneKind === 'wall' ? 5.5 : 3
-  const secondLineOffsetM = zoneKind === 'wall' ? 11 : 9
-  const deepOffsetM = 24
+  const sign = Math.sign(attackSign) || 1
+  const S = ZONE_SHAPE[zoneKind] ?? ZONE_SHAPE.cup
+  // Strefa broni przestrzeni PRZED dyskiem. Zawodnik cofnięty za dysk (reset) jest
+  // świadomie oddawany — inaczej shading ciągnąłby drugą linię do tyłu i cup przestawał
+  // stać przed rzucającym (zmierzone przy pierwszej wersji: cup 0.2 m przed dyskiem,
+  // „przełamany" w 64% rzutów).
+  const live = Array.isArray(threats)
+    ? threats.filter((t) => t && !t.isThrower && (t.x - discX) * sign > -2)
+    : []
 
   if (fieldRole === 'zone_marker') {
-    return { x: clampFieldX(discX + attackSign * 0.6), y: clampFieldY(dY) }
+    // Tylko seed — realny ruch markera liczy forceMarkPosition (tickDefenderBrain,
+    // isMarkerOnThrower), bo marker jako jedyny slot kryje konkretną osobę.
+    return { x: clampFieldX(discX + sign * 0.6), y: clampFieldY(dY) }
   }
+
   if (fieldRole === 'zone_cup') {
     const side = roleSlotIndex === 0 ? -1 : 1
+    let angle = side * S.cupHalfAngleRad + openSideSign * S.cupForceRotationRad
+    // Cupowiec reaguje na wbiegającego PO ŁUKU — przesuwa się wzdłuż niego, nie schodzi
+    // z niego do krycia osobowego. Kiedy wolno mu było gonić człowieka jak reszcie
+    // strefy, łuk przestawał istnieć: zmierzony cupowiec stał 0.6 m przed dyskiem
+    // zamiast 1.9 m i w 37% rzutów był już za dyskiem.
+    const baseX = discX + sign * S.cupRadiusM * Math.cos(angle)
+    const baseY = dY + S.cupRadiusM * Math.sin(angle)
+    const threat = nearestThreat(live, baseX, baseY, S.cupShadeRadiusM)
+    if (threat) {
+      const bearing = Math.atan2(threat.y - dY, (threat.x - discX) * sign)
+      // Do środka łuku wolno się przesunąć szeroko, na zewnątrz prawie wcale: krok w bok
+      // od osi to jednocześnie krok DO TYŁU (x = R·cos kąta), a cupowiec, który zejdzie
+      // na skrzydło, stoi już tylko obok rzucającego i nie zasłania nic z przodu.
+      const raw = bearing - angle
+      const outward = side > 0 ? S.cupShadeOutRad : -S.cupShadeOutRad
+      const inward = side > 0 ? -S.cupShadeMaxRad : S.cupShadeMaxRad
+      const lo = Math.min(outward, inward)
+      const hi = Math.max(outward, inward)
+      angle += Math.max(lo, Math.min(hi, raw))
+    }
     return {
-      x: clampFieldX(discX + attackSign * cupOffsetM),
-      y: clampFieldY(cy + side * 5 + lateralBias * 0.35),
+      x: clampFieldX(discX + sign * S.cupRadiusM * Math.cos(angle)),
+      y: clampFieldY(dY + S.cupRadiusM * Math.sin(angle)),
     }
   }
+
   if (fieldRole === 'zone_wing') {
     const side = roleSlotIndex === 0 ? -1 : 1
-    return {
-      x: clampFieldX(discX + attackSign * secondLineOffsetM),
-      y: clampFieldY(cy + side * w * 0.36 + lateralBias * 0.5),
+    const base = {
+      x: clampFieldX(discX + sign * S.secondLineM),
+      y: clampFieldY(dY + side * S.wingSpreadM),
     }
+    // Wing kryje swing i under po SWOJEJ stronie — dociąga się do tego, kto tam wbiega.
+    const threat = nearestThreat(live, base.x, base.y, 11)
+    const shaded = shadeToward(base, threat, 0.3, 0.5)
+    return { x: clampFieldX(shaded.x), y: clampFieldY(shaded.y) }
   }
+
   if (fieldRole === 'zone_middle') {
-    return {
-      x: clampFieldX(discX + attackSign * secondLineOffsetM),
-      y: clampFieldY(dY),
-    }
+    const base = { x: clampFieldX(discX + sign * S.secondLineM), y: clampFieldY(dY) }
+    const threat = nearestThreat(live, base.x, base.y, 9)
+    const shaded = shadeToward(base, threat, 0.35, 0.55)
+    return { x: clampFieldX(shaded.x), y: clampFieldY(shaded.y) }
   }
+
   if (fieldRole === 'zone_deep') {
-    return {
-      x: clampFieldX(discX + attackSign * deepOffsetM),
-      y: clampFieldY(cy + lateralBias * 0.3),
+    // Deep gra WZGLĘDEM najgłębszego atakującego, nie na stałym offsecie 24 m. Sztywne
+    // 24 m robiło z niego niepokonywalną ścianę (zmierzone: huck spadał z 5.3% podań
+    // przy person do 0.0-0.4% przy strefie — deep kasował bombę za darmo).
+    let deepest = null
+    let deepestAhead = -Infinity
+    for (const t of live) {
+      const ahead = (t.x - discX) * sign
+      if (ahead > deepestAhead) {
+        deepestAhead = ahead
+        deepest = t
+      }
     }
+    const aheadM = Math.max(
+      S.deepMinAheadM,
+      Math.min(S.deepMaxAheadM, (Number.isFinite(deepestAhead) ? deepestAhead : 19) + S.deepBehindM),
+    )
+    const targetY = deepest ? dY * 0.35 + deepest.y * 0.65 : cy + (dY - cy) * 0.3
+    return { x: clampFieldX(discX + sign * aheadM), y: clampFieldY(targetY) }
   }
+
   return { x: clampFieldX(discX), y: clampFieldY(dY) }
 }
 

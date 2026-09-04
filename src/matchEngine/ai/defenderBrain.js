@@ -15,7 +15,7 @@ import {
   zoneStructuralTarget,
   ZONE_SLOT_ROLES,
 } from './tacticsBehavior.js'
-import { isCloggingThrowLane } from './offenseReorganization.js'
+import { isCloggingThrowLane, openSideSign } from './offenseReorganization.js'
 import { mergeTraitAndCoachMods } from '../coachDirectives.js'
 
 export const DEFENDER_STATE = {
@@ -503,27 +503,244 @@ export function tickDefenderBrain(agent, ctx) {
 }
 
 /**
- * Ruch obrońcy w strefie (cup/wing/middle/deep): trzyma slot względem AKTUALNEJ
- * pozycji dysku, zamiast gonić najbliższego zawodnika ataku jak w markingu 1:1.
- * Wcześniej każdy defAgent (zone lub nie) leciał przez resolvePersonMarkTarget, co
- * dla zone (personMark=false, brak matchupów) spadało do "goń najbliższego" — cały
- * cup rojem zbiegał się na jednego zawodnika ataku. Marker (fieldRole==='zone_marker')
- * NIE przechodzi przez tę funkcję — dalej idzie przez zwykły tickDefenderBrain z
- * isMarkerOnThrower=true (śledzi realnie throwera, forceMarkPosition), bo to jedyny
- * slot strefy, który faktycznie kryje konkretną osobę.
+ * PRZEJĘCIE CZŁOWIEKA W STREFIE — ile metrów od swojej kotwicy slot bierze wbiegającego
+ * atakującego pod krycie osobowe. Cup ma najmniejszy rejon (ma trzymać łuk przed
+ * rzucającym), deep największy (odpowiada za całą głębię).
+ *
+ * Bez tego strefa nie miała jak nikogo kryć: geometryczny resolver rozstrzyga kontest
+ * dopiero, gdy obrońca jest bliżej niż 1.2 m od punktu chwytu (GEOMETRIC_CALIBRATION w
+ * actionSimulator.js), a zmierzony najbliższy obrońca przy strefie był 5.05 m od dysku.
+ * Odbiorca był kryty (<=3 m) w 6.6% rzutów wobec 74.9% przy person — strefa fizycznie
+ * nie mogła nic odebrać poza przypadkowym staniem w torze lotu.
+ */
+export const ZONE_TAKEOVER_RADIUS_M = {
+  zone_cup: 3.6,
+  zone_wing: 5.5,
+  zone_middle: 5.5,
+  zone_deep: 7.5,
+}
+/** Histereza: raz przejętego zawodnika puszczam dopiero za tym mnożnikiem promienia. */
+export const ZONE_TAKEOVER_RELEASE_MULT = 1.5
+/** Cushion przy kryciu przejętego zawodnika (m) — od strony dysku (deep: od strony bramki). */
+export const ZONE_TAKEOVER_CUSHION_M = 1.3
+/** O ile cel musi odjechać od aktualnego zamiaru, żeby obrońca w ogóle zareagował (m). */
+export const ZONE_AIM_TOLERANCE_M = 1.1
+
+/** Kotwica slotu dla dowolnego agenta strefy — także cudzego (do rozstrzygania, czyj to gracz). */
+function zoneAnchorFor(agentLike, { discX, discY, attackSign, zoneKind, openSide, threats }) {
+  return zoneStructuralTarget(agentLike.fieldRole, agentLike.roleSlotIndex ?? 0, {
+    discX,
+    discY,
+    attackSign,
+    zoneKind,
+    openSideSign: openSide,
+    threats,
+  })
+}
+
+/**
+ * Kogo bierze ten slot. Warunek jest podwójny: atakujący musi być w promieniu MOJEGO
+ * rejonu i musi być bliżej mnie niż któregokolwiek innego slotu strefy — inaczej cała
+ * strefa zbiegłaby się rojem na jednego cuttera (to był dawny swarm bug, tylko innymi
+ * drzwiami). Remis rozstrzyga id, żeby wynik był deterministyczny.
+ */
+function resolveZoneTakeover(agent, anchor, threats, peers, radiusM) {
+  const myId = agent.id ?? agent.player?.id
+  const held =
+    agent.zoneLockId != null ? threats.find((t) => t.id === agent.zoneLockId) : null
+  if (held) {
+    const d = Math.hypot(anchor.x - held.x, anchor.y - held.y)
+    if (d <= radiusM * ZONE_TAKEOVER_RELEASE_MULT) return held
+  }
+  let best = null
+  let bestD = radiusM
+  for (const t of threats) {
+    // W MOIM rejonie = w promieniu od kotwicy slotu.
+    const d = Math.hypot(anchor.x - t.x, anchor.y - t.y)
+    if (d >= bestD) continue
+    // Ale KTO go bierze, rozstrzyga dystans CIAŁA, nie kotwicy. Arbitraż po kotwicach
+    // oddawał zawodnika slotowi, którego kotwica była blisko, choć sam obrońca był
+    // daleko — „przejęcie" wychodziło wtedy nominalne: zmierzony dystans obrońca-kryty
+    // 6.19 m, czyli krycie tylko na papierze.
+    const myBodyD = Math.hypot(agent.x - t.x, agent.y - t.y)
+    let mine = true
+    for (const peer of peers) {
+      if (peer.id === myId) continue
+      if (Math.hypot(peer.anchor.x - t.x, peer.anchor.y - t.y) > peer.radius) continue
+      const pd = Math.hypot(peer.x - t.x, peer.y - t.y)
+      if (pd < myBodyD || (pd === myBodyD && String(peer.id) < String(myId))) {
+        mine = false
+        break
+      }
+    }
+    if (!mine) continue
+    best = t
+    bestD = d
+  }
+  return best
+}
+
+/**
+ * Minimalny dystans slotu PRZED dyskiem (m) — także wtedy, gdy kryje przejętego
+ * zawodnika. Strefa nie cofa się za dysk: reset za plecami rzucającego jest świadomie
+ * oddawany (od tego jest marker i force), a cup ma zostać ścianą przed nim.
+ */
+const ZONE_MIN_AHEAD_M = {
+  zone_cup: 1.4,
+  zone_wing: 1,
+  zone_middle: 2,
+  zone_deep: 8,
+}
+
+/** Gdzie stanąć przy przejętym zawodniku: od strony dysku (deep — od strony bramki). */
+function zoneTakeoverGoal(fieldRole, target, discPos, attackSign) {
+  const sign = Math.sign(attackSign) || 1
+  const minAhead = ZONE_MIN_AHEAD_M[fieldRole] ?? 1
+  const clampAhead = (goal) => {
+    const ahead = (goal.x - discPos.x) * sign
+    return ahead >= minAhead ? goal : { x: discPos.x + sign * minAhead, y: goal.y }
+  }
+  if (fieldRole === 'zone_deep') {
+    return clampAhead({ x: target.x + sign * ZONE_TAKEOVER_CUSHION_M, y: target.y })
+  }
+  const vx = discPos.x - target.x
+  const vy = discPos.y - target.y
+  const len = Math.hypot(vx, vy) || 1
+  return clampAhead({
+    x: target.x + (vx / len) * ZONE_TAKEOVER_CUSHION_M,
+    y: target.y + (vy / len) * ZONE_TAKEOVER_CUSHION_M,
+  })
+}
+
+/**
+ * OPÓŹNIENIE REAKCJI STREFY.
+ *
+ * Wcześniej slot liczył kotwicę z BIEŻĄCEJ pozycji dysku co tick — także w trakcie lotu
+ * (actionSimulator przekazuje w `disc` próbkę lecącego dysku). Strefa przestawiała się
+ * więc natychmiast i bezbłędnie: zmierzone trzymanie kotwicy z dokładnością ~0.2 m i cup
+ * przełamany w 0.2% rzutów. Swing nie zostawiał po sobie żadnej dziury, z której żyje
+ * atak przeciw strefie.
+ *
+ * Teraz obrońca celuje w ZAPAMIĘTANY punkt i przestawia zamiar dopiero, gdy nowy cel
+ * odjechał o ZONE_AIM_TOLERANCE_M i minął jego czas reakcji. Ten sam mechanizm obsługuje
+ * kotwicę i przejętego człowieka — jedno źródło opóźnienia dla obu.
+ */
+function zoneAimWithReactionLag(agent, want, ms, delayMs) {
+  const aimX = agent.zoneAimX
+  const aimY = agent.zoneAimY
+  if (aimX == null || aimY == null) {
+    return { x: want.x, y: want.y, pending: null }
+  }
+  if (Math.hypot(want.x - aimX, want.y - aimY) <= ZONE_AIM_TOLERANCE_M) {
+    return { x: aimX, y: aimY, pending: null }
+  }
+  // Liczy się moment, w którym zamiar PRZESTAŁ być aktualny — nie to, czy cel przez cały
+  // czas reakcji stoi w miejscu. Warunek „pending musi zostać w tolerancji" powodował, że
+  // przy celu ruchomym (dysk w locie) stempel czasu odnawiał się co tick i obrońca nie
+  // przestawiał się nigdy: cup kończył rzut ~15 m za dyskiem i całe następne posiadanie
+  // gonił (zmierzone: 0.4 m przed dyskiem zamiast 1.9 m z łuku).
+  const pending = agent.zonePending
+  if (pending) {
+    if (ms - pending.sinceMs >= delayMs) return { x: want.x, y: want.y, pending: null }
+    return { x: aimX, y: aimY, pending }
+  }
+  return { x: aimX, y: aimY, pending: { sinceMs: ms } }
+}
+
+/**
+ * Ruch obrońcy w strefie (cup/wing/middle/deep): trzyma slot względem pozycji dysku,
+ * ale z czasem reakcji, z czytaniem zagrożeń w swoim rejonie i z przejęciem człowieka,
+ * który w ten rejon wbiega. Marker (fieldRole==='zone_marker') NIE przechodzi przez tę
+ * funkcję — idzie przez zwykły tickDefenderBrain z isMarkerOnThrower=true
+ * (forceMarkPosition), bo jest trzecim, środkowym ciałem łuku cupa i kryje konkretną
+ * osobę: rzucającego.
  */
 export function tickZoneDefenderBrain(agent, ctx) {
-  const { disc, throwerAgent, dtSec, attackSign = 1, defenseStyle = 'zone_cup' } = ctx
+  const {
+    disc,
+    throwerAgent,
+    dtSec,
+    ms = 0,
+    attackSign = 1,
+    defenseStyle = 'zone_cup',
+    forceSide = null,
+    offenseAgents = null,
+    defenseAgents = null,
+  } = ctx
   const player = agent.player ?? agent
   const zoneKind = defenseMods(defenseStyle).zoneKind ?? 'cup'
   const discPos = disc ?? throwerAgent ?? { x: agent.x, y: agent.y }
-  const anchor = zoneStructuralTarget(agent.fieldRole, agent.roleSlotIndex ?? 0, {
+  const openSide = forceSide ? openSideSign(forceSide, discPos.y) : 0
+
+  const sign = Math.sign(attackSign) || 1
+  const throwerId = throwerAgent?.id ?? throwerAgent?.player?.id
+  const threats = []
+  const takeoverCandidates = []
+  for (const o of offenseAgents ?? []) {
+    if (!o || o.isThrower) continue
+    const id = o.id ?? o.player?.id
+    if (id == null || id === throwerId) continue
+    const t = { id, x: o.x, y: o.y }
+    threats.push(t)
+    // Krycie osobowe tylko w przestrzeni, której ten slot broni — czyli przed dyskiem.
+    if ((o.x - discPos.x) * sign > -1) takeoverCandidates.push(t)
+  }
+
+  const geoCtx = {
     discX: discPos.x,
     discY: discPos.y,
     attackSign,
     zoneKind,
-  })
-  const next = moveToward(agent, anchor.x, anchor.y, defenderSpeedMps(player), dtSec)
+    openSide,
+    threats,
+  }
+  // Rola EFEKTYWNA, nie przypisana w lineup: łuk cupa się obraca (resolveCupRotation),
+  // więc gracz z przypisanym slotem zone_marker może w tym ticku grać skrzydło łuku.
+  const rotation = ctx.zoneRotation ?? null
+  const myId = agent.id ?? agent.player?.id
+  const myRole = rotation?.get(myId)?.role ?? agent.fieldRole
+  const mySlot = rotation?.get(myId)?.roleSlotIndex ?? agent.roleSlotIndex ?? 0
+  const anchor = zoneAnchorFor({ fieldRole: myRole, roleSlotIndex: mySlot }, geoCtx)
+
+  const peers = []
+  for (const d of defenseAgents ?? []) {
+    if (!d || !ZONE_SLOT_ROLES.has(d.fieldRole)) continue
+    const dId = d.id ?? d.player?.id
+    const dRole = rotation?.get(dId)?.role ?? d.fieldRole
+    // Marker i cup nie biorą ludzi pod krycie, więc nie startują też w arbitrażu o nich.
+    if (dRole === 'zone_marker' || dRole === 'zone_cup') continue
+    const dSlot = rotation?.get(dId)?.roleSlotIndex ?? d.roleSlotIndex ?? 0
+    peers.push({
+      id: dId,
+      x: d.x,
+      y: d.y,
+      radius: ZONE_TAKEOVER_RADIUS_M[dRole] ?? 4.5,
+      anchor: zoneAnchorFor({ fieldRole: dRole, roleSlotIndex: dSlot }, geoCtx),
+    })
+  }
+
+  const radius = ZONE_TAKEOVER_RADIUS_M[myRole] ?? 4.5
+  // Cup nie przejmuje ludzi — jego reakcją na wbiegającego jest przesunięcie po łuku
+  // (zoneStructuralTarget). Trzy ciała łuku mają zostać ścianą przed rzucającym; gdy
+  // schodzą z łuku do krycia osobowego, strefa przestaje mieć kształt.
+  const canTakeover = myRole !== 'zone_cup'
+  const lock =
+    canTakeover && takeoverCandidates.length
+      ? resolveZoneTakeover(agent, anchor, takeoverCandidates, peers, radius)
+      : null
+  const want = lock ? zoneTakeoverGoal(myRole, lock, discPos, attackSign) : anchor
+
+  const aim = zoneAimWithReactionLag(agent, want, ms, reactionDelayMs(player))
+  // Domykanie przejętego zawodnika to sprint, nie utrzymywanie slotu — bez tego obrońca
+  // brał kogoś pod krycie i zostawał 6 m z tyłu do końca akcji. Tak samo odbudowa
+  // kształtu po podaniu: dysk przeskakuje 15 m w 1.2 s, obrońca ma na to ~2 s biegu, więc
+  // jeśli truchta, to cup już nigdy nie stanie przed rzucającym (zmierzone: 0.4 m przed
+  // dyskiem zamiast 1.9 m z łuku, „przełamany" w 56% rzutów).
+  const lockGap = lock ? Math.hypot(agent.x - lock.x, agent.y - lock.y) : 0
+  const gapToAim = Math.hypot(agent.x - aim.x, agent.y - aim.y)
+  const scrambling = lockGap > 3 || gapToAim > 4
+  const speed = defenderSpeedMps(player) * (scrambling ? 1.14 : lock ? 1.05 : 1)
+  const next = moveToward(agent, aim.x, aim.y, speed, dtSec, !scrambling)
   return {
     ...next,
     state: DEFENDER_STATE.COVERING_CUTTER,
@@ -532,12 +749,69 @@ export function tickZoneDefenderBrain(agent, ctx) {
     poachUntil: 0,
     poachedFromId: null,
     nextPoachCheckMs: agent.nextPoachCheckMs ?? 0,
-    lastTargetX: anchor.x,
-    lastTargetY: anchor.y,
+    lastTargetX: aim.x,
+    lastTargetY: aim.y,
     lastCutterState: null,
-    markTargetId: null,
+    markTargetId: lock?.id ?? null,
     isActiveMark: false,
+    zoneLockId: lock?.id ?? null,
+    zoneAimX: aim.x,
+    zoneAimY: aim.y,
+    zonePending: aim.pending,
   }
+}
+
+/** O ile metrów bliżej rzucającego musi być kolega z łuku, żeby przejąć mark. */
+export const ZONE_CUP_ROTATE_MARGIN_M = 1.5
+
+/**
+ * ROTACJA CUPA. Marker i dwaj cupowcy to jedno ciało obrony: trzy sylwetki na łuku
+ * wokół rzucającego, gdzie marker jest środkiem łuku. Skoro tak, to markerem jest po
+ * prostu ten z tej trójki, kto po podaniu jest najbliżej nowego rzucającego — pozostali
+ * dwaj domykają skrzydła. Sztywne przypisanie z lineup zmuszało jednego zawodnika, żeby
+ * po każdym podaniu biegł przez pół boiska do dysku: zmierzony marker strefy stał
+ * średnio 2.4 m od rzucającego (person: 0.5 m), czyli łuk miał dziurę dokładnie w
+ * środku, przed rzucającym.
+ *
+ * Histereza (ZONE_CUP_ROTATE_MARGIN_M) chroni przed migotaniem ról, gdy dwóch jest
+ * podobnie blisko. Wynik jest deterministyczny (remisy po id), więc każdy agent liczy
+ * tę samą mapę z tej samej migawki i obrona nie rozjeżdża się między sobą.
+ * @returns {Map<string|number, {role: string, roleSlotIndex: number}>|null}
+ */
+export function resolveCupRotation(ctx) {
+  const { defenseAgents, throwerAgent } = ctx
+  if (!defenseAgents || !throwerAgent) return null
+  const arc = defenseAgents.filter(
+    (a) => a && (a.fieldRole === 'zone_marker' || a.fieldRole === 'zone_cup'),
+  )
+  if (arc.length !== 3) return null
+
+  const idOf = (a) => a.id ?? a.player?.id
+  const distToThrower = (a) => Math.hypot(a.x - throwerAgent.x, a.y - throwerAgent.y)
+
+  let closest = arc[0]
+  for (const a of arc) {
+    const d = distToThrower(a)
+    const best = distToThrower(closest)
+    if (d < best || (d === best && String(idOf(a)) < String(idOf(closest)))) closest = a
+  }
+  const incumbent =
+    arc.find((a) => a.isActiveMark === true) ??
+    arc.find((a) => a.fieldRole === 'zone_marker') ??
+    arc[0]
+  const marker =
+    distToThrower(closest) + ZONE_CUP_ROTATE_MARGIN_M < distToThrower(incumbent)
+      ? closest
+      : incumbent
+
+  const flanks = arc
+    .filter((a) => idOf(a) !== idOf(marker))
+    .sort((a, b) => a.y - b.y || String(idOf(a)).localeCompare(String(idOf(b))))
+
+  const map = new Map()
+  map.set(idOf(marker), { role: 'zone_marker', roleSlotIndex: 0 })
+  flanks.forEach((a, i) => map.set(idOf(a), { role: 'zone_cup', roleSlotIndex: i }))
+  return map
 }
 
 /**
@@ -545,13 +819,17 @@ export function tickZoneDefenderBrain(agent, ctx) {
  * strefy i cała reszta (person / clam / AP) — przez zwykły tickDefenderBrain jak
  * dotychczas. Jeden punkt wejścia dla actionSimulator.js, żeby obie kopie pętli
  * tickowej (setup + lot) nie mogły się rozjechać w tym rozróżnieniu.
+ * Kto jest markerem, rozstrzyga rotacja łuku, a nie slot z lineup (resolveCupRotation).
  */
 export function tickDefenseAgent(agent, ctx) {
   if (ZONE_SLOT_ROLES.has(agent.fieldRole)) {
-    if (agent.fieldRole === 'zone_marker') {
+    const rotation = resolveCupRotation(ctx)
+    const myId = agent.id ?? agent.player?.id
+    const role = rotation?.get(myId)?.role ?? agent.fieldRole
+    if (role === 'zone_marker') {
       return tickDefenderBrain(agent, { ...ctx, isMarkerOnThrower: true })
     }
-    return tickZoneDefenderBrain(agent, ctx)
+    return tickZoneDefenderBrain(agent, { ...ctx, zoneRotation: rotation })
   }
   return tickDefenderBrain(agent, ctx)
 }

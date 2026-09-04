@@ -677,6 +677,17 @@ function snapshotAgentStates(offenseAgents, defenseAgents) {
   return map
 }
 
+/**
+ * Kto REALNIE stoi na rzucającym. W strefie łuk cupa się obraca (resolveCupRotation w
+ * defenderBrain.js), więc marker to nie jest już na stałe zawodnik ze slotem
+ * 'zone_marker' — bez tego trace i widok 2D pokazywałyby mark u kogoś, kto akurat gra
+ * skrzydło łuku.
+ */
+function activeMarkerId(defenseAgents, fallbackId) {
+  const active = defenseAgents.find((a) => a?.isActiveMark === true)
+  return active ? active.id ?? active.player?.id ?? fallbackId : fallbackId
+}
+
 function snapshotFrame(ms, offenseAgents, defenseAgents, throwerId, disc = null, markerId = null, stallCount = null) {
   const players = [
     ...offenseAgents.map((a) => ({
@@ -1245,8 +1256,14 @@ export function runContinuousThrowSimulation({
           attackSign,
           defenseTactics: defenseTeam?.tactics,
           spaceCells,
+          // Strefa czyta zagrożenia w swoim rejonie i przejmuje wbiegającego zawodnika
+          // (tickZoneDefenderBrain) — potrzebuje całego ataku, nie tylko swojego targetu,
+          // oraz kotwic pozostałych slotów, żeby rozstrzygnąć, czyj to gracz.
+          offenseAgents,
+          defenseAgents,
         })
       })
+      markerId = activeMarkerId(defenseAgents, markerId)
 
       const adjusted = applyFlightResolutionToAgents(
         flight,
@@ -1470,8 +1487,12 @@ export function runContinuousThrowSimulation({
           attackSign,
           defenseTactics: defenseTeam?.tactics,
           spaceCells,
+          // Patrz komentarz przy bliźniaczym wywołaniu w pętli lotu.
+          offenseAgents,
+          defenseAgents,
         })
       })
+      markerId = activeMarkerId(defenseAgents, markerId)
     }
 
     if (staminaMaps) {
