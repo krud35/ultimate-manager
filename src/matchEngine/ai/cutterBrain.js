@@ -424,12 +424,103 @@ function pickResetTarget(disc, throwerPos, attackSign, forceSide, rng, cells = n
 }
 
 /**
+ * PRZYDATNOŚĆ do roli resetowej — im wyżej, tym bardziej ten zawodnik pasuje, żeby
+ * teraz czekać w przestrzeni resetowej zamiast czyścić do stacka.
+ *
+ * Handlerów ciągnie tam mocniej z samej roli, ale nie na sztywno: jeśli akurat są
+ * daleko albo właśnie wyczyścili, przydatność spada i miejsce zajmuje ktoś inny.
+ */
+const RESET_ROLE_AFFINITY = {
+  // PRIMARY HANDLER MA PIERWSZEŃSTWO przed resetowym — to on jest głównym
+  // rozgrywającym i przez niego ma przechodzić dysk. Zmierzone przy odwrotnej
+  // kolejności: resetowy handler oddawał 24.1 podania na zawodnika, a primary handler
+  // 10.4 — przedostatnie miejsce w drużynie, za trzema podrolami cutterskimi. Reset
+  // jest wtedy pierwszym wyjściem spod stallu, a nie głównym kanałem gry.
+  primary_handler: 1,
+  reset_handler: 0.8,
+  filler_cutter: 0.35,
+  continuation_cutter: 0.3,
+  secondary_cutter: 0.3,
+  primary_cutter: 0.2,
+}
+/** Od jakiej odległości od miejsca resetu przydatność spada do zera. */
+const RESET_RANGE_M = 26
+
+/**
+ * Ile miejsc resetowych ma OBECNA formacja — tyle, ilu zawodników ma podrolę
+ * reset_handler. W vertical stacku jest jeden, w horizontalu dwóch (przy trzech
+ * handlerach). Liczba nie jest więc zaszyta, tylko wynika z ustawienia.
+ */
+function resetSlotCount(agent, teammates) {
+  let n = agent?.subRole === HANDLER_SUB_ROLES.RESET ? 1 : 0
+  for (const t of teammates ?? []) {
+    if ((t.id ?? t.player?.id) === (agent?.id ?? agent?.player?.id)) continue
+    if (t.subRole === HANDLER_SUB_ROLES.RESET) n += 1
+  }
+  return Math.max(1, n)
+}
+
+function resetFitness(agent, resetSlot, preferBonus = 0) {
+  if (!resetSlot) return 0
+  const affinity = (RESET_ROLE_AFFINITY[agent?.subRole] ?? 0.3) + preferBonus
+  const d = Math.hypot((agent.x ?? 0) - resetSlot.x, (agent.y ?? 0) - resetSlot.y)
+  // Wygaszanie KWADRATOWE, nie liniowe: przy liniowym powinowactwo z podroli (1.0 dla
+  // reset_handlera wobec 0.2-0.35 u cutterów) przebijało odległość praktycznie zawsze —
+  // handler oddalony o 52 m miał jeszcze 0.33, a cutter stojący 5 m od miejsca resetu
+  // 0.29. Sytuacja "handler jest daleko albo właśnie wyczyścił" nigdy nie zachodziła
+  // i rola wracała do sztywnego przypisania (zmierzone: 0.0% ról wziętych przez kogoś
+  // bez flagi isDump). Kwadrat sprawia, że dobiegnięcie realnie waży.
+  const rel = d / RESET_RANGE_M
+  const closeness = 1 / (1 + rel * rel)
+  // Zawodnik w trakcie cutu nie jest kandydatem — jest zajęty czym innym.
+  const busy = agent?.state === CUTTER_STATE.ACTIVE_CUT ? 0.35 : 1
+  return affinity * closeness * busy
+}
+
+/**
  * Co robi ten zawodnik po chwycie: czyści do stacka, oferuje się do dysku,
  * czy zostaje z tyłu jako reset. Każdy decyduje osobno, na podstawie własnej sytuacji.
+ *
+ * RESET NIE JEST PRZYPISANY NA SZTYWNO. Wcześniej rolę brał ten, kto miał podrolę
+ * reset_handler albo pozycję `dump` w formacji, i trzymał ją przez cały punkt —
+ * niezależnie od tego, gdzie w tym czasie powędrował dysk. Drużyna zawsze chce mieć
+ * KOGOŚ na resecie, więc zawodnik ocenia teraz własną przydatność (rola + bliskość
+ * miejsca resetu + czy akurat nie tnie) i porównuje ją z kolegami: zostaje, jeśli jest
+ * najlepszym dostępnym kandydatem. Handlerów ciągnie tam mocniej, ale gdy są daleko
+ * albo właśnie wyczyścili, miejsce naturalnie zajmuje ktoś inny.
  */
-function pickPostCatchRole(agent, situation, isDump, stackIndex, rng, canCut, coachMods) {
+function pickPostCatchRole(agent, situation, isDump, stackIndex, rng, canCut, coachMods, ctx = {}) {
+
   if (situation?.inThrowLane) return 'clear'
-  if (isDump || coachMods?.preferDumpRole) return 'reset'
+  // UWAGA: `preferDumpRole` NIE wypala tu skrótem. Wcześniej zwracał reset
+  // bezwarunkowo, więc resetowi handlerzy w ogóle nie przechodzili przez ocenę
+  // sytuacyjną — mechanizm dynamiczny działał wyłącznie dla pozostałych. Preferencja
+  // wchodzi teraz jako premia do przydatności, a nie jako obejście.
+  const { resetSlot = null, teammates = null } = ctx
+  if (resetSlot) {
+    const mine = resetFitness(agent, resetSlot, coachMods?.preferDumpRole ? 0.5 : 0)
+    if (mine > 0) {
+      const selfId = agent?.id ?? agent?.player?.id ?? null
+      // Rolę bierze tylu zawodników, ile miejsc resetowych ma formacja — ci o
+      // najwyższej przydatności. Remis rozstrzyga id, deterministycznie.
+      //
+      // "Dokładnie jeden" było założeniem z vertical stacka i w horizontalu odcinało
+      // drugiego resetowego handlera. "Najlepszy z tolerancją 5%" (wersja jeszcze
+      // wcześniejsza) przepuszczał wszystkich o zbliżonej przydatności — 57.7% decyzji
+      // kończyło się resetem.
+      const selfIdN = selfId ?? 0
+      let better = 0
+      for (const t of teammates ?? []) {
+        const tid = t.id ?? t.player?.id ?? null
+        if (tid === selfId) continue
+        const f = resetFitness(t, resetSlot)
+        if (f > mine || (f === mine && (tid ?? 0) < selfIdN)) better += 1
+      }
+      if (better < resetSlotCount(agent, teammates)) return 'reset'
+    }
+  } else if (isDump) {
+    return 'reset'
+  }
   if (!canCut) return 'clear'
   const priority = cutPriority(agent.player, situation, stackIndex)
   let offerChance = Math.max(0, Math.min(0.8, (priority - 38) / 55))
@@ -559,6 +650,11 @@ export function tickCutterBrain(agent, tickCtx) {
       rng,
       canStartCut,
       coachMods,
+      {
+        // Miejsce resetu i skład — do porównania własnej przydatności z kolegami.
+        resetSlot: resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng }),
+        teammates,
+      },
     )
     stateMs = 0
     if (role === 'offer') {
@@ -598,6 +694,12 @@ export function tickCutterBrain(agent, tickCtx) {
           teammates: teammates ?? [],
           defenders: defenders ?? [],
           ignoreId: agent?.id ?? agent?.player?.id ?? null,
+          // Reset ocenia przestrzeń TAK SAMO jak cut: ze swojej pozycji (wyścig do
+          // komórki) i własnym czytaniem gry. Bez `viewer` mapa szła drugą gałęzią
+          // freeness — tą bez wyścigu — więc resetowy handler korzystał ze starego
+          // modelu, a zaklepana przestrzeń liczyła mu się bez względu na umiejętności.
+          claimAwareness: claimAwarenessFor(agent?.player ?? agent),
+          viewer: { x: agent.x, y: agent.y, player: agent?.player ?? agent },
         }),
       )
       targetX = tgt.x

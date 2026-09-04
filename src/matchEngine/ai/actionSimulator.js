@@ -665,6 +665,12 @@ export function runContinuousThrowSimulation({
       player: a.player,
       x: a.x,
       y: a.y,
+      // Podrola i stan — potrzebne, by kolega mógł ocenić CZYJĄ przydatność do resetu
+      // porównuje. Bez nich resetFitness liczył wszystkich domyślnymi wartościami:
+      // każdy widział siebie prawdziwie, a innych domyślnie, więc każdy uznawał się
+      // za najlepszego kandydata.
+      subRole: a.subRole ?? null,
+      state: a.state ?? null,
       // PRZESTRZEŃ ZAKLEPANA: dokąd ten kolega już biegnie. Mapa liczyła dotąd wyłącznie
       // bieżące pozycje, więc trzech cutterów oceniających tę samą pustą głębię widziało
       // ją jako wolną — każdy z nich osobno — i biegli tam wszyscy naraz.
@@ -1159,6 +1165,11 @@ export function runContinuousThrowSimulation({
           // poczekać na niego w przestrzeni. IN-CUT = wbiegał w lecący dysk.
           // Ta sama miara, którą wykonanie dobiera tempo lotu (flightSpeed.js).
           leadingPass: paceFracFor(recvAgent, fromX, fromY) < 0.5,
+          // Podrole obu stron zagrania — podrola jest wyliczana per agent przy
+          // budowaniu składu i nigdzie indziej nie jest zapisywana, więc bez tego
+          // statystyki nie potrafią rozbić rzutów wg roli.
+          throwerSubRole: throwerAgent?.subRole ?? null,
+          receiverSubRole: recvAgent?.subRole ?? null,
           catchX: toX,
           catchY: toY,
           laneThreats: option.laneThreats ?? option.traffic?.laneThreats ?? [],
@@ -1266,6 +1277,8 @@ export function runContinuousThrowSimulation({
     receiver: throwDecision.receiver,
     throwType: throwDecision.throwType,
     throwTechnique: throwDecision.throwTechnique,
+    throwerSubRole: throwDecision.throwerSubRole ?? null,
+    receiverSubRole: throwDecision.receiverSubRole ?? null,
     leadingPass: throwDecision.leadingPass ?? null,
     isOpenSide: throwDecision.isOpenSide,
     defender: throwDecision.defender,

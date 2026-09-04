@@ -187,6 +187,27 @@ function coverageCushionM(player, defenseTactics = null) {
  *  Obrona ma stronę, której broni — kierunek zagrożenia jej nie kasuje, tylko dominuje. */
 const SHADE_FORCE_BLEND = 0.35
 /** Jak mocno bias trenerski (shade deep/under) przechyla kierunek shade. */
+/**
+ * Siła kierunkowego shadingu (shade_deep / shade_under) — mnożnik przesunięcia celu
+ * obrońcy wzdłuż osi ataku.
+ *
+ * Przy 1.0 instrukcja przesuwała cel o ~0.6 m, a REALIZOWANE ustawienie wychodziło
+ * 0.11-0.34 m, bo obrońca goni ruchomy cel i nie dociąga go w pełni. W nowym modelu
+ * freeness (wyścig do przestrzeni) 0.34 m to różnica czasów 0.05 s, czyli contest
+ * o dwie setne — poniżej szumu percepcji. Shading musi przesuwać obrońcę rzędu
+ * 1.5-2 m, żeby atak w ogóle zobaczył zmienioną przestrzeń.
+ *
+ * Skalibrowane na 3 (tmp-sweep/shade2.mjs, 16 rozproszonych seedów na wariant):
+ *   1 -> shade_deep: krótkie 16.8%, długie 26.3%
+ *   3 -> shade_deep: krótkie 21.3%, długie 25.1%, completion 93.6%   <- wybrane
+ *   6 -> shade_deep: krótkie 21.1%, długie 24.7% (bez zysku ponad 3)
+ * Baza bez instrukcji: krótkie 15.9%, długie 27.8%, completion 92.6%.
+ *
+ * `shade_under` przesuwa obronę poprawnie i monotonicznie (-0.36 / -0.57 / -0.74 m),
+ * ale atak NIE odpowiada pójściem w głąb na żadnej skali — zamknięcie unders samo
+ * z siebie nie tworzy głębokiego cutu, ktoś tam musi pobiec. Do zbadania osobno.
+ */
+export const SHADE_SHIFT_CAL = { scale: 3 }
 export const SHADE_BIAS_CAL = { gain: 1.2 }
 
 export function tickDefenderBrain(agent, ctx) {
@@ -413,8 +434,8 @@ export function tickDefenderBrain(agent, ctx) {
     if (!goal) goal = cushionedMarkGoal(agent, tx, ty, cushion, preferDx, preferDy)
     if (layout === 'home') goal = { ...goal, y: goal.y + 0.35 }
     else if (layout === 'away') goal = { ...goal, y: goal.y - 0.35 }
-    const deepShift = (coachMods.helpDeepBias ?? 0) * 1.1 * attackSign
-    const underShift = (coachMods.denyUnderBias ?? 0) * 0.9 * attackSign
+    const deepShift = (coachMods.helpDeepBias ?? 0) * 1.1 * attackSign * SHADE_SHIFT_CAL.scale
+    const underShift = (coachMods.denyUnderBias ?? 0) * 0.9 * attackSign * SHADE_SHIFT_CAL.scale
     if (discPos) {
       goal = { ...goal, x: goal.x + deepShift - underShift }
     }
