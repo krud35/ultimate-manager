@@ -789,6 +789,14 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
           setProfileTeamName(null)
           setSelected(row)
         }}
+        onProposeLoanIn={(playerId) => {
+          const row = buildTransferRowForPlayer(career.world, career.playerTeamId, playerId)
+          if (!row || row.freeAgent) return
+          setProfilePlayer(null)
+          setProfileTeamName(null)
+          setFlash(null)
+          setLoanRow(row)
+        }}
       />
     </div>
   )

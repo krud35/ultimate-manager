@@ -138,6 +138,7 @@ export default function PlayerProfileModal({
   scoutPending = false,
   scoutCost = null,
   onStartNegotiation = null,
+  onProposeLoanIn = null,
 }) {
   const effectiveKnowledge = knowledge ?? (isOwnPlayer ? 100 : 40)
   const { lang } = useUiLang()
@@ -402,7 +403,7 @@ export default function PlayerProfileModal({
           </button>
         </div>
 
-        {!isOwnPlayer && (onToggleShortlist || onScoutPlayer || onStartNegotiation) && (
+        {!isOwnPlayer && (onToggleShortlist || onScoutPlayer || onStartNegotiation || onProposeLoanIn) && (
           <div className="px-5 py-3 border-b border-ufa-border/80 flex flex-wrap items-center gap-2">
             {onStartNegotiation && (
               <button
@@ -411,6 +412,15 @@ export default function PlayerProfileModal({
                 className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-bg hover:opacity-90"
               >
                 {t.startNegotiation}
+              </button>
+            )}
+            {onProposeLoanIn && (
+              <button
+                type="button"
+                onClick={() => onProposeLoanIn(player.id)}
+                className="rounded-md px-3 py-1.5 text-sm font-medium ring-1 text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover"
+              >
+                {t.proposeLoanIn}
               </button>
             )}
             {onToggleShortlist && (

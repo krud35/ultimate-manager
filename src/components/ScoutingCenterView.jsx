@@ -11,6 +11,7 @@ import { PLAYER_STAT_CATEGORIES, CATEGORY_LABELS, SUB_STAT_LABELS } from '../mod
 import { TRAIT_DEFS, traitLabel, traitDescription, traitToneClass } from '../models/playerTraits'
 import PlayerProfileModal from './PlayerProfileModal'
 import NegotiateModal from './NegotiateModal'
+import LoanTermsModal from './LoanTermsModal'
 import {
   worldTeamById,
   worldTeamsList,
@@ -29,6 +30,7 @@ import {
   removeFromShortlist,
   buildTransferRowForPlayer,
   submitTransferOffer,
+  queueLoanInRequest,
   mergeInbox,
   formatUsd,
   playerSearchCriteriaScore,
@@ -71,6 +73,7 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
   const [profileTeamName, setProfileTeamName] = useState(null)
   const [negotiateRow, setNegotiateRow] = useState(null)
   const [negotiateFlash, setNegotiateFlash] = useState(null)
+  const [loanRow, setLoanRow] = useState(null)
   const [selectedAttributes, setSelectedAttributes] = useState([])
   const [selectedTraits, setSelectedTraits] = useState([])
   const [maxAge, setMaxAge] = useState('')
@@ -193,6 +196,24 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
       setNegotiateFlash({ type: 'ok', text: result.flash ?? tt.offerSentFlash })
     }
     setNegotiateRow(null)
+  }
+
+  function handleLoanRequest(terms) {
+    if (!loanRow) return
+    const result = queueLoanInRequest(career, {
+      playerId: loanRow.playerId,
+      fee: terms.fee,
+      durationPreset: terms.durationPreset,
+      wageSplitPct: terms.wageSplitPct,
+      buyClause: terms.buyClause,
+    })
+    if (!result.ok) {
+      setNegotiateFlash({ type: 'error', text: translateTransferError(result.error, lang) ?? tt.transferError })
+      return
+    }
+    onCareerUpdate({ inbox: mergeInbox(career, [result.message]) })
+    setNegotiateFlash({ type: 'ok', text: tt.loanSentFlash })
+    setLoanRow(null)
   }
 
   return (
@@ -558,6 +579,14 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
           setNegotiateFlash(null)
           setNegotiateRow(row)
         }}
+        onProposeLoanIn={(playerId) => {
+          const row = buildTransferRowForPlayer(career.world, career.playerTeamId, playerId)
+          if (!row || row.freeAgent) return
+          setProfilePlayer(null)
+          setProfileTeamName(null)
+          setNegotiateFlash(null)
+          setLoanRow(row)
+        }}
       />
 
       {negotiateRow && (
@@ -566,6 +595,15 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
           budget={getTransferBudget(buyer)}
           onClose={() => setNegotiateRow(null)}
           onSubmitOffer={handleNegotiateOffer}
+        />
+      )}
+      {loanRow && (
+        <LoanTermsModal
+          mode="in"
+          row={loanRow}
+          budget={getTransferBudget(buyer)}
+          onClose={() => setLoanRow(null)}
+          onSubmit={handleLoanRequest}
         />
       )}
       {negotiateFlash && (

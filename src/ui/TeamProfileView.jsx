@@ -61,11 +61,13 @@ import {
   toggleShortlist,
   buildTransferRowForPlayer,
   submitTransferOffer,
+  queueLoanInRequest,
   mergeInbox,
 } from '../career'
 import PlayerTraitChips from '../components/PlayerTraitChips'
 import PlayerProfileModal from '../components/PlayerProfileModal'
 import NegotiateModal from '../components/NegotiateModal'
+import LoanTermsModal from '../components/LoanTermsModal'
 import { teamProfileStrings } from './strings/teamProfile'
 import { transfersStrings } from './strings/transfers'
 import { translateTransferError } from './strings/transferErrors'
@@ -317,6 +319,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
   const [profilePlayer, setProfilePlayer] = useState(null)
   const [negotiateRow, setNegotiateRow] = useState(null)
   const [negotiateFlash, setNegotiateFlash] = useState(null)
+  const [loanRow, setLoanRow] = useState(null)
   const tt = transfersStrings(lang)
 
   const team = seasonState?.teamsById?.[teamId]
@@ -876,6 +879,13 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
             setNegotiateFlash(null)
             setNegotiateRow(row)
           }}
+          onProposeLoanIn={(playerId) => {
+            const row = buildTransferRowForPlayer(career?.world, career?.playerTeamId, playerId)
+            if (!row || row.freeAgent) return
+            setProfilePlayer(null)
+            setNegotiateFlash(null)
+            setLoanRow(row)
+          }}
         />
       )}
 
@@ -902,6 +912,31 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
               setNegotiateFlash({ type: 'ok', text: result.flash ?? tt.offerSentFlash })
             }
             setNegotiateRow(null)
+          }}
+        />
+      )}
+      {loanRow && (
+        <LoanTermsModal
+          mode="in"
+          row={loanRow}
+          budget={getTransferBudget(playerTeam)}
+          onClose={() => setLoanRow(null)}
+          onSubmit={(terms) => {
+            const result = queueLoanInRequest(career, {
+              playerId: loanRow.playerId,
+              fee: terms.fee,
+              durationPreset: terms.durationPreset,
+              wageSplitPct: terms.wageSplitPct,
+              buyClause: terms.buyClause,
+            })
+            if (!result.ok) {
+              const text = translateTransferError(result.error, lang) ?? tt.transferError
+              setNegotiateFlash({ type: 'error', text })
+              return
+            }
+            onChange?.({ inbox: mergeInbox(career, [result.message]) })
+            setNegotiateFlash({ type: 'ok', text: tt.loanSentFlash })
+            setLoanRow(null)
           }}
         />
       )}
