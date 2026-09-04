@@ -147,6 +147,15 @@ function skillAdjustment(throwStat, category, isOpenSide) {
 /**
  * Obrońca na torze lotu — niezależna szansa bloku (agility / reactions / vision).
  * Zwraca null gdy nikt nie przerywa lotu.
+ *
+ * TYLKO fastMode. Pełny silnik ma od Fazy 4b realny blok z geometrii lotu
+ * (laneBlockChance w ai/actionSimulator.js): dysk jest blokowany wtedy, gdy faktycznie
+ * przechodzi przez kopertę zasięgu obrońcy, więc przerzucenie go górą albo wyprowadzenie
+ * krzywizną poza rękę realnie działa. Ten model tego nie potrafił — liczył szansę z
+ * płaskiej odległości od odcinka rzucający→cel i z wysokości ZGADYWANEJ z typu rzutu
+ * (heightFactor), przez co wybór toru nie mógł na niego wpłynąć. Zmierzone przed
+ * podmianą: 0 bloków na torze na 44 wszystkich w 6 meczach pełnym silnikiem, czyli
+ * mechanizm w praktyce nie strzelał. W fastMode zostaje, bo tam nie ma geometrii.
  */
 export function rollLaneBlock({
   laneThreats = [],

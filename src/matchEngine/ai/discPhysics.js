@@ -27,27 +27,78 @@ const SAMPLE_STEP_MS = 25
 const MAX_RISE_FALL_SEC = 1.3
 
 /**
+ * Wysokość dysku w chwili t (s) — trójfazowy profil rise → hang → fall, wyliczany
+ * analitycznie, bez budowania tablicy próbek.
+ *
+ * Wydzielone z integrateDiscFlight3D, żeby OCENA torów (throwShape.js) liczyła dokładnie
+ * ten sam kształt, który potem realnie poleci. Ocena rozważa kilka kandydatów na rzut,
+ * więc nie może dla każdego alokować pełnej trajektorii.
+ */
+export function discHeightAtSec(t, { totalSec, startHeightM = 0, peakHeightM = 0, endHeightM = 0 }) {
+  const total = Math.max(0, totalSec ?? 0)
+  const start = Math.max(0, startHeightM)
+  const peak = Math.max(start, peakHeightM)
+  const end = Math.max(0, Math.min(peak, endHeightM))
+  if (total <= 0 || peak <= 0) return end
+  const riseSec = Math.min(MAX_RISE_FALL_SEC, total * 0.5)
+  const fallSec = Math.min(MAX_RISE_FALL_SEC, total * 0.5)
+  const glideSec = Math.max(0, total - riseSec - fallSec)
+  const tc = Math.max(0, Math.min(total, t))
+  if (tc <= riseSec) {
+    // Rise: stały ujemny przyspiesz. sprowadzający v0 do 0 dokładnie w riseSec, przy z=peak
+    // — startując z wysokości WYPUSZCZENIA, nie z ziemi.
+    const v0 = riseSec > 0 ? (2 * (peak - start)) / riseSec : 0
+    const riseAccel = riseSec > 0 ? -v0 / riseSec : 0
+    return Math.max(0, start + v0 * tc + 0.5 * riseAccel * tc * tc)
+  }
+  if (tc <= riseSec + glideSec) return peak
+  // Fall: start z vz=0 przy z=peak, stały przyspiesz. w dół, dokładnie z=end w fallSec.
+  const fallAccel = fallSec > 0 ? (-2 * (peak - end)) / (fallSec * fallSec) : 0
+  const tf = tc - riseSec - glideSec
+  return Math.max(0, peak + 0.5 * fallAccel * tf * tf)
+}
+
+/**
  * Buduje raz, na starcie lotu, pełną próbkę trajektorii wysokości + bocznego dryfu w
  * czasie. Wynik jest później próbkowany (interpolowany) dla dowolnego ms — ten sam wzorzec
  * co `throwPathPoints`/`samplePathAt` dla x,y (policz raz, próbkuj wiele razy).
  *
  * @param {number} totalFlightMs - całkowity, już wyliczony czas lotu (bez zmian w tej fazie)
  * @param {number} peakHeightM - docelowa maks. wysokość (z discPeakHeightM, kalibrowane stat.)
+ * @param {number} [startHeightM] - wysokość WYPUSZCZENIA z ręki (patrz niżej)
+ * @param {number} [endHeightM] - wysokość dysku w punkcie DOSTARCZENIA (patrz niżej)
  * @param {number} [turnFadeAmplitudeM] - maks. boczny dryf (m); 0 wyłącza turn/fade
  * @param {number} [turnFadeSign] - kierunek (+1/-1) początkowego turnu
- * @returns {{ms:number, z:number, lateral:number}[]} próbki, zawsze zaczynają się i
- *   kończą na z=0, lateral=0 (nie rusza skalibrowanego punktu wypuszczenia/lądowania)
+ * @returns {{ms:number, z:number, lateral:number}[]} próbki; zaczynają się na startHeightM,
+ *   kończą na endHeightM, lateral=0 (nie rusza skalibrowanego punktu wypuszczenia/dostarczenia)
  */
 export function integrateDiscFlight3D({
   totalFlightMs,
   peakHeightM,
+  /**
+   * Wysokość WYPUSZCZENIA dysku. Dysk wychodzi z ręki — z biodra przy forehandzie, zza
+   * pleców przy backhandzie, znad głowy przy hammerze — a nie z murawy. Póki lot startował
+   * z z=0, każde podanie musiało się najpierw wznieść, więc nawet dump na 4 m był lobem.
+   * Patrz discReleaseHeightM w statFormulas.js.
+   */
+  startHeightM = 0,
+  /**
+   * Punkt końcowy lotu to miejsce DOSTARCZENIA dysku, a nie miejsce, w którym uderzyłby
+   * w ziemię — podanie dochodzi do odbiorcy na wysokości klatki, a wiszący huck jeszcze
+   * wyżej. Wcześniej każdy lot kończył się na z=0, więc KAŻDY chwyt w silniku odbywał się
+   * przy samej ziemi (zmierzone: dysk w oknie kontestu średnio 0.26–0.52 m nad murawą) i
+   * ani wzrost, ani wyskok nie miały czego rozstrzygać.
+   */
+  endHeightM = 0,
   turnFadeAmplitudeM = 1.4,
   turnFadeSign = 1,
 }) {
   const totalSec = Math.max(0, (totalFlightMs ?? 0) / 1000)
-  const peak = Math.max(0, Number.isFinite(peakHeightM) ? peakHeightM : 0)
+  const start = Math.max(0, Number.isFinite(startHeightM) ? startHeightM : 0)
+  const peak = Math.max(start, Number.isFinite(peakHeightM) ? peakHeightM : 0)
+  const end = Math.max(0, Math.min(peak, Number.isFinite(endHeightM) ? endHeightM : 0))
   if (totalSec <= 0 || peak <= 0) {
-    return [{ ms: 0, z: 0, lateral: 0 }]
+    return [{ ms: 0, z: end, lateral: 0 }]
   }
 
   // Trójfazowy profil (nie symetryczna parabola balistyczna): szybkie wzniesienie do
@@ -61,28 +112,16 @@ export function integrateDiscFlight3D({
   // dłuższy płaski hang, nie w wyższy szczyt. Krótkie rzuty (2×MAX_RISE_FALL_SEC lub
   // krócej) nie mają fazy hang wcale — cały lot to rise+fall, blisko dawnego symetrycznego
   // łuku.
-  const riseSec = Math.min(MAX_RISE_FALL_SEC, totalSec * 0.5)
-  const fallSec = Math.min(MAX_RISE_FALL_SEC, totalSec * 0.5)
-  const glideSec = Math.max(0, totalSec - riseSec - fallSec)
-  // Rise: stały ujemny przyspiesz. sprowadzający v0 do 0 dokładnie w riseSec, przy z=peak.
-  const v0 = riseSec > 0 ? (2 * peak) / riseSec : 0
-  const riseAccel = riseSec > 0 ? -v0 / riseSec : 0
-  // Fall: start z vz=0 przy z=peak, stały przyspiesz. w dół, dokładnie z=0 w fallSec.
-  const fallAccel = fallSec > 0 ? (-2 * peak) / (fallSec * fallSec) : 0
-
   const samples = []
   const stepSec = SAMPLE_STEP_MS / 1000
   for (let t = 0; t <= totalSec; t += stepSec) {
-    let z
-    if (t <= riseSec) {
-      z = v0 * t + 0.5 * riseAccel * t * t
-    } else if (t <= riseSec + glideSec) {
-      z = peak
-    } else {
-      const tf = t - riseSec - glideSec
-      z = peak + 0.5 * fallAccel * tf * tf
-    }
-    z = Math.max(0, z)
+    // Jedno źródło prawdy dla kształtu — ta sama funkcja, z której korzysta ocena torów.
+    const z = discHeightAtSec(t, {
+      totalSec,
+      startHeightM: start,
+      peakHeightM: peak,
+      endHeightM: end,
+    })
     const uFrac = t / totalSec
     // S-curve zerowana na obu końcach (nie rusza punktu startu/lądowania) — banking
     // jedną stroną w pierwszej połowie lotu (turn, dysk szybki/mocno wirujący), drugą
@@ -92,9 +131,9 @@ export function integrateDiscFlight3D({
   }
   const last = samples[samples.length - 1]
   if (!last || last.ms < totalFlightMs) {
-    samples.push({ ms: totalFlightMs, z: 0, lateral: 0 })
+    samples.push({ ms: totalFlightMs, z: end, lateral: 0 })
   } else {
-    last.z = 0
+    last.z = end
     last.lateral = 0
   }
   return samples

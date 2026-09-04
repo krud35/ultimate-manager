@@ -703,20 +703,23 @@ export function simulatePoint({
     // Faza 4b (kill-switch, patrz RESOLUTION_MODE.useGeometric powyżej): gdy włączone,
     // prawdziwy wynik i kredytowany obrońca pochodzą z realnej geometrii 3D po locie
     // (sim.geometricResolution — actionSimulator.js), nie z result.success/isBlock.
-    // Lane block zostaje definitywną, synchroniczną decyzją jak dziś (nie przechodzi
-    // przez geometrię). Wind drop to osobny, już-realny efekt fizyczny — stosowany
-    // PO geometrii, nie zamiast niej.
+    // Blok NA TORZE też pochodzi z geometrii (dysk realnie przeszedł przez zasięg
+    // obrońcy — patrz laneBlockChance w actionSimulator.js); abstrakcyjny rollLaneBlock
+    // z resolveThrow zostaje wyłącznie dla fastMode, który geometrii nie ma. Wind drop to
+    // osobny, już-realny efekt fizyczny — stosowany PO geometrii, nie zamiast niej.
     let finalSuccess = result.success
     let finalIsBlock = result.isBlock
     let finalIsDrop = !!result.isDrop || !!result.isWindDrop
     let finalDefender = defender
-    if (RESOLUTION_MODE.useGeometric && !result.isLaneBlock && sim.geometricResolution) {
+    let finalIsLaneBlock = !!result.isLaneBlock
+    if (RESOLUTION_MODE.useGeometric && sim.geometricResolution) {
       const geo = sim.geometricResolution
       finalSuccess = geo.success && !result.isWindDrop
       finalIsBlock = finalSuccess ? false : geo.isBlock
       // Drop = odbiorca dosięgnął dysku i go nie utrzymał (albo zdmuchnął go wiatr).
       // W przeciwieństwie do „nie dobiegł" ma konkretnego winnego, więc idzie do statystyk.
       finalIsDrop = !finalSuccess && !finalIsBlock && (!!geo.isDrop || !!result.isWindDrop)
+      finalIsLaneBlock = geo.reason === 'lane_block'
       if (geo.defenderId != null && geo.defenderId !== defender.id) {
         finalDefender = defenseLineup.find((d) => d.id === geo.defenderId) ?? defender
       }
@@ -996,6 +999,7 @@ export function simulatePoint({
           turnoverMeters,
           isBlock: finalIsBlock,
           isDrop: finalIsDrop,
+          isLaneBlock: finalIsLaneBlock,
           isOpenSide: commitIsOpenSide,
           throwTechnique: commitThrowTechnique ?? sim.throwTechnique ?? null,
           leadingPass: sim.leadingPass ?? null,

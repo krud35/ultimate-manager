@@ -5,11 +5,16 @@ import { integrateAgentMotion, waitingHoldSpeedMps } from './playerMovement.js'
 import { computeDynamicOffenseTarget, spacingAdjustedTarget } from './offenseReorganization.js'
 import {
   aerialContestChance,
+  discDeliveryHeightM,
+  discReleaseHeightM,
+  executeThrowShape,
   discPeakHeightM,
+  jumpHeightM,
   maxSpeedMps,
   subStat,
 } from './statFormulas.js'
 import { windFlightOffset } from '../wind.js'
+import { chooseThrowShape, defaultThrowShape, CURVE_AMP_MULT } from './throwShape.js'
 import {
   integrateDiscFlight3D,
   sampleDiscFlight3D,
@@ -90,8 +95,6 @@ export function sprintSpeedMps(player, role) {
 // statem jump. Wciąż tylko wizualne/pozycyjne (dane wejściowe do resolveThrow nie
 // zależą od tego) — Faza 4 dopiero użyje tej realnej wysokości do realnego kontestu.
 const JUMP_GRAVITY_MPS2 = 9.81
-const JUMP_PEAK_BASE_M = 0.3
-const JUMP_PEAK_SCALE_M = 0.85
 
 function tickJumpArc(agent, discX, discY, timeToDiscMs, player, rng, discZ = 2) {
   if (agent.layout) {
@@ -106,9 +109,9 @@ function tickJumpArc(agent, discX, discY, timeToDiscMs, player, rng, discZ = 2) 
   const isReceiver = agent.id === player?.id
   const chance = aerialContestChance(player, discZ, isReceiver)
   if (rng && rng.float() > chance + 0.12) return agent
-  const jumpStat = subStat(player, 'physical', 'jump')
-  const peakJumpM = JUMP_PEAK_BASE_M + (jumpStat / 100) * JUMP_PEAK_SCALE_M
-  const vz0 = Math.sqrt(2 * JUMP_GRAVITY_MPS2 * peakJumpM)
+  // Jedno źródło prawdy dla wysokości wybicia — ta sama wielkość, którą kontest
+  // powietrzny (actionSimulator.js) dolicza do zasięgu.
+  const vz0 = Math.sqrt(2 * JUMP_GRAVITY_MPS2 * jumpHeightM(player))
   return { ...agent, layout: true, layoutMs: timeToDiscMs, jumping: true, z: 0, vz: vz0 }
 }
 
@@ -164,6 +167,12 @@ export function createFlightContext({
   aimY = null,
   throwType,
   trajectory,
+  /** Technika i strona rzutu — z czego dysk wychodzi (patrz discReleaseHeightM). */
+  throwTechnique = null,
+  isOpenSide = true,
+  /** Pozycje obrony w chwili wypuszczenia — wejście oceny torów (throwShape.js). */
+  defenseAgents = null,
+  receiverDefenderAgent = null,
   throwPathPoints,
   receiverId,
   defenderId,
@@ -269,9 +278,71 @@ export function createFlightContext({
   // (MAX_FLIGHT_MS, musi być >= tego sufitu + margines); dłuższy totalFlightMs nie
   // wydłuża budżetu, tylko ucina animację przed realnym końcem lotu (a przy wielu
   // długich rzutach w punkcie potrafi bardzo spowolnić całą symulację).
+  // KSZTAŁT LOTU wybrany przez rzucającego — musi być policzony PRZED czasem lotu, bo
+  // wyższy łuk to dłuższy lot: dysk przerzucony górą (albo przelot słabego rzucającego)
+  // wisi, a wiszący dysk daje obronie czas na zbiegnięcie się. To jest sprzężenie, przez
+  // które kontrola wysokości realnie kosztuje.
+  const discLoftStat = throwerLoftStat(thrower, trajectory)
+  const releaseHeightM = discReleaseHeightM(thrower, {
+    trajectory,
+    technique: throwTechnique,
+    isOpenSide,
+    rng,
+  })
+  const throwDistanceM = Math.hypot(finalPt.x - fromX, finalPt.y - fromY)
+  const basePeakM = discPeakHeightM(trajectory, discLoftStat, {
+    distanceM: throwDistanceM,
+    releaseHeightM,
+  })
+  const dxPath = finalPt.x - fromX
+  const dyPath = finalPt.y - fromY
+  const pathDirLen = Math.hypot(dxPath, dyPath) || 1
+  const perpX = -dyPath / pathDirLen
+  const perpY = dxPath / pathDirLen
+  const baseAmplitudeM = Math.min(2.2, Math.max(0.4, pathLen * 0.035))
+  const baseFlightMs = Math.max(FLIGHT_TICK_MS * 4, Math.round((pathLen / flightSpeedMps) * 1000))
+
+  // WYBÓR TORU: rzucający porównuje kilka kształtów (płasko/normalnie/górą × prosto/
+  // z naturalnym fadem/pod prąd) i bierze ten, który najtrudniej zablokować — patrz
+  // throwShape.js. Bez danych o obronie (fastMode, wywołania spoza symulacji) leci
+  // kształt domyślny.
+  const shape =
+    defenseAgents?.length
+      ? chooseThrowShape(thrower, {
+          trajectory,
+          technique: throwTechnique,
+          fromX,
+          fromY,
+          toX: finalPt.x,
+          toY: finalPt.y,
+          perpX,
+          perpY,
+          defenders: defenseAgents,
+          receiverDefender: receiverDefenderAgent,
+          basePeakM,
+          baseFlightMs,
+          baseAmplitudeM,
+          releaseHeightM,
+          deliveryHeightM: discDeliveryHeightM(trajectory),
+          loftStat: discLoftStat,
+          rng,
+        })
+      : defaultThrowShape(thrower, { trajectory, technique: throwTechnique })
+  // WYKONANIE: czy trafił w wybrany kształt (osobno wysokość, osobno krzywizna).
+  const arc = executeThrowShape(thrower, {
+    arc: shape.arc,
+    curve: shape.curve,
+    loftStat: discLoftStat,
+    rng,
+  })
+  const peakHeightM = Math.max(releaseHeightM + 0.12, basePeakM * arc.peakMult)
+  const turnFadeAmplitudeM = baseAmplitudeM * (CURVE_AMP_MULT[shape.curve] ?? 1) * arc.amplitudeMult
+  // Każdy dodatkowy metr łuku to ~9% dłuższy lot (i symetrycznie: płaski rzut dochodzi
+  // szybciej), z sufitem, żeby przelot nie zamieniał podania w balon.
+  const hangMult = Math.min(1.3, Math.max(0.86, 1 + (peakHeightM - basePeakM) * 0.09))
   const totalFlightMs = Math.min(
     9500,
-    Math.max(FLIGHT_TICK_MS * 4, Math.round((pathLen / flightSpeedMps) * 1000)),
+    Math.max(FLIGHT_TICK_MS * 4, Math.round(baseFlightMs * hangMult)),
   )
   // Apex łuku wyznacza RZUCAJĄCY i rodzaj rzutu — nie skoczność odbiorcy. Wcześniej było
   // tu subStat(receiver,'physical','jump'), czyli wysokość lotu dysku zależała od tego,
@@ -303,7 +374,6 @@ export function createFlightContext({
   const trueLandingX = finalPt.x + landingDrift.dx
   const trueLandingY = finalPt.y + landingDrift.dy
 
-  const discLoftStat = throwerLoftStat(thrower, trajectory)
 
   // Faza 1 planu 3D: realna integracja wysokości (grawitacja+uniesienie) + ograniczony
   // boczny dryf turn/fade, policzone raz tutaj i próbkowane co tick w sampleFlightDisc —
@@ -311,18 +381,17 @@ export function createFlightContext({
   // punktu lądowania (toX/toY) — tylko kształt toru w międzyczasie. Boczny dryf jest
   // zerowany na obu końcach lotu i ograniczony do ułamka dystansu rzutu, więc nie może
   // realnie przesunąć skalibrowanego punktu złapania.
-  const peakHeightM = discPeakHeightM(trajectory, discLoftStat)
-  const dxPath = finalPt.x - fromX
-  const dyPath = finalPt.y - fromY
-  const pathDirLen = Math.hypot(dxPath, dyPath) || 1
-  const perpX = -dyPath / pathDirLen
-  const perpY = dxPath / pathDirLen
-  const turnFadeAmplitudeM = Math.min(2.2, Math.max(0.4, pathLen * 0.035))
   const flight3DSamples = integrateDiscFlight3D({
     totalFlightMs,
     peakHeightM,
+    // Dysk wychodzi z ręki, nie z murawy...
+    startHeightM: releaseHeightM,
+    // ...i kończy tam, gdzie ma być ZAGRANY, a nie tam, gdzie uderzyłby w ziemię.
+    endHeightM: discDeliveryHeightM(trajectory),
     turnFadeAmplitudeM,
-    turnFadeSign: 1,
+    // Kierunek fade'u: naturalny dla techniki albo odwrócony, gdy rzucający
+    // świadomie posyła dysk pod prąd (patrz throwShape.js).
+    turnFadeSign: shape.curveSign,
   })
   const flight3DValid = isDiscFlight3DValid(flight3DSamples)
 
@@ -349,6 +418,20 @@ export function createFlightContext({
     throwerId,
     receiver,
     trajectory,
+    throwType,
+    /** Z czego dysk wyszedł — wejście bramki kontestu powietrznego (actionSimulator.js). */
+    releaseHeightM,
+    /** Tor wybrany przez rzucającego i to, jak bardzo go przestrzelił (resolveThrowArc). */
+    throwArc: shape.arc,
+    throwCurve: shape.curve,
+    curveSign: shape.curveSign,
+    arcExecutionError: arc.executionError,
+    curveExecutionError: arc.curveError,
+    /** Najciaśniejsze miejsce wybranego toru i ile rzucający stracił na samym WYBORZE. */
+    minLaneGap: shape.minLaneGap ?? null,
+    judgementLoss: shape.judgementLoss ?? 0,
+    shapeScore: shape.score ?? 0,
+    bestShapeScore: shape.bestScore ?? 0,
     resolution: resolution ?? null,
     defenderSpeedMult,
     defenderReactionDelayMs,

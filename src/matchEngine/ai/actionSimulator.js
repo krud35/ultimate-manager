@@ -50,7 +50,14 @@ import { subRoleForAgent, HANDLER_SUB_ROLES } from '../playerSubRoles.js'
 import { HUCK_MIN_M } from '../matchStats.js'
 import { buildSpaceMap } from './spaceMap.js'
 import { subStat } from './statFormulas.js'
-import { catchSuccessChance } from './statFormulas.js'
+import {
+  catchHeightM,
+  catchSuccessChance,
+  defenderReactionDelayMs,
+  standingReachM,
+  horizontalReachM,
+  maxAerialReachM,
+} from './statFormulas.js'
 import { getTraitMods } from '../../models/playerTraits.js'
 
 export const SIM_TICK_MS = 20
@@ -82,9 +89,35 @@ const CONTEST_WINDOW_MS = 260
 /** Do tylu metrów od dysku obrońca realnie utrudnia CHWYT (ręce przy dysku), w odróżnieniu
  *  od szerszego catchReachM, który mówi tylko „ktoś tam był". */
 const CONTESTED_CATCH_DIST_M = 1.0
+/**
+ * Okno śledzenia KTO MOŻE SIĘGNĄĆ DYSKU — celowo szersze niż CONTEST_WINDOW_MS.
+ *
+ * CONTEST_WINDOW_MS (260 ms) opisuje moment lądowania: dysk jest wtedy na ~0.3 m i
+ * wysokość nie znaczy tam nic. Realna walka o hucka rozstrzyga się wyżej i wcześniej —
+ * dysk schodzi przez 3.5 m mniej więcej pół sekundy przed lądowaniem i bierze go ten,
+ * kto sięga tam pierwszy. Żeby ten moment w ogóle zobaczyć, trzeba patrzeć szerzej.
+ */
+const AERIAL_WINDOW_MS = 900
 
 function agentPlayerId(agent) {
   return agent?.player?.id ?? agent?.id ?? null
+}
+
+/**
+ * Jak daleko zawodnik był od dysku — mierzone od jego RĄK, nie od stóp.
+ *
+ * Dopóki lot kończył się na z=0, „odległość 3D od stóp" była dobrym przybliżeniem. Teraz
+ * dysk dochodzi na wysokość chwytu (discDeliveryHeightM), więc mierzenie od ziemi
+ * doliczałoby każdemu ~1.2 m kary za to, że dysk w ogóle jest w powietrzu. Nadwyżka
+ * ponad wygodną wysokość chwytu (i ponad aktualne wybicie) liczy się normalnie — to
+ * właśnie ona sprawia, że wysoko wiszący dysk jest dla niższego dalej.
+ */
+function discReachGapM(agent, player, discSample) {
+  const dz = Math.max(
+    0,
+    (discSample.z ?? 0) - catchHeightM(player ?? agent?.player) - (agent.z ?? 0),
+  )
+  return Math.hypot(discSample.x - agent.x, discSample.y - agent.y, dz)
 }
 
 // Faza 4a (shadow mode) — opcjonalny log diagnostyczny do porównania geometrii z
@@ -130,6 +163,273 @@ function summarizeShadowContest(shadowContest, flight) {
     geometricSuccess,
     abstractSuccess,
     agreesWithAbstract: abstractSuccess == null ? null : geometricSuccess === abstractSuccess,
+  }
+}
+
+/**
+ * BLOK NA TORZE — realny, z geometrii lotu.
+ *
+ * Zastępuje abstrakcyjny rollLaneBlock (resolution.js), który liczył szansę z płaskiej
+ * odległości obrońcy od odcinka rzucający→cel i ze zgadywanej z TYPU rzutu wysokości.
+ * Skutki tamtego modelu były dwa i oba złe: wybór toru nie mógł zmniejszyć szansy bloku
+ * (bo blok nie wiedział, jak dysk leci), a sam mechanizm i tak nie strzelał — zmierzone
+ * na 6 meczach pełnym silnikiem: 0 bloków na torze na 44 wszystkich.
+ *
+ * Teraz obrońca blokuje dysk wtedy, kiedy ten realnie przechodzi przez jego kopertę
+ * zasięgu — tę samą elipsoidę (pion z wyskoku, bok z ramienia), którą rozstrzygamy
+ * kontest. Dzięki temu przerzucenie dysku nad obrońcą albo wyprowadzenie go krzywizną
+ * poza jego rękę faktycznie działa, a nie jest tylko etykietką.
+ *
+ * ZMIERZONE (tmp-laneblock-sweep.mjs, 8 meczów/arm, te same seedy):
+ *   base/span      completion  bloki/mecz (na torze)  hold%   huck
+ *   0.16 / 0.42      92.6%      13.4  (4.4)          68.5%  79.3%
+ *   0.10 / 0.28      94.0%       9.4  (2.1)          74.2%  83.3%   <- wybrane
+ *   0.06 / 0.18      94.1%       8.6  (1.9)          72.6%  82.7%
+ *   0.03 / 0.12      93.7%       7.9  (0.9)          68.9%  85.5%
+ *
+ * Bloki na torze to ~22% wszystkich bloków — reszta zostaje na odbiorcy (nie dobiegł
+ * albo przegrał walkę o dysk), co odpowiada realnemu rozkładowi: przecięcie podania w
+ * połowie drogi zdarza się, ale nie jest głównym sposobem odbierania dysku.
+ */
+export const LANE_BLOCK_CALIBRATION = {
+  /** Szansa dla przeciętnego obrońcy, gdy dysk idzie wprost w niego, wolno. */
+  baseChance: 0.1,
+  /** Ile dokłada umiejętność (agility/reactions/vision/blocking). */
+  skillSpan: 0.28,
+  /** Dysk mijający na granicy zasięgu jest dużo trudniejszy niż lecący w klatkę. */
+  edgePenalty: 0.65,
+  /** Powyżej tej prędkości (m/s) ręka po prostu nie nadąża; poniżej easy — pełna szansa. */
+  hardSpeedMps: 21,
+  easySpeedMps: 8,
+}
+
+function laneBlockChance(player, envelopeFrac, discSpeedMps) {
+  const C = LANE_BLOCK_CALIBRATION
+  const skill =
+    subStat(player, 'physical', 'agility') * 0.34 +
+    subStat(player, 'mental', 'reactions') * 0.34 +
+    subStat(player, 'mental', 'vision') * 0.2 +
+    subStat(player, 'defensive', 'blocking') * 0.12
+  const speedFactor = Math.max(
+    0.12,
+    Math.min(1, (C.hardSpeedMps - discSpeedMps) / (C.hardSpeedMps - C.easySpeedMps)),
+  )
+  const depth = 1 - Math.min(1, Math.max(0, envelopeFrac)) * C.edgePenalty
+  const mods = getTraitMods(player)
+  return Math.max(
+    0,
+    (C.baseChance + (skill / 100) * C.skillSpan) * depth * speedFactor * (mods.blockChanceMult ?? 1),
+  )
+}
+
+/**
+ * Śledzi, KIEDY (i na jakiej wysokości) dany zawodnik po raz pierwszy mógł zagrać dysk.
+ *
+ * Warunek jest fizyczny, nie statystyczny: dysk musi być w zasięgu poziomym (ręce +
+ * krok) i nie wyżej, niż zawodnik sięga w wyskoku (maxAerialReachM — dziś jump, docelowo
+ * wzrost + ramiona). Ponieważ lot próbkujemy do przodu, pierwszy taki tick to moment
+ * NAJWCZEŚNIEJSZY, czyli i najwyższy — a to jest cała stawka kontestu na hucku: dwóch
+ * ludzi stoi w tym samym miejscu i dysk bierze ten, kto sięga wyżej.
+ *
+ * `minDistToReceiver` jest tu po to, żeby odróżnić obrońcę, który kontestuje TEGO
+ * odbiorcę, od takiego, który po prostu przebiegał obok punktu lądowania — brak tej
+ * informacji był powodem, dla którego wcześniejsza próba stopniowanego kontestu dawała
+ * szum zamiast sygnału (patrz komentarz przy GEOMETRIC_CALIBRATION).
+ */
+function trackAerialTake(prev, agent, player, discSample, receiverAgent = null) {
+  const state = prev ?? {
+    player,
+    // Koperta zasięgu jest ELIPSOIDĄ, nie kulą ani walcem: w pionie sięga wyskok
+    // (2.3–3.5 m), w bok tylko ramię z wychyleniem (~1.1 m). Walec dawał artefakt —
+    // obrońca, nad którym dysk dopiero PRZELATYWAŁ w drodze do odbiorcy, „sięgał" go
+    // wcześniej niż odbiorca stojący w punkcie dostarczenia (zmierzone: obrońcy mieli
+    // średnio 182 ms przewagi, czyli model nagradzał bycie po drodze, nie przy dysku).
+    reachUpM: maxAerialReachM(player),
+    reachOutM: horizontalReachM(player),
+    takeMs: null,
+    takeZ: null,
+    minDistToReceiver: Infinity,
+    prevHoriz: Infinity,
+  }
+  if (receiverAgent) {
+    const dr = Math.hypot(agent.x - receiverAgent.x, agent.y - receiverAgent.y)
+    if (dr < state.minDistToReceiver) state.minDistToReceiver = dr
+  }
+  const horiz = Math.hypot(discSample.x - agent.x, discSample.y - agent.y)
+  if (state.takeMs == null) {
+    const ex = horiz / state.reachOutM
+    const ez = Math.max(0, discSample.z) / state.reachUpM
+    // Dysk musi do zawodnika PODCHODZIĆ. Bez tego warunku obrońca, nad którym dysk
+    // właśnie przelatuje w drodze do odbiorcy, „zagrywał" go — a dysku oddalającego się
+    // z prędkością kilkunastu m/s nie zabiera się w biegu. To ten warunek odróżnia
+    // realny kontest (obaj zbiegają się pod wiszący dysk) od bycia po drodze.
+    if (ex * ex + ez * ez <= 1 && horiz <= state.prevHoriz) {
+      state.takeMs = discSample.timeToDisc
+      state.takeZ = discSample.z
+    }
+  }
+  state.prevHoriz = horiz
+  return state
+}
+
+/**
+ * Zdolność do wygrania dysku w powietrzu (skala statów). `jump` wchodzi tu drugi raz —
+ * po pierwsze przez zasięg (kto sięga wcześniej), po drugie tutaj, bo wyskok to nie
+ * tylko wysokość, ale i to, czy zawodnik zabiera dysk pewnie, czy tylko go dotyka.
+ */
+function aerialSkillScore(player, isReceiver) {
+  const mods = getTraitMods(player)
+  const base = isReceiver
+    ? subStat(player, 'offensive', 'catching') * 0.6 + subStat(player, 'physical', 'jump') * 0.4
+    : subStat(player, 'defensive', 'blocking') * 0.6 + subStat(player, 'physical', 'jump') * 0.4
+  const mult = isReceiver ? (mods.aerialRecvMult ?? 1) : (mods.aerialDefMult ?? 1)
+  return base * mult
+}
+
+/**
+ * Kalibracja kontestu powietrznego — osobno od GEOMETRIC_CALIBRATION, bo odpowiada za
+ * inne pytanie. Tamta mówi „czy odbiorca w ogóle dobiegł", ta „kto zabrał dysk, skoro
+ * dobiegli obaj".
+ */
+/**
+ * ZMIERZONE — 8 meczów pełnym silnikiem na etap, te same seedy (tmp-aerial-sep.mjs):
+ *
+ *                         completion  bloki/mecz  hold%   dump   standard  huck
+ *   baseline (przed)         96.2%       4.4      81.2%   97.8%   96.2%   93.5%
+ *   sam kontest              89.8%      17.4      62.1%   93.0%   89.7%   84.7%
+ *   + bramka sky             95.1%       7.0      76.3%   96.5%   95.9%   87.7%
+ *   + wybór toru rzutu       94.5%       8.0      70.3%   96.5%   95.6%   83.8%
+ *
+ * Wniosek, dla którego warto to tu trzymać: SAM kontest bez bramki wysokości był
+ * katastrofą (17 bloków na mecz, dumpy 93%), bo odpalał na płaskich podaniach. Dopiero
+ * warunek „dysk musiał spadać z góry" ustawił go tam, gdzie należy — na huckach.
+ *
+ * Sweep przewagi odbiorcy (tmp-aerial-sweep.mjs, 16 meczów/arm, jeszcze przed bramką):
+ * edge 2.0/2.2/2.4/2.6 dało completion 91.9/92.8/92.3/92.3% — całość w granicach szumu
+ * (ten sam arm w dwóch przebiegach: 92.8% i 91.7%), więc nie ma sensu stroić dokładniej.
+ * Realną dźwignią częstości kontestów jest minDefenderLeadMs: 90 ms -> 12.6 bloku/mecz,
+ * 120 ms -> 9.9, 150 ms -> 11.0.
+ *
+ * Hold% schodzi z 81% do ~70%, czyli do dolnej krawędzi pasma (70–85) — to bezpośrednia
+ * konsekwencja tego, że obrona zaczęła wygrywać dyski, i pierwsza rzecz do sprawdzenia,
+ * gdyby mecze wyszły zbyt „obronne".
+ *
+ * WRAŻLIWOŚĆ NA SKOCZNOŚĆ (tmp-aerial-jumpab2.mjs, jump całej drużyny 25/60/95,
+ * completion rzutów tej drużyny — pomiar sprzed bramki sky, gdy kontestów było dużo
+ * i próbka wystarczała):
+ *   atak   W KONTEŚCIE 28.1% -> 41.0% -> 63.8%   bez kontestu 96.4% -> 97.1% -> 96.8%
+ *   obrona W KONTEŚCIE 79.4% -> 72.5% -> 51.1%   bez kontestu 94.2% -> 96.1% -> 97.3%
+ * Czyli skoczność rozstrzyga dokładnie tam, gdzie powinna — w walce o dysk — i nie
+ * rusza rzutów, których nikt nie kontestuje.
+ */
+export const AERIAL_CALIBRATION = {
+  /** Ile ms przewagi w sięgnięciu po dysk daje 1 logit (≈73% szansy). */
+  msPerLogit: 90,
+  /** Ile punktów różnicy zdolności powietrznych daje 1 logit. */
+  skillPerLogit: 28,
+  /**
+   * Stała przewaga odbiorcy przy RÓWNYM dojściu do dysku. Musi być duża, bo równe
+   * dojście nie jest sytuacją równą: odbiorca atakuje dysk twarzą, obiema rękami i
+   * wie, kiedy go zabrać, a obrońca sięga przez plecy, jedną ręką i pod rygorem faulu.
+   * Przy 2.2 równe dojście to ~90% dla ataku, obrońca 100 ms wcześniej ~75%, 200 ms
+   * wcześniej ~50%, 300 ms wcześniej ~25% — czyli dopiero realne wyprzedzenie odbiorcy
+   * przy dysku (a nie samo bycie w pobliżu) zabiera atakowi rzut.
+   */
+  receiverEdgeLogit: 2.2,
+  /** Dokładany logit obrony za KAŻDEGO kolejnego kontestującego (help D w tłoku). */
+  extraContesterLogit: 0.5,
+  /**
+   * Ile ms przed dolotem dysku obrońca musi być przy nim, żeby w ogóle zdążył zagrać.
+   * Dysku, który wchodzi w zasięg dopiero w ostatniej chwili, nie da się zabrać — na
+   * wyprost ręki czy wybicie potrzeba czasu. To jest granica między płaskim, szybkim
+   * podaniem (obrońca ociera się o dysk, ale nic z tym nie zrobi) a wiszącym huckiem,
+   * pod który zbiegają się wszyscy.
+   */
+  minDefenderLeadMs: 120,
+  /** Jak blisko odbiorcy musi być obrońca, żeby kontestować JEGO, a nie samą przestrzeń. */
+  nearReceiverM: 3.0,
+  /**
+   * BRAMKA „TO JEST SKY BALL" — bez niej kontest odpalał na czym popadnie.
+   *
+   * Walka o dysk w powietrzu ma sens tylko wtedy, gdy dysk SCHODZI Z GÓRY na stojących
+   * pod nim zawodników: wisiał, obaj zdążyli dobiec, obaj skaczą. Płaskie podanie leci
+   * cały czas na podobnej wysokości i dochodzi w ręce — nie ma tam czego wyskakiwać,
+   * a obrona odbiera je blokiem na torze (rollLaneBlock) albo tym, że odbiorca nie
+   * dobiegł, nie walką w powietrzu.
+   *
+   * Warunek: w strefie dolotu (skyZoneM od punktu dostarczenia) dysk musiał być wyżej
+   * niż zasięg stojącego odbiorcy — czyli trzeba było po niego wyskoczyć. Próg jest
+   * zaczepiony o standingReachM, więc razem ze wzrostem zawodników przesunie się sam.
+   */
+  skyZoneM: 3.0,
+  skyReachFraction: 1.0,
+}
+
+/**
+ * Rozstrzyga walkę o dysk między odbiorcą a obrońcami, którzy realnie mogli go zagrać.
+ * Zwraca null, gdy nie ma czego rozstrzygać (żaden obrońca nie sięgnął dysku).
+ */
+function resolveAerialContest(shadowContest, flight, summary, rng) {
+  const recvTake = shadowContest?.aerialReceiver ?? null
+  const defTakes = shadowContest?.aerialDefenders
+  if (!defTakes || defTakes.size === 0) return null
+  const { catchReachM } = GEOMETRIC_CALIBRATION
+  const A = AERIAL_CALIBRATION
+
+  // Dump/swing nie kontestuje się nigdy. Po urealnieniu toru lotu (dump szczytuje ~1.3 m)
+  // i tak nie przeszedłby bramki wysokości, ale zapisujemy to wprost, żeby nie wróciło
+  // przy następnej zmianie pułapu.
+  if (flight?.throwType === THROW_TYPE.DUMP_SWING) return null
+
+  // Dysk musiał schodzić z góry — inaczej to nie jest walka w powietrzu.
+  const receiverPlayer = recvTake?.player ?? flight.receiver
+  const skyBar = standingReachM(receiverPlayer) * A.skyReachFraction
+  if (!((shadowContest.approachMaxZ ?? 0) > skyBar)) return null
+
+  const contesters = []
+  for (const [id, take] of defTakes) {
+    if (take.takeMs == null || take.takeMs < A.minDefenderLeadMs) continue
+    if (take.minDistToReceiver > A.nearReceiverM) continue
+    const distToDisc = summary.nearestDefenderId === id
+      ? summary.nearestDefenderMinDist3D
+      : (shadowContest.defenders.get(id) ?? Infinity)
+    if (!(distToDisc <= catchReachM)) continue
+    contesters.push({ id, take })
+  }
+  if (contesters.length === 0) return null
+
+  // Najgroźniejszy = ten, kto sięga dysku najwcześniej; przy remisie lepszy powietrznie.
+  contesters.sort(
+    (a, b) =>
+      b.take.takeMs - a.take.takeMs ||
+      aerialSkillScore(b.take.player, false) - aerialSkillScore(a.take.player, false),
+  )
+  const best = contesters[0]
+
+  // Odbiorca, który nigdy nie sięgnął dysku wyżej niż przy samej ziemi, wchodzi do
+  // kontestu z zerową przewagą czasową — nie jest z niego wykluczony, bo bramka
+  // catchReachM już potwierdziła, że przy dysku był.
+  const recvTakeMs = recvTake?.takeMs ?? 0
+  const recvPlayer = recvTake?.player ?? flight.receiver
+  const logit =
+    A.receiverEdgeLogit +
+    (recvTakeMs - best.take.takeMs) / A.msPerLogit +
+    (aerialSkillScore(recvPlayer, true) - aerialSkillScore(best.take.player, false)) /
+      A.skillPerLogit -
+    (contesters.length - 1) * A.extraContesterLogit
+  const pReceiver = 1 / (1 + Math.exp(-logit))
+  const receiverWins = rng?.float ? rng.float() < pReceiver : pReceiver >= 0.5
+
+  return {
+    receiverWins,
+    pReceiver,
+    defenderId: best.id,
+    contesterCount: contesters.length,
+    recvTakeMs,
+    defTakeMs: best.take.takeMs,
+    // Wysokość, na której dysk faktycznie został zagrany — to ona (a nie wysokość przy
+    // lądowaniu) decyduje o trudności chwytu.
+    takeZ: recvTake?.takeZ ?? shadowContest.discZAtClosest ?? 1.2,
   }
 }
 
@@ -206,11 +506,23 @@ function computeGeometricResolution(shadowContest, flight, rng = null) {
   // dokładał szum zamiast sygnału. Żeby to zrobić dobrze, trzeba najpierw wiedzieć, KTO
   // realnie kontestował tego odbiorcę (obrońca blisko dysku ORAZ blisko odbiorcy),
   // a tej informacji shadowContest dziś nie zbiera.
-  const { contestRelativeThreshold, contestAbsoluteThreshold } = GEOMETRIC_CALIBRATION
-  const defenderWinsContest =
-    defenderInReach &&
-    summary.nearestDefenderMinDist3D < summary.receiverMinDist3D * contestRelativeThreshold &&
-    summary.nearestDefenderMinDist3D < contestAbsoluteThreshold
+  // KONTEST POWIETRZNY zastępuje dawną bramkę „obrońca wyraźnie bliżej dysku".
+  // Tamta wymagała, żeby obrońca był bliżej niż 13% dystansu odbiorcy — przy typowym
+  // receiverMinDist3D ≈ 0.9 m oznaczało to 0.12 m i praktycznie nigdy nie odpalała:
+  // zmierzone na hucku obrońca był bliżej dysku niż odbiorca w 29.9% rzutów, a odbiorca
+  // i tak łapał 80% z nich. Teraz o dysk toczy się realna walka: kto sięga wcześniej
+  // (zasięg + wyskok), z poprawką na umiejętności powietrzne i liczbę kontestujących.
+  // Odbiorca, który nie dobiegł, nie ma o co walczyć — kontestu wtedy nie rozstrzygamy
+  // (i nie zużywamy na niego losowania).
+  const aerial = receiverInReach ? resolveAerialContest(shadowContest, flight, summary, rng) : null
+  const defenderWinsContest = aerial
+    ? !aerial.receiverWins
+    : // Zapas na wypadek braku danych o sięgnięciu (np. bardzo krótki lot) — stara,
+      // czysto dystansowa bramka.
+      defenderInReach &&
+      summary.nearestDefenderMinDist3D <
+        summary.receiverMinDist3D * GEOMETRIC_CALIBRATION.contestRelativeThreshold &&
+      summary.nearestDefenderMinDist3D < GEOMETRIC_CALIBRATION.contestAbsoluteThreshold
   if (receiverInReach && !defenderWinsContest) {
     // OSOBNY KROK CHWYTU — dysk doleciał w zasięg, ale trzeba go jeszcze utrzymać.
     // Ta sama formuła co w fastMode (resolveThrow), tylko karmiona realną geometrią:
@@ -221,9 +533,18 @@ function computeGeometricResolution(shadowContest, flight, rng = null) {
     const contestedCatch =
       summary.nearestDefenderMinDist3D != null &&
       summary.nearestDefenderMinDist3D <= CONTESTED_CATCH_DIST_M
+    // Wysokość ZAGRANIA dysku, nie wysokość przy lądowaniu. Odbiorca, który wyszedł
+    // pod hucka wysoko, łapie go na 2 m nad ziemią — i to jest chwyt trudniejszy, nawet
+    // gdy wygrał wyścig. Dawne `discZAtClosest` opisywało moment, w którym dysk był już
+    // praktycznie na ziemi (zmierzone: średnio 0.26–0.52 m), więc trudność wysokości
+    // nie odpalała nigdy.
+    const takeZ = shadowContest.aerialReceiver?.takeZ ?? shadowContest.discZAtClosest ?? 1.2
     const pCatch = catchSuccessChance(flight.receiver, {
-      discZ: shadowContest.discZAtClosest ?? 1.2,
+      discZ: takeZ,
       contested: contestedCatch,
+      // Chwyt na pełnym wybiciu, u szczytu własnego zasięgu — tam dysk łapie się jedną
+      // ręką, w kontakcie i bez asekuracji ciałem.
+      layoutAttempt: takeZ > maxAerialReachM(flight.receiver) * 0.92,
       catchBonus: getTraitMods(flight.receiver).catchBonus ?? 0,
       // Jak bardzo odbiorca musiał sięgać: 0 = dysk trafił w ręce, 1 = granica zasięgu.
       reachStrain:
@@ -232,15 +553,36 @@ function computeGeometricResolution(shadowContest, flight, rng = null) {
           : 0,
     })
     if (rng?.float && rng.float() > pCatch) {
-      return { success: false, isBlock: false, isDrop: true, defenderId: null }
+      return {
+        success: false,
+        isBlock: false,
+        isDrop: true,
+        defenderId: null,
+        reason: 'drop',
+        aerialDebug: aerial,
+      }
     }
-    return { success: true, isBlock: false, defenderId: null }
+    return { success: true, isBlock: false, defenderId: null, reason: 'catch', aerialDebug: aerial }
+  }
+  // Przegrany kontest powietrzny to blok konkretnego obrońcy — tego, który dysk zabrał,
+  // nawet jeśli inny był statystycznie bliżej w chwili lądowania.
+  if (receiverInReach && aerial) {
+    return {
+      success: false,
+      isBlock: true,
+      isDrop: false,
+      defenderId: aerial.defenderId,
+      reason: 'aerial_lost',
+      aerialDebug: aerial,
+    }
   }
   return {
     success: false,
     isBlock: defenderInReach,
     isDrop: false,
     defenderId: defenderInReach ? summary.nearestDefenderId : null,
+    reason: receiverInReach ? 'contest_lost' : 'not_in_reach',
+    aerialDebug: aerial,
   }
 }
 
@@ -626,6 +968,10 @@ export function runContinuousThrowSimulation({
   // WSZYSTKICH obrońców (nie tylko statycznie przypisanego), więc łapie realny wpływ
   // poacha, jeśli faktycznie jest bliżej dysku niż przypisany obrońca.
   let shadowContest = null
+  /** Blok na torze (geometryczny) — gdy padnie, lot kończy się w miejscu przecięcia. */
+  let laneBlock = null
+  const laneBlockTried = new Set()
+  let prevDiscSample = null
 
   for (let tick = 0; tick < resolvedMaxTicks; tick += 1) {
     const ms = tick * SIM_TICK_MS
@@ -907,37 +1253,128 @@ export function runContinuousThrowSimulation({
       offenseAgents = adjusted.offenseAgents
       defenseAgents = adjusted.defenseAgents
 
-      if (discSample.timeToDisc <= CONTEST_WINDOW_MS) {
+      // BLOK NA TORZE: dysk przechodzi przez zasięg obrońcy w drodze do odbiorcy. Liczy
+      // się tylko przelot (poza oknem dolotu — końcówkę rozstrzyga kontest powietrzny) i
+      // dopiero po czasie reakcji obrońcy: dysku, którego jeszcze nie przeczytał, nie
+      // zetnie. Każdy obrońca ma jedną próbę na lot.
+      if (!laneBlock && discSample.timeToDisc > AERIAL_WINDOW_MS) {
+        const discSpeedMps =
+          prevDiscSample != null
+            ? Math.hypot(discSample.x - prevDiscSample.x, discSample.y - prevDiscSample.y) /
+              (SIM_TICK_MS / 1000)
+            : 0
+        for (const dAgent of defenseAgents) {
+          const dId = agentPlayerId(dAgent)
+          if (dId == null || laneBlockTried.has(dId)) continue
+          const dPlayer = dAgent.player ?? dAgent
+          if (flight.elapsedMs < defenderReactionDelayMs(dPlayer)) continue
+          const horiz = Math.hypot(discSample.x - dAgent.x, discSample.y - dAgent.y)
+          const ex = horiz / Math.max(0.5, horizontalReachM(dPlayer))
+          const ez =
+            Math.max(0, (discSample.z ?? 0) - (dAgent.z ?? 0)) /
+            Math.max(0.5, maxAerialReachM(dPlayer))
+          const envelope = Math.sqrt(ex * ex + ez * ez)
+          if (envelope > 1) continue
+          laneBlockTried.add(dId)
+          if (rng.float() < laneBlockChance(dPlayer, envelope, discSpeedMps)) {
+            laneBlock = {
+              defenderId: dId,
+              x: discSample.x,
+              y: discSample.y,
+              z: discSample.z ?? 0,
+              ms: flight.elapsedMs,
+              envelope,
+              discSpeedMps,
+            }
+            break
+          }
+        }
+        if (laneBlock) {
+          // Lot kończy się TU — dysk nie leci dalej, a strata jest w miejscu przecięcia,
+          // nie przy odbiorcy.
+          frames.push(
+            snapshotFrame(
+              ms,
+              offenseAgents,
+              defenseAgents,
+              thrower.id,
+              discPositionInFlight(laneBlock.x, laneBlock.y, laneBlock.z),
+              markerId,
+              liveStall,
+            ),
+          )
+          break
+        }
+      }
+
+      if (discSample.timeToDisc <= AERIAL_WINDOW_MS) {
         if (!shadowContest) {
-          shadowContest = { receiverMinDist3D: Infinity, defenders: new Map(), discZAtClosest: 0 }
+          shadowContest = {
+            receiverMinDist3D: Infinity,
+            defenders: new Map(),
+            discZAtClosest: 0,
+            // Jak wysoko dysk był, wchodząc w strefę dolotu — wejście bramki sky.
+            approachMaxZ: 0,
+            // Kto i kiedy mógł sięgnąć dysku — okno szersze niż to poniżej, patrz
+            // AERIAL_WINDOW_MS.
+            aerialReceiver: null,
+            aerialDefenders: new Map(),
+          }
+        }
+        // Wąskie okno (moment lądowania) rządzi bramką „czy odbiorca w ogóle dobiegł" —
+        // zostaje dokładnie takie, jak było skalibrowane.
+        const inContestWindow = discSample.timeToDisc <= CONTEST_WINDOW_MS
+        // Wysokość dysku w strefie dolotu (nie na całej trasie): interesuje nas, czy
+        // SPADAŁ na zawodników przy punkcie dostarczenia, a nie jak wysoko leciał w pół drogi.
+        const distToTarget = Math.hypot(
+          discSample.x - (flight.trueLandingX ?? flight.toX),
+          discSample.y - (flight.trueLandingY ?? flight.toY),
+        )
+        if (distToTarget <= AERIAL_CALIBRATION.skyZoneM && discSample.z > shadowContest.approachMaxZ) {
+          shadowContest.approachMaxZ = discSample.z
         }
         const recvAgent = offenseAgents.find((a) => a.id === flight.receiverId)
         if (recvAgent) {
-          const d3 = Math.hypot(
-            discSample.x - recvAgent.x,
-            discSample.y - recvAgent.y,
-            discSample.z - (recvAgent.z ?? 0),
-          )
-          if (d3 < shadowContest.receiverMinDist3D) {
-            shadowContest.receiverMinDist3D = d3
-            // wysokość dysku w chwili największego zbliżenia — realna wielkość fizyczna,
-            // wejście dla przyszłej logiki kontestu (sky battle / layout)
-            shadowContest.discZAtClosest = discSample.z ?? 0
+          if (inContestWindow) {
+            const d3 = discReachGapM(
+              recvAgent,
+              recvAgent.player ?? throwDecision.receiver,
+              discSample,
+            )
+            if (d3 < shadowContest.receiverMinDist3D) {
+              shadowContest.receiverMinDist3D = d3
+              shadowContest.discZAtClosest = discSample.z ?? 0
+            }
           }
+          shadowContest.aerialReceiver = trackAerialTake(
+            shadowContest.aerialReceiver,
+            recvAgent,
+            recvAgent.player ?? throwDecision.receiver,
+            discSample,
+          )
         }
         for (const dAgent of defenseAgents) {
           const dId = agentPlayerId(dAgent)
           if (dId == null) continue
-          const d3 = Math.hypot(
-            discSample.x - dAgent.x,
-            discSample.y - dAgent.y,
-            discSample.z - (dAgent.z ?? 0),
+          if (inContestWindow) {
+            const d3 = discReachGapM(dAgent, dAgent.player ?? dAgent, discSample)
+            const prev = shadowContest.defenders.get(dId)
+            if (prev == null || d3 < prev) shadowContest.defenders.set(dId, d3)
+          }
+          shadowContest.aerialDefenders.set(
+            dId,
+            trackAerialTake(
+              shadowContest.aerialDefenders.get(dId),
+              dAgent,
+              dAgent.player ?? dAgent,
+              discSample,
+              recvAgent,
+            ),
           )
-          const prev = shadowContest.defenders.get(dId)
-          if (prev == null || d3 < prev) shadowContest.defenders.set(dId, d3)
         }
       }
 
+      prevDiscSample = discSample
       flight.elapsedMs += SIM_TICK_MS
     } else {
       const throwerPos = { x: discX, y: discY }
@@ -1210,6 +1647,18 @@ export function runContinuousThrowSimulation({
             aimY: toY,
             throwType: throwDecision.throwType,
             trajectory,
+            // Z czego dysk wychodzi: forehand niżej, hammer znad głowy, rzut łamiący
+            // marka dołem albo górą (discReleaseHeightM).
+            throwTechnique: throwDecision.throwTechnique ?? null,
+            isOpenSide: throwDecision.isOpenSide ?? true,
+            // Ustawienie obrony w chwili wypuszczenia — rzucający ocenia po nim, którym
+            // torem dysk najtrudniej zablokować (throwShape.js).
+            defenseAgents: defenseAgents.map((d) => ({ x: d.x, y: d.y, player: d.player ?? d })),
+            receiverDefenderAgent: flightDefender
+              ? defenseAgents.find(
+                  (d) => (d.player?.id ?? d.id) === flightDefender.id,
+                ) ?? null
+              : null,
             receiverId: throwDecision.receiver.id,
             defenderId: flightDefender?.id,
             throwerId: thrower.id,
@@ -1269,6 +1718,19 @@ export function runContinuousThrowSimulation({
     holdStartMs,
   })
 
+  // Blok na torze zamyka sprawę: dysk nigdy nie doleciał do odbiorcy, więc nie ma czego
+  // rozstrzygać w powietrzu.
+  const geoResolution = laneBlock
+    ? {
+        success: false,
+        isBlock: true,
+        isDrop: false,
+        defenderId: laneBlock.defenderId,
+        reason: 'lane_block',
+        laneBlock,
+      }
+    : computeGeometricResolution(shadowContest, flight, rng)
+
   return {
     stallAbort: false,
     stallOut: false,
@@ -1294,7 +1756,7 @@ export function runContinuousThrowSimulation({
     discY,
     motionTrace,
     endStates: snapshotAgentStates(offenseAgents, defenseAgents),
-    geometricResolution: computeGeometricResolution(shadowContest, flight, rng),
+    geometricResolution: geoResolution,
     geometricShadow: (() => {
       const g = summarizeShadowContest(shadowContest, flight)
       if (g) {
@@ -1305,9 +1767,32 @@ export function runContinuousThrowSimulation({
           ...g,
           throwType: throwDecision.throwType,
           receiverState: ra?.state ?? null,
+          receiverId: flight.receiverId,
+          assignedDefenderId: flight.defenderId,
+          separationOutcome: throwDecision.separation?.outcome ?? null,
           predictedLeadDist,
           totalFlightMs: flight.totalFlightMs,
           throwDistanceM: Math.hypot(flight.toX - flight.fromX, flight.toY - flight.fromY),
+          // Realna decyzja geometrii (to, co trafia do gry) + wejścia kontestu
+          // powietrznego — bez tego z logu nie da się odróżnić „odbiorca nie dobiegł"
+          // od „dobiegł i przegrał walkę w powietrzu".
+          geoSuccess: geoResolution?.success ?? null,
+          geoIsBlock: geoResolution?.isBlock ?? null,
+          geoIsDrop: geoResolution?.isDrop ?? null,
+          geoReason: geoResolution?.reason ?? null,
+          laneBlock: geoResolution?.laneBlock ?? null,
+          discZAtClosest: shadowContest?.discZAtClosest ?? null,
+          approachMaxZ: shadowContest?.approachMaxZ ?? null,
+          throwArc: flight.throwArc ?? null,
+          throwCurve: flight.throwCurve ?? null,
+          minLaneGap: flight.minLaneGap ?? null,
+          judgementLoss: flight.judgementLoss ?? null,
+          shapeScore: flight.shapeScore ?? null,
+          bestShapeScore: flight.bestShapeScore ?? null,
+          arcExecutionError: flight.arcExecutionError ?? null,
+          peakHeightM: flight.peakHeightM ?? null,
+          releaseHeightM: flight.releaseHeightM ?? null,
+          aerial: geoResolution?.aerialDebug ?? null,
         })
       }
       return g
