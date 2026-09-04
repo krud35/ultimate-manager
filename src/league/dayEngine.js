@@ -21,6 +21,7 @@ import { createLeaguePlayerStats, mergeMatchBoxScore } from './leagueStats.js'
 import { standingsTable } from './standings.js'
 import { teamFromLeague } from '../career/worldState.js'
 import { applyReputationForMatchTeams } from '../models/teamReputation.js'
+import { applyEloForMatchTeams } from '../models/teamElo.js'
 import { applyFansMoodForMatchTeams } from '../models/teamFans.js'
 import { applyPostMatchFinances } from '../career/clubFacilities.js'
 import { applyCupPlacementPrizes } from '../career/placementPrizes.js'
@@ -285,6 +286,15 @@ function applyCupMatchResult(league, fixture, record) {
     injuries: record.injuries ?? [],
   })
 
+  // Ta sama waga co mecz ligowy — patrz notatka przy `applyEloForMatchTeams`
+  // w applyMatchResultToLeague (leagueEngine.js). Mecze AI idą tędy, mecz gracza tamtędy,
+  // więc obie ścieżki muszą liczyć ELO tak samo.
+  applyEloForMatchTeams(
+    teamFromLeague(league, record.homeTeamId),
+    teamFromLeague(league, record.awayTeamId),
+    record.homeScore,
+    record.awayScore,
+  )
   applyReputationForMatchTeams(
     teamFromLeague(league, record.homeTeamId),
     teamFromLeague(league, record.awayTeamId),

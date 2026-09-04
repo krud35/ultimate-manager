@@ -12,22 +12,48 @@ export const ELO_MIN = 900
 export const ELO_MAX = 2200
 const ELO_K = 24
 
+/**
+ * Startowa poprzeczka poziomu piramidy (Liga Europejska; `team.tier`) — kumulatywna,
+ * `-(tier - 1) * ELO_TIER_STEP`. Bez niej ranking miesza poziomy zupełnie: rozrzut ELO
+ * WEWNĄTRZ jednego poziomu to ok. 200 punktów, czyli znacznie więcej niż różnica jakości
+ * składów MIĘDZY poziomami (ok. 60), więc lider Ligi 2 startowałby nad połową Ligi 1.
+ *
+ * Krok jest jednak celowo MNIEJSZY niż rozrzut wewnątrz poziomu — pasma mają się stykać,
+ * nie rozjeżdżać. Przy 110 czubek niższej ligi (średnio 3–4 kluby, zależnie od rocznika)
+ * startuje nad ogonem wyższej, a reszta zostaje w swojej kolejności: najlepszy klub Ligi 2
+ * ląduje ok. 15. miejsca z 48, nie w topce. Puchar w tym trybie jest międzypoziomowy
+ * (patrz `createPyramidCup`), więc to naturalne miejsce na weryfikację takiej zakładki.
+ *
+ * Rozgrywki bez piramidy (UFA) nie mają `tier` — dla nich poprzeczka to 0.
+ */
+const ELO_TIER_STEP = 110
+
+function eloTierOffset(tier) {
+  const n = Number(tier)
+  return Number.isFinite(n) && n >= 1 ? -(n - 1) * ELO_TIER_STEP : 0
+}
+
+function tierOffset(team) {
+  return eloTierOffset(team?.tier)
+}
+
 function clampElo(n) {
   return Math.max(ELO_MIN, Math.min(ELO_MAX, Math.round(n)))
 }
 
-/** Seed startowy z jakości składu (top 7), gdy pole jeszcze nie istnieje. */
+/** Seed startowy z jakości składu (top 7) i poziomu piramidy, gdy pole jeszcze nie istnieje. */
 export function seedEloFromRoster(team) {
+  const offset = tierOffset(team)
   const players = team?.players ?? []
-  if (!players.length) return ELO_DEFAULT
+  if (!players.length) return clampElo(ELO_DEFAULT + offset)
   const ovrs = players
     .map((p) => getOverallRating(p?.skills))
     .filter((n) => typeof n === 'number' && Number.isFinite(n))
     .sort((a, b) => b - a)
-  if (!ovrs.length) return ELO_DEFAULT
+  if (!ovrs.length) return clampElo(ELO_DEFAULT + offset)
   const top = ovrs.slice(0, Math.min(7, ovrs.length))
   const avg = top.reduce((s, n) => s + n, 0) / top.length
-  return clampElo(ELO_DEFAULT + (avg - 70) * 15)
+  return clampElo(ELO_DEFAULT + (avg - 70) * 15 + offset)
 }
 
 export function ensureTeamElo(team) {
@@ -40,9 +66,33 @@ export function ensureTeamElo(team) {
   return team
 }
 
-export function ensureWorldElo(world) {
+/**
+ * Jednorazowa migracja zapisów sprzed poprzeczek poziomu: przesuwa istniejący rating
+ * o poprzeczkę poziomu, zamiast go przeliczać od zera. Dzięki temu ELO wypracowane
+ * wynikami nie przepada, a pasma poziomów rozjeżdżają się tak samo jak przy nowej
+ * karierze. Drużyny bez ratingu pomijamy — te dostaną poprzeczkę od razu w seedzie.
+ */
+function applyEloTierBandsOnce(world, ids, tierByTeamId) {
+  if (world.eloTierBandsApplied) return
+  world.eloTierBandsApplied = true
+  for (const id of ids) {
+    const team = world.teamsById[id]
+    if (!team) continue
+    if (typeof team.eloRating !== 'number' || !Number.isFinite(team.eloRating)) continue
+    const offset = eloTierOffset(tierByTeamId?.[id] ?? team.tier)
+    if (offset) team.eloRating = clampElo(team.eloRating + offset)
+  }
+}
+
+/**
+ * @param {object} world
+ * @param {{ tierByTeamId?: Record<string, number>|null }} [options] — aktualny poziom
+ *   piramidy per klub; `team.tier` to statyczne dane EUCS i po awansach jest nieaktualny.
+ */
+export function ensureWorldElo(world, { tierByTeamId = null } = {}) {
   if (!world?.teamsById) return world
   const ids = world.teamIds ?? Object.keys(world.teamsById)
+  applyEloTierBandsOnce(world, ids, tierByTeamId)
   for (const id of ids) {
     const team = world.teamsById[id]
     if (team) ensureTeamElo(team)

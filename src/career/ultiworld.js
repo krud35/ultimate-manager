@@ -743,6 +743,32 @@ function roundReviewArticles(career, league, round, namesPl, namesEn, rng) {
 }
 
 /**
+ * Bilans W-L i AKTUALNY poziom piramidy dla każdej drużyny w świecie.
+ *
+ * Ranking obejmuje wszystkie kluby, a nie tylko ligę gracza, więc czytanie samego
+ * `league.standings` zostawiało pozostałe poziomy z bilansem 0-0 na cały sezon.
+ * Pozostałe ligi rozgrywają się dzień po dniu w tym samym silniku (patrz
+ * otherLeagues.js), więc ich tabele są zawsze aktualne na „dziś”.
+ *
+ * Poziom bierzemy z tego, w której tabeli drużyna faktycznie stoi — `team.tier` to
+ * statyczne dane źródłowe EUCS i po pierwszym awansie/spadku byłby nieaktualny.
+ */
+function pyramidRecordsByTeam(career, league) {
+  const out = {}
+  const playerTier = career?.pyramid?.tier ?? null
+  for (const [teamId, row] of Object.entries(league?.standings ?? {})) {
+    out[teamId] = { wins: row?.wins ?? 0, losses: row?.losses ?? 0, tier: playerTier }
+  }
+  for (const other of league?.otherLeagues ?? []) {
+    const tier = Number(String(other?.id ?? '').replace('tier', '')) || null
+    for (const [teamId, row] of Object.entries(other?.standings ?? {})) {
+      out[teamId] = { wins: row?.wins ?? 0, losses: row?.losses ?? 0, tier }
+    }
+  }
+  return out
+}
+
+/**
  * Ranking siły wszystkich drużyn świata (posortowany malejąco po ELO).
  * ELO startuje z jakości składu, ale od tego momentu żyje własnym życiem — zmieniają go
  * tylko wyniki meczów (patrz models/teamElo.js), więc drużyna w dołku formy realnie spada,
@@ -750,16 +776,18 @@ function roundReviewArticles(career, league, round, namesPl, namesEn, rng) {
  */
 export function computePowerRankings(career, league) {
   const teams = worldTeamsList(career.world)
+  const records = pyramidRecordsByTeam(career, league)
   const rows = []
   for (const team of teams) {
     if (!team?.players?.length) continue
-    const standingsRow = league?.standings?.[team.id]
+    const record = records[team.id]
     rows.push({
       teamId: team.id,
       name: team.name,
       score: getTeamElo(team),
-      wins: standingsRow?.wins ?? 0,
-      losses: standingsRow?.losses ?? 0,
+      wins: record?.wins ?? 0,
+      losses: record?.losses ?? 0,
+      tier: record?.tier ?? null,
     })
   }
   rows.sort((a, b) => b.score - a.score)
@@ -783,7 +811,8 @@ function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, n
       const label = namesPl[r.teamId] ?? r.name
       const mark = movementMark(prevSnapshot?.[r.teamId], r.rank, UI_LANG.PL)
       const flag = r.teamId === career.playerTeamId ? ' (Ty)' : ''
-      return `${r.rank}. ${label}${flag} — ELO ${r.score} (${r.wins}-${r.losses}) ${mark}`
+      const tier = r.tier ? ` · L${r.tier}` : ''
+      return `${r.rank}. ${label}${tier}${flag} — ELO ${r.score} (${r.wins}-${r.losses}) ${mark}`
     })
     .join('\n')
   const linesEn = rankings
@@ -791,7 +820,8 @@ function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, n
       const label = namesEn[r.teamId] ?? namesPl[r.teamId] ?? r.name
       const mark = movementMark(prevSnapshot?.[r.teamId], r.rank, UI_LANG.EN)
       const flag = r.teamId === career.playerTeamId ? ' (You)' : ''
-      return `${r.rank}. ${label}${flag} — ELO ${r.score} (${r.wins}-${r.losses}) ${mark}`
+      const tier = r.tier ? ` · L${r.tier}` : ''
+      return `${r.rank}. ${label}${tier}${flag} — ELO ${r.score} (${r.wins}-${r.losses}) ${mark}`
     })
     .join('\n')
 
@@ -834,8 +864,8 @@ function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, n
       headlineEn: `Power Rankings — ${monthLabelEnStr}: ${topLabelEn} on top`,
       dek: dekPl,
       dekEn,
-      body: `Comiesięczny ranking Ultiworld działa na systemie ELO: startowy rating drużyny brał się z jakości składu, ale odtąd żyje własnym życiem — każdy mecz ligowy przesuwa go w górę lub w dół, zależnie od siły rywala i wyniku. Wygrana z mocniejszym zespołem daje więcej niż wygrana z outsiderem; porażka ze słabszym kosztuje więcej niż porażka z faworytem. To nie jest tabela ligowa (liczba wygranych) — to nasza ocena, kto naprawdę jest najgroźniejszy teraz.\n\n${linesPl}\n\nStrzałki pokazują zmianę pozycji względem poprzedniego miesiąca.`,
-      bodyEn: `Ultiworld’s monthly ranking runs on ELO: a team’s starting rating came from roster quality, but from then on it lives on its own — every league match nudges it up or down depending on the opponent’s strength and the result. Beating a stronger team earns more than beating a weak one; losing to a weaker team costs more than losing to a favorite. Not a standings table (win count) — just our read on who’s actually most dangerous right now.\n\n${linesEn}\n\nArrows show the move versus last month’s ranking.`,
+      body: `Comiesięczny ranking Ultiworld działa na systemie ELO: startowy rating drużyny brał się z jakości składu i poziomu rozgrywek, w którym gra, ale odtąd żyje własnym życiem — każdy mecz ligowy przesuwa go w górę lub w dół, zależnie od siły rywala i wyniku. Wygrana z mocniejszym zespołem daje więcej niż wygrana z outsiderem; porażka ze słabszym kosztuje więcej niż porażka z faworytem. To nie jest tabela ligowa (liczba wygranych) — to nasza ocena, kto naprawdę jest najgroźniejszy teraz.\n\n${linesPl}\n\nStrzałki pokazują zmianę pozycji względem poprzedniego miesiąca.`,
+      bodyEn: `Ultiworld’s monthly ranking runs on ELO: a team’s starting rating came from roster quality and the division they play in, but from then on it lives on its own — every league match nudges it up or down depending on the opponent’s strength and the result. Beating a stronger team earns more than beating a weak one; losing to a weaker team costs more than losing to a favorite. Not a standings table (win count) — just our read on who’s actually most dangerous right now.\n\n${linesEn}\n\nArrows show the move versus last month’s ranking.`,
       date: simDate ?? career.league?.currentDate ?? null,
       career,
       tags: ['power-rankings', monthIso],

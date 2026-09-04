@@ -160,13 +160,19 @@ export function applyMatchResultToLeague(league, matchRecord) {
       matchRecord.homeScore,
       matchRecord.awayScore,
     )
-    applyEloForMatchTeams(
-      teamFromLeague(league, matchRecord.homeTeamId),
-      teamFromLeague(league, matchRecord.awayTeamId),
-      matchRecord.homeScore,
-      matchRecord.awayScore,
-    )
   }
+
+  // ELO liczy się także z pucharu, z tą samą wagą co mecz ligowy. W Lidze Europejskiej
+  // drabinka jest międzypoziomowa (patrz pyramidCup.js) i jest to JEDYNE miejsce, gdzie
+  // kluby z różnych poziomów w ogóle na siebie grają — bez tego startowe poprzeczki
+  // poziomów (teamElo.js) nigdy nie dostają weryfikacji na boisku. Tabela ligowa
+  // zostaje oczywiście nietknięta: puchar nie daje punktów w lidze.
+  applyEloForMatchTeams(
+    teamFromLeague(league, matchRecord.homeTeamId),
+    teamFromLeague(league, matchRecord.awayTeamId),
+    matchRecord.homeScore,
+    matchRecord.awayScore,
+  )
 
   if (matchRecord.boxScore?.length) {
     const boxWithTeams = matchRecord.boxScore.map((row) => ({

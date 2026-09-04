@@ -73,6 +73,10 @@ function cloneTemplateTeam(team) {
     primaryColor: team.primaryColor ?? null,
     awayColor: team.awayColor ?? null,
     isFictional: !!team.isFictional,
+    // Poziom piramidy (Liga Europejska). Kluby spoza poziomu gracza trafiają do świata
+    // gotowe z `materializeFullPyramidTeams` i mają `tier` od zawsze — bez tej linii
+    // gubiły go akurat kluby z poziomu gracza, czyli te, które przechodzą przez szablon.
+    tier: team.tier ?? null,
     tacticalIdentity: team.tacticalIdentity ? structuredClone(team.tacticalIdentity) : null,
     players: structuredClone(team.players ?? []),
   }
@@ -270,6 +274,20 @@ export function bindLeagueToWorld(league, world) {
  * Po wczytaniu z JSON: world jest źródłem prawdy dla składów;
  * league dostaje te same referencje (bez duplikatu w storage).
  */
+/**
+ * Aktualny poziom piramidy per klub, z `league.eucsPyramid`. `team.tier` niesie
+ * poziom z danych źródłowych EUCS i po pierwszym awansie/spadku jest nieaktualny.
+ */
+function pyramidTierByTeamId(league) {
+  const pyramid = league?.eucsPyramid
+  if (!pyramid) return null
+  const map = {}
+  for (const [tier, key] of [[1, 'tier1Ids'], [2, 'tier2Ids'], [3, 'tier3Ids']]) {
+    for (const id of pyramid[key] ?? []) map[id] = tier
+  }
+  return map
+}
+
 export function rehydrateCareerWorld(career) {
   if (!career || typeof career !== 'object') return career
 
@@ -290,7 +308,7 @@ export function rehydrateCareerWorld(career) {
   ensureWorldFinances(world, { seed: financeSeed, force: false })
   ensureWorldContracts(world, { seed: financeSeed, force: false, syncBudgets: true })
   ensureWorldReputation(world)
-  ensureWorldElo(world)
+  ensureWorldElo(world, { tierByTeamId: pyramidTierByTeamId(career.league) })
   ensureWorldFans(world, { seed: financeSeed, force: false })
   ensureWorldFacilities(world, { seed: financeSeed, force: false })
   ensureWorldScouting(world)
