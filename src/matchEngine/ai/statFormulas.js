@@ -54,6 +54,21 @@ export function perceivedOptionLimit(player) {
 }
 
 /**
+ * Dla ilu opcji rzucający realnie ROZPATRUJE TOR — czyli sprawdza, czy da się tam dysk
+ * posłać tak, żeby nikt go nie zdjął (patrz chooseThrowShape w throwShape.js).
+ *
+ * To nie to samo co perceivedOptionLimit: dostrzec kolegę w polu widzenia jest tanio,
+ * ale rozrysowanie sobie korytarza — którędy dysk przejdzie, czy trzeba go zakręcić,
+ * czy podnieść — kosztuje uwagę i czas, i realnie robi się to dla tych dwóch-trzech
+ * opcji, na których wzrok się zatrzymał. Stąd wąski zakres: 2 przy słabym czytaniu gry,
+ * 3 u elity.
+ */
+export function throwLaneReadLimit(player) {
+  const vision = subStat(player, 'mental', 'vision')
+  return 2 + Math.round(Math.max(0, Math.min(1, (vision - 55) / 40)))
+}
+
+/**
  * Rozrzut oceny opcji. Słaby decydent myli dobre podanie ze złym, a przy presji
  * stalla dokłada się do tego niskie composure.
  */

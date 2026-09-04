@@ -971,6 +971,10 @@ export function runContinuousThrowSimulation({
   /** Blok na torze (geometryczny) — gdy padnie, lot kończy się w miejscu przecięcia. */
   let laneBlock = null
   const laneBlockTried = new Set()
+  /** Zasięg i czas reakcji obrońców — wielkości stałe na cały lot, więc liczone RAZ.
+   *  Odpytywanie ich co tick (staty przez morale i traity) było najdroższą częścią
+   *  symulacji: 4 łańcuchy statów x 7 obrońców x ~150 ticków na każdy lot. */
+  const laneBlockProfiles = new Map()
   let prevDiscSample = null
 
   for (let tick = 0; tick < resolvedMaxTicks; tick += 1) {
@@ -1267,12 +1271,20 @@ export function runContinuousThrowSimulation({
           const dId = agentPlayerId(dAgent)
           if (dId == null || laneBlockTried.has(dId)) continue
           const dPlayer = dAgent.player ?? dAgent
-          if (flight.elapsedMs < defenderReactionDelayMs(dPlayer)) continue
+          let prof = laneBlockProfiles.get(dId)
+          if (!prof) {
+            prof = {
+              player: dPlayer,
+              reactionMs: defenderReactionDelayMs(dPlayer),
+              reachOutM: Math.max(0.5, horizontalReachM(dPlayer)),
+              reachUpM: Math.max(0.5, maxAerialReachM(dPlayer)),
+            }
+            laneBlockProfiles.set(dId, prof)
+          }
+          if (flight.elapsedMs < prof.reactionMs) continue
           const horiz = Math.hypot(discSample.x - dAgent.x, discSample.y - dAgent.y)
-          const ex = horiz / Math.max(0.5, horizontalReachM(dPlayer))
-          const ez =
-            Math.max(0, (discSample.z ?? 0) - (dAgent.z ?? 0)) /
-            Math.max(0.5, maxAerialReachM(dPlayer))
+          const ex = horiz / prof.reachOutM
+          const ez = Math.max(0, (discSample.z ?? 0) - (dAgent.z ?? 0)) / prof.reachUpM
           const envelope = Math.sqrt(ex * ex + ez * ez)
           if (envelope > 1) continue
           laneBlockTried.add(dId)

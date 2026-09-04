@@ -1,5 +1,5 @@
 import { attackDirectionX, opponentGoalLineM } from '../fieldDimensions.js'
-import { THROW_TYPE } from '../throwTypes.js'
+import { THROW_TYPE, throwProfile } from '../throwTypes.js'
 
 /**
  * Próg „to jest głęboki look" dla WARSTWY DECYZYJNEJ — celowo NIŻSZY niż HUCK_MIN_M,
@@ -38,9 +38,14 @@ import {
   throwScanRadiusM,
   stallComposureAccuracyPenalty,
   perceivedOptionLimit,
+  throwLaneReadLimit,
   decisionNoiseAmplitude,
+  discDeliveryHeightM,
+  discPeakHeightM,
+  discReleaseHeightM,
   subStat,
 } from './statFormulas.js'
+import { chooseThrowShape } from './throwShape.js'
 import {
   applyAttackThrowBias,
   ATTACK_STYLES,
@@ -458,6 +463,107 @@ function breakDifficulty(thrower, throwerPos, marker, catchPt) {
   // Ciasny mark boli bardziej niż luźny.
   const tightness = Math.max(0, Math.min(1, (3.5 - mlen) / 3.5))
   return alignment * (1 - skillRelief * 0.7) * (0.45 + tightness * 0.55)
+}
+
+/**
+ * Ile punktu oceny opcji wart jest jeden punkt oceny toru. Ocena toru zwraca ~0 dla
+ * czystego korytarza i schodzi na minus, gdy ktoś w nim stoi — więc opcja z zajętym
+ * torem traci, a opcja z czystym nie zyskuje nic sztucznie względem tych, którym
+ * rzucający się nie przyjrzał.
+ */
+export const LANE_READ_CALIBRATION = {
+  weight: 0.8,
+  /** O ile poniżej progu akceptacji opcja wciąż zasługuje na przyjrzenie się torowi. */
+  considerMargin: 12,
+}
+
+/**
+ * PRZYJRZENIE SIĘ TOROWI dla kilku najlepszych opcji.
+ *
+ * Do tej pory ocena opcji patrzyła na tor tylko przez `laneThreat` — płaską odległość
+ * obrońcy od odcinka rzucający→cel. Rzucający nie wiedział więc, czy dysk DA SIĘ tam
+ * posłać: czy wystarczy go zakręcić, przerzucić górą, czy nie ma żadnego dobrego toru i
+ * lepiej poszukać innego kolegi. Teraz dla kilku opcji liczona jest pełna ocena torów
+ * (throwShape.js), a jej najlepszy dostępny wynik wchodzi do oceny opcji.
+ *
+ * CELOWO nie dla wszystkich: rozrysowanie sobie korytarza kosztuje uwagę, więc realnie
+ * robi się to dla dwóch-trzech opcji, na których wzrok się zatrzymał (patrz
+ * throwLaneReadLimit — zakres zależy od vision). To jest też jedyny sensowny kompromis
+ * wydajnościowy: ocena torów liczy kilkanaście kandydatów na tor razy wszyscy obrońcy.
+ *
+ * Wybrany kształt zostaje na opcji (`shape`) i to jego wykonuje potem lot, zamiast liczyć
+ * wybór drugi raz — dzięki temu rzucający wykonuje ten rzut, który sobie zaplanował.
+ */
+function nearestTo(defenders, x, y) {
+  let best = null
+  let bestD = Infinity
+  for (const d of defenders) {
+    const dd = Math.hypot(d.x - x, d.y - y)
+    if (dd < bestD) { bestD = dd; best = d }
+  }
+  return best
+}
+
+function applyLaneReadToOptions(thrower, considered, { throwerPos, defenseAgents, rng, threshold }) {
+  if (!throwerPos || !defenseAgents?.length || !considered.length) return
+  // Waga 0 = mechanizm wyłączony; wtedy nie ma po co liczyć oceny torów w ogóle
+  // (wyłącznik do pomiarów, jak RESOLUTION_MODE w point.js).
+  if (!LANE_READ_CALIBRATION.weight) return
+  const limit = throwLaneReadLimit(thrower)
+  // Tor rozpatruje się dla rzutów, które realnie wchodzą w grę. Przez większość czasu
+  // trzymania dysku żadna opcja nie zbliża się do progu akceptacji — rzucający po prostu
+  // czeka i nie ma czego rozrysowywać. Bez tej bramki ocena liczyła się przy każdym
+  // skanie co 250 ms i potroiła czas symulacji meczu (4.8 s -> 17.5 s).
+  const readFloor = (threshold ?? -Infinity) - LANE_READ_CALIBRATION.considerMargin
+  const defenders = defenseAgents.map((d) => ({ x: d.x, y: d.y, player: d.player ?? d }))
+
+  for (const option of considered.slice(0, limit)) {
+    if (option.score < readFloor) break
+    const trajectory = throwProfile(option.throwType).trajectory
+    const dx = option.catchX - throwerPos.x
+    const dy = option.catchY - throwerPos.y
+    const len = Math.hypot(dx, dy) || 1
+    // Rzucający ocenia tor SZACUNKOWO — z tego, co widzi w tej chwili. Wykonanie
+    // (createFlightContext) przelicza te same wielkości dokładnie, więc drobna
+    // rozbieżność między planem a lotem jest prawidłowa, nie błędem.
+    const loftStat =
+      trajectory === 'deep'
+        ? subStat(thrower, 'throwing', 'huck')
+        : trajectory === 'overhead'
+          ? subStat(thrower, 'throwing', 'hammer')
+          : subStat(thrower, 'throwing', 'backhand') * 0.5 +
+            subStat(thrower, 'throwing', 'forehand') * 0.5
+    const releaseHeightM = discReleaseHeightM(thrower, {
+      trajectory,
+      technique: option.throwTechnique,
+      isOpenSide: option.isOpenSide,
+    })
+    const flightSpeed = Math.max(6, option.flightSpeedMps ?? pacedSpeedMps(trajectory, option.agent, throwerPos.x, throwerPos.y))
+    const shape = chooseThrowShape(thrower, {
+      trajectory,
+      technique: option.throwTechnique,
+      fromX: throwerPos.x,
+      fromY: throwerPos.y,
+      toX: option.catchX,
+      toY: option.catchY,
+      perpX: -dy / len,
+      perpY: dx / len,
+      defenders,
+      // Obrońca przy punkcie chwytu — od niego zależy, z której strony lepiej dostarczyć dysk.
+      receiverDefender: nearestTo(defenders, option.catchX, option.catchY),
+      basePeakM: discPeakHeightM(trajectory, loftStat, { distanceM: len, releaseHeightM }),
+      baseFlightMs: (len / flightSpeed) * 1000,
+      baseAmplitudeM: Math.min(2.2, Math.max(0.4, len * 0.035)),
+      releaseHeightM,
+      deliveryHeightM: discDeliveryHeightM(trajectory),
+      loftStat,
+      rng,
+    })
+    if (!shape) continue
+    option.shape = shape
+    option.laneRead = true
+    option.score += shape.bestScore * LANE_READ_CALIBRATION.weight
+  }
 }
 
 export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
@@ -915,6 +1021,8 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     D.n += 1
     D.optionsSeen += considered.length
   }
+  considered.sort((a, b) => b.score - a.score)
+  applyLaneReadToOptions(thrower, considered, { throwerPos, defenseAgents, rng, threshold })
   considered.sort((a, b) => b.score - a.score)
   const best = considered[0]
   if (!best) return null

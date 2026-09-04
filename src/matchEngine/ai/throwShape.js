@@ -136,15 +136,33 @@ function candidateShapes(trajectory) {
  * Wynik < 1 znaczy „może go dotknąć", 2 znaczy „przechodzi dwa zasięgi obok".
  */
 function normalizedLaneGap(defender, discX, discY, discZ) {
-  const player = defender.player ?? defender
-  const horiz = Math.hypot(discX - (defender.x ?? 0), discY - (defender.y ?? 0))
+  const horiz = Math.hypot(discX - defender.x, discY - defender.y)
   // Dokładnie ta sama elipsoida, co przy sięgnięciu po dysk w kontestcie
   // (trackAerialTake): pion mierzony od ZIEMI do szczytu wyskoku, bok — ramieniem.
-  // Liczenie pionu od wysokości klatki sprawiało, że dysk 4 m nad murawą wychodził
-  // „w zasięgu ręki" i rzut górą nigdy nie opłacał się w ocenie.
-  const ex = horiz / Math.max(0.5, horizontalReachM(player))
-  const ez = Math.max(0, discZ) / Math.max(0.5, maxAerialReachM(player))
+  // Zasięgi są policzone RAZ na obrońcę (patrz reachAnnotatedDefenders) — liczenie ich
+  // w tej pętli oznaczało odpytywanie statów z morale i traitami 567 razy na kandydata
+  // i potroiło czas symulacji meczu.
+  const ex = horiz / defender.reachOutM
+  const ez = Math.max(0, discZ) / defender.reachUpM
   return Math.sqrt(ex * ex + ez * ez)
+}
+
+/**
+ * Zasięgi obrońców policzone raz — wejście dla wszystkich kandydatów na tor.
+ * Idempotentne: obrońca już opisany zasięgiem przechodzi bez ponownego liczenia, więc
+ * scoreThrowShape można wołać i osobno (harness), i przez chooseThrowShape.
+ */
+function reachAnnotatedDefenders(defenders) {
+  return defenders.map((d) => {
+    if (Number.isFinite(d.reachOutM) && Number.isFinite(d.reachUpM)) return d
+    const player = d.player ?? d
+    return {
+      x: d.x ?? 0,
+      y: d.y ?? 0,
+      reachOutM: Math.max(0.5, horizontalReachM(player)),
+      reachUpM: Math.max(0.5, maxAerialReachM(player)),
+    }
+  })
 }
 
 /**
@@ -170,6 +188,7 @@ export function scoreThrowShape(candidate, ctx) {
     loftStat,
   } = ctx
   const C = SHAPE_CALIBRATION
+  const defs = reachAnnotatedDefenders(defenders)
   const peakM = Math.max(releaseHeightM + 0.12, basePeakM * (ARC_MULT[candidate.arc] ?? 1))
   // To samo sprzężenie co w locie: wyższy łuk = dłuższy lot.
   const hangMult = Math.min(1.3, Math.max(0.86, 1 + (peakM - basePeakM) * 0.09))
@@ -197,7 +216,7 @@ export function scoreThrowShape(candidate, ctx) {
     // się mocno i nisko.
     const tSec = u * flightSec
     const timeWeight = Math.min(1, Math.max(0.15, (tSec - LANE_REACTION_SEC) / LANE_FULL_REACT_SEC))
-    for (const d of defenders) {
+    for (const d of defs) {
       const gap = normalizedLaneGap(d, x, y, z)
       if (gap < worstGap) worstGap = gap
       if (gap < C.laneSafeMargin) {
@@ -254,6 +273,7 @@ export function scoreThrowShape(candidate, ctx) {
 export function chooseThrowShape(thrower, ctx) {
   const { trajectory = 'forward', technique = null, rng = null } = ctx
   const curveSignNatural = naturalCurveSign(technique, thrower)
+  const scoreCtx = { ...ctx, defenders: reachAnnotatedDefenders(ctx.defenders ?? []) }
   const candidates = candidateShapes(trajectory).map((c) =>
     scoreThrowShape(
       {
@@ -261,7 +281,7 @@ export function chooseThrowShape(thrower, ctx) {
         curveSign:
           c.curve === THROW_CURVE.REVERSE ? -curveSignNatural : curveSignNatural,
       },
-      ctx,
+      scoreCtx,
     ),
   )
   if (!candidates.length) return null
