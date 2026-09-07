@@ -130,7 +130,7 @@ import InboxView from './components/InboxView'
 import UltiworldView from './components/UltiworldView'
 import InternationalCompetitionView from './components/InternationalCompetitionView.jsx'
 import PreMatchView, { isFixtureMatchDay } from './components/PreMatchView'
-import SimulationProgressOverlay from './components/SimulationProgressOverlay'
+import SimulationProgressOverlay, { yieldToUi } from './components/SimulationProgressOverlay'
 import CalendarSimOverlay from './components/CalendarSimOverlay'
 import WelcomeModal from './components/WelcomeModal'
 import TutorialGuide from './components/TutorialGuide'
@@ -2112,15 +2112,20 @@ export default function App() {
     refreshSlots()
   }, [career, refreshSlots])
 
-  const handleExitToSlots = useCallback(() => {
+  const handleExitToSlots = useCallback(async () => {
     if (career) {
+      setSimProgress({ label: tShell.savingExit, indeterminate: true })
+      // Odczekaj klatkę, żeby przeglądarka zdążyła odmalować pasek postępu
+      // zanim zablokuje wątek kosztowną kompresją zapisu (patrz saveStore.js).
+      await yieldToUi()
       saveCareerNow(career)
       refreshSlots()
+      setSimProgress(null)
     }
     setCareer(null)
     setLeagueFixture(null)
     setScreen('slots')
-  }, [career, refreshSlots])
+  }, [career, refreshSlots, tShell.savingExit])
 
   if (screen === 'slots') {
     return (
