@@ -1,8 +1,13 @@
 /**
  * Puchar Piramidy — styczniowy puchar wszystkich 48 drużyn Ligi Europejskiej,
- * jedna losowa drabinka:
- *  - Runda 1: Liga 2 (16) vs Liga 3 (16), losowe pary — Liga 1 ma pauzę.
- *  - Runda 32: 16 zwycięzców rundy 1 + 16 drużyn Ligi 1, losowe pary.
+ * jedna ROZSTAWIONA drabinka (rozstawienie wg tabel na dzień losowania, czyli tydzień
+ * 1 stycznia — patrz maybeInitializeCup w dayEngine.js):
+ *  - Rozstawienie 1–48: Liga 1 = 1–16, Liga 2 = 17–32, Liga 3 = 33–48, a w obrębie
+ *    poziomu wg miejsca w jego tabeli (mistrz Ligi 1 = 1, ostatni Ligi 3 = 48).
+ *  - Runda 1: 17v48, 18v47 … 32v33 — czyli z definicji zawsze Liga 2 vs Liga 3,
+ *    a Liga 1 (1–16) ma pauzę. To standardowa drabinka 64 z 16 wolnymi losami.
+ *  - Runda 32: rozstawiony k (1–16) gra ze zwycięzcą pary (33−k, 32+k), więc 1 trafia
+ *    na najsłabszego ocalałego, a 1 i 2 mogą się spotkać dopiero w finale.
  *  - Dalej zwykła drabinka pojedynczej eliminacji: 1/8 → ćwierćfinał → półfinał → finał.
  * Awans w drabince liczony jest przez współdzielone `advanceCupAfterMatch` z cupBracket.js.
  *
@@ -16,37 +21,12 @@
  * w shadowLeague.js, wołane raz na starcie sezonu w careerModel.js.
  */
 
-function mulberry32(seed) {
-  let a = seed >>> 0
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0
-    let t = a
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-function hashSeed(...parts) {
-  let h = 2166136261
-  for (const part of parts) {
-    const s = String(part)
-    for (let i = 0; i < s.length; i += 1) {
-      h ^= s.charCodeAt(i)
-      h = Math.imul(h, 16777619)
-    }
-  }
-  return h >>> 0
-}
-
-function shuffled(arr, rng) {
-  const copy = [...arr]
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(rng() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
-}
+/**
+ * Standardowa kolejność rozstawionych w drabince 16 (miejsca 1–16 Ligi 1 wchodzą w
+ * rundzie 32). Sąsiednie pary schodzą się rundę wyżej, więc taki układ trzyma 1 i 2 w
+ * przeciwnych połówkach: 1v16 i 9v8 spotykają się w 1/8, 1 i 4 w ćwierćfinale itd.
+ */
+const BRACKET_ORDER_16 = [1, 16, 9, 8, 5, 12, 13, 4, 3, 14, 11, 6, 7, 10, 15, 2]
 
 function findMatch(matches, id) {
   return matches.find((m) => m.id === id)
@@ -59,29 +39,34 @@ function link(matches, fromId, toId, slot) {
 }
 
 /**
- * @param {string[]} tier1Ids 16 drużyn Ligi 1 (pauza w rundzie 1)
- * @param {string[]} tier2Ids 16 drużyn Ligi 2
- * @param {string[]} tier3Ids 16 drużyn Ligi 3
- * @param {number} seed
+ * @param {string[]} tier1Ids 16 drużyn Ligi 1 W KOLEJNOŚCI TABELI (1. miejsce pierwsze)
+ * @param {string[]} tier2Ids 16 drużyn Ligi 2 w kolejności tabeli
+ * @param {string[]} tier3Ids 16 drużyn Ligi 3 w kolejności tabeli
  * @param {object} pyramidCupWeeks — `calendar.pyramidCup` (seasonCalendar.js)
  */
-export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, seed, pyramidCupWeeks) {
-  const rng = mulberry32(hashSeed(seed, 'pyramid-cup-draw'))
+export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, pyramidCupWeeks) {
   const matches = []
+  // Rozstawienie 1–48 (indeks 0–47): Liga 1, potem Liga 2, potem Liga 3 — każda już
+  // posortowana wg swojej tabeli przez wywołującego (dayEngine.js: teamIdsByStandings).
+  const seeds = [...tier1Ids, ...tier2Ids, ...tier3Ids]
+  const teamAt = (seedNo) => seeds[seedNo - 1]
 
-  // Runda 1: Liga 2 vs Liga 3, losowe pary.
-  const l2Draw = shuffled(tier2Ids, rng)
-  const l3Draw = shuffled(tier3Ids, rng)
-  const round1Ids = []
+  // Runda 1: 17v48, 18v47 … 32v33. Liga 2 to rozstawienia 17–32, Liga 3 to 33–48,
+  // więc każda para jest automatycznie Liga 2 vs Liga 3 — bez żadnej dodatkowej reguły.
+  const round1IdBySeed = new Map()
   for (let i = 0; i < 16; i += 1) {
+    const homeSeed = 17 + i
+    const awaySeed = 48 - i
     const id = `pyr-r1-${i + 1}`
-    round1Ids.push(id)
+    round1IdBySeed.set(homeSeed, id)
     matches.push({
       id,
       round: 'round1',
       bracketIndex: i,
-      homeTeamId: l2Draw[i],
-      awayTeamId: l3Draw[i],
+      homeTeamId: teamAt(homeSeed),
+      awayTeamId: teamAt(awaySeed),
+      homeSeed,
+      awaySeed,
       status: 'scheduled',
       competition: 'cup',
       venue: 'neutral',
@@ -91,28 +76,31 @@ export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, seed, pyramidCupW
     })
   }
 
-  // Runda 32: 16 drużyn Ligi 1 + 16 zwycięzców rundy 1, losowe pary.
-  const l1Draw = shuffled(tier1Ids, rng)
-  const round1DrawOrder = shuffled(round1Ids, rng)
+  // Runda 32: rozstawiony k (Liga 1) vs zwycięzca pary (33−k, 32+k). Kolejność w
+  // tablicy to standardowa drabinka 16, żeby 1 i 2 rozeszły się do przeciwnych połówek.
   const r32Ids = []
   for (let i = 0; i < 16; i += 1) {
+    const topSeed = BRACKET_ORDER_16[i]
+    const feederId = round1IdBySeed.get(33 - topSeed)
     const id = `pyr-r32-${i + 1}`
     r32Ids.push(id)
     matches.push({
       id,
       round: 'roundOf32',
       bracketIndex: i,
-      homeTeamId: l1Draw[i],
+      homeTeamId: teamAt(topSeed),
       awayTeamId: null,
+      homeSeed: topSeed,
+      awaySeed: null,
       status: 'pending',
       competition: 'cup',
       venue: 'neutral',
       date: pyramidCupWeeks.playWeek2.roundOf32,
       nextMatchId: null,
       nextSlot: null,
-      dependsOn: [round1DrawOrder[i]],
+      dependsOn: [feederId],
     })
-    link(matches, round1DrawOrder[i], id, 'away')
+    link(matches, feederId, id, 'away')
   }
 
   // Od tego miejsca: zwykła drabinka (bez ponownego losowania) — 1/8, ćwierćfinał, półfinał, finał.
@@ -205,9 +193,10 @@ export function createPyramidCup(tier1Ids, tier2Ids, tier3Ids, seed, pyramidCupW
 
   return {
     status: 'active',
-    // `advanceCupAfterMatch` (cupBracket.js) używa cup.seeds tylko do kosmetycznego
-    // ułożenia home/away — przy losowej drabince kolejność nie ma znaczenia.
-    seeds: [...tier1Ids, ...tier2Ids, ...tier3Ids],
+    // Rozstawienie 1–48. `advanceCupAfterMatch` (cupBracket.js) czyta z tego numery
+    // rozstawienia kolejnych rund (indexOf + 1) i ustawia lepiej rozstawionego jako
+    // gospodarza — dlatego kolejność MUSI odpowiadać tabelom z dnia losowania.
+    seeds,
     matches,
     championTeamId: null,
     pyramidCupDates: pyramidCupWeeks,

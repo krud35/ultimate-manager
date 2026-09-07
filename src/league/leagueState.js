@@ -4,7 +4,7 @@ import {
   generateDoubleRoundRobinSchedule,
   shuffledTeamOrder,
 } from './schedule.js'
-import { createStandings } from './standings.js'
+import { createStandings, standingsTable } from './standings.js'
 import { createLeaguePlayerStats } from './leagueStats.js'
 import {
   bindLeagueToWorld,
@@ -79,6 +79,79 @@ export function teamNameMap(league, lang = UI_LANG.PL) {
     map[id] = resolveTeamName(team, lang) || id
   }
   return map
+}
+
+/**
+ * Jak `teamNameMap`, ale dla WSZYSTKICH drużyn dostępnych w `league.teamsById` — nie
+ * tylko `league.teamIds` (poziom gracza). Piramida Ligi Europejskiej ma 48 klubów w
+ * `teamsById` od startu sezonu (patrz materializeFullPyramidTeams), ale mecze pucharowe
+ * i widoki typu "dzisiejsze mecze" pokazują drużyny z KAŻDEGO poziomu — bez tego
+ * przeciwnik spoza własnej ligi nie ma nazwy do pokazania.
+ */
+export function teamNameMapAll(league, lang = UI_LANG.PL) {
+  const map = {}
+  const teamsById = league?.teamsById ?? {}
+  for (const id of Object.keys(teamsById)) {
+    map[id] = resolveTeamName(teamsById[id], lang) || id
+  }
+  return map
+}
+
+/**
+ * Znajduje tabelę/statystyki DOWOLNEJ drużyny piramidy — najpierw w lidze gracza
+ * (`league.standings`/`league.playerStats`), potem w każdej z pozostałych lig
+ * (`league.otherLeagues`). Bez tego przeciwnik pucharowy spoza poziomu gracza nie miał
+ * bilansu/miejsca w tabeli ani liderów sezonu (zawsze puste/„Unranked”).
+ * @returns {{ standing: object|null, place: number|null, totalTeams: number, playerStats: object }}
+ */
+export function teamLeagueContext(league, teamId) {
+  if (!teamId) return { standing: null, place: null, totalTeams: 0, playerStats: {} }
+
+  const ownTable = standingsTable(league.standings ?? {})
+  const ownIdx = ownTable.findIndex((r) => r.teamId === teamId)
+  if (ownIdx >= 0) {
+    return {
+      standing: league.standings[teamId],
+      place: ownIdx + 1,
+      totalTeams: ownTable.length,
+      playerStats: league.playerStats ?? {},
+    }
+  }
+
+  for (const otherLeague of league.otherLeagues ?? []) {
+    const table = standingsTable(otherLeague.standings ?? {})
+    const idx = table.findIndex((r) => r.teamId === teamId)
+    if (idx >= 0) {
+      return {
+        standing: otherLeague.standings[teamId],
+        place: idx + 1,
+        totalTeams: table.length,
+        playerStats: otherLeague.playerStats ?? {},
+      }
+    }
+  }
+
+  return { standing: null, place: null, totalTeams: 0, playerStats: {} }
+}
+
+/**
+ * Ids jednego poziomu uporządkowane wg JEGO tabeli na dziś (1. miejsce pierwsze).
+ * Wszystkie drużyny poziomu siedzą w tej samej tabeli — albo w lidze gracza, albo w
+ * jednej z `league.otherLeagues` — więc wystarczy znaleźć tę jedną i po niej posortować.
+ * Drużyny bez wiersza w tabeli lądują na końcu, w oryginalnej kolejności.
+ */
+export function teamIdsByStandings(league, teamIds) {
+  if (!teamIds?.length) return []
+  const sources = [league?.standings, ...(league?.otherLeagues ?? []).map((l) => l.standings)]
+  const source = sources.find((s) => s && teamIds.some((id) => s[id]))
+  if (!source) return [...teamIds]
+
+  const wanted = new Set(teamIds)
+  const ranked = standingsTable(source)
+    .map((r) => r.teamId)
+    .filter((id) => wanted.has(id))
+  const rankedSet = new Set(ranked)
+  return [...ranked, ...teamIds.filter((id) => !rankedSet.has(id))]
 }
 
 export function fixturesForRound(league, round) {

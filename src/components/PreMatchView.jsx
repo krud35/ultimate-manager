@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import {
-  standingsTable,
-  teamNameMap,
+  teamNameMapAll,
+  teamLeagueContext,
   parseISODate,
   pointDifferential,
 } from '../league'
@@ -249,11 +249,9 @@ export default function PreMatchView({
   const { lang } = useUiLang()
   const t = preMatchStrings(lang)
   const ts = scoutingStrings(lang)
-  const names = useMemo(() => teamNameMap(league), [league])
-  const table = useMemo(
-    () => standingsTable(league.standings ?? {}, (id) => names[id] ?? id),
-    [league.standings, names],
-  )
+  // Nazwy WSZYSTKICH drużyn piramidy (nie tylko poziomu gracza) — mecz pucharowy może
+  // być przeciwko klubowi z innego poziomu. Patrz teamNameMapAll w leagueState.js.
+  const names = useMemo(() => teamNameMapAll(league, lang), [league, lang])
 
   const homeId = fixture.homeTeamId
   const awayId = fixture.awayTeamId
@@ -261,18 +259,24 @@ export default function PreMatchView({
   const homeHighlight = homeId === playerId
   const awayHighlight = awayId === playerId
 
-  const homePlace = table.findIndex((r) => r.teamId === homeId) + 1 || null
-  const awayPlace = table.findIndex((r) => r.teamId === awayId) + 1 || null
-  const homeStanding = league.standings?.[homeId]
-  const awayStanding = league.standings?.[awayId]
+  // Tabela/bilans/liderzy przeciwnika mogą żyć w INNEJ lidze (Puchar Piramidy stawia
+  // przeciwko sobie kluby z różnych poziomów) — teamLeagueContext szuka po kolei w
+  // lidze gracza i w każdej z pozostałych, zamiast zakładać że przeciwnik jest zawsze
+  // w league.standings/league.playerStats.
+  const homeContext = useMemo(() => teamLeagueContext(league, homeId), [league, homeId])
+  const awayContext = useMemo(() => teamLeagueContext(league, awayId), [league, awayId])
+  const homePlace = homeContext.place
+  const awayPlace = awayContext.place
+  const homeStanding = homeContext.standing
+  const awayStanding = awayContext.standing
 
   const homeLeaders = useMemo(
-    () => teamLeaders(league.playerStats, homeId, 5),
-    [league.playerStats, homeId],
+    () => teamLeaders(homeContext.playerStats, homeId, 5),
+    [homeContext.playerStats, homeId],
   )
   const awayLeaders = useMemo(
-    () => teamLeaders(league.playerStats, awayId, 5),
-    [league.playerStats, awayId],
+    () => teamLeaders(awayContext.playerStats, awayId, 5),
+    [awayContext.playerStats, awayId],
   )
 
   const daysLeft = daysBetweenIso(league.currentDate, fixture.date)
@@ -280,11 +284,12 @@ export default function PreMatchView({
   const isCup = fixture.competition === 'cup'
 
   const opponentId = homeHighlight ? awayId : awayHighlight ? homeId : null
+  const opponentContext = homeHighlight ? awayContext : homeContext
   const playerTeam = worldTeamById(world, playerId)
   const opponentTeam = worldTeamById(world, opponentId)
   const opponentLeaders7 = useMemo(
-    () => teamLeaders(league.playerStats, opponentId, 7),
-    [league.playerStats, opponentId],
+    () => teamLeaders(opponentContext.playerStats, opponentId, 7),
+    [opponentContext.playerStats, opponentId],
   )
   const tacticsKnowledge = playerTeam && opponentId
     ? getOpponentTacticsKnowledge(playerTeam, opponentId)

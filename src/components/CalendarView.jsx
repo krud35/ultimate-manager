@@ -7,7 +7,7 @@ import {
   addDays,
   formatISODate,
   parseISODate,
-  teamNameMap,
+  teamNameMapAll,
   getFixturesOnDate,
   detectSeasonPhase,
   officialSeasonEndDate,
@@ -956,7 +956,7 @@ export default function CalendarView({ league, onPlayFixture, onSimulateUntilDat
   const { lang } = useUiLang()
   const t = calendarStrings(lang)
   const c = commonStrings(lang)
-  const names = teamNameMap(league, lang)
+  const names = teamNameMapAll(league, lang)
   const team = playerTeamFromLeague(league)
   const [view, setView] = useState('week')
   const [anchorIso, setAnchorIso] = useState(league.currentDate ?? league.calendar?.startDate)
@@ -1171,7 +1171,7 @@ export function CalendarTile({ league, onNavigate }) {
   const { lang } = useUiLang()
   const t = calendarStrings(lang)
   const c = commonStrings(lang)
-  const names = teamNameMap(league, lang)
+  const names = teamNameMapAll(league, lang)
   const phase = detectSeasonPhase(league)
   const upcoming = allFixtures(league)
     .filter(

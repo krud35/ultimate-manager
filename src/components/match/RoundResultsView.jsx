@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { teamNameMap, standingsTable, getFixturesOnDate } from '../../league'
+import { teamNameMapAll, standingsTable, getFixturesOnDate } from '../../league'
 import { useUiLang } from '../../ui/UiLangContext'
 import { matchStrings } from '../../ui/strings/match'
 
@@ -10,7 +10,9 @@ export default function RoundResultsView({ league, fixture, playerTeamId, onCont
   const { lang } = useUiLang()
   const t = matchStrings(lang)
 
-  const names = useMemo(() => (league ? teamNameMap(league, lang) : {}), [league, lang])
+  // Dzisiejsze mecze (dayFixtures) mogą obejmować puchar — drużyny spoza poziomu
+  // gracza potrzebują też nazw, stąd teamNameMapAll zamiast teamNameMap.
+  const names = useMemo(() => (league ? teamNameMapAll(league, lang) : {}), [league, lang])
   const table = useMemo(
     () => (league ? standingsTable(league.standings ?? {}, (id) => names[id] ?? id) : []),
     [league, names],

@@ -19,6 +19,7 @@ import { materializeFullPyramidTeams } from './shadowLeague.js'
 import { advanceOtherLeagueToDate } from './otherLeagues.js'
 import { createLeaguePlayerStats, mergeMatchBoxScore } from './leagueStats.js'
 import { standingsTable } from './standings.js'
+import { teamIdsByStandings } from './leagueState.js'
 import { teamFromLeague } from '../career/worldState.js'
 import { applyReputationForMatchTeams } from '../models/teamReputation.js'
 import { applyEloForMatchTeams } from '../models/teamElo.js'
@@ -116,6 +117,12 @@ export function maybeInitializeCup(league) {
   if (league.eucsPyramid) {
     const { tier1Ids, tier2Ids, tier3Ids } = league.eucsPyramid
     if (!league.calendar?.pyramidCup) return league
+    // Losowanie drabinki (draw) czeka do tygodnia obejmującego 1 stycznia — jesień
+    // zwykle kończy się wcześniej (~20 grudnia), a rozgrywanie meczów zaczyna się
+    // dopiero w playWeek2. Bez tego losowanie wypadało zaraz po jesieni (~20 grudnia),
+    // ponad 2 tygodnie przed realnym startem pucharu — nierealistycznie wcześnie.
+    const freeWeek1Start = league.calendar.pyramidCup.freeWeek1?.start
+    if (freeWeek1Start && toIso(league.currentDate) < freeWeek1Start) return league
     // Bezpiecznik dla starszych save'ów sprzed pełnej materializacji na starcie sezonu
     // (patrz careerModel.js) — normalnie wszystkie 48 drużyn ma już pełny skład. Celowo
     // BEZ `teamIds` w pseudo-world: `league.teamIds` to lista TYLKO poziomu gracza (16),
@@ -125,11 +132,12 @@ export function maybeInitializeCup(league) {
       [...tier1Ids, ...tier2Ids, ...tier3Ids],
       league.simSeedBase,
     )
+    // Rozstawienie 1–48 liczone z TABEL NA DZIEŃ LOSOWANIA (tydzień 1 stycznia):
+    // Liga 1 = 1–16, Liga 2 = 17–32, Liga 3 = 33–48, w obrębie poziomu wg miejsca.
     league.cup = createPyramidCup(
-      tier1Ids,
-      tier2Ids,
-      tier3Ids,
-      league.simSeedBase,
+      teamIdsByStandings(league, tier1Ids),
+      teamIdsByStandings(league, tier2Ids),
+      teamIdsByStandings(league, tier3Ids),
       league.calendar.pyramidCup,
     )
     // Drabinka rozstrzyga się teraz dzień po dniu (jak zwykły puchar UFA) — patrz

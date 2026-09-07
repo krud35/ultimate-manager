@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
-import { topLeaders, detectSeasonPhase } from '../league'
+import { topLeaders, detectSeasonPhase, teamNameMapAll } from '../league'
 import { useUiLang } from '../ui/UiLangContext'
 import { leagueViewsStrings } from '../ui/strings/leagueViews'
-import { resolveTeamName } from '../ui/locale'
 
 const UFA_ROUND_ORDER = ['prequarter', 'quarter', 'semi', 'final']
 // Puchar Piramidy (48 drużyn Ligi Europejskiej): 2 dodatkowe wczesne rundy, których
@@ -15,27 +14,17 @@ function roundOrderFor(cup) {
   return cup?.pyramidCupDates ? PYRAMID_ROUND_ORDER : UFA_ROUND_ORDER
 }
 
-/**
- * Nazwy WSZYSTKICH drużyn dostępnych w `league.teamsById` — nie tylko `league.teamIds`
- * (poziom gracza). Puchar Piramidy obejmuje wszystkie 48 klubów piramidy, więc mecze
- * spoza poziomu gracza potrzebują też swoich nazw (stąd nie da się użyć teamNameMap()
- * z leagueState.js, ograniczonego do league.teamIds).
- */
-function allTeamNames(league, lang) {
-  const map = {}
-  const teamsById = league?.teamsById ?? {}
-  for (const id of Object.keys(teamsById)) {
-    map[id] = resolveTeamName(teamsById[id], lang) || id
-  }
-  return map
-}
-
 function shortName(name) {
   if (!name) return 'TBD'
   if (name.length <= 18) return name
   return `${name.slice(0, 16)}…`
 }
 
+/**
+ * `homeSeed`/`awaySeed` to numer rozstawienia: dla pucharu UFA miejsce w tabeli po
+ * jesieni (1–16), dla Pucharu Piramidy miejsce 1–48 wg tabel z dnia losowania
+ * (Liga 1 = 1–16, Liga 2 = 17–32, Liga 3 = 33–48) — patrz pyramidCup.js.
+ */
 function seedLabel(match, side) {
   const seed = side === 'home' ? match.homeSeed : match.awaySeed
   return seed != null ? seed : null
@@ -326,7 +315,7 @@ function CupStatsView({ league, names, t }) {
 export function CupTile({ league, onNavigate }) {
   const { lang } = useUiLang()
   const t = leagueViewsStrings(lang)
-  const names = allTeamNames(league, lang)
+  const names = teamNameMapAll(league, lang)
   const cup = league.cup
   const phase = detectSeasonPhase(league)
   const champion =
@@ -353,7 +342,9 @@ export function CupTile({ league, onNavigate }) {
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-xs uppercase tracking-wide text-ufa-gold">{t.cupTitle}</p>
+          <p className="text-xs uppercase tracking-wide text-ufa-gold">
+            {cup?.pyramidCupDates ? t.pyramidCupTitle : t.cupTitle}
+          </p>
           <p className="mt-0.5 text-sm font-semibold text-ufa-text">
             {champion
               ? t.champion(champion)
@@ -401,8 +392,14 @@ export default function CupView({ league, onPlayFixture = null }) {
     { id: 'stats', label: t.tabStats },
   ]
   const [tab, setTab] = useState('bracket')
-  const names = allTeamNames(league, lang)
+  const names = teamNameMapAll(league, lang)
   const cup = league.cup
+  // Puchar Piramidy to inne rozgrywki niż zwykły Puchar Ligi (48 klubów, losowanie bez
+  // rozstawienia) — nagłówek musi to mówić, inaczej „16 drużyn wg tabeli po jesieni"
+  // sugeruje rozstawienie, którego tu w ogóle nie ma.
+  const isPyramidCup = !!cup?.pyramidCupDates
+  const cupTitle = isPyramidCup ? t.pyramidCupTitle : t.cupTitle
+  const cupIntro = isPyramidCup ? t.pyramidCupIntro : t.cupIntro
   const champion =
     cup?.championTeamId != null
       ? names[cup.championTeamId] ?? cup.championTeamId
@@ -413,8 +410,8 @@ export default function CupView({ league, onPlayFixture = null }) {
       <div className="rounded-xl border border-ufa-gold/25 bg-ufa-panel p-6 shadow-xl shadow-black/30">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-ufa-text">{t.cupTitle}</h2>
-            <p className="mt-1 text-sm text-ufa-muted">{t.cupIntro}</p>
+            <h2 className="text-lg font-semibold text-ufa-text">{cupTitle}</h2>
+            <p className="mt-1 text-sm text-ufa-muted">{cupIntro}</p>
             {champion && (
               <p className="mt-2 text-sm text-ufa-gold font-medium">
                 {t.winner}: {champion}

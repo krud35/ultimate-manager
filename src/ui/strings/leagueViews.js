@@ -32,6 +32,10 @@ const pl = {
   cupTitle: 'Puchar Ligi',
   cupIntro:
     'Turniej styczniowy · 16 drużyn według tabeli po jesieni · boisko neutralne (N) · osobna klasyfikacja zawodników',
+  // Puchar Piramidy: 48 klubów, rozstawienie 1–48 wg tabel z dnia losowania (tydzień 1 stycznia).
+  pyramidCupTitle: 'Puchar Piramidy',
+  pyramidCupIntro:
+    'Turniej styczniowy · wszystkie 48 klubów piramidy · rozstawienie wg tabel z 1 stycznia (Liga 1: 1–16, Liga 2: 17–32, Liga 3: 33–48) · boisko neutralne (N) · osobna klasyfikacja zawodników',
   cupNotStarted: 'Puchar jeszcze się nie rozpoczął. Drabinka powstanie po zakończeniu jesieni.',
   cupEmptyBody:
     'Po 15. kolejce ligowej (jesień) 16 najlepszych drużyn wchodzi do pucharowej drabinki: 1/8, ćwierćfinały, półfinały i finał.',
@@ -108,6 +112,10 @@ const en = {
   cupTitle: 'League Cup',
   cupIntro:
     'January tournament · 16 teams by fall standings · neutral venue (N) · separate player leaders',
+  // Pyramid Cup: 48 clubs, seeded 1–48 from the tables on draw day (week of January 1st).
+  pyramidCupTitle: 'Pyramid Cup',
+  pyramidCupIntro:
+    'January tournament · all 48 pyramid clubs · seeded from the Jan 1 tables (Liga 1: 1–16, Liga 2: 17–32, Liga 3: 33–48) · neutral venue (N) · separate player leaders',
   cupNotStarted: 'The cup has not started yet. The bracket appears after fall ends.',
   cupEmptyBody:
     'After league round 15 (fall), the top 16 teams enter the cup bracket: round of 16, quarters, semis and final.',

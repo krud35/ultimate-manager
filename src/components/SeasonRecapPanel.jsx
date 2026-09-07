@@ -1,6 +1,6 @@
 import {
   standingsTable,
-  teamNameMap,
+  teamNameMapAll,
   topLeaders,
   getLeagueChampionTeamId,
   areCompetitionsComplete,
@@ -106,7 +106,7 @@ export function SeasonSummaryPanel({ career, onViewStandings, onOpenTransfers = 
   const { lang } = useUiLang()
   const t = seasonRecapStrings(lang)
   const league = career.league
-  const names = teamNameMap(league, lang)
+  const names = teamNameMapAll(league, lang)
   const table = standingsTable(league.standings, (id) => names[id])
   const championId = getLeagueChampionTeamId(league)
   const championName = championId ? names[championId] ?? championId : '—'
@@ -196,7 +196,7 @@ export default function SeasonRecapPanel({
   const { lang } = useUiLang()
   const t = seasonRecapStrings(lang)
   const league = career.league
-  const names = teamNameMap(league, lang)
+  const names = teamNameMapAll(league, lang)
   const table = standingsTable(league.standings, (id) => names[id])
   const championId = getLeagueChampionTeamId(league)
   const championName = championId ? names[championId] ?? championId : '—'
