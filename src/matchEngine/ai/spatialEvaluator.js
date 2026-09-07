@@ -3,7 +3,7 @@ import { FORCE_SIDES } from '../tacticsModifiers.js'
 import { forceMarkLayoutSide, normalizeForceMark } from '../throwTechnique.js'
 import { isCloggingThrowLane } from './offenseReorganization.js'
 import { subStat } from './statFormulas.js'
-import { getTraitMods } from '../../models/playerTraits.js'
+import { playerMatchMods } from '../playerModsRegistry.js'
 
 function dist(ax, ay, bx, by) {
   return Math.hypot(bx - ax, by - ay)
@@ -107,7 +107,7 @@ export function evaluatePlayerSituation(player, ctx) {
     if (dist(x, y, o.x, o.y) < 7) cloggingLevel += 1
   }
   if (inThrowLane) cloggingLevel += 2
-  const traitMods = getTraitMods(player)
+  const traitMods = playerMatchMods(player)
   if ((traitMods.clogChanceMult ?? 1) > 1.1 && inThrowLane) cloggingLevel += 1
   if ((traitMods.clogChanceMult ?? 1) < 0.7 && cloggingLevel > 0) {
     cloggingLevel = Math.max(0, cloggingLevel - 1)

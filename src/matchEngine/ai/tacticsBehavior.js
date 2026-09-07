@@ -531,7 +531,8 @@ export function shouldAttemptPoach(defender, ctx) {
     defenseTactics = null,
   } = ctx
   const def = defenseMods(defenseStyle)
-  const traitMult = mergeTraitAndCoachMods(defender, defenseTactics, 'defense').poachChanceMult ?? 1
+  const defMods = mergeTraitAndCoachMods(defender, defenseTactics, 'defense')
+  const traitMult = defMods.poachChanceMult ?? 1
   // Zawodnik z cechą `poacher` albo instrukcją `poach` poachuje NIEZALEŻNIE od stylu:
   // w zwykłym person defence tendencja stylu to 0.09, więc cecha nie miała czego mnożyć.
   // Taki zawodnik reaguje też na cuty daleko od dysku (deep help, zamykanie open side),
@@ -545,8 +546,12 @@ export function shouldAttemptPoach(defender, ctx) {
 
   // Blisko lane'u/dysku — albo dedykowany poacher, który może pomóc też z głębi.
   if (!dedicatedPoacher && distToDisc > 9 && distToLane > 3.5) return false
-  // Nie zostawiaj człowieka, który już jest otwarty / którego gubisz.
-  if (separationToMark > 3.2) return false
+  // Nie zostawiaj człowieka, który już jest otwarty / którego gubisz. Próg rośnie o
+  // ZAMIERZONY odstęp (cushionDeltaM): obrońca, któremu kazano kryć luźno i poachować,
+  // stoi dalej od swojego człowieka z wyboru, a nie dlatego, że przegrał pościg — bez
+  // tej poprawki rozkaz `poach` sam by się blokował własnym cushionem.
+  const intendedCushion = Math.max(0, defMods.cushionDeltaM ?? 0)
+  if (separationToMark > 3.2 + intendedCushion) return false
 
   const vision = subStatFromPlayer(defender, 'mental', 'vision')
   const reactions = subStatFromPlayer(defender, 'mental', 'reactions')

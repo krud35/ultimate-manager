@@ -89,6 +89,26 @@ function cutInitiationMs(player) {
 }
 
 /** Błąd ustawienia: gdzie zawodnikowi się WYDAJE, że jest jego miejsce w formacji. */
+/**
+ * Przesunięcie slotu formacji w POPRZEK boiska, względem pasa rzutu.
+ *
+ * To jest kanał rozkazów pozycyjnych („bierz przestrzeń" / „zostaw przestrzeń innym").
+ * Wcześniej obie te instrukcje ruszały te same gałki co para priorytetu cutowania
+ * (cutRollMult / cutPriorityDelta), czyli były jej duplikatem i nie mówiły nic o tym,
+ * GDZIE zawodnik stoi, zanim cokolwiek się wydarzy.
+ *
+ * Dodatnie = dalej od pasa (oddaje lane), ujemne = bliżej (ustawia się tam, skąd wychodzi
+ * się do cutu). Przy ujemnym biasie nie przechodzimy na drugą stronę dysku — zawodnik ma
+ * wejść w pas, a nie przez niego przelecieć.
+ */
+function applySlotLaneBias(slot, disc, biasM) {
+  if (!slot || !disc || !biasM) return slot
+  const dy = slot.y - disc.y
+  const sign = dy >= 0 ? 1 : -1
+  const shift = biasM >= 0 ? biasM : -Math.min(-biasM, Math.abs(dy))
+  return { ...slot, y: clampFieldY(slot.y + sign * shift) }
+}
+
 function slotWithError(slot, player, rng) {
   if (!rng?.float) return slot
   const systems = subStat(player, 'offensive', 'offensiveSystemsKnowledge')
@@ -243,10 +263,33 @@ const SPACE_NOISE = 12
 const YARD_SPREAD_M = 26
 /** Cut z reguły trochę zyskuje teren — stąd przesunięcie środka do przodu. */
 const YARD_FORWARD_TILT_M = 6
+/**
+ * Kara za metr ZA DYSKIEM. Wartość terenu była dotąd liczona wyłącznie względem slotu
+ * zawodnika (`selfAhead`), więc przestrzeń za dyskiem nie była tania — była po prostu
+ * daleko od szczytu krzywej i dostawała zero. Zero nie konkuruje z freeness (waga 100):
+ * gdy obrona obsadza cały przód, komórki za dyskiem są obiektywnie wolniejsze i wygrywają
+ * argmax. Zmierzone przeciw ścianie: najlepsza komórka z tyłu biła najlepszą z przodu
+ * o 5.6 pkt, 59% cutów celowało za dysk, a zawodnik w ACTIVE_CUT był średnio 2.2 m ZA
+ * dyskiem (przeciw obronie 1:1: +2.2 m).
+ *
+ * Złapanie dysku 10 m za rzucającym to realna strata 10 m, więc teren za dyskiem ma
+ * wartość UJEMNĄ, nie zerową. Kara jest liniowa w metrach i ograniczona, żeby reset nie
+ * stał się nielegalny — ma być tańszy niż zysk, a nie zakazany.
+ */
+const YARD_BACK_PENALTY_PER_M = 0.1
+const YARD_BACK_PENALTY_MAX = 1.8
+/**
+ * Reset gra za dyskiem z definicji — to jego zadanie, nie błąd ustawienia. Wyznaczony
+ * dump płaci ułamek tej kary, więc dalej wybiera przestrzeń za dyskiem, gdy jest wolna.
+ */
+const YARD_BACK_RESET_MULT = 0.25
 
-function yardValue(cellAhead, selfAhead) {
+function yardValue(cellAhead, selfAhead, isReset = false) {
   const peak = selfAhead + YARD_FORWARD_TILT_M
-  return Math.max(0, 1 - Math.abs(cellAhead - peak) / YARD_SPREAD_M)
+  const base = Math.max(0, 1 - Math.abs(cellAhead - peak) / YARD_SPREAD_M)
+  if (cellAhead >= 0) return base
+  const penalty = Math.min(YARD_BACK_PENALTY_MAX, -cellAhead * YARD_BACK_PENALTY_PER_M)
+  return base - penalty * (isReset ? YARD_BACK_RESET_MULT : 1)
 }
 
 function pickCutTarget(
@@ -315,11 +358,16 @@ function pickCutTarget(
 
   let best = null
   let bestScore = -Infinity
+  const isReset = agent.isDump === true
   for (const cell of cells) {
-    // 1. Wolna przestrzeń — to jest istota decyzji.
-    let score = cell.freeness * SPACE_FREE_WEIGHT
-    // 2. Ile metrów da zdobycie tej przestrzeni.
-    score += yardValue(cell.ahead, selfAhead) * SPACE_BALANCE.yard
+    // 1. Wolna przestrzeń — to jest istota decyzji. Ale wolna przestrzeń, do której dysk
+    //    nie doleci, nie jest wolna: laneFactor (spaceMap.js) tłumi komórki schowane za
+    //    ciałami obrony i zostawia pełną wartość dziurom, przez które rzut przechodzi.
+    //    Mnożnik działa tylko po stronie ataku — mapa zagrożeń obrony (threatCellForMark)
+    //    zostaje bez zmian, bo obrońca broni przestrzeni także wtedy, gdy sam ją zasłania.
+    let score = cell.freeness * (cell.laneFactor ?? 1) * SPACE_FREE_WEIGHT
+    // 2. Ile metrów da zdobycie tej przestrzeni (ujemnie za dyskiem — patrz yardValue).
+    score += yardValue(cell.ahead, selfAhead, isReset) * SPACE_BALANCE.yard
     // 3. Czy zdążę tam dobiec.
     const runM = Math.hypot(cell.x - agent.x, cell.y - agent.y)
     score -= (runM / speed) * SPACE_BALANCE.reach
@@ -603,18 +651,22 @@ export function tickCutterBrain(agent, tickCtx) {
   const attackSign = attackDirectionX(possessionTeam)
 
   const structuralTarget = () =>
-    formationStructuralTarget({
-      attackStyle,
-      x: agent.x,
-      y: agent.y,
+    applySlotLaneBias(
+      formationStructuralTarget({
+        attackStyle,
+        x: agent.x,
+        y: agent.y,
+        disc,
+        throwerPos,
+        forceSide,
+        possessionTeam,
+        stackIndex,
+        isDump,
+        rng,
+      }),
       disc,
-      throwerPos,
-      forceSide,
-      possessionTeam,
-      stackIndex,
-      isDump,
-      rng,
-    })
+      coachMods.slotLaneBiasM ?? 0,
+    )
 
   const distToDisc = Math.hypot(
     agent.x - (throwerPos?.x ?? disc.x),
@@ -622,9 +674,15 @@ export function tickCutterBrain(agent, tickCtx) {
   )
   const alreadyCutting =
     agent.state === CUTTER_STATE.ACTIVE_CUT || agent.state === CUTTER_STATE.INITIATING_CUT
+  // Sloty cutowe (MAX_CONCURRENT_CUTTERS = 2) są tym, co realnie ogranicza „dominuj grę":
+  // sama większa chęć nic nie daje, gdy oba pasy są zajęte. Zmierzone przy cutRollMult 2.2
+  // i cutPriorityDelta -28: inicjacje cutu +0.21 na 1000 ticków przy progu 0.37, czyli nic.
+  // Zawodnik z mocnym rozkazem priorytetu WCHODZI mimo zajętych slotów — i płaci za to
+  // zapchaniem pasa, które silnik i tak wycenia przez cloggingLevel.
+  const priorityClaim = (coachMods.cutPriorityDelta ?? 0) <= -15
   const canStartCut =
     alreadyCutting ||
-    (activeCutters < maxCutters && distToDisc >= MIN_CUT_START_DIST_M)
+    ((activeCutters < maxCutters || priorityClaim) && distToDisc >= MIN_CUT_START_DIST_M)
 
   let state = agent.state ?? CUTTER_STATE.WAITING
   let targetX = agent.targetX ?? agent.x
@@ -716,7 +774,13 @@ export function tickCutterBrain(agent, tickCtx) {
     !coachMods.continuationOnlyCuts &&
     !coachMods.fillerCutsOnly &&
     throwerPos &&
-    Math.hypot(agent.x - throwerPos.x, agent.y - throwerPos.y) < 24
+    Math.hypot(agent.x - throwerPos.x, agent.y - throwerPos.y) < 24 &&
+    // Rozkaz priorytetu cutowania musi obowiązywać też przy clearoucie po resecie.
+    // Ta gałąź wskakiwała prosto w ACTIVE_CUT z pominięciem bramki w WAITING, więc
+    // „czekaj na swoją kolej" nie miał czego powstrzymać — zmierzone: cutInitPer1k
+    // -0.36 przy progu 1.50. Przy braku rozkazu (cutRollMult = 1) warunek jest zawsze
+    // spełniony, czyli dla zawodnika bez instrukcji nic się nie zmienia.
+    ((coachMods.cutRollMult ?? 1) >= 1 || rng.float() < (coachMods.cutRollMult ?? 1))
   ) {
     state = CUTTER_STATE.ACTIVE_CUT
     stateMs = 0

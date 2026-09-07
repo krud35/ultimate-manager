@@ -1,6 +1,6 @@
 import { getSubStat } from '../../models/playerStats.js'
 import { applyMoraleToStat, getPlayerMorale } from '../../models/playerMorale.js'
-import { getTraitMods } from '../../models/playerTraits.js'
+import { playerMatchMods } from '../playerModsRegistry.js'
 
 const DEFAULT = 50
 
@@ -12,20 +12,20 @@ export function subStat(player, category, key) {
 
 /** Vmax ≈ 4.4–7.2 m/s (speed 0–100) — sprint cutu ultimate, nie finisz 100 m. */
 export function maxSpeedMps(player) {
-  const mods = getTraitMods(player)
+  const mods = playerMatchMods(player)
   return (4.4 + (subStat(player, 'physical', 'speed') / 100) * 2.8) * (mods.speedMult ?? 1)
 }
 
 /** Plant & cut: 300 - (agility / 100) * 180 ms */
 export function plantStopMs(player) {
-  const mods = getTraitMods(player)
+  const mods = playerMatchMods(player)
   const base = 300 - (subStat(player, 'physical', 'agility') / 100) * 180
   return Math.max(90, base * (mods.plantMsMult ?? 1))
 }
 
 /** Reakcje obrońcy: 350 - (reactions / 100) * 250 ms */
 export function defenderReactionDelayMs(player) {
-  const mods = getTraitMods(player)
+  const mods = playerMatchMods(player)
   return Math.round(
     350 - (subStat(player, 'mental', 'reactions') / 100) * 250 + (mods.reactionDelayDeltaMs ?? 0),
   )
@@ -39,7 +39,7 @@ export function defenderReactionDelayMs(player) {
  * bombę 55m+. Sufit przy vision=100 to 77m, margines nad deepDist (75m).
  */
 export function throwScanRadiusM(player) {
-  const mods = getTraitMods(player)
+  const mods = playerMatchMods(player)
   const visionFrac = subStat(player, 'mental', 'vision') / 100
   return 22 + visionFrac ** 4 * 55 + (mods.scanRadiusBonusM ?? 0)
 }
@@ -49,7 +49,7 @@ export function throwScanRadiusM(player) {
  * Reszta boiska po prostu umyka jego uwadze.
  */
 export function perceivedOptionLimit(player) {
-  const mods = getTraitMods(player)
+  const mods = playerMatchMods(player)
   return 2 + Math.round((subStat(player, 'mental', 'vision') / 100) * 5) + (mods.perceivedOptionsBonus ?? 0)
 }
 
@@ -75,7 +75,7 @@ export function throwLaneReadLimit(player) {
 export function decisionNoiseAmplitude(player, stallCount = 1) {
   const dm = subStat(player, 'mental', 'decisionMaking')
   const composure = subStat(player, 'mental', 'composure')
-  const mods = getTraitMods(player)
+  const mods = playerMatchMods(player)
   const base = (1 - dm / 100) * 38
   const pressure = stallCount >= 5 ? (1 - composure / 100) * (stallCount - 4) * 5 : 0
   return (base + pressure) * (mods.decisionNoiseMult ?? 1)
@@ -93,7 +93,7 @@ export function stallComposureAccuracyPenalty(stallCount, player) {
 
 /** Cushion krycia cuttera: 2.5 - (defensiveCutterMovement / 100) * 1.8 m */
 export function coverageCushionMeters(player) {
-  const mods = getTraitMods(player)
+  const mods = playerMatchMods(player)
   const base =
     2.5 -
     (subStat(player, 'defensive', 'defensiveCutterMovement') / 100) * 1.8 +
@@ -438,7 +438,7 @@ export function horizontalReachM(player) {
 /** Szansa layout / catch w powietrzu (0–1). */
 export function aerialContestChance(player, discZMeters, isReceiver = true) {
   const jump = subStat(player, 'physical', 'jump')
-  const mods = getTraitMods(player)
+  const mods = playerMatchMods(player)
   // Ten sam zasięg, na którym rozstrzyga się kontest powietrzny — dysk wyraźnie ponad
   // nim to już tylko desperacka próba.
   const reach = maxAerialReachM(player)

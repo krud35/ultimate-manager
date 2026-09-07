@@ -223,6 +223,54 @@ function contestFor(cell, viewer, viewerSpeed, defenders, defSpeeds) {
   const margin = defTime - myTime
   return Math.max(0, Math.min(1, 0.5 - (margin / RACE_REF_SEC) * 0.5))
 }
+/**
+ * OSIĄGALNOŚĆ RZUTEM. Wolna przestrzeń, do której dysk nie doleci, nie jest wolna.
+ *
+ * Sama freeness mierzy tylko wyścig do miejsca: kto tam będzie pierwszy. Przestrzeń za
+ * ciałami cupa wygrywała ten wyścig bezapelacyjnie (obrona stoi PRZED nią, nie w niej),
+ * więc atak biegł tam, gdzie rzut i tak nie mógł dojść, a dziury tuż obok łuku — jedyne
+ * miejsce, gdzie strefę realnie się rozgrywa — dostawały tyle samo co reszta. Zmierzone:
+ * pasmo 0-8 m przed dyskiem, czyli dziury między cupem a wingami, było wybierane w
+ * 1.6-8.3% decyzji.
+ *
+ * Tor rzutu to odcinek dysk -> komórka. Obrońca bliżej niego niż zasięg ręki go zamyka;
+ * od LANE_CLEAR_M tor jest czysty. Skrajne odcinki toru są pominięte celowo: przy dysku
+ * stoi marker (to model marku i stalla), a przy komórce obrońca krycia (to już jest w
+ * freeness) — podwójne liczenie ich obu wypaczałoby mapę.
+ *
+ * Czynnik nie schodzi do zera (LANE_MIN_FACTOR), bo zamknięty tor prosty nie znaczy brak
+ * rzutu: zostaje hammer, wysoki release, obejście marku.
+ */
+export const LANE_REACH_M = 1.2
+export const LANE_CLEAR_M = 3.6
+export const LANE_MIN_FACTOR = 0.25
+const LANE_SEGMENT_FROM = 0.15
+const LANE_SEGMENT_TO = 0.9
+
+/** Odległość obrońcy od toru rzutu (odcinek a->b), licząc tylko środek odcinka. */
+function laneClearanceFor(ax, ay, bx, by, defenders) {
+  const vx = bx - ax
+  const vy = by - ay
+  const len2 = vx * vx + vy * vy
+  if (len2 < 1e-6) return Infinity
+  let best = Infinity
+  for (const dfn of defenders) {
+    const t = ((dfn.x - ax) * vx + (dfn.y - ay) * vy) / len2
+    if (t < LANE_SEGMENT_FROM || t > LANE_SEGMENT_TO) continue
+    const px = ax + vx * t
+    const py = ay + vy * t
+    const d = Math.hypot(dfn.x - px, dfn.y - py)
+    if (d < best) best = d
+  }
+  return best
+}
+
+function laneFactorFor(clearM) {
+  if (!Number.isFinite(clearM)) return 1
+  const t = Math.max(0, Math.min(1, (clearM - LANE_REACH_M) / (LANE_CLEAR_M - LANE_REACH_M)))
+  return LANE_MIN_FACTOR + (1 - LANE_MIN_FACTOR) * t
+}
+
 export function buildSpaceMap({ disc, attackSign, teammates = [], defenders = [], ignoreId = null, viewer = null, claimAwareness = 1 }) {
   const cells = []
   if (!disc) return cells
@@ -293,6 +341,7 @@ export function buildSpaceMap({ disc, attackSign, teammates = [], defenders = []
         const freeness = viewer
           ? 1 / (1 + load)
           : 1 / (1 + teamOccupancy + defPressure * DEFENDER_WEIGHT)
+        const laneClear = laneClearanceFor(disc.x, disc.y, px, py, defenders)
         cells.push({
           depth,
           lane,
@@ -306,6 +355,8 @@ export function buildSpaceMap({ disc, attackSign, teammates = [], defenders = []
           shadow,
           crowd,
           freeness,
+          laneClear,
+          laneFactor: laneFactorFor(laneClear),
         })
       }
     }

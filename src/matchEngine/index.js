@@ -43,6 +43,7 @@ export {
   PLAYER_INSTRUCTION_DEFS,
   PLAYER_INSTRUCTION_IDS,
   PLAYER_INSTRUCTION_CONFLICTS,
+  PLAYER_INSTRUCTION_GROUPS,
   playerInstructionDef,
   playerInstructionLabel,
   normalizeInstructionList,

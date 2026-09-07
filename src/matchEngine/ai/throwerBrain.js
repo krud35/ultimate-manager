@@ -69,14 +69,43 @@ export const CONTINUATION_WINDOW_MS = 900
  * (a nie „rzut w pustkę do kogoś odchodzącego od gry") — patrz filtr w scanThrowOptions. */
 const CLEARING_RESET_MAX_M = 13
 
+/**
+ * Ile punktów score waży pełny apetyt na głęboką grę (huckWeightMult = 2 → +30).
+ * Kalibrowane do działającego breakSideOptionBonus (0.24 × 100 ≈ 24 pkt daje +10 pp
+ * udziału break-side) — patrz scripts/bench-player-instructions.mjs.
+ */
+const DEEP_APPETITE_POINTS = 30
+
+
+/**
+ * Mnożnik wagi nałożony na score opcji, odporny na znak.
+ *
+ * Score bywa UJEMNY — kary za zablokowany korytarz (LANE_BLOCK_WEIGHT = 20) i za trudny
+ * break (BREAK_DIFFICULTY_WEIGHT = 12) potrafią zbić ocenę poniżej zera. Zwykłe
+ * `score *= 0.7` wtedy PODNOSI opcję ku progowi akceptacji zamiast ją odsunąć, czyli
+ * mnożnik działa odwrotnie do zamiaru dokładnie tam, gdzie opcja jest najgorsza.
+ * Skalujemy więc magnitudę, zachowując znak.
+ */
+function scaleOptionScore(score, mult) {
+  if (!Number.isFinite(mult) || mult === 1) return score
+  return score >= 0 ? score * mult : score / Math.max(0.05, mult)
+}
+
 function acceptanceThreshold(stallCount, thrower, tactics = null) {
-  const tier = stallTier(stallCount)
   const compPenalty = stallComposureAccuracyPenalty(stallCount, thrower)
   const vision = subStat(thrower, 'mental', 'vision')
   const decision = subStat(thrower, 'mental', 'decisionMaking')
   const composure = subStat(thrower, 'mental', 'composure')
   const judgment = decision * 0.5 + vision * 0.3 + composure * 0.2
   const mods = mergeTraitAndCoachMods(thrower, tactics, 'offense')
+  // resetFirstStallBias CELOWO nie wchodzi do progu akceptacji. Próbowałem tak i wyszło
+  // odwrotnie do zamiaru: podniesiony efektywny stall spycha tier na „high", próg leci z
+  // ~62 na ~32, a wtedy rzucający bierze pierwszą lepszą opcję DO PRZODU — bo tych jest
+  // więcej i punktują wyżej. Zmierzone: `dump_first` przesuwał udział resetów o -0.93 pp,
+  // czyli w złą stronę. „Najpierw reset" ma podnosić WARTOŚĆ resetu (dumpWeightMult,
+  // dumpEarlyBias) i wyłączać nadpisanie „graj do przodu" niżej — a nie rozluźniać
+  // kryterium dla wszystkich opcji naraz.
+  const tier = stallTier(stallCount)
   let base
   // Wyższy próg na niskim stallu — czekamy na czystszą opcję.
   if (tier === 'low') base = 70 - judgment * 0.1
@@ -592,6 +621,13 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
   const scanRadius = throwScanRadiusM(thrower)
   const throwerPos = throwerPosition(offenseAgents, thrower)
   const throwerMods = mergeTraitAndCoachMods(thrower, offenseTactics, 'offense')
+  /**
+   * Apetyt na głęboką grę: 0 = naturalny, dodatni = szuka deep, ujemny = ma nie rzucać.
+   * Stały dla całego skanu (zależy od rzucającego, nie od opcji), więc liczony raz.
+   */
+  const deepAppetite = (throwerMods.huckWeightMult ?? 1) - 1
+  /** Mnożnik widoczności deep opcji. 1 = bez rozkazu; sufit chroni przed tunelem na huck. */
+  const deepVisibility = Math.max(0, Math.min(1.8, 1 + deepAppetite))
   // Marker to obrońca stojący najbliżej rzucającego — on definiuje open/break side.
   let markerAgent = null
   if (throwerPos && defenseAgents?.length) {
@@ -855,7 +891,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
 
     if (!situation.isOpenSide) {
       score += (throwerMods.breakSideOptionBonus ?? 0) * 100
-      score *= throwerMods.breakSideWeightMult ?? 1
+      score = scaleOptionScore(score, throwerMods.breakSideWeightMult ?? 1)
     }
 
     // Safe vs creative: pewne okna vs ryzyko otwierające boisko.
@@ -903,18 +939,27 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
         score += (huckSkill - 50) * 0.2
         const openDeep = sep >= 4.5
         const goodDeep = sep >= 3.0
+        // Apetyt na głęboką grę (rozkaz / dyrektywa / cecha) jako człon ADDYTYWNY, w skali
+        // działającego breakSideOptionBonus (~24 pkt). Wcześniej stał tu mnożnik na score
+        // tłumiony wzorem `score *= 0.82 + 0.18*w`, czyli realnie ±14% — za mało wobec
+        // ARRIVAL_WEIGHT (11) i LANE_BLOCK_WEIGHT (20). Zmierzone przed zmianą
+        // (scripts/bench-player-instructions.mjs): `throw_hucks` ruszał udział hucków
+        // rzucającego o +1.55 pp przy szumie ±1.61, czyli o nic.
         if (openDeep || goodDeep) {
           const appetiteFactor = openDeep ? 1 : 0.55
           score += (huckSkill - 50) * 0.2 * appetiteFactor
           score += (openDeep ? 14 : 7) * appetiteFactor
-          const w = throwerMods.huckWeightMult ?? 1
-          score *= 0.82 + 0.18 * (1 + (w - 1) * appetiteFactor)
+          score += deepAppetite * DEEP_APPETITE_POINTS * appetiteFactor
           score += (throwerMods.huckAcceptanceDelta ?? 0) * 40 * appetiteFactor
           const hero = throwerMods.heroThrowWeightMult ?? 1
-          score *= 1 + (hero - 1) * appetiteFactor
+          score = scaleOptionScore(score, 1 + (hero - 1) * appetiteFactor)
           score += (throwerMods.scoringOptionBonus ?? 0) * 50 * appetiteFactor
-        } else if (sep < 2.5) {
-          score -= 6
+        } else {
+          // Deep look BEZ separacji. Zniechęcenie działa tu z pełną siłą — „nie rzucaj
+          // hucków" ma zdejmować przede wszystkim te wymuszone, a stary mnożnik w ogóle
+          // ich nie dotykał (siedział wewnątrz gałęzi sep >= 3.0).
+          if (deepAppetite < 0) score += deepAppetite * DEEP_APPETITE_POINTS
+          if (sep < 2.5) score -= 6
         }
       } else if (forwardProgress >= 18 || distFromThrower >= 20) {
         score += (huckSkill - 50) * 0.14
@@ -923,7 +968,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     }
 
     if (isDump) {
-      score *= throwerMods.dumpWeightMult ?? 1
+      score = scaleOptionScore(score, throwerMods.dumpWeightMult ?? 1)
       score += (throwerMods.dumpEarlyBias ?? 0) * 18
       score -= Math.max(0, throwerMods.scoringOptionBonus ?? 0) * 25
     }
@@ -985,8 +1030,13 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
         // rzuca się w oczy tak samo mocno jak bliska opcja z dobrym oknem — bez
         // tego cele 55m+ (generowane regularnie przez cutterBrain) nigdy nie
         // przetrwały limitu percepcji wobec kilku bliższych konkurentów.
+        // Apetyt na deep skaluje WIDOCZNOŚĆ głębokiej opcji, a nie tylko jej ocenę. Salience
+        // decyduje, co przetrwa limit percepcji (perceivedOptionLimit) i w ogóle trafi do
+        // scoringu — sam bonus do score nic nie dawał, bo deep look wypadał wcześniej
+        // (zmierzone: `throw_hucks` +1.12 pp udziału hucków przy szumie ±1.46). Przy
+        // apetycie neutralnym mnożnik = 1, więc dla zawodnika bez rozkazu nic się nie zmienia.
         (distFromThrower >= DEEP_LOOK_MIN_M && (situation.separation ?? 0) >= 3
-          ? 20 + (situation.separation ?? 0) * 6
+          ? (20 + (situation.separation ?? 0) * 6) * deepVisibility
           : 0),
       situation,
       traffic,
@@ -1042,7 +1092,14 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
   const flowLook = continuationWindow && best.isContinuationCut
   const contThreshold = threshold - (flowLook ? 12 : 0)
 
-  if (stallCount < 4 && best.isDump && (best.forwardProgress ?? 0) < 1) {
+  // Nadpisanie „nie resetuj na niskim stallu" musi ustępować rozkazowi. Bez tego żadne
+  // wzmocnienie wagi dumpa nie miało prawa zadziałać: gdy najlepszą opcją był reset bez
+  // zysku terenu, silnik i tak brał opcję do przodu — zmierzone, `dump_first` przesuwał
+  // udział resetów o -0.72 pp, czyli W PRZECIWNĄ stronę niż mówi rozkaz.
+  // resetFirstStallBias > 0 („najpierw reset") zsuwa granicę w dół i nadpisanie milknie;
+  // < 0 („patrz w pole") przesuwa ją w górę i nadpisanie działa dłużej.
+  const forwardOverrideBelowStall = 4 - (throwerMods.resetFirstStallBias ?? 0)
+  if (stallCount < forwardOverrideBelowStall && best.isDump && (best.forwardProgress ?? 0) < 1) {
     const forwardOpt = considered.find(
       (o) =>
         !o.isDump &&

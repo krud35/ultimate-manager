@@ -17,10 +17,10 @@ import {
 } from './throwTechnique.js'
 import { stallComposureAccuracyPenalty, subStat, catchSuccessChance } from './ai/statFormulas.js'
 import {
-  getTraitMods,
   throwTypeAccuracyTraitBonus,
   throwTypeBlockRiskTraitBonus,
 } from '../models/playerTraits.js'
+import { playerMatchMods } from './playerModsRegistry.js'
 import { windThrowModifiers } from './wind.js'
 
 /**
@@ -291,9 +291,9 @@ export function resolveThrow({
   const throwStat =
     throwSkill * 0.85 + readLegacySkill(thrower.skills, 'throwing') * 0.15
 
-  const throwerTraits = getTraitMods(thrower)
-  const receiverTraits = getTraitMods(receiver)
-  const defenderTraits = getTraitMods(defender)
+  const throwerTraits = playerMatchMods(thrower)
+  const receiverTraits = playerMatchMods(receiver)
+  const defenderTraits = playerMatchMods(defender)
 
   const distanceM = throwDistanceM ?? Math.hypot(throwDx, throwDy)
   const distanceCategory = throwDistanceCategory(distanceM)

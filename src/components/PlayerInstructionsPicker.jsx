@@ -7,6 +7,7 @@ import { getPlayerFullName } from '../data/mockPlayers'
 import {
   PLAYER_INSTRUCTION_DEFS,
   PLAYER_INSTRUCTION_CONFLICTS,
+  PLAYER_INSTRUCTION_GROUPS,
   instructionsForPlayer,
   toggleInstructionInTactics,
   instructionBadges,
@@ -14,14 +15,16 @@ import {
   normalizeTactics,
 } from '../matchEngine'
 
-const GROUPS = [
-  { id: 'throw', labelPl: 'Rzut', labelEn: 'Throw' },
-  { id: 'cut', labelPl: 'Cut', labelEn: 'Cut' },
-  { id: 'defense', labelPl: 'Obrona', labelEn: 'Defense' },
-  { id: 'role', labelPl: 'Rola', labelEn: 'Role' },
-]
+/** Kolejność i etykiety grup pochodzą z definicji rozkazów, nie z tego pliku. */
+const GROUPS = PLAYER_INSTRUCTION_GROUPS
 
-/** Pary instrukcji należące do danej grupy, w kolejności PLAYER_INSTRUCTION_CONFLICTS. */
+/**
+ * Pary instrukcji należące do danej grupy, w kolejności PLAYER_INSTRUCTION_CONFLICTS.
+ *
+ * Świadomie BEZ filtrowania po `def.side`: zakładki to O-Line / D-Line, czyli linia, na
+ * której zawodnik zaczyna punkt — a nie strona dysku. Zawodnik D-Line po bloku gra atakiem
+ * i potrzebuje rozkazów ofensywnych, tak samo jak O-Line po stracie musi bronić.
+ */
 function pairsForGroup(groupId) {
   return PLAYER_INSTRUCTION_CONFLICTS.filter(
     ([a]) => PLAYER_INSTRUCTION_DEFS[a]?.group === groupId,
@@ -125,7 +128,7 @@ export default function PlayerInstructionsPicker({
             return (
               <div key={group.id} className="space-y-1.5">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-ufa-muted">
-                  {pickLabel(group, lang)}
+                  {lang === 'en' ? group.labelEn : group.label}
                 </p>
                 <div className="space-y-1">
                   {pairs.map(([idA, idB]) => (

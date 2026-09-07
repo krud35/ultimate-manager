@@ -1,7 +1,7 @@
 import { MATCH_CONFIG } from './config.js'
 import { getSubStat, readLegacySkill } from '../models/playerStats.js'
 import { applyMoraleToStat, getPlayerMorale } from '../models/playerMorale.js'
-import { getTraitMods } from '../models/playerTraits.js'
+import { playerMatchMods } from './playerModsRegistry.js'
 
 export const STALL_MAX = 10
 /** Jedna jednostka stalla = 1 sekunda krycia. */
@@ -49,7 +49,7 @@ export function throwerMentalStats(thrower) {
 
 /** Presja markera 0–30 — staty obrońcy + tight coverage. */
 export function markerPressureRating(defender, separation) {
-  const traitMods = getTraitMods(defender)
+  const traitMods = playerMatchMods(defender)
   // Presja marka to praca nóg przy dysku, zamykanie linii rzutu i czytanie zamiaru —
   // NIE sprint i nie chwytność. Wcześniej używane były tu skillCheck.defenseWeights
   // (defense 0.55 / speed 0.3 / catching 0.15), ale te wagi służą do WYBORU obrońcy
@@ -92,7 +92,7 @@ export function stallThrowModifiers({
   const tier = stallTier(stallCount)
   const mental = throwerMentalStats(thrower)
   const pressure = markerPressureRating(defender, separation)
-  const traitMods = getTraitMods(thrower)
+  const traitMods = playerMatchMods(thrower)
 
   let accuracyBonus = 0
   let accuracyPenalty = 0

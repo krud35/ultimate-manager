@@ -1,6 +1,7 @@
 /** Parametry zmęczenia — strojenie bez zmiany logiki sesji. */
 import { getSubStat } from '../models/playerStats.js'
 import { getTraitMods } from '../models/playerTraits.js'
+import { playerMatchMods } from './playerModsRegistry.js'
 import {
   isHandlerSubRole,
   isCutterSubRole,
@@ -143,7 +144,10 @@ export function residualCostFromSprintMeters(
       ? STAMINA_CONFIG.residualHandlerMult
       : STAMINA_CONFIG.residualCutterMult
   const defMult = lineRole === 'defense' ? STAMINA_CONFIG.residualDefenseMult : 1
-  const mods = player ? getTraitMods(player) : null
+  // Koszt biegu w punkcie zależy też od rozkazu („zostaw wszystko" / „oszczędzaj siły"),
+  // więc idzie przez mody meczowe. Regeneracja na ławce niżej zostaje na samych cechach —
+  // dzieje się między punktami, poza stemplowaniem.
+  const mods = player ? playerMatchMods(player) : null
   const traitMult =
     lineRole === 'offense'
       ? mods?.oLineCostMult ?? 1

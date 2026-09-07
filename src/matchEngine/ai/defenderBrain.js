@@ -288,7 +288,12 @@ export function tickDefenderBrain(agent, ctx) {
     // z reguły. Zostawiony zawodnik robi się przez to widoczny jako wolna opcja (jego
     // cień znika z mapy), więc poach ma realną cenę.
     const attackSignPoach = ctx.attackSign ?? 1
-    const poachCell = spaceCells?.length ? poachTargetCell(spaceCells, agent) : null
+    // Rozkaz `poach` poszerza zasięg szukania celu: obrońca kryjący luźniej patrzy dalej
+    // i sięga do przestrzeni, których przy ciasnym kryciu w ogóle by nie rozważał.
+    const poachRange = 34 + (coachMods.poachRangeBonusM ?? 0)
+    const poachCell = spaceCells?.length
+      ? poachTargetCell(spaceCells, agent, { maxRunM: poachRange })
+      : null
     const laneX = poachCell ? poachCell.x : discPos ? discPos.x + attackSignPoach * 3.5 : agent.x
     const laneY = poachCell ? poachCell.y : discPos?.y ?? agent.y
     const next = moveToward(agent, laneX, laneY, defenderSpeedMps(player) * 1.05, dtSec)

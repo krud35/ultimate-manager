@@ -482,10 +482,14 @@ function computeTraitAndCoachMods(player, tactics = null, role = 'offense', line
       clearActiveCutMult:
         (merged.clearActiveCutMult ?? 1) * (instr.clearActiveCutMult ?? 1),
       clearLaneExtraM: (merged.clearLaneExtraM ?? 0) + (instr.clearLaneExtraM ?? 0),
+      slotLaneBiasM: (merged.slotLaneBiasM ?? 0) + (instr.slotLaneBiasM ?? 0),
+      safeOptionBias: (merged.safeOptionBias ?? 0) + (instr.safeOptionBias ?? 0),
+      creativeRiskBias: (merged.creativeRiskBias ?? 0) + (instr.creativeRiskBias ?? 0),
       cushionDeltaM: (merged.cushionDeltaM ?? 0) + (instr.cushionDeltaM ?? 0),
       denyUnderBias: (merged.denyUnderBias ?? 0) + (instr.denyUnderBias ?? 0),
       helpDeepBias: (merged.helpDeepBias ?? 0) + (instr.helpDeepBias ?? 0),
       poachChanceMult: (merged.poachChanceMult ?? 1) * (instr.poachChanceMult ?? 1),
+      poachRangeBonusM: (merged.poachRangeBonusM ?? 0) + (instr.poachRangeBonusM ?? 0),
       releaseGateMult: (merged.releaseGateMult ?? 1) * (instr.releaseGateMult ?? 1),
       dumpEarlyBias: (merged.dumpEarlyBias ?? 0) + (instr.dumpEarlyBias ?? 0),
       huckAcceptanceDelta:

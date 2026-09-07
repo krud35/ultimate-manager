@@ -297,7 +297,11 @@ export function adaptAiTacticsBetweenPoints({
   const benchPenaltyIds = new Set()
   for (const p of analysis.strugglingPlayers ?? []) {
     benchPenaltyIds.add(p.id)
+    // Po rozdzieleniu osi: `give_space` to już tylko USTAWIENIE (schodzi z pasa rzutu),
+    // a częstotliwość cutów siedzi w parze dominate / wait_your_turn. Intencja „zejdź na
+    // drugi plan" wymaga więc obu tagów naraz.
     addInstr(instr, p.id, 'give_space')
+    addInstr(instr, p.id, 'wait_your_turn')
     removeInstr(instr, p.id, 'dominate')
     removeInstr(instr, p.id, 'throw_hucks')
     addInstr(instr, p.id, 'no_hucks')
@@ -550,9 +554,11 @@ export function buildSkillBasedAiInstructions(players, identity, oSorted, dSorte
       addO(p, 'cut_deep')
     }
 
-    // Słaby / zmęczony ofensywnie — daj przestrzeń
+    // Słaby / zmęczony ofensywnie — daj przestrzeń (ustawienie + niższy priorytet cutów;
+    // to dwie różne osie od czasu rozdzielenia par, patrz playerInstructions.js)
     if (offense < 72 && !strongThrower) {
       addO(p, 'give_space')
+      addO(p, 'wait_your_turn')
     }
 
     // Break mark dla dobrych throwerów

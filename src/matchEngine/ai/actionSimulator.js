@@ -58,7 +58,7 @@ import {
   horizontalReachM,
   maxAerialReachM,
 } from './statFormulas.js'
-import { getTraitMods } from '../../models/playerTraits.js'
+import { playerMatchMods } from '../playerModsRegistry.js'
 
 export const SIM_TICK_MS = 20
 /** Stały krok symulacji (50 Hz); jedna ciągła pętla setup → lot */
@@ -215,7 +215,7 @@ function laneBlockChance(player, envelopeFrac, discSpeedMps) {
     Math.min(1, (C.hardSpeedMps - discSpeedMps) / (C.hardSpeedMps - C.easySpeedMps)),
   )
   const depth = 1 - Math.min(1, Math.max(0, envelopeFrac)) * C.edgePenalty
-  const mods = getTraitMods(player)
+  const mods = playerMatchMods(player)
   return Math.max(
     0,
     (C.baseChance + (skill / 100) * C.skillSpan) * depth * speedFactor * (mods.blockChanceMult ?? 1),
@@ -278,7 +278,7 @@ function trackAerialTake(prev, agent, player, discSample, receiverAgent = null) 
  * tylko wysokość, ale i to, czy zawodnik zabiera dysk pewnie, czy tylko go dotyka.
  */
 function aerialSkillScore(player, isReceiver) {
-  const mods = getTraitMods(player)
+  const mods = playerMatchMods(player)
   const base = isReceiver
     ? subStat(player, 'offensive', 'catching') * 0.6 + subStat(player, 'physical', 'jump') * 0.4
     : subStat(player, 'defensive', 'blocking') * 0.6 + subStat(player, 'physical', 'jump') * 0.4
@@ -545,7 +545,7 @@ function computeGeometricResolution(shadowContest, flight, rng = null) {
       // Chwyt na pełnym wybiciu, u szczytu własnego zasięgu — tam dysk łapie się jedną
       // ręką, w kontakcie i bez asekuracji ciałem.
       layoutAttempt: takeZ > maxAerialReachM(flight.receiver) * 0.92,
-      catchBonus: getTraitMods(flight.receiver).catchBonus ?? 0,
+      catchBonus: playerMatchMods(flight.receiver).catchBonus ?? 0,
       // Jak bardzo odbiorca musiał sięgać: 0 = dysk trafił w ręce, 1 = granica zasięgu.
       reachStrain:
         summary.receiverMinDist3D != null
@@ -1556,8 +1556,12 @@ export function runContinuousThrowSimulation({
       const atkStyle = attackStyle
       const defStyle = defenseStyle
       const throwerCoach = mergeTraitAndCoachMods(thrower, offenseTeam?.tactics, 'offense')
+      // releaseGateMult obejmuje CAŁĄ bramkę razem z cierpliwością rzucającego. Wcześniej
+      // patience był dodawany PO mnożniku, więc rozkaz „graj szybko" (0.83×) rozcieńczał się
+      // w stałym składniku i nie robił nic — zmierzone: play_fast bez efektu na czas
+      // trzymania dysku, play_slow (1.21×) ledwo widoczny.
       const gateBase =
-        throwReleaseGateMs(decisionStall, option?.forwardProgress ?? 0, {
+        (throwReleaseGateMs(decisionStall, option?.forwardProgress ?? 0, {
           postCatchReorg,
           isContinuationCut: option?.isContinuationCut === true,
           separation: option?.situation?.separation ?? 0,
@@ -1566,9 +1570,9 @@ export function runContinuousThrowSimulation({
           continuationUrgency: attackMods(atkStyle).continuationUrgency ?? 0.15,
           thrower,
         }) *
-          throwReleaseGateMultiplier(atkStyle, defStyle) *
-          (throwerCoach.releaseGateMult ?? 1) +
-        throwerPatienceBonusMs(thrower)
+          throwReleaseGateMultiplier(atkStyle, defStyle) +
+        throwerPatienceBonusMs(thrower)) *
+        (throwerCoach.releaseGateMult ?? 1)
       // Jitter w górę częściej niż w dół — rzadziej „przyśpieszamy” set play.
       const releaseGateMs = gateBase * (0.95 + rng.float() * 0.25)
       if (option && ms >= Math.max(0, releaseGateMs)) {

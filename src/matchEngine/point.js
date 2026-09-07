@@ -59,6 +59,7 @@ import { runThrowMotionSimulation } from './ai/motionPipeline.js'
 import { resolveCatchPointFromMotionTrace, resolveTurnoverPointFromMotionTrace } from './motionFromTicks.js'
 import { offenseFieldPositionsFromStates } from './ai/offenseReorganization.js'
 import { recordPointPlayedForPlayers } from '../models/playerStats.js'
+import { setPossessionPlayerMods, clearPointPlayerMods } from './playerMods.js'
 import {
   lineStylesForPointStart,
   pointStartRoleForTeam,
@@ -260,6 +261,16 @@ export function simulatePoint({
     const defId = defendingTeamId()
     const defTeam = teamById(defId)
     const defStyle = stylesForTeam(defId).defenseStyle
+
+    // Mody (cechy + dyrektywy + rozkazy) zależą od tego, kto ma dysk — patrz playerMods.js.
+    // Stempel PRZED wyjściem dla obrony strefowej: matchupy person są opcjonalne, mody nie.
+    setPossessionPlayerMods(
+      getLineupForTeam(pointLineups, possession),
+      teamById(possession).tactics,
+      getLineupForTeam(pointLineups, defId),
+      defTeam.tactics,
+    )
+
     if (!isPersonDefense(defStyle)) return
 
     const offenseLineup = getLineupForTeam(pointLineups, possession)
@@ -1049,6 +1060,9 @@ export function simulatePoint({
     }),
   )
 
+  // Mody meczowe kończą się razem z punktem — poza meczem obowiązują same cechy.
+  clearPointPlayerMods()
+
   return {
     scoringTeam,
     nextPullTeam: scoringTeam,
@@ -1203,6 +1217,14 @@ export function simulatePointFast({
     personMatchups = null
     const defId = defendingTeamId()
     const defStyle = stylesForTeam(defId).defenseStyle
+    // Ten sam stempel modów co w simulatePoint — fastMode idzie przez resolution.js
+    // i stall.js, które też czytają mody zawodnika (patrz playerMods.js).
+    setPossessionPlayerMods(
+      getLineupForTeam(pointLineups, possession),
+      teamById(possession).tactics,
+      getLineupForTeam(pointLineups, defId),
+      teamById(defId).tactics,
+    )
     if (!isPersonDefense(defStyle)) return
     personMatchups = createPersonMatchups(
       rng,
@@ -1483,6 +1505,8 @@ export function simulatePointFast({
       throws: throwCount,
     }),
   )
+
+  clearPointPlayerMods()
 
   return {
     scoringTeam,

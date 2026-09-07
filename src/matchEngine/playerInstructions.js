@@ -78,6 +78,24 @@ export const PLAYER_INSTRUCTION_DEFS = {
     side: 'offense',
     group: 'throw',
   },
+  safe_throws: {
+    id: 'safe_throws',
+    label: 'Graj pewniaki',
+    labelEn: 'Safe throws',
+    description: 'Tylko czyste okna — przy ciasnym kryciu odpuszcza podanie.',
+    descriptionEn: 'Clean windows only — passes up throws into tight coverage.',
+    side: 'offense',
+    group: 'throw',
+  },
+  take_risks: {
+    id: 'take_risks',
+    label: 'Ryzykuj',
+    labelEn: 'Take risks',
+    description: 'Wchodzi w półotwarte okna i break side, jeśli otwierają boisko.',
+    descriptionEn: 'Goes at half-open windows and break side when they open the field.',
+    side: 'offense',
+    group: 'throw',
+  },
   // ── Cut ──
   cut_deep: {
     id: 'cut_deep',
@@ -157,8 +175,8 @@ export const PLAYER_INSTRUCTION_DEFS = {
     id: 'dominate',
     label: 'Dominuj grę',
     labelEn: 'Dominate play',
-    description: 'Chce dysk i decyzje — wyższy priorytet cutów / skanu.',
-    descriptionEn: 'Want the disc and decisions — higher cut / scan priority.',
+    description: 'Chce dysk — inicjuje cuty przed innymi, szerzej skanuje pole.',
+    descriptionEn: 'Wants the disc — initiates cuts ahead of others, scans wider.',
     side: 'both',
     group: 'role',
   },
@@ -166,10 +184,10 @@ export const PLAYER_INSTRUCTION_DEFS = {
     id: 'give_space',
     label: 'Zostaw przestrzeń innym',
     labelEn: 'Give space to others',
-    description: 'Oddaj lane — mniej cutów, więcej clearingu.',
-    descriptionEn: 'Yield the lane — fewer cuts, more clearing.',
+    description: 'Trzyma się z boku, oddaje pas rzutu i szybciej clearuje.',
+    descriptionEn: 'Stays wide, yields the throwing lane and clears sooner.',
     side: 'offense',
-    group: 'role',
+    group: 'positioning',
   },
   play_fast: {
     id: 'play_fast',
@@ -193,10 +211,10 @@ export const PLAYER_INSTRUCTION_DEFS = {
     id: 'take_space',
     label: 'Bierz przestrzeń',
     labelEn: 'Take the space',
-    description: 'Częściej inicjuje cuty.',
-    descriptionEn: 'Initiates cuts more often.',
+    description: 'Ustawia się bliżej pasa rzutu — tam, skąd wychodzi się do cutu.',
+    descriptionEn: 'Sets up closer to the throwing lane — where cuts start from.',
     side: 'offense',
-    group: 'role',
+    group: 'positioning',
   },
   wait_your_turn: {
     id: 'wait_your_turn',
@@ -209,6 +227,19 @@ export const PLAYER_INSTRUCTION_DEFS = {
   },
 }
 
+/**
+ * Grupy rozkazów w kolejności wyświetlania. Trzymane TU, a nie w pickerze: dodanie rozkazu
+ * w nowej kategorii ma być zmianą w jednym pliku. Wcześniej lista grup była zahardkodowana
+ * w PlayerInstructionsPicker.jsx i rozkaz z nieznaną grupą po prostu znikał z UI.
+ */
+export const PLAYER_INSTRUCTION_GROUPS = [
+  { id: 'throw', label: 'Rzut', labelEn: 'Throw' },
+  { id: 'cut', label: 'Cut', labelEn: 'Cut' },
+  { id: 'defense', label: 'Obrona', labelEn: 'Defense' },
+  { id: 'positioning', label: 'Ustawienie', labelEn: 'Positioning' },
+  { id: 'role', label: 'Rola', labelEn: 'Role' },
+]
+
 /** Pary wzajemnie wykluczające się. */
 export const PLAYER_INSTRUCTION_CONFLICTS = [
   ['throw_hucks', 'no_hucks'],
@@ -218,9 +249,10 @@ export const PLAYER_INSTRUCTION_CONFLICTS = [
   ['tight_mark', 'loose_mark'],
   ['poach', 'no_poach'],
   ['shade_deep', 'shade_under'],
-  ['dominate', 'give_space'],
+  ['dominate', 'wait_your_turn'],
   ['play_fast', 'play_slow'],
-  ['take_space', 'wait_your_turn'],
+  ['take_space', 'give_space'],
+  ['safe_throws', 'take_risks'],
 ]
 
 export const PLAYER_INSTRUCTION_IDS = Object.keys(PLAYER_INSTRUCTION_DEFS)
@@ -448,10 +480,14 @@ export function rawInstructionMods(ids) {
     underCutBias: 0,
     clearActiveCutMult: 1,
     clearLaneExtraM: 0,
+    slotLaneBiasM: 0,
+    safeOptionBias: 0,
+    creativeRiskBias: 0,
     cushionDeltaM: 0,
     denyUnderBias: 0,
     helpDeepBias: 0,
     poachChanceMult: 1,
+    poachRangeBonusM: 0,
     releaseGateMult: 1,
     dumpEarlyBias: 0,
     huckAcceptanceDelta: 0,
@@ -469,20 +505,23 @@ export function rawInstructionMods(ids) {
         mods.cutRollMult *= 1.12
         break
       case 'cut_under':
-        mods.underCutBias += 0.55
-        mods.deepCutBias -= 0.2
+        mods.underCutBias += 0.8
+        mods.deepCutBias -= 0.45
         break
       case 'throw_hucks':
         // Premia tylko przy czystej sep (egzekwowane w throwerBrain) — tu same wagi.
-        mods.huckWeightMult *= 1.65
+        mods.huckWeightMult *= 1.9
         mods.huckAcceptanceDelta += 0.18
         mods.heroThrowWeightMult *= 1.2
         mods.dumpWeightMult *= 0.85
         break
       case 'no_hucks':
-        mods.huckWeightMult *= 0.35
+        // 0.35 → 0.15: zakaz musi realnie wypchnąć deep look z pola widzenia rzucającego
+        // (huckWeightMult skaluje w throwerBrain zarówno score, jak i salience opcji).
+        // Zmierzone przy 0.35: udział głębokich rzutów -1.31 pp przy szumie ±1.84.
+        mods.huckWeightMult *= 0.08
         mods.dumpWeightMult *= 1.35
-        mods.huckAcceptanceDelta -= 0.2
+        mods.huckAcceptanceDelta -= 0.3
         mods.heroThrowWeightMult *= 0.7
         break
       case 'break_mark':
@@ -494,24 +533,28 @@ export function rawInstructionMods(ids) {
         mods.breakSideWeightMult *= 0.6
         mods.breakSideSepReqDeltaM += 1.4
         mods.dumpWeightMult *= 1.15
-        mods.standardWeightMult *= 1.1
+        // standardWeightMult usunięty: czyta go wyłącznie pickThrowType (throwTypes.js),
+        // a to w żywym silniku tylko fallback, gdy throwerBrain nie poda typu rzutu.
         break
       case 'dump_first':
-        mods.dumpWeightMult *= 1.45
-        mods.dumpEarlyBias += 0.25
-        mods.resetFirstStallBias += 2.5
+        // Skala podniesiona do poziomu podról: sama podrola reset_handler ma już
+        // dumpWeightMult 1.35 + resetFirstStallBias 2, więc ROZKAZ musi dokładać wyraźnie
+        // więcej, żeby był rozpoznawalny. resetFirstStallBias działa teraz na próg
+        // akceptacji w throwerBrain, nie na martwy pickThrowType.
+        mods.dumpWeightMult *= 1.9
+        mods.dumpEarlyBias += 0.4
+        mods.resetFirstStallBias += 3.5
         mods.huckWeightMult *= 0.8
         break
       case 'look_downfield':
-        mods.dumpWeightMult *= 0.7
-        mods.standardWeightMult *= 1.25
+        mods.dumpWeightMult *= 0.4
         mods.huckWeightMult *= 1.15
-        mods.resetFirstStallBias -= 2
-        mods.dumpEarlyBias -= 0.2
+        mods.resetFirstStallBias -= 4
+        mods.dumpEarlyBias -= 0.35
         break
       case 'tight_mark':
-        mods.cushionDeltaM -= 0.55
-        mods.denyUnderBias += 0.15
+        mods.cushionDeltaM -= 1.1
+        mods.denyUnderBias += 0.25
         break
       case 'loose_mark':
         mods.cushionDeltaM += 0.5
@@ -519,10 +562,20 @@ export function rawInstructionMods(ids) {
         mods.helpDeepBias += 0.15
         break
       case 'poach':
+        // Poach ma WYNIKAĆ z luźniejszego krycia, a nie być osobnym przełącznikiem:
+        // obrońca odstaje od swojego człowieka, przez to więcej widzi i dalej sięga.
+        // Cushion współgra z bramką „nie zostawiaj człowieka, którego gubisz"
+        // (shouldAttemptPoach) — tam próg podnosi się o ten sam zamierzony odstęp,
+        // żeby świadome odstawienie nie było mylone z przegranym pościgiem.
         mods.poachChanceMult *= 1.75
+        mods.cushionDeltaM += 0.6
+        mods.poachRangeBonusM += 8
         break
       case 'no_poach':
-        mods.poachChanceMult *= 0.25
+        // ŚWIADOMIE tylko reakcja. Zakaz nie dotyka ani cushionu, ani percepcji:
+        // obrońca ma dalej WIDZIEĆ okazję do poacha i po prostu z niej nie korzystać.
+        // Nie dodawaj tu kar do vision / scanu ani zmian cushionu.
+        mods.poachChanceMult *= 0.05
         break
       case 'shade_deep':
         mods.cushionDeltaM += 0.45
@@ -540,34 +593,49 @@ export function rawInstructionMods(ids) {
         mods.acceptanceThresholdDelta -= 4
         mods.scanRadiusBonusM += 3
         mods.perceivedOptionsBonus += 1
-        mods.cutRollMult *= 1.18
-        mods.cutPriorityDelta -= 6
+        // Skala jak u podról (primary_cutter: cutRollMult 1.55, cutPriorityDelta -14).
+        // Rozkaz ruszający te same gałki 10× słabiej był nie do odróżnienia od szumu.
+        mods.cutRollMult *= 2.2
+        mods.cutPriorityDelta -= 28
         mods.throwerPickWeightMult *= 1.3
         break
       case 'give_space':
-        mods.cutRollMult *= 0.55
-        mods.cutPriorityDelta += 14
+        // POZYCJONOWANIE, nie priorytet cutowania: trzyma się z boku, oddaje pas.
+        // Para z `take_space`; częstotliwość cutów to osobna oś (dominate / wait_your_turn).
+        mods.slotLaneBiasM += 4
         mods.clearActiveCutMult *= 1.2
         mods.clearLaneExtraM += 2
         break
       case 'play_fast':
-        mods.releaseGateMult *= 0.8
+        mods.releaseGateMult *= 0.62
         mods.dumpEarlyBias += 0.15
         mods.cutRollMult *= 1.1
         break
       case 'play_slow':
-        mods.releaseGateMult *= 1.25
+        mods.releaseGateMult *= 1.5
         mods.dumpEarlyBias -= 0.1
         mods.acceptanceThresholdDelta += 4
         mods.cutRollMult *= 0.9
         break
       case 'take_space':
-        mods.cutRollMult *= 1.2
-        mods.cutPriorityDelta -= 5
+        // Ustawia się tam, skąd wychodzi się do cutu — bliżej pasa rzutu.
+        mods.slotLaneBiasM -= 3.5
+        break
+      case 'safe_throws':
+        // safeOptionBias / creativeRiskBias są już czytane w throwerBrain przy ocenie okna
+        // (kary za ciasną separację, premie za break side i OTT) — rozkaz tylko je zasila.
+        mods.safeOptionBias += 0.9
+        mods.creativeRiskBias -= 0.4
+        mods.acceptanceThresholdDelta += 5
+        break
+      case 'take_risks':
+        mods.creativeRiskBias += 1.8
+        mods.safeOptionBias -= 0.6
+        mods.acceptanceThresholdDelta -= 8
         break
       case 'wait_your_turn':
-        mods.cutRollMult *= 0.65
-        mods.cutPriorityDelta += 10
+        mods.cutRollMult *= 0.15
+        mods.cutPriorityDelta += 32
         mods.clearActiveCutMult *= 1.15
         break
       default:
@@ -618,10 +686,14 @@ export function instructionModsForPlayer(ids, player, role = 'offense') {
     underCutBias: scaleAdd(raw.underCutBias),
     clearActiveCutMult: scaleMult(raw.clearActiveCutMult),
     clearLaneExtraM: scaleAdd(raw.clearLaneExtraM),
+    slotLaneBiasM: scaleAdd(raw.slotLaneBiasM),
+    safeOptionBias: scaleAdd(raw.safeOptionBias),
+    creativeRiskBias: scaleAdd(raw.creativeRiskBias),
     cushionDeltaM: scaleAdd(raw.cushionDeltaM),
     denyUnderBias: scaleAdd(raw.denyUnderBias),
     helpDeepBias: scaleAdd(raw.helpDeepBias),
     poachChanceMult: scaleMult(raw.poachChanceMult),
+    poachRangeBonusM: scaleAdd(raw.poachRangeBonusM),
     releaseGateMult: scaleMult(raw.releaseGateMult),
     dumpEarlyBias: scaleAdd(raw.dumpEarlyBias),
     huckAcceptanceDelta: scaleAdd(raw.huckAcceptanceDelta),
@@ -663,6 +735,8 @@ function shortLabel(id) {
     play_slow: 'Slow',
     take_space: 'Take',
     wait_your_turn: 'Wait',
+    safe_throws: 'Safe',
+    take_risks: 'Risk',
   }
   return map[id] ?? id.slice(0, 4)
 }

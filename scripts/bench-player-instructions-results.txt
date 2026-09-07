@@ -1,0 +1,59 @@
+# Wpływ rozkazów indywidualnych na zachowanie zawodnika
+# 40 meczów/warunek, do 7 pkt, baseline ×3, roster 18, seed 424242
+# efekt = (A−B) z rozkazem − (A−B) baseline;  próg = max(MIN_DELTA metryki, 2 × rozrzut baseline)
+
+rozkaz          sonda              efekt    próg    szum  wynik
+--------------------------------------------------------------------------
+throw_hucks     deepThrowShare↑     5.48    4.74    2.37    18.19  PASS
+no_hucks        deepThrowShare↓    -0.57    4.74    2.37    18.19  FAIL
+break_mark      breakShare↑         8.42    5.00    1.22    41.68  PASS
+no_break_mark   breakShare↓       -18.72    5.00    1.22    41.68  PASS
+dump_first      resetShare↑         4.33    3.19    1.59     9.46  PASS
+look_downfield  resetShare↓        -4.04    3.19    1.59     9.46  PASS
+safe_throws     tightSepShare↓     -6.23    2.11    1.05    13.48  PASS
+take_risks      tightSepShare↑      2.20    2.11    1.05    13.48  PASS
+cut_deep        cutFwdPerCutM↑      3.17    0.90    0.14     6.06  PASS
+cut_under       cutFwdPerCutM↓     -1.52    0.90    0.14     6.06  PASS
+tight_mark      cushionM↓          -0.23    0.22    0.03     1.61  PASS
+loose_mark      cushionM↑           0.39    0.22    0.03     1.61  PASS
+poach           poachShare↑         5.20    0.22    0.11     0.15  PASS
+no_poach        poachShare↓        -0.31    0.22    0.11     0.15  PASS
+shade_deep      shadeM↑             0.98    0.25    0.01     0.07  PASS
+shade_under     shadeM↓            -1.64    0.25    0.01     0.07  PASS
+dominate        cutInitPer1k↑       0.51    0.47    0.23     2.51  PASS
+give_space      waitLaneM↑          0.88    0.60    0.10     4.96  PASS
+play_fast       holdMs↓          -526.70  250.00   94.04  2526.78  PASS
+play_slow       holdMs↑           671.77  250.00   94.04  2526.78  PASS
+take_space      waitLaneM↓         -0.74    0.60    0.10     4.96  PASS
+wait_your_turn  cutInitPer1k↓      -0.32    0.47    0.23     2.51  FAIL
+--------------------------------------------------------------------------
+PASS 20/22
+
+## Pełna macierz metryk (efekt = (A−B) z rozkazem − (A−B) baseline)
+rozkaz               huckShare deepThrowShar    meanThrowM    breakShare    resetShare tightSepShare        holdMs cutFwdPerCutM  cutInitPer1k     waitLaneM      cushionM        shadeM    poachShare     runMPer1k  moveSpeedMps   staminaMean
+[baza abs]                7.84         18.19         14.58         41.68          9.46         13.48       2526.78          6.06          2.51          4.96          1.61          0.07          0.15         60.53          3.91         88.15
+[szum ±]                  1.13          2.37          0.64          1.22          1.59          1.05         94.04          0.14          0.23          0.10          0.03          0.01          0.11          0.70          0.05          1.79
+throw_hucks               1.79          5.48          1.07         -2.67         -0.83         -1.99        -82.17         -0.18          0.19          0.16          0.01         -0.02          0.02          0.79          0.01          0.14
+no_hucks                 -1.39         -0.57         -0.42         -3.51         -0.26         -2.35        -57.43         -0.07          0.11         -0.03         -0.01          0.02         -0.04         -0.04         -0.01         -0.98
+break_mark                2.16          0.21         -0.27          8.42          1.37          0.90       -205.63         -0.19          0.18          0.02          0.02         -0.00          0.03          0.41          0.01         -2.01
+no_break_mark            -0.22         -2.09         -0.01        -18.72          0.43          1.90        237.75         -0.04          0.20         -0.01         -0.02          0.00          0.05          0.60          0.04         -1.79
+dump_first               -0.08          0.96         -0.73         -0.82          4.33         -2.20        -77.63         -0.15          0.17         -0.00         -0.02          0.02         -0.00          0.67          0.01          0.47
+look_downfield            1.09          4.27          2.14         -1.92         -4.04          1.50        -15.11         -0.04          0.12         -0.09          0.01          0.01          0.02          0.40          0.02         -0.18
+safe_throws               1.27          5.33          0.87          3.22         -0.04         -6.23         36.29         -0.05          0.09         -0.06         -0.01          0.04         -0.01          0.28          0.00         -0.34
+take_risks                0.22          0.17         -0.02          1.76         -0.26          2.20       -284.90          0.03          0.06          0.09         -0.00         -0.00          0.02          0.69          0.00         -0.19
+cut_deep                 -1.77         -1.22         -0.96          1.19          4.58          3.81        164.59          3.17          0.01          0.00          0.03         -0.02         -0.04          0.88          0.05         -1.58
+cut_under                -1.85          0.07          0.21         -2.13         -2.97         -1.60       -100.41         -1.52          0.09          0.16          0.01          0.00          0.02          0.78         -0.02         -1.04
+tight_mark                0.87          1.71          0.85         -0.89         -1.43         -2.79        -83.39         -0.05          0.09          0.18         -0.23         -0.77          0.12         -0.78         -0.02         -0.72
+loose_mark               -2.20         -4.17         -0.60         -5.94         -0.51          0.55        -33.51          0.17          0.12         -0.03          0.39          0.75         -0.10          1.47          0.09         -1.01
+poach                     0.61          1.56          0.99          0.07         -0.83         -1.33         -8.27         -0.10          0.15          0.22          0.20          0.13          5.20          0.70          0.06         -0.29
+no_poach                  0.42          3.85          1.07          0.47         -0.38         -3.86       -118.77          0.13          0.21          0.03          0.04         -0.04         -0.31          0.65          0.02         -0.69
+shade_deep                0.97         -1.44         -0.44         -1.11         -1.01          0.24         71.97         -0.04         -0.03         -0.14          0.70          0.98         -0.07          2.64          0.17         -0.90
+shade_under               0.85         -0.47         -0.20          0.81          2.32         -3.58        -76.30         -0.07          0.05         -0.06          0.35         -1.64          0.03         -2.07         -0.06         -1.21
+dominate                  1.72         -0.13          0.02         -0.44         -3.65         -2.95       -213.08          0.58          0.51         -0.27         -0.04          0.03          0.05          0.32          0.04         -0.24
+give_space                0.25         -1.84         -0.43         -6.28          0.02         -1.13        -58.32          0.19          0.08          0.88          0.02         -0.03         -0.04          1.27          0.03         -0.25
+play_fast                -1.64          5.52          1.54          5.51         -0.57         -3.43       -526.70         -0.24          0.16          0.34         -0.04         -0.00          0.06          1.05         -0.01         -1.39
+play_slow                 1.66         -0.09          0.33         -1.38          1.61         -1.53        671.77          0.29          0.16         -0.28          0.06         -0.03         -0.02          0.10          0.01         -0.65
+take_space                1.39          3.31          1.15          1.69          0.27         -1.95        -26.44          0.26          0.12         -0.74         -0.02         -0.02         -0.04         -0.05         -0.00         -1.25
+wait_your_turn           -0.55         -0.36          0.29         -1.97         -0.27         -0.03        -58.79          0.48         -0.32          0.10          0.00         -0.00          0.07          0.57         -0.01         -1.05
+
+czas: 1818 s
