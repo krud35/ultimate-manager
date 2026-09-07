@@ -22,6 +22,7 @@
  */
 import { generateRoundRobinSchedule } from '../league/schedule.js'
 import { advanceCupAfterMatch } from '../league/cupBracket.js'
+import { addDays, formatISODate } from '../league/seasonCalendar.js'
 import { ensureCareerNationalTeams, getCountryStrength, selectNationalSquad } from './nationalTeams.js'
 import {
   nationalTeamPseudoTeam,
@@ -257,17 +258,57 @@ export function resolveFinalsGroupStage(finals) {
   return seedTeamIds
 }
 
+/**
+ * Mecz o brązowy medal: przegrani półfinaliści, dzień przed finałem (jak na prawdziwych
+ * turniejach WFDF, gdzie nikt nie kończy imprezy po przegranym półfinale). Świadomie NIE
+ * jest częścią kaskady `buildKnockoutBracket` — ta halvinguje liczbę meczów runda po
+ * rundzie, a brąz jest bocznym meczem bez kontynuacji. Ma `nextMatchId: null`, więc
+ * `advanceCupAfterMatch` uznałaby go za finał i ukoronowała jego zwycięzcę mistrzem —
+ * dlatego rozstrzyga go osobna ścieżka w `advanceFinalsKnockout` (patrz `propagate: false`).
+ */
+function buildBronzeMatch(matches, idPrefix) {
+  const finalMatch = matches.find((m) => m.round === 'final')
+  const semifinals = matches.filter((m) => m.round === 'semifinal')
+  if (!finalMatch || semifinals.length !== 2) return null
+  return {
+    id: `${idPrefix}-bronze`,
+    round: 'bronze',
+    bracketIndex: 0,
+    homeTeamId: null,
+    awayTeamId: null,
+    status: 'pending',
+    date: finalMatch.date ? formatISODate(addDays(finalMatch.date, -1)) : null,
+    nextMatchId: null,
+    nextSlot: null,
+    dependsOn: semifinals.map((m) => m.id),
+  }
+}
+
+/** Wpisuje przegranych półfinalistów do meczu o brąz — `advanceCupAfterMatch` propaguje
+ * wyłącznie zwycięzców, więc ten jeden mecz trzeba obsadzić ręcznie. */
+function fillBronzeFromSemifinals(knockout) {
+  const bronze = knockout.matches.find((m) => m.round === 'bronze')
+  if (!bronze || bronze.homeTeamId || bronze.status === 'completed') return
+  const semifinals = knockout.matches.filter((m) => m.round === 'semifinal')
+  if (!semifinals.length || !semifinals.every((m) => m.status === 'completed')) return
+  const losers = semifinals.map((m) =>
+    m.winnerTeamId === m.homeTeamId ? m.awayTeamId : m.homeTeamId,
+  )
+  bronze.homeTeamId = losers[0]
+  bronze.awayTeamId = losers[1]
+  bronze.status = 'scheduled'
+}
+
 /** Buduje drabinkę pucharową z seedów wyliczonych przez `resolveFinalsGroupStage` — kształt
  * kompatybilny z `advanceCupAfterMatch` (cupBracket.js), więc propagacja zwycięzców między
  * rundami korzysta z tej samej, w pełni generycznej funkcji co Puchar Piramidy. */
 export function buildFinalsKnockout(finals, seedTeamIds) {
   const roundNames = KNOCKOUT_ROUND_NAMES[finals.kind] ?? KNOCKOUT_ROUND_NAMES.euro
   const dates = finals.knockoutDates
-  const matches = buildKnockoutBracket(seedTeamIds, {
-    idPrefix: `${finals.kind}${finals.year}`,
-    roundNames,
-    dates,
-  })
+  const idPrefix = `${finals.kind}${finals.year}`
+  const matches = buildKnockoutBracket(seedTeamIds, { idPrefix, roundNames, dates })
+  const bronze = buildBronzeMatch(matches, idPrefix)
+  if (bronze) matches.push(bronze)
   finals.knockout = {
     status: 'active',
     seeds: seedTeamIds,
@@ -300,10 +341,8 @@ export function advanceFinalsKnockout(finals, world, career, dateIso) {
   if (!finals?.knockout) return finals
   const knockout = finals.knockout
   const day = String(dateIso).slice(0, 10)
-  const due = knockout.matches.filter(
-    (m) => m.status !== 'completed' && m.date && m.date <= day && m.homeTeamId && m.awayTeamId,
-  )
-  for (const match of due) {
+
+  const resolveMatch = (match) => {
     const homeCountryId = countryIdFromPseudoTeamId(match.homeTeamId)
     const awayCountryId = countryIdFromPseudoTeamId(match.awayTeamId)
     const homeSquad = selectNationalSquad(world, career, homeCountryId, { seasonYear: finals.year })
@@ -315,6 +354,18 @@ export function advanceFinalsKnockout(finals, world, career, dateIso) {
     // drabinka knockout nie ma "grupy" do policzenia (throwaway obiekt, jak w barażach
     // kwalifikacyjnych z Fazy 3 — applyGameToStandings cicho pomija nieznane klucze).
     recordNationalTeamMatch({}, finals.playerStats, record, teamA, teamB)
+
+    if (match.round === 'bronze') {
+      // Brąz NIE idzie przez advanceCupAfterMatch: nie ma `nextMatchId`, a ta funkcja każdy
+      // taki mecz uznaje za finał (ustawia championTeamId + status 'complete'). Ponieważ
+      // brąz gra się DZIEŃ PRZED finałem, ukoronowałaby brązowego medalistę mistrzem i
+      // zamknęła turniej przed czasem.
+      match.status = 'completed'
+      match.homeScore = record.homeScore
+      match.awayScore = record.awayScore
+      match.winnerTeamId = record.winner
+      return
+    }
     advanceCupAfterMatch(knockout, {
       fixtureId: match.id,
       winner: record.winner,
@@ -322,9 +373,24 @@ export function advanceFinalsKnockout(finals, world, career, dateIso) {
       awayScore: record.awayScore,
     })
   }
+
+  fillBronzeFromSemifinals(knockout)
+  const dueNow = () =>
+    knockout.matches
+      .filter((m) => m.status !== 'completed' && m.date && m.date <= day && m.homeTeamId && m.awayTeamId)
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+
+  for (const match of dueNow()) resolveMatch(match)
+  // Jeśli półfinały wypadły w tym samym wywołaniu (szerszy przeskok dni), brąz dopiero
+  // teraz dostał obsadę — domknij go, o ile jego termin też już minął.
+  fillBronzeFromSemifinals(knockout)
+  for (const match of dueNow()) resolveMatch(match)
+
   if (knockout.status === 'complete') {
     finals.phase = 'complete'
     finals.championCountryId = countryIdFromPseudoTeamId(knockout.championTeamId)
+    const bronze = knockout.matches.find((m) => m.round === 'bronze' && m.status === 'completed')
+    finals.bronzeCountryId = bronze ? countryIdFromPseudoTeamId(bronze.winnerTeamId) : null
   }
   return finals
 }

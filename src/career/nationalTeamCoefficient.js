@@ -10,18 +10,25 @@ import { updateCountryStrength } from './nationalTeams.js'
 import { nationalTournamentStandingsTable } from './nationalTeamMatches.js'
 import { countryIdFromPseudoTeamId } from './nationalTeamQualifying.js'
 
-/** Delta wg najdalszej rundy drabinki, w której kraj odpadł (mistrz liczony osobno). */
-const TOURNAMENT_PLACEMENT_DELTA = {
+/** Delta wg najdalszej rundy drabinki, w której kraj odpadł (mistrz liczony osobno).
+ * Eksportowane — `nationalTeamRanking.js`'s `computePublicWorldRanking` pożycza te same
+ * wagi, żeby jawny ranking i ukryty coefficient przynajmniej zgadzały się co do kierunku. */
+export const TOURNAMENT_PLACEMENT_DELTA = {
   final: 4,
+  // Przegrany meczu o brąz = 4. miejsce — tyle samo co "przegrany półfinał" przed
+  // wprowadzeniem brązu, żeby stare zapisy nie zmieniły nagle wyceny wstecz.
+  bronze: 2,
   semifinal: 2,
   quarterfinal: 1,
   roundOf16: 1,
 }
-const TOURNAMENT_CHAMPION_DELTA = 6
+export const TOURNAMENT_CHAMPION_DELTA = 6
+/** Zwycięzca meczu o brąz (3. miejsce) — między finalistą (4) a 4. miejscem (2). */
+export const TOURNAMENT_BRONZE_DELTA = 3
 /** Odpadnięcie w grupie (nigdy nie dostał seeda do drabinki) — mały bonus wg wygranych
  * w grupie, żeby "zero wygranych" i "prawie awansował" nie kosztowały tyle samo. */
-const GROUP_STAGE_EXIT_PER_WIN = 0.15
-const GROUP_STAGE_EXIT_CAP = 0.5
+export const GROUP_STAGE_EXIT_PER_WIN = 0.15
+export const GROUP_STAGE_EXIT_CAP = 0.5
 
 /**
  * Nalicza coefficient po zakończonej fazie finałowej — mistrz, finalista, półfinaliści,
@@ -45,6 +52,14 @@ export function applyTournamentResultToCountryStrength(career, finals) {
     const loserCountryId =
       match.winnerTeamId === match.homeTeamId ? awayCountryId : homeCountryId
     deltas[loserCountryId] = TOURNAMENT_PLACEMENT_DELTA[match.round] ?? 0
+  }
+  // Zwycięzca meczu o brąz przegrał wcześniej półfinał, więc pętla wyżej dała mu 2 —
+  // podbijamy do 3 za faktyczne 3. miejsce (przegrany brązu zostaje na 2, czyli 4. miejscu).
+  const bronzeMatch = finals.knockout.matches.find(
+    (m) => m.round === 'bronze' && m.status === 'completed',
+  )
+  if (bronzeMatch?.winnerTeamId) {
+    deltas[countryIdFromPseudoTeamId(bronzeMatch.winnerTeamId)] = TOURNAMENT_BRONZE_DELTA
   }
   if (finals.championCountryId) {
     deltas[finals.championCountryId] = TOURNAMENT_CHAMPION_DELTA

@@ -6,7 +6,7 @@ import SeasonRecapPanel, {
 import { CalendarTile } from './CalendarView'
 import { CupTile } from './CupView'
 import {
-  teamNameMap,
+  teamNameMapAll,
   standingsTable,
   getFixturesOnDate,
   getPlayerFixtureOnDate,
@@ -36,6 +36,9 @@ import { useUiLang } from '../ui/UiLangContext'
 import { commonStrings } from '../ui/strings/common'
 import { hubStrings } from '../ui/strings/hub'
 import { displaySeasonLabel, pickCopy, pickLabel, UI_LANG } from '../ui/locale'
+import { nationalTeamFixturesOnDate } from '../career/nationalTeamSeason.js'
+import { academyCountryLabel } from '../data/academyScoutGeography.js'
+import { internationalCompetitionStrings } from '../ui/strings/internationalCompetition.js'
 
 function formatDayLabel(iso, lang) {
   if (!iso) return '—'
@@ -70,7 +73,9 @@ export default function LeagueHub({
   const { lang } = useUiLang()
   const t = hubStrings(lang)
   const c = commonStrings(lang)
-  const names = teamNameMap(league, lang)
+  // Wszystkie drużyny piramidy, nie tylko poziom gracza — "dzisiejsze mecze" mogą
+  // pokazywać pucharowe pary z innych poziomów (patrz teamNameMapAll w leagueState.js).
+  const names = teamNameMapAll(league, lang)
   const table = standingsTable(league.standings, (id) => names[id])
   const officialEnded =
     isOfficialSeasonEnded(league) || career?.phase === 'season_complete'
@@ -78,6 +83,11 @@ export default function LeagueHub({
   const showSummary = career && shouldShowSeasonSummary({ ...career, league })
   const phase = detectSeasonPhase(league) || league.phase || 'fall'
   const todayFixtures = getFixturesOnDate(league, league.currentDate)
+  const ti = internationalCompetitionStrings(lang)
+  const nationalFixturesToday = nationalTeamFixturesOnDate(
+    career?.nationalTeams,
+    league.currentDate,
+  )
   const playerFix = getPlayerFixtureOnDate(league, league.currentDate)
   const playerTeamName =
     teamFromLeague(league, league.playerTeamId)?.name ?? names[league.playerTeamId]
@@ -320,6 +330,33 @@ export default function LeagueHub({
                 )
               })}
             </ul>
+          )}
+
+          {/* Przerwa reprezentacyjna: mecze kadr narodowych na dziś (patrz
+              nationalTeamSeason.js) — osobna lista, bo kadry to pseudo-drużyny
+              `nt-<countryId>`, których nie ma w `names`/`league.teamsById`. */}
+          {nationalFixturesToday.length > 0 && (
+            <div className="mt-4">
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ufa-gold">
+                {ti.title}
+              </h4>
+              <ul className="space-y-2">
+                {nationalFixturesToday.map((f) => (
+                  <li
+                    key={f.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-ufa-border bg-ufa-bg/50 px-3 py-2 text-sm"
+                  >
+                    <span className="text-ufa-text">
+                      {academyCountryLabel(f.homeCountryId, lang)} vs{' '}
+                      {academyCountryLabel(f.awayCountryId, lang)}
+                    </span>
+                    <span className="tabular-nums text-ufa-muted">
+                      {f.status === 'completed' ? `${f.homeScore}:${f.awayScore}` : '—'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </div>

@@ -128,6 +128,7 @@ import AcademyView from './components/AcademyView'
 import CalendarView from './components/CalendarView'
 import InboxView from './components/InboxView'
 import UltiworldView from './components/UltiworldView'
+import InternationalCompetitionView from './components/InternationalCompetitionView.jsx'
 import PreMatchView, { isFixtureMatchDay } from './components/PreMatchView'
 import SimulationProgressOverlay from './components/SimulationProgressOverlay'
 import CalendarSimOverlay from './components/CalendarSimOverlay'
@@ -191,6 +192,12 @@ const NAV_CATEGORIES = [
     labelPl: 'Ultizone',
     labelEn: 'Ultiworld',
     items: [{ id: 'ultiworld', labelPl: 'Ultizone', labelEn: 'Ultiworld' }],
+  },
+  {
+    id: 'international',
+    labelPl: 'Reprezentacje',
+    labelEn: 'International',
+    items: [{ id: 'international', labelPl: 'Reprezentacje', labelEn: 'International' }],
   },
   {
     id: 'other',
@@ -314,11 +321,22 @@ function IconBackdrop({ className, off = false }) {
   )
 }
 
+function IconGlobe({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M3.5 12h17" />
+      <path d="M12 3.5c2.6 2.3 4 5.3 4 8.5s-1.4 6.2-4 8.5c-2.6-2.3-4-5.3-4-8.5s1.4-6.2 4-8.5Z" />
+    </svg>
+  )
+}
+
 const NAV_ICONS = {
   home: IconHome,
   club: IconShirt,
   season: IconTrophy,
   ultiworld: IconNews,
+  international: IconGlobe,
   other: IconDots,
 }
 
@@ -2345,6 +2363,10 @@ export default function App() {
 
         {activeTab === 'ultiworld' && (
           <UltiworldView career={career} onUltiworldChange={handleUltiworldChange} />
+        )}
+
+        {activeTab === 'international' && (
+          <InternationalCompetitionView career={career} onCareerUpdate={handleTransfersUpdate} />
         )}
 
         {activeTab === 'standings' && (

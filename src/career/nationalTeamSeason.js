@@ -37,11 +37,13 @@ import {
   advanceFinalsKnockout,
   topCountriesByStrength,
 } from './nationalTeamFinals.js'
+import { nationalTournamentStandingsTable } from './nationalTeamMatches.js'
 import {
   applyQualifyingFailureToCountryStrength,
   applyTournamentResultToCountryStrength,
 } from './nationalTeamCoefficient.js'
 import { messageFromQualifyingResult, messageFromTournamentResult } from './nationalTeamMessages.js'
+import { countryIdFromPseudoTeamId } from './nationalTeamQualifying.js'
 
 const EURO_TOTAL_SLOTS = 16
 const WORLD_TOTAL_SLOTS = 32
@@ -196,6 +198,80 @@ function startTournamentFinals(career, { kind, year, calendar }) {
   return nt.finals
 }
 
+/**
+ * Kompaktowy snapshot zakończonego turnieju do `nt.history` (Faza A planu "International
+ * Competition") — wołane TUŻ PRZED wyzerowaniem `nt.finals`, bo Results/All-time Leaders
+ * (przyszłe fazy UI) czytają wyłącznie z historii, nie z aktywnego stanu turnieju, który
+ * znika po zamknięciu cyklu. `placements` mapuje KAŻDY uczestniczący kraj na etykietę
+ * najdalszej rundy, w jakiej odpadł (`'champion'`/`'final'`/`'semifinal'`/`'quarterfinal'`/
+ * `'roundOf16'`/`'group'`) — ten sam słownik rund co `nationalTeamCoefficient.js`, więc
+ * `nationalTeamRanking.js` może przeliczyć punkty rankingowe bez duplikowania logiki drabinki.
+ */
+function buildTournamentHistoryEntry(finals) {
+  const knockout = finals.knockout
+  const finalMatch = knockout?.matches.find((m) => m.round === 'final' && m.status === 'completed')
+  const runnerUpCountryId = finalMatch
+    ? countryIdFromPseudoTeamId(
+        finalMatch.winnerTeamId === finalMatch.homeTeamId ? finalMatch.awayTeamId : finalMatch.homeTeamId,
+      )
+    : null
+  const finalScore = finalMatch
+    ? {
+        homeCountryId: countryIdFromPseudoTeamId(finalMatch.homeTeamId),
+        awayCountryId: countryIdFromPseudoTeamId(finalMatch.awayTeamId),
+        homeScore: finalMatch.homeScore,
+        awayScore: finalMatch.awayScore,
+      }
+    : null
+
+  const placements = {}
+  for (const match of knockout?.matches ?? []) {
+    if (match.status !== 'completed') continue
+    // Brąz obsługiwany niżej — tu jego przegrany dostałby etykietę 'bronze', a to on jest
+    // czwarty; brązowy medalista to ZWYCIĘZCA tego meczu.
+    if (match.round === 'bronze') continue
+    const loserTeamId = match.winnerTeamId === match.homeTeamId ? match.awayTeamId : match.homeTeamId
+    placements[countryIdFromPseudoTeamId(loserTeamId)] = match.round
+  }
+  const bronzeMatch = knockout?.matches.find((m) => m.round === 'bronze' && m.status === 'completed')
+  if (bronzeMatch?.winnerTeamId) {
+    const loserTeamId =
+      bronzeMatch.winnerTeamId === bronzeMatch.homeTeamId ? bronzeMatch.awayTeamId : bronzeMatch.homeTeamId
+    placements[countryIdFromPseudoTeamId(bronzeMatch.winnerTeamId)] = 'bronze'
+    placements[countryIdFromPseudoTeamId(loserTeamId)] = 'fourth'
+  }
+  if (finals.championCountryId) placements[finals.championCountryId] = 'champion'
+
+  const groups = finals.groups.map((group) => ({
+    id: group.id,
+    table: nationalTournamentStandingsTable(finals.standings[group.id]).map((row) => ({
+      countryId: countryIdFromPseudoTeamId(row.teamId),
+      wins: row.wins,
+      losses: row.losses,
+      pointsFor: row.pointsFor,
+      pointsAgainst: row.pointsAgainst,
+      diff: row.diff,
+    })),
+  }))
+  for (const group of groups) {
+    for (const row of group.table) {
+      if (!(row.countryId in placements)) placements[row.countryId] = 'group'
+    }
+  }
+
+  return {
+    year: finals.year,
+    kind: finals.kind,
+    championCountryId: finals.championCountryId,
+    runnerUpCountryId,
+    bronzeCountryId: finals.bronzeCountryId ?? null,
+    finalScore,
+    placements,
+    groups,
+    playerStatsSnapshot: { ...finals.playerStats },
+  }
+}
+
 /** Rozstrzyga zaległe mecze fazy finałowej <= `dateIso`: grupy, potem (po skompletowaniu)
  * drabinka pucharowa. Po mistrzostwie nalicza coefficient (Faza 5), buduje wiadomość,
  * dopisuje do historii, czyści stan i ustawia kolejny cykl (na przemian ME/MŚ, +2 lata). */
@@ -222,11 +298,43 @@ function advanceTournamentFinalsCycle(career, world, dateIso) {
   applyTournamentResultToCountryStrength(career, finals)
   const message = messageFromTournamentResult(finals, career)
 
-  nt.history.push({ year: finals.year, kind: finals.kind, championCountryId: finals.championCountryId })
+  nt.history.push(buildTournamentHistoryEntry(finals))
   nt.nextTournament = { kind: finals.kind === 'euro' ? 'world' : 'euro', year: finals.year + 2 }
   nt.finals = null
 
   return message ? [message] : []
+}
+
+/**
+ * Mecze reprezentacji zaplanowane na dany dzień — z aktywnych kwalifikacji (grupy + baraże)
+ * albo z fazy finałowej (grupy + drabinka). Odpowiednik `pyramidCupFixturesOnDate` dla
+ * kalendarza/huba: czysto odczytowa, zwraca `{ id, homeCountryId, awayCountryId, status,
+ * homeScore, awayScore }`, więc wołający nie musi znać pseudo-drużyn `nt-<countryId>`.
+ */
+export function nationalTeamFixturesOnDate(nt, dateIso) {
+  if (!nt || !dateIso) return []
+  const day = String(dateIso).slice(0, 10)
+  const out = []
+  const push = (m) => {
+    if (m.date !== day || !m.homeTeamId || !m.awayTeamId) return
+    out.push({
+      id: m.id,
+      homeCountryId: countryIdFromPseudoTeamId(m.homeTeamId),
+      awayCountryId: countryIdFromPseudoTeamId(m.awayTeamId),
+      status: m.status,
+      homeScore: m.homeScore,
+      awayScore: m.awayScore,
+    })
+  }
+
+  for (const campaign of nt.qualifying?.campaigns ?? []) {
+    for (const f of campaign.fixtures ?? []) push(f)
+    for (const m of campaign.playoff?.matches ?? []) push(m)
+  }
+  for (const f of nt.finals?.fixtures ?? []) push(f)
+  for (const m of nt.finals?.knockout?.matches ?? []) push(m)
+
+  return out
 }
 
 /** Hak dzienny (patrz App.jsx: computeCalendarDayStep) — kwalifikacje i finały nigdy nie są
