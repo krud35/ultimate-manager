@@ -1392,19 +1392,24 @@ export function simulatePointFast({
       }),
     )
 
+    // Huck liczony raz, z zamierzonego dystansu — tak jak w pełnym silniku.
+    // Gdy każda gałąź liczyła go osobno, nieudany huck nie trafiał do
+    // huckAttempts i completion% wychodziło zawsze 100%.
+    const discAfter = computeThrowAdvance(discPositionBefore, effectiveThrowType, {
+      attackStyle,
+      defenseStyle,
+      rng,
+      forwardProgressM: null,
+      wind,
+      thrower,
+      explicitYards: isHuckThrow ? estDistanceM : null,
+    })
+    const yardsIfSuccess = yardsFromPositions(discPositionBefore, discAfter)
+    const isHuck = isHuckType(effectiveThrowType, yardsIfSuccess)
+
     if (result.success) {
-      const discAfter = computeThrowAdvance(discPositionBefore, effectiveThrowType, {
-        attackStyle,
-        defenseStyle,
-        rng,
-        forwardProgressM: null,
-        wind,
-        thrower,
-        explicitYards: isHuckThrow ? estDistanceM : null,
-      })
       discPosition = discAfter
       const yardsGained = yardsFromPositions(discPositionBefore, discPosition)
-      const isHuck = isHuckType(effectiveThrowType, yardsGained)
 
       if (matchStats) {
         recordThrowAttempt(matchStats, possession, { success: true, yardsGained, isHuck })
@@ -1447,7 +1452,6 @@ export function simulatePointFast({
       if (boxScore && result.isBlock) recordBlock(boxScore, defender.id)
       if (boxScore && (result.isDrop || result.isWindDrop)) recordDrop(boxScore, receiver.id)
 
-      const isHuck = isHuckType(effectiveThrowType, 0)
       if (matchStats) {
         recordThrowAttempt(matchStats, possession, {
           success: false,
