@@ -1,5 +1,4 @@
 import { uplineSpaceBonus, giveAndGoOfferBonus, doubleMoveSetup } from './traitBehavior.js'
-import { playerTravelSec } from './discIntercept.js'
 import { clampAgentPosition } from './spatialEvaluator.js'
 import { attackDirectionX, clampFieldX, clampFieldY, fieldCenterY } from '../fieldDimensions.js'
 import { forceMarkLayoutSide, normalizeForceMark } from '../throwTechnique.js'
@@ -14,8 +13,6 @@ import {
   ATTACK_STYLES,
 } from './tacticsBehavior.js'
 import { maxSpeedMps, plantStopMs, subStat } from './statFormulas.js'
-import { routeConflict } from './routeAwareness.js'
-import { crowdAwareTarget } from './teamCoordination.js'
 import {
   buildSpaceMap,
   claimAwarenessFor,
@@ -23,7 +20,6 @@ import {
 } from './spaceMap.js'
 import { mergeTraitAndCoachMods } from '../coachDirectives.js'
 import { integrateAgentMotion, repositionSpeedMps, waitingHoldSpeedMps } from './playerMovement.js'
-import { bodyAwareTarget, BODY_TRAFFIC_CALIBRATION } from './bodyTraffic.js'
 import {
   subRoleForAgent,
   subRoleAllowsInitiateCut,
@@ -390,9 +386,8 @@ function pickCutTarget(
     // 2. Ile metrów da zdobycie tej przestrzeni (ujemnie za dyskiem — patrz yardValue).
     score += yardValue(cell.ahead, selfAhead, isReset) * SPACE_BALANCE.yard
     // 3. Czy zdążę tam dobiec.
-    score -= playerTravelSec(agent, cell, agent.player ?? agent, 'offense', speed) * SPACE_BALANCE.reach
-    score -= routeConflict(agent, cell, speed, teammates ?? []) * 12
-      * subStat(agent.player ?? agent, 'mental', 'spatialAwareness') / 100
+    const runM = Math.hypot(cell.x - agent.x, cell.y - agent.y)
+    score -= (runM / speed) * SPACE_BALANCE.reach
     // 4. Osobista preferencja zawodnika.
     if (cell.depth === 'deep') score += deepBias * SPACE_BIAS_WEIGHT
     if (cell.depth === 'under') score += underBias * SPACE_BIAS_WEIGHT
@@ -1044,20 +1039,17 @@ export function tickCutterBrain(agent, tickCtx) {
     const distance = origin ? Math.max(0.1, Math.hypot(targetX - origin.x, targetY - origin.y)) : 1
     const moveX = feint ? clampFieldX(origin.x - (targetX - origin.x) / distance * setup.distanceM) : targetX
     const moveY = feint ? clampFieldY(origin.y - (targetY - origin.y) / distance * setup.distanceM) : targetY
-    const spaced = crowdAwareTarget(agent, spacingAdjustedTarget(agent, moveX, moveY, teammates), [...(teammates ?? []), ...(defenders ?? [])])
-    const movement = BODY_TRAFFIC_CALIBRATION.offBall ? bodyAwareTarget({ ...agent, x, y, vx, vy }, spaced,
-      [...(teammates ?? []), ...(defenders ?? [])], speed) : { ...spaced, speed }
+    const spaced = spacingAdjustedTarget(agent, moveX, moveY, teammates)
     const moved = integrateAgentMotion(
       { ...agent, x, y, vx, vy },
-      movement.x,
-      movement.y,
+      spaced.x,
+      spaced.y,
       speed,
       dtSec,
       true,
       // rola 'offense': zwinność + cutterMovement decydują, jak ostro cutter potrafi
       // zmienić kierunek — czyli ile separacji realnie urywa (patrz mobilityMultiplier).
       'offense',
-      movement.speed,
     )
     x = moved.x
     y = moved.y
@@ -1067,21 +1059,17 @@ export function tickCutterBrain(agent, tickCtx) {
     // Bez piłki zawodnik nie stoi bezczynnie: wraca truchtem / lekkim biegiem na slot
     // (nie sprint — sprint tylko na ACTIVE_CUT).
     const slot = slotWithError(structuralTarget(), agent.player ?? agent, rng)
-    const spaced = crowdAwareTarget(agent, spacingAdjustedTarget(agent, slot.x, slot.y, teammates), [...(teammates ?? []), ...(defenders ?? [])])
+    const spaced = spacingAdjustedTarget(agent, slot.x, slot.y, teammates)
     const drift = Math.hypot(spaced.x - agent.x, spaced.y - agent.y)
     if (drift > 1.5) {
-      const speed = waitingHoldSpeedMps(agent.player ?? agent, drift)
-      const movement = BODY_TRAFFIC_CALIBRATION.offBall ? bodyAwareTarget({ ...agent, x, y, vx, vy }, spaced,
-        [...(teammates ?? []), ...(defenders ?? [])], speed) : { ...spaced, speed }
       const moved = integrateAgentMotion(
         { ...agent, x, y, vx, vy },
-        movement.x,
-        movement.y,
-        speed,
+        spaced.x,
+        spaced.y,
+        waitingHoldSpeedMps(agent.player ?? agent, drift),
         dtSec,
         true,
         'offense',
-        movement.speed,
       )
       x = moved.x
       y = moved.y
@@ -1089,15 +1077,7 @@ export function tickCutterBrain(agent, tickCtx) {
       vy = moved.vy
     } else {
       const jitter = { x: x + (rng.float() - 0.5) * 0.15, y: y + (rng.float() - 0.5) * 0.12 }
-      if (BODY_TRAFFIC_CALIBRATION.offBall && BODY_TRAFFIC_CALIBRATION.enabled) {
-        const movement = bodyAwareTarget({ ...agent, x, y, vx, vy }, jitter,
-          [...(teammates ?? []), ...(defenders ?? [])], 0.5)
-        const moved = integrateAgentMotion({ ...agent, x, y, vx, vy }, movement.x, movement.y,
-          maxSpeedMps(agent.player ?? agent), dtSec, true, 'offense', movement.speed)
-        ;({ x, y, vx, vy } = moved)
-      } else {
-        x = jitter.x; y = jitter.y; vx *= 0.5; vy *= 0.5
-      }
+      x = jitter.x; y = jitter.y; vx *= 0.5; vy *= 0.5
     }
   }
 

@@ -9,7 +9,6 @@ import {
   subStat,
 } from './statFormulas.js'
 import { integrateAgentMotion } from './playerMovement.js'
-import { bodyAwareTarget, BODY_TRAFFIC_CALIBRATION } from './bodyTraffic.js'
 import { threatCellForMark, poachTargetCell } from './spaceMap.js'
 import {
   defenseMods,
@@ -129,13 +128,10 @@ export function forceMarkPosition(throwerX, throwerY, forceMark, attackSign = 1,
   }
 }
 
-function moveToward(agent, tx, ty, maxSpeed, dtSec, limitTurn = true, ctx = {}) {
+function moveToward(agent, tx, ty, maxSpeed, dtSec, limitTurn = true) {
   // rola 'defense': praca nóg obrońcy (agility + defensiveCutterMovement) wpływa na to,
   // ile gruntu traci przy zmianie kierunku cuttera — patrz mobilityMultiplier.
-  const traffic = ctx.trafficAgents ?? [...(ctx.offenseAgents ?? []), ...(ctx.defenseAgents ?? [])]
-  const target = BODY_TRAFFIC_CALIBRATION.offBall ? bodyAwareTarget(agent, { x: tx, y: ty }, traffic, maxSpeed)
-    : { x: tx, y: ty, speed: maxSpeed }
-  const moved = integrateAgentMotion(agent, target.x, target.y, maxSpeed, dtSec, limitTurn, 'defense', target.speed)
+  const moved = integrateAgentMotion(agent, tx, ty, maxSpeed, dtSec, limitTurn, 'defense')
   return { ...agent, ...moved }
 }
 

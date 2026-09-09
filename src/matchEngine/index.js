@@ -24,6 +24,9 @@ export { ATTACK_STYLES, DEFENSE_STYLES, FORCE_SIDES, TACTICS_MODIFIERS, defaultT
 export {
   COACH_SLIDER_KEYS,
   COACH_DIRECTIVE_META,
+  COACH_DIRECTIVE_KIND,
+  COACH_DIRECTIVE_PHASE,
+  COACH_DIRECTIVE_KEYS_BY_PHASE,
   COACH_FORCE_PRIMARY,
   COACH_FORCE_ADVANCED,
   defaultCoachDirectives,
@@ -53,6 +56,7 @@ export {
   togglePlayerInstruction,
   toggleInstructionInTactics,
   instructionCompliance,
+  instructionOverrides,
   instructionModsForPlayer,
   instructionBadges,
 } from './playerInstructions.js'

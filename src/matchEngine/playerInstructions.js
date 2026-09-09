@@ -257,6 +257,22 @@ export const PLAYER_INSTRUCTION_CONFLICTS = [
 
 export const PLAYER_INSTRUCTION_IDS = Object.keys(PLAYER_INSTRUCTION_DEFS)
 
+/** Coach-directive axes overridden by each individual instruction. */
+const INSTRUCTION_OVERRIDES = {
+  throw_hucks: ['huckAppetite'], no_hucks: ['huckAppetite'],
+  break_mark: ['breakAppetite'], no_break_mark: ['breakAppetite'],
+  safe_throws: ['passSelectivity', 'creativity'], take_risks: ['passSelectivity', 'creativity'],
+  play_fast: ['possessionTempo'], play_slow: ['possessionTempo'],
+  tight_mark: ['cushionDepth'], loose_mark: ['cushionDepth'],
+  shade_deep: ['coverageShade'], shade_under: ['coverageShade'],
+  poach: ['poachSeeking'], no_poach: ['poachSeeking'],
+}
+const EMPTY_LIST = []
+
+export function instructionOverrides(id) {
+  return INSTRUCTION_OVERRIDES[id] ?? EMPTY_LIST
+}
+
 export function playerInstructionDef(id) {
   return PLAYER_INSTRUCTION_DEFS[id] ?? null
 }
