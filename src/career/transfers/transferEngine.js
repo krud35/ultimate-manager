@@ -72,7 +72,7 @@ export function setPlayerTransferListed(team, playerId, listed) {
   if (player.loan) return { ok: false, error: 'on_loan' }
   const wasListed = !!player.transferListed
   player.transferListed = !!listed
-  if (listed) player.loanListed = false
+  if (listed) { player.loanListed = false; player.notForSale = false }
   player.developmentListing = null
   if (listed && !wasListed) {
     // Jednorazowy, niewielki spadek morale/lojalności — zawodnik wie, że klub go nie
@@ -90,9 +90,19 @@ export function setPlayerLoanListed(team, playerId, listed) {
   if (!player) return { ok: false, error: 'not_on_roster' }
   if (player.loan) return { ok: false, error: 'on_loan' }
   player.loanListed = !!listed
-  if (listed) player.transferListed = false
+  if (listed) { player.transferListed = false; player.notForSale = false }
   player.developmentListing = null
   return { ok: true, player, listed: player.loanListed }
+}
+
+export function setPlayerNotForSale(team, playerId, enabled) {
+  const player = team?.players?.find(p => String(p.id) === String(playerId))
+  if (!player) return { ok: false, error: 'not_on_roster' }
+  if (player.loan) return { ok: false, error: 'on_loan' }
+  player.notForSale = !!enabled
+  if (enabled) { player.transferListed = false; player.loanListed = false }
+  player.developmentListing = null
+  return { ok: true, player, notForSale: player.notForSale }
 }
 
 /** Progi „wymuszenia" wpisu na listę transferową przez niezadowolonego zawodnika. */
@@ -433,6 +443,7 @@ export function completeTransferBetweenClubs(career, opts) {
   moved.lastTransferDate = career.league?.currentDate ?? null
   moved.loanListed = false
   moved.transferListed = false
+  moved.notForSale = false
   moved.developmentListing = null
   moved.recentPlayingTime = []
   const window = getTransferWindowState(career)

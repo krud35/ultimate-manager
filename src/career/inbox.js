@@ -932,6 +932,8 @@ export function generateIncomingTransferOffers(career, { date = null } = {}) {
   }
   const minFeeRatio = chosenTarget.veteran ? 0.65 : 0.72
   if (fee < value * minFeeRatio) return []
+  // A protected player only attracts bids meeting the higher asking price.
+  if (chosen.notForSale && fee < ask) return []
 
   const name = getPlayerFullName(chosen)
   const expires = formatISODate(addDays(parseISODate(simDate), 2 + Math.floor(rng() * 3)))

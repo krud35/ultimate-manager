@@ -131,7 +131,7 @@ export default function PlayerProfileModal({
   onExtendContract = null,
   onToggleTransferList = null,
   onToggleLoanList = null,
-  onProposeLoanOut = null,
+  onToggleNotForSale = null,
   loanCounterpartyName = null,
   isShortlisted = false,
   onToggleShortlist = null,
@@ -353,6 +353,7 @@ export default function PlayerProfileModal({
                 </span>
               )}
               {player.loanListed && <span className="rounded border border-sky-400/40 px-2 py-1 text-xs text-sky-300">{lang === 'en' ? 'Listed for loan' : 'Na liście wypożyczeń'}</span>}
+              {player.notForSale && <span className="rounded border border-amber-400/40 px-2 py-1 text-xs text-amber-300">{lang === 'en' ? 'Not for sale' : 'Nie na sprzedaż'}</span>}
               {isOwnPlayer && player.transferListed && (
                 <span className="rounded bg-ufa-gold/15 px-2 py-0.5 text-xs font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
                   {t.transferListedBadge}
@@ -492,17 +493,25 @@ export default function PlayerProfileModal({
           ) : (
             <p className="text-ufa-muted text-xs">{t.noContract}</p>
           )}
+          {isOwnPlayer && !player.loan && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {onExtendContract && <button type="button" onClick={() => setExtendOpen(!extendOpen)} aria-expanded={extendOpen}
+                className="rounded-md bg-ufa-accent/15 px-3 py-1.5 text-xs font-semibold text-ufa-accent ring-1 ring-ufa-accent/30 hover:bg-ufa-accent/25">{t.extendContract}</button>}
+              {onToggleTransferList && <button type="button" onClick={() => onToggleTransferList(player.id)} aria-pressed={!!player.transferListed}
+                className={"rounded-md px-3 py-1.5 text-xs font-semibold ring-1 " + (player.transferListed ? 'bg-ufa-gold/15 text-ufa-gold ring-ufa-gold/40' : 'bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover')}>
+                {player.transferListed ? t.removeFromTransferList : t.addToTransferList}</button>}
+              {onToggleLoanList && <button type="button" onClick={() => onToggleLoanList(player.id)} aria-pressed={!!player.loanListed}
+                className={"rounded-md px-3 py-1.5 text-xs font-semibold ring-1 " + (player.loanListed ? 'bg-sky-400/15 text-sky-300 ring-sky-400/40' : 'bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover')}>
+                {player.loanListed ? (lang === 'en' ? 'Remove from loan list' : 'Zdejmij z listy wypożyczeń') : (lang === 'en' ? 'Add to loan list' : 'Dodaj do listy wypożyczeń')}</button>}
+              {onToggleNotForSale && <button type="button" onClick={() => onToggleNotForSale(player.id)} aria-pressed={!!player.notForSale}
+                title={lang === 'en' ? 'Discourages offers and raises the asking price.' : 'Ogranicza zainteresowanie klubów i podnosi oczekiwaną cenę.'}
+                className={"rounded-md px-3 py-1.5 text-xs font-semibold ring-1 " + (player.notForSale ? 'bg-amber-400/15 text-amber-300 ring-amber-400/40' : 'bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover')}>
+                {lang === 'en' ? 'Not for sale' : 'Nie na sprzedaż'}</button>}
+            </div>
+          )}
           {isOwnPlayer && onExtendContract && !player.loan && (
             <div className="mt-3 space-y-2">
-              {!extendOpen ? (
-                <button
-                  type="button"
-                  onClick={() => setExtendOpen(true)}
-                  className="rounded-md bg-ufa-accent/15 px-3 py-1.5 text-xs font-semibold text-ufa-accent ring-1 ring-ufa-accent/30 hover:bg-ufa-accent/25"
-                >
-                  {t.extendContract}
-                </button>
-              ) : (
+              {extendOpen && (
                 <div className="rounded-lg border border-ufa-border bg-ufa-bg/40 p-3 space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <label className="text-xs text-ufa-muted">
@@ -548,38 +557,7 @@ export default function PlayerProfileModal({
               )}
             </div>
           )}
-          {isOwnPlayer && onToggleLoanList && !player.loan && (
-            <div className="rounded-lg border border-sky-400/30 bg-sky-400/5 p-3">
-              <p className="mb-2 text-xs text-ufa-muted">{lang === 'en' ? 'Loan listing invites offers from other clubs. Listing for a loan removes the player from the transfer list.' : 'Lista wypożyczeń zwiększa zainteresowanie innych klubów. Wystawienie na wypożyczenie usuwa zawodnika z listy transferowej.'}</p>
-              <button type="button" className="rounded border border-sky-400/40 px-3 py-2 text-sm text-sky-300" onClick={() => onToggleLoanList(player.id)}>{player.loanListed ? (lang === 'en' ? 'Remove from loan list' : 'Zdejmij z listy wypożyczeń') : (lang === 'en' ? 'Add to loan list' : 'Dodaj do listy wypożyczeń')}</button>
-            </div>
-          )}
-          {isOwnPlayer && onToggleTransferList && !player.loan && (
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={() => onToggleTransferList(player.id)}
-                className={`rounded-md px-3 py-1.5 text-xs font-semibold ring-1 ${
-                  player.transferListed
-                    ? 'bg-ufa-gold/15 text-ufa-gold ring-ufa-gold/40 hover:bg-ufa-gold/25'
-                    : 'bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover'
-                }`}
-              >
-                {player.transferListed ? t.removeFromTransferList : t.addToTransferList}
-              </button>
-            </div>
-          )}
-          {isOwnPlayer && onProposeLoanOut && !player.loan && (
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={() => onProposeLoanOut(player.id)}
-                className="rounded-md px-3 py-1.5 text-xs font-semibold ring-1 bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover"
-              >
-                {t.proposeLoanOut}
-              </button>
-            </div>
-          )}
+
         </div>
 
         {isOwnPlayer && (

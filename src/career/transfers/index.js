@@ -101,6 +101,7 @@ export {
   negotiatePlayerContract,
   setPlayerTransferListed,
   setPlayerLoanListed,
+  setPlayerNotForSale,
   checkForcedTransferListDemands,
 } from './transferEngine.js'
 

@@ -1,4 +1,4 @@
-import { setPlayerLoanListed } from './career/transfers/transferEngine.js'
+import { setPlayerLoanListed, setPlayerNotForSale } from './career/transfers/transferEngine.js'
 import ManagerCareerPanel from './components/ManagerCareerPanel.jsx'
 import { addManagerWelcome, processManagerCareer } from './career/managerCareer.js'
 import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
@@ -58,7 +58,6 @@ import {
   setPlayerTransferListed,
   isClubBankrupt,
   recordMatchKnowledgeGain,
-  queueLoanOutOffer,
   respondToIncomingLoanRequest,
 } from './career'
 
@@ -1275,25 +1274,14 @@ export default function App() {
     return result
   }, [career, syncCareer])
 
-  const handleProposeLoanOut = useCallback(
-    (playerId, terms) => {
-      if (!career?.world) return { ok: false }
-      const result = queueLoanOutOffer(career, {
-        playerId,
-        destinationTeamId: terms.destinationTeamId,
-        fee: terms.fee,
-        durationPreset: terms.durationPreset,
-        wageSplitPct: terms.wageSplitPct,
-        buyClause: terms.buyClause,
-      })
-      if (!result.ok) return result
-      const nextInbox = mergeInbox(career, [result.message])
-      const next = persistCareer(career, { inbox: nextInbox })
-      syncCareer(next)
-      return { ok: true, flash: 'Propozycja wypożyczenia wysłana.' }
-    },
-    [career, syncCareer],
-  )
+  const handleToggleNotForSale = useCallback((playerId) => {
+    if (!career?.world) return { ok: false }
+    const team = worldTeamById(career.world, career.playerTeamId)
+    const player = team?.players?.find(p => String(p.id) === String(playerId))
+    const result = setPlayerNotForSale(team, playerId, !player?.notForSale)
+    if (result.ok) syncCareer(persistCareer(career, { world: career.world }))
+    return result
+  }, [career, syncCareer])
 
   const handleReturnToLeague = useCallback(() => {
     setLeagueFixture(null)
@@ -1719,7 +1707,7 @@ export default function App() {
             onExtendContract={handleExtendContract}
             onToggleTransferList={handleToggleTransferList}
             onToggleLoanList={handleToggleLoanList}
-            onProposeLoanOut={handleProposeLoanOut}
+            onToggleNotForSale={handleToggleNotForSale}
           />
         )}
 

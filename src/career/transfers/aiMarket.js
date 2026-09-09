@@ -15,6 +15,7 @@ import {
 } from './clubFinances.js'
 import {
   computeAskPrice,
+  NOT_FOR_SALE_INTEREST_MULT,
   evaluateBuyOffer,
   classifyTransferTarget,
 } from './negotiation.js'
@@ -120,7 +121,7 @@ function aiWantsPlayer(buyer, player, seller, ask, budget, rng, rank, buyerAvg, 
   else if (veteranFit) desire += 0.05
   // Starsi z małym roomem są łatwiejszym „depth hire”.
   if (veteran && room <= 2) desire += 0.04
-  return rng.float() < Math.min(0.92, desire)
+  return rng.float() < Math.min(0.92, desire) * (player.notForSale ? NOT_FOR_SALE_INTEREST_MULT : 1)
 }
 
 function pickAiOffer(ask, budget, rng) {

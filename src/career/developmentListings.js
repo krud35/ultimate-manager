@@ -2,7 +2,7 @@ import { getOverallRating } from '../models/playerStats.js'
 import { recentPlayingTime } from './matchDevelopment.js'
 
 export function developmentListingDecision(player, team, date) {
-  if(player.loan||player.injury?.daysRemaining>0||(team.players?.length??0)<=16)return null
+  if(player.notForSale||player.loan||player.injury?.daysRemaining>0||(team.players?.length??0)<=16)return null
   const usage=recentPlayingTime(player,team.id,date)
   if(usage.games<4||usage.share>=.12)return null
   const ranked=[...team.players].sort((a,b)=>getOverallRating(b.skills)-getOverallRating(a.skills))

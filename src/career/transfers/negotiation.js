@@ -18,6 +18,9 @@ import {
 import { getPlayerMarketValue, formatUsd } from './playerValue.js'
 import { getTransferPolicy } from './clubFinances.js'
 
+export const NOT_FOR_SALE_ASK_MULT = 1.5
+export const NOT_FOR_SALE_INTEREST_MULT = 0.2
+
 /**
  * Profil zawodnika jako celu transferowego.
  * - prospect: młody z roomem potencjału
@@ -133,6 +136,7 @@ export function computeAskPrice(player, sellerTeam, precomputedRank = null, valu
   const base = Math.max(value, Math.round(ask / 1000) * 1000)
   // Zastosowane NA KOŃCU (po podłodze `value`), inaczej rabat ginie dla większości
   // zawodników (premium=1 → ask już blisko podłogi value, rabat przed floor nic by nie dał).
+  if (player?.notForSale) return Math.round(base * NOT_FOR_SALE_ASK_MULT / 1000) * 1000
   if (!player?.transferListed) return base
   return Math.round((base * TRANSFER_LIST_ASK_DISCOUNT) / 1000) * 1000
 }
@@ -564,5 +568,6 @@ export function aiIncomingInterestChance(buyer, player, seller, rng) {
 
   if (player.transferListed) chance *= TRANSFER_LIST_AI_INTEREST_MULT
 
-  return Math.max(0, Math.min(0.88, chance + (rng() - 0.5) * 0.04))
+  const interest = Math.max(0, Math.min(0.88, chance + (rng() - 0.5) * 0.04))
+  return interest * (player.notForSale ? NOT_FOR_SALE_INTEREST_MULT : 1)
 }
