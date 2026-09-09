@@ -323,6 +323,9 @@ function applyCupMatchResult(league, fixture, record) {
   const homeWon = (record.homeScore ?? 0) > (record.awayScore ?? 0)
   const awayWon = (record.awayScore ?? 0) > (record.homeScore ?? 0)
   applyPostMatchFinances(homeTeam, awayTeam, {
+    matchId: record.fixtureId ?? record.id,
+    forfeited: !!record.forfeited,
+    date: record.date ?? league.currentDate,
     isCup: true,
     homeWon,
     awayWon,

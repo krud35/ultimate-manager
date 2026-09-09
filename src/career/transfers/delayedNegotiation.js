@@ -1,3 +1,4 @@
+import { canAffordContract } from '../clubEconomy.js'
 /**
  * Opóźnione odpowiedzi na oferty transferowe / kontraktowe (1–3 dni → skrzynka).
  */
@@ -191,9 +192,6 @@ export function submitTransferOffer(career, { row, offerAmount = 0, contractTerm
 
   if (row.freeAgent) {
     const buyer = worldTeamById(career.world, career.playerTeamId)
-    if (!canBuyPlayers(buyer)) {
-      return { ok: false, code: 'negative_budget' }
-    }
     const demands = computePlayerContractDemands({
       player: row.player,
       sellerTeam: null,
@@ -233,12 +231,14 @@ export function queueOutgoingPlayerContract(career, opts) {
   }
 
   const fee = Math.max(0, Math.round(Number(opts.fee) || 0))
-  const preview = previewContractOffer(opts.weeklyWage, opts.years)
+  const preview = previewContractOffer(opts.weeklyWage, opts.years, buyer)
+  const affordable = canAffordContract(buyer, found.player, preview.weeklyWage, { fee, date: today, weeksRemaining: preview.weeks })
+  if (!affordable.ok) return affordable
   const budget = getTransferBudget(buyer)
-  if (fee + preview.totalCost > budget) {
+  if (fee > budget) {
     return {
       ok: false,
-      error: `Brak środków (transfer ${formatUsd(fee)} + kontrakt ${formatUsd(preview.totalCost)}; budżet ${formatUsd(budget)})`,
+      error: `Brak środków (transfer ${formatUsd(fee)}; budżet ${formatUsd(budget)})`,
     }
   }
 
@@ -276,6 +276,7 @@ export function queueOutgoingPlayerContract(career, opts) {
       weeklyWage: preview.weeklyWage,
       years: preview.years,
       totalCost: preview.totalCost,
+      requiredCash: preview.requiredCash,
       bonuses: opts.bonuses ?? [],
       promises: opts.promises ?? [],
       parentMessageId: opts.parentMessageId ?? null,
@@ -930,10 +931,10 @@ export function acceptPlayerContractCounter(career, { messageId }) {
     return { ok: false, error: 'Brak warunków kontrpropozycji' }
   }
 
-  const preview = previewContractOffer(wage, years)
   const buyer = worldTeamById(career.world, career.playerTeamId)
+  const preview = previewContractOffer(wage, years, buyer)
   if (!buyer) return { ok: false, error: 'Brak drużyny' }
-  if (p.fee + preview.totalCost > getTransferBudget(buyer)) {
+  if (p.fee > getTransferBudget(buyer)) {
     return { ok: false, error: 'Niewystarczający budżet na te warunki' }
   }
 

@@ -1,3 +1,4 @@
+import { ensureYouthCohort, discoverRegionalYouth } from './youthPopulation.js'
 /**
  * Scouting: znajomość (0–100) drużyn przeciwnych i pojedynczych zawodników (w tym
  * wolnych agentów). Wzorowane na clubFacilities.js — obiekt klubowy `scoutingDept`
@@ -14,7 +15,6 @@ import { adjustTransferBudget, getTransferBudget } from './transfers/clubFinance
 import { getOverallRating, getSubStat, SUB_STAT_LABELS } from '../models/playerStats.js'
 import { playerHasTrait } from '../models/playerTraits.js'
 import { worldTeamById, worldTeamsList } from './worldState.js'
-import { createAcademyProspect, ensureTeamAcademyCandidates } from './academy.js'
 import { eucsTeamTier } from '../data/eucsLeagueTeams.js'
 import { ACADEMY_COUNTRIES } from '../data/academyScoutGeography.js'
 import { weeklyWageFromOvr } from './transfers/playerContracts.js'
@@ -81,9 +81,8 @@ export const SCOUT_MISSION_DOSSIER_DAYS = 5
 
 /**
  * Misja `academyProspect` to kampania rozłożona na MIESIĄCE (nie tygodnie): skaut
- * wyjeżdża do wybranego kraju na 1/3/6/12 miesięcy (wybór gracza), z cotygodniowym-
- * -teraz-comiesięcznym raportem na 1. dzień kalendarzowego miesiąca (wzorem
- * `processMonthlyTvPayouts`). Bez kandydatów natychmiast po wysłaniu — pierwsza partia
+ * wyjeżdża do wybranego kraju na 1/3/6/12 miesięcy (wybór gracza), z raportem
+ * po każdym pełnym miesiącu od wyjazdu. Bez kandydatów natychmiast po wysłaniu — pierwsza partia
  * pojawia się dopiero w raporcie z 1. miesiąca. Co miesiąc (łącznie z pierwszym) losowana
  * jest nowa partia 1-5 kandydatów, każdy z losową wiedzą startową 20-80%; kandydaci z
  * poprzednich miesięcy zyskują +25-45pp wiedzy. Jakość kandydata (pasmo OVR) zależy od
@@ -243,10 +242,6 @@ export const HIDDEN_PLAYER_ARCHETYPES = [
   },
 ]
 
-/** Losuje jeden ukryty archetyp (deterministycznie, wg podanego `rng`). */
-function pickHiddenArchetype(rng) {
-  return HIDDEN_PLAYER_ARCHETYPES[Math.floor(rng() * HIDDEN_PLAYER_ARCHETYPES.length)]
-}
 
 /**
  * Dopasowanie zawodnika do JAWNYCH kryteriów gracza (misja `playerSearch`) —
@@ -497,13 +492,13 @@ export function decayScoutingKnowledge(world, playerTeamId) {
 
 export function scoutMissionCapacity(team) {
   const level = getFacilityLevel(team, 'scoutingDept')
-  return 1 + Math.floor(level / 3)
+  return 1 + Math.floor(level / 3) + Math.floor((team.staff?.chiefScout ?? 1) / 3)
 }
 
 export function scoutMissionCost(kind, team) {
   const level = getFacilityLevel(team, 'scoutingDept')
-  const base = SCOUT_MISSION_BASE_COST[kind] ?? 10_000
-  const levelMultiplier = 1.3 - level * 0.04
+  const base = 2 * (SCOUT_MISSION_BASE_COST[kind] ?? 10_000)
+  const levelMultiplier = (1.3 - level * 0.04) * (1 - ((team.staff?.chiefScout ?? 1) - 1) * 0.05)
   return Math.max(1_000, Math.round((base * levelMultiplier) / 500) * 500)
 }
 
@@ -532,7 +527,7 @@ function academyGeoCostMultiplier(team, countryId) {
 /** Koszt misji `academyProspect`: bazowy koszt × poziom działu skautingu × odległość × długość. */
 export function academyScoutMissionCost(team, countryId, durationMonths) {
   const level = getFacilityLevel(team, 'scoutingDept')
-  const base = SCOUT_MISSION_BASE_COST.academyProspect ?? 20_000
+  const base = 2 * (SCOUT_MISSION_BASE_COST.academyProspect ?? 20_000)
   const levelMultiplier = 1.3 - level * 0.04
   const geoMultiplier = academyGeoCostMultiplier(team, countryId)
   const durationMultiplier = ACADEMY_DURATION_COST_MULT[durationMonths] ?? 1
@@ -638,81 +633,73 @@ export function queueScoutMission(
   return { ok: true, mission, cost, remainingBudget: getTransferBudget(team) }
 }
 
-/**
- * Comiesięczny postęp kampanii `academyProspect` — wzorzec 1:1 z `processMonthlyTvPayouts`
- * (dzień kalendarzowy === 1, idempotentne przez `mission.lastProcessedYm`). Wołane
- * CODZIENNIE (nie tylko w weekTick), bo sama funkcja gates on dzień miesiąca.
- * Co miesiąc (łącznie z pierwszym): losuje 1-5 nowych kandydatów (do twardego limitu
- * `ACADEMY_MAX_CANDIDATES`), każdy z losową wiedzą startową 20-80%; kandydaci z
- * poprzednich miesięcy tej misji zyskują +25-45pp wiedzy.
- */
-export function advanceAcademyCampaigns(team, dateIso) {
+/** Calendar-month anniversary, clamped for February and shorter months. */
+export function academyReportDate(queuedAtDate, monthNumber) {
+  const [year, month, day] = String(queuedAtDate).slice(0, 10).split('-').map(Number)
+  const target = new Date(Date.UTC(year, month - 1 + monthNumber, 1))
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate()
+  target.setUTCDate(Math.min(day, lastDay))
+  return target.toISOString().slice(0, 10)
+}
+
+export function advanceAcademyCampaigns(team, dateIso, world = null) {
+  if (!team) return []
   if (!dateIso) return []
-  const day = Number(String(dateIso).slice(8, 10))
-  if (day !== 1) return []
   const ym = String(dateIso).slice(0, 7)
   const scouting = ensureTeamScouting(team)
   const reports = []
   for (const mission of scouting.pendingMissions) {
     if (mission.kind !== 'academyProspect' || mission.recalling) continue
-    if (mission.lastProcessedYm === ym) continue
-    mission.lastProcessedYm = ym
-    mission.monthsElapsed = (mission.monthsElapsed ?? 0) + 1
+    if (!mission.queuedAtDate) { mission.queuedAtDate = dateIso; continue }
+    // Catch up old saves in one call; repeating the same date emits nothing.
+    while ((mission.monthsElapsed ?? 0) < (mission.monthsTotal ?? mission.durationMonths ?? 1)) {
+      const dueDate = academyReportDate(mission.queuedAtDate, (mission.monthsElapsed ?? 0) + 1)
+      if (String(dateIso).slice(0, 10) < dueDate) break
+      mission.lastProcessedYm = ym
+      mission.monthsElapsed = (mission.monthsElapsed ?? 0) + 1
 
-    const existingIds = mission.candidateIds ?? []
-    const growthRng = mulberry32(hashSeed(mission.id, 'academy-growth', mission.monthsElapsed))
-    for (const candidateId of existingIds) {
-      const growth =
-        ACADEMY_KNOWLEDGE_GROWTH_MIN +
-        Math.floor(growthRng() * (ACADEMY_KNOWLEDGE_GROWTH_MAX - ACADEMY_KNOWLEDGE_GROWTH_MIN + 1))
-      bumpKnowledge(playerEntry(team, candidateId), 'knowledge', growth)
-    }
-
-    const countRng = mulberry32(hashSeed(mission.id, 'academy-new-count', mission.monthsElapsed))
-    const desiredCount =
-      ACADEMY_NEW_CANDIDATES_MIN_PER_MONTH +
-      Math.floor(
-        countRng() * (ACADEMY_NEW_CANDIDATES_MAX_PER_MONTH - ACADEMY_NEW_CANDIDATES_MIN_PER_MONTH + 1),
-      )
-    const room = Math.max(0, ACADEMY_MAX_CANDIDATES - existingIds.length)
-    const newCount = Math.min(desiredCount, room)
-
-    const newCandidateIds = []
-    if (newCount > 0) {
-      const seasonYear = mission.queuedAtDate ? Number(String(mission.queuedAtDate).slice(0, 4)) : null
-      const genRng = mulberry32(hashSeed(mission.id, 'academy-gen', mission.monthsElapsed))
-      const revealRng = mulberry32(hashSeed(mission.id, 'academy-reveal', mission.monthsElapsed))
-      const archetypeRng = mulberry32(hashSeed(mission.id, 'academy-archetype', mission.monthsElapsed))
-      for (let i = 0; i < newCount; i += 1) {
-        // Każdy kandydat dostaje losowy, ukryty archetyp — daje zróżnicowane sylwetki
-        // bez pytania gracza o profil (patrz HIDDEN_PLAYER_ARCHETYPES wyżej).
-        const profileWeights = pickHiddenArchetype(archetypeRng).weights
-        const candidate = createAcademyProspect(genRng, {
-          seasonYear,
-          teamId: team.id,
-          source: 'scouted',
-          countryId: mission.countryId,
-          profileWeights,
-          index: existingIds.length + i,
-        })
-        ensureTeamAcademyCandidates(team).push(candidate)
-        const reveal =
-          ACADEMY_KNOWLEDGE_REVEAL_MIN +
-          Math.floor(revealRng() * (ACADEMY_KNOWLEDGE_REVEAL_MAX - ACADEMY_KNOWLEDGE_REVEAL_MIN + 1))
-        bumpKnowledge(playerEntry(team, candidate.id), 'knowledge', reveal)
-        newCandidateIds.push(candidate.id)
+      const existingIds = mission.candidateIds ?? []
+      const growthRng = mulberry32(hashSeed(mission.id, 'academy-growth', mission.monthsElapsed))
+      for (const candidateId of existingIds) {
+        const growth =
+          ACADEMY_KNOWLEDGE_GROWTH_MIN +
+          Math.floor(growthRng() * (ACADEMY_KNOWLEDGE_GROWTH_MAX - ACADEMY_KNOWLEDGE_GROWTH_MIN + 1))
+        bumpKnowledge(playerEntry(team, candidateId), 'knowledge', growth)
       }
-      mission.candidateIds = [...existingIds, ...newCandidateIds]
-    }
 
-    reports.push({
-      missionId: mission.id,
-      countryId: mission.countryId,
-      monthNumber: mission.monthsElapsed,
-      monthsTotal: mission.monthsTotal,
-      candidateIds: mission.candidateIds ?? [],
-      newCandidateIds,
-    })
+      const countRng = mulberry32(hashSeed(mission.id, 'academy-new-count', mission.monthsElapsed))
+      const desiredCount =
+        ACADEMY_NEW_CANDIDATES_MIN_PER_MONTH +
+        Math.floor(
+          countRng() * (ACADEMY_NEW_CANDIDATES_MAX_PER_MONTH - ACADEMY_NEW_CANDIDATES_MIN_PER_MONTH + 1),
+        )
+      const room = Math.max(0, ACADEMY_MAX_CANDIDATES - existingIds.length)
+      const newCount = Math.min(desiredCount, room)
+
+      const newCandidateIds = []
+      if (newCount > 0) {
+        const genRng = mulberry32(hashSeed(mission.id, 'academy-gen', mission.monthsElapsed))
+        const revealRng = mulberry32(hashSeed(mission.id, 'academy-reveal', mission.monthsElapsed))
+        ensureYouthCohort(world, Number(dateIso.slice(0, 4)) - (Number(dateIso.slice(5, 7)) < 8 ? 1 : 0))
+        for (const candidate of discoverRegionalYouth(world, team, mission.countryId, newCount, genRng)) {
+          const reveal =
+            ACADEMY_KNOWLEDGE_REVEAL_MIN +
+            Math.floor(revealRng() * (ACADEMY_KNOWLEDGE_REVEAL_MAX - ACADEMY_KNOWLEDGE_REVEAL_MIN + 1))
+          bumpKnowledge(playerEntry(team, candidate.id), 'knowledge', reveal)
+          newCandidateIds.push(candidate.id)
+        }
+        mission.candidateIds = [...existingIds, ...newCandidateIds]
+      }
+
+      reports.push({
+        missionId: mission.id,
+        countryId: mission.countryId,
+        monthNumber: mission.monthsElapsed,
+        monthsTotal: mission.monthsTotal,
+        candidateIds: mission.candidateIds ?? [],
+        newCandidateIds,
+      })
+    }
   }
   return reports
 }
@@ -724,6 +711,7 @@ export function advanceAcademyCampaigns(team, dateIso) {
  * się nie zmienia (nie generujemy nowych ludzi, tylko odkrywamy istniejących).
  */
 export function advancePlayerSearchCampaigns(team) {
+  if (!team) return []
   const scouting = ensureTeamScouting(team)
   const reports = []
   for (const mission of scouting.pendingMissions) {

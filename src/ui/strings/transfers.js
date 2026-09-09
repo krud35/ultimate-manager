@@ -30,7 +30,7 @@ const pl = {
 
   overBudget: 'Oferta przekracza budżet transferowy.',
 
-  overBudgetContract: 'Transfer + kontrakt przekracza budżet transferowy.',
+  overBudgetContract: 'Brak rezerwy na pensje lub przekroczony tygodniowy limit płac.',
 
   faHint: 'Wolny agent — tylko kontrakt (bez opłaty transferowej).',
   faSigned: 'Podpisano wolnego agenta.',
@@ -80,7 +80,7 @@ const pl = {
 
   transferBudget: 'Budżet transferowy',
 
-  salaryBudget: 'Budżet pensji',
+  salaryBudget: 'Budżet płacowy / tydzień',
 
   weeklyWageBill: 'Tygodniówka składu',
 
@@ -271,7 +271,7 @@ const en = {
 
   overBudget: 'Offer exceeds the transfer budget.',
 
-  overBudgetContract: 'Transfer fee + contract exceeds the transfer budget.',
+  overBudgetContract: 'Insufficient wage reserve or weekly wage limit exceeded.',
 
   faHint: 'Free agent — contract only (no transfer fee).',
   faSigned: 'Free agent signed.',
@@ -321,7 +321,7 @@ const en = {
 
   transferBudget: 'Transfer budget',
 
-  salaryBudget: 'Wage budget',
+  salaryBudget: 'Weekly wage budget',
 
   weeklyWageBill: 'Weekly wage bill',
 

@@ -1,25 +1,22 @@
+import ClubFinanceSummary from './ClubFinanceSummary.jsx'
 import { useUiLang } from '../ui/UiLangContext'
 import { pickLabel } from '../ui/locale'
 import { transfersStrings } from '../ui/strings/transfers'
 import { translateTransferError } from '../ui/strings/transferErrors'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getOverallRating } from '../data/mockPlayers'
 import PlayerProfileModal from './PlayerProfileModal'
 import NegotiateModal from './NegotiateModal'
 import LoanTermsModal from './LoanTermsModal'
 import {
-  formatUsd,
   formatUsdCompact,
   getPlayerMarketValue,
   getTransferBudget,
-  getSalaryBudget,
   getTransferWindowState,
   listTransferMarketWithFreeAgents,
   buildTransferRowForPlayer,
   submitTransferOffer,
-  simulateAiTransferActivity,
   worldTeamById,
-  teamWeeklyWageBill,
   mergeInbox,
   getPlayerKnowledge,
   isPlayerShortlisted,
@@ -49,6 +46,7 @@ function WindowBanner({ windowState }) {
     <div className="rounded-lg border border-ufa-border bg-ufa-bg/60 px-4 py-3">
       <p className="text-sm font-semibold text-ufa-text">{t.windowClosed}</p>
       <p className="mt-0.5 text-xs text-ufa-muted">{t.windowClosedHint}</p>
+      <p className="mt-1 text-xs text-ufa-muted">{lang === 'en' ? 'Free agents can sign throughout the year.' : 'Wolnych zawodników można zatrudniać przez cały rok.'}</p>
     </div>
   )
 }
@@ -72,8 +70,6 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
   const windowState = getTransferWindowState(career)
   const buyer = worldTeamById(career.world, career.playerTeamId)
   const budget = getTransferBudget(buyer)
-  const salaryBudget = getSalaryBudget(buyer)
-  const weeklyBill = teamWeeklyWageBill(buyer)
 
   const [teamFilter, setTeamFilter] = useState('all')
   const [sortKey, setSortKey] = useState('value')
@@ -86,38 +82,9 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
   const [profileTeamName, setProfileTeamName] = useState(null)
   const [flash, setFlash] = useState(null)
   const [historyFilter, setHistoryFilter] = useState(isClub ? 'mine' : 'all')
-  const summerWaveLock = useRef(false)
   useEffect(() => {
     setHistoryFilter(isClub ? 'mine' : 'all')
   }, [isClub])
-
-  // Fale AI w oknie letnim (po oficjalnym końcu sezonu) przy wejściu w zakładkę (max 3).
-  useEffect(() => {
-    if (!windowState.open || windowState.kind !== 'summer') return
-    if (career.phase !== 'season_complete') return
-    if (summerWaveLock.current) return
-    const waves = career.aiOffseasonTransferWaves ?? 0
-    if (waves >= 3) return
-    summerWaveLock.current = true
-    const ai = simulateAiTransferActivity(career, {
-      mode: 'burst',
-      maxDeals: 4,
-      date: `summer-wave-${career.seasonYear}-${career.seasonIndex}-${waves + 1}`,
-    })
-    onCareerUpdate({
-      world: ai.world ?? career.world,
-      transferLog: ai.transferLog ?? career.transferLog,
-      loanLog: ai.loanLog ?? career.loanLog,
-      aiOffseasonTransferWaves: waves + 1,
-    })
-    if (ai.deals?.length) {
-      setFlash({
-        type: 'ok',
-        text: t.aiWave(ai.deals.length),
-      })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowState.open, windowState.kind, career.seasonIndex, career.phase])
 
   // `career.world` mutuje się w miejscu (transferListed toggle) — referencja się nie zmienia,
   // więc doliczamy licznik odświeżenia, żeby memoizacja rzeczywiście przeliczyła się po toggle
@@ -288,27 +255,8 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                 : t.leagueMarketHint}
             </p>
           </div>
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/60 px-4 py-3 min-w-[220px] space-y-2">
-            <div>
-              <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{t.transferBudget}</p>
-              <p className="text-xl font-bold tabular-nums text-ufa-accent">{formatUsd(budget)}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 border-t border-ufa-border/60 pt-2">
-              <div>
-                <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{t.salaryBudget}</p>
-                <p className="text-sm font-semibold tabular-nums text-ufa-gold">
-                  {formatUsd(salaryBudget)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{t.weeklyWageBill}</p>
-                <p className="text-sm font-semibold tabular-nums text-ufa-text">
-                  {formatUsd(weeklyBill)}
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
+        <div className="mt-4"><ClubFinanceSummary team={buyer} lang={lang} onChange={() => onCareerUpdate({ world: career.world })} /></div>
 
         <div className="mt-4">
           <WindowBanner windowState={windowState} />
@@ -733,6 +681,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
 
       {selected && (
         <NegotiateModal
+          buyerTeam={buyer}
           row={selected}
           budget={budget}
           onClose={() => setSelected(null)}

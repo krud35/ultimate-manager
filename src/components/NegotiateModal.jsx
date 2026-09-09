@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { canAffordContract, clubFinanceForecast } from '../career/clubEconomy.js'
 import { useUiLang } from '../ui/UiLangContext'
 import { transfersStrings } from '../ui/strings/transfers'
 import {
@@ -15,7 +16,7 @@ import {
  * dostaje ofertę wysłaną do skrzynki (`onSubmitOffer(offerAmount, contractTerms)`).
  * Czysty UI — logika wysyłki (`submitTransferOffer`) żyje w wywołującym.
  */
-export default function NegotiateModal({ row, budget, onClose, onSubmitOffer }) {
+export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubmitOffer }) {
   const { lang } = useUiLang()
   const t = transfersStrings(lang)
   const isFa = !!row?.freeAgent
@@ -55,7 +56,8 @@ export default function NegotiateModal({ row, budget, onClose, onSubmitOffer }) 
     Math.round(Number(wage) || 0),
     Math.max(1, Math.min(5, Math.round(Number(years) || 1))),
   )
-  const faOverBudget = isFa && preview.totalCost > budget
+  const faOverBudget = isFa && !canAffordContract(buyerTeam, row.player, preview.weeklyWage).ok
+  const finances = buyerTeam ? clubFinanceForecast(buyerTeam) : null
 
   return (
     <div
@@ -103,8 +105,13 @@ export default function NegotiateModal({ row, budget, onClose, onSubmitOffer }) 
         </div>
 
         <p className="mt-3 text-xs text-ufa-muted">
-          {t.yourBudget}: {formatUsd(budget)}
+          {isFa && finances
+            ? `${lang === 'en' ? 'Weekly wages / limit' : 'Pensje tygodniowe / limit'}: ${formatUsd(finances.weeklyWages)} / ${formatUsd(finances.weeklyWageLimit)}`
+            : `${lang === 'en' ? 'Available for transfer fees' : 'Dostępne na opłaty transferowe'}: ${formatUsd(Math.max(0, budget))}`}
         </p>
+        <p className="mt-1 text-xs text-ufa-muted">{isFa
+          ? (lang === 'en' ? 'No transfer fee. Wages are paid from your account weekly; the contract total is not charged upfront.' : 'Bez opłaty transferowej. Pensja schodzi z konta co tydzień; suma kontraktu nie jest pobierana z góry.')
+          : (lang === 'en' ? 'The transfer fee is paid once from your account. Player wages are a separate weekly expense.' : 'Opłata transferowa schodzi z konta jednorazowo. Pensja zawodnika jest osobnym cotygodniowym wydatkiem.')}</p>
 
         {isFa ? (
           <div className="mt-4 space-y-3">
@@ -173,7 +180,7 @@ export default function NegotiateModal({ row, budget, onClose, onSubmitOffer }) 
 
             <button
               type="button"
-              disabled={faOverBudget || budget <= 0}
+              disabled={faOverBudget}
               onClick={() =>
                 onSubmitOffer(0, {
                   weeklyWage: Math.round(Number(wage) || 0),

@@ -1,3 +1,6 @@
+import { matchCommercials } from './economyBalance.js'
+import { eucsTeamCountry } from '../data/eucsLeagueTeams.js'
+import { addDays, formatISODate } from '../league/seasonCalendar.js'
 /**
  * Struktury klubu (poziomy 1–10) — lekkie modyfikatory + ulepszenia za budżet.
  * Poziomy 1–4: negatywny wpływ (poza sklepikiem), 5 = baseline, 6–10: rosnący plus.
@@ -5,15 +8,10 @@
 
 import { createRng } from '../matchEngine/rng.js'
 import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/clubFinances.js'
-import { getTeamReputation, ensureTeamReputation } from '../models/teamReputation.js'
-import { getPlayerForm } from '../models/playerForm.js'
+import { ensureTeamReputation } from '../models/teamReputation.js'
 import {
   ensureTeamFans,
-  getFanSize,
-  getFanMood,
-  getFanTraits,
 } from '../models/teamFans.js'
-import { SPONSOR_INCOME_BOOST } from './clubSponsors.js'
 import { eucsTeamTier } from '../data/eucsLeagueTeams.js'
 
 export const FACILITY_LEVEL_MIN = 1
@@ -434,7 +432,7 @@ export function facilityUpgradeCost(facilityId, level) {
     scoutingDept: 1.0,
     academy: 1.05,
   }[facilityId] ?? 1
-  const raw = 16_000 * tier * 1.52 ** (lv - 1)
+  const raw = 24_000 * tier * 1.46 ** (lv - 1)
   return Math.round(raw / 1000) * 1000
 }
 
@@ -562,19 +560,19 @@ export function stadiumHomeRatingMult(team) {
 /** Mnożnik jakości sesji treningowej. */
 export function trainingCenterQualityMult(team) {
   const delta = facilityLevelDelta(getFacilityLevel(team, 'trainingCenter'))
-  return 1 + delta * 0.028
+  return (1 + delta * 0.028) * (1 + ((team.staff?.sportingDirector ?? 1) - 1) * 0.015)
 }
 
 /** Mnożnik szansy kontuzji (1 = baseline; wyższy poziom → mniejsza szansa). */
 export function medicalInjuryChanceMult(team) {
   const delta = facilityLevelDelta(getFacilityLevel(team, 'medicalCenter'))
-  return Math.max(0.72, Math.min(1.28, 1 - delta * 0.045))
+  return Math.max(0.72, Math.min(1.28, 1 - delta * 0.045 - ((team.staff?.physio ?? 1) - 1) * 0.025))
 }
 
 /** Mnożnik dziennej regeneracji staminy meczowej (1 = baseline; wyższy poziom → szybszy powrót do formy). */
 export function medicalRecoveryMult(team) {
   const delta = facilityLevelDelta(getFacilityLevel(team, 'medicalCenter'))
-  return Math.max(0.75, Math.min(1.35, 1 + delta * 0.06))
+  return Math.max(0.75, Math.min(1.35, 1 + delta * 0.06 + ((team.staff?.physio ?? 1) - 1) * 0.04))
 }
 
 /** Lekka zmiana morale po treningu (dla obecnych). */
@@ -598,98 +596,62 @@ export function academyIntakeMult(team) {
  * Szacowany / rzeczywisty zysk ze sklepiku po meczu (USD). Nie kosmiczne kwoty.
  * @returns {{ amount: number, breakdown: object }}
  */
-export function computeFanShopMatchRevenue(team, { won = false, isHome = true } = {}) {
-  ensureTeamFacilities(team)
-  ensureTeamFans(team)
-  ensureTeamReputation(team)
-
-  const level = getFacilityLevel(team, 'fanShop')
-  const size = getFanSize(team)
-  const mood = getFanMood(team)
-  const rep = getTeamReputation(team)
-  const traits = getFanTraits(team)
-
-  const players = team?.players ?? []
-  let formSum = 0
-  let formN = 0
-  for (const p of players) {
-    formSum += getPlayerForm(p)
-    formN += 1
-  }
-  const avgForm = formN ? formSum / formN : 70
-
-  // Bazowo ~$120–$900 zależnie od poziomu sklepu (× SPONSOR_INCOME_BOOST — patrz clubSponsors.js).
-  let amount = (90 + level * 70) * SPONSOR_INCOME_BOOST
-  amount *= 0.55 + Math.min(1.35, size / 9_000)
-  amount *= 0.7 + (avgForm / 100) * 0.55
-  amount *= 0.72 + (rep / 100) * 0.5
-  amount *= 0.85 + (mood / 100) * 0.35
-  if (won) amount *= 1.18
-  else amount *= 0.82
-  if (isHome) amount *= 1.22
-  else amount *= 0.55
-
-  if (traits.includes('festive')) amount *= 1.12
-  if (traits.includes('family')) amount *= 1.08
-  if (traits.includes('traditional')) amount *= 1.05
-  if (traits.includes('ultras')) amount *= 1.06
-  if (traits.includes('fickle')) amount *= 0.92
-  if (traits.includes('critical') && !won) amount *= 0.88
-
-  amount = Math.max(40, Math.round(amount / 10) * 10)
-  // Cap — „nie kosmiczne”
-  amount = Math.min(amount, Math.round(4_500 * SPONSOR_INCOME_BOOST))
-
-  return {
-    amount,
-    breakdown: { level, size, mood, rep, avgForm: Math.round(avgForm), won, isHome },
-  }
+export function computeFanShopMatchRevenue(team, options = {}) {
+  ensureTeamFacilities(team); ensureTeamFans(team); ensureTeamReputation(team)
+  const sale = matchCommercials(team, options)
+  return { amount: sale.shirts + sale.merch - sale.shirtCosts - sale.merchCosts, breakdown: sale }
 }
 
-/**
- * Po meczu: dolicza merch do budżetu transferowego.
- * @returns {{ amount: number } | null}
- */
 export function applyFanShopAfterMatch(team, options = {}) {
   if (!team) return null
-  const { amount } = computeFanShopMatchRevenue(team, options)
-  if (amount <= 0) return null
-  adjustTransferBudget(team, amount)
-  if (!team.facilities) ensureTeamFacilities(team)
+  const { amount, breakdown: sale } = computeFanShopMatchRevenue(team, options)
+  adjustTransferBudget(team, sale.shirts, 'shirt_sales')
+  adjustTransferBudget(team, -sale.shirtCosts, 'shirt_production')
+  adjustTransferBudget(team, sale.merch, 'merch_sales')
+  adjustTransferBudget(team, -sale.merchCosts, 'merch_production')
   team.facilities.lastMerchAmount = amount
   team.facilities.lastMerchAt = Date.now()
   return { amount }
 }
 
-/**
- * Koszt wyjazdu / pucharu: liczba zawodników × losowy koszt 100–500$.
- * Ciche odjęcie od budżetu transferowego (bez inbox).
- * @returns {{ amount: number } | null}
- */
-export function applyTravelCostAfterMatch(team, { rng = Math.random } = {}) {
-  if (!team) return null
-  const rosterSize = Math.max(1, (team.players ?? []).length)
-  const perPlayer = 100 + Math.floor((typeof rng === 'function' ? rng() : Math.random()) * 401)
-  const amount = rosterSize * perPlayer
-  if (amount <= 0) return null
-  adjustTransferBudget(team, -amount)
-  if (!team.facilities) ensureTeamFacilities(team)
-  team.facilities.lastTravelCost = amount
-  team.facilities.lastTravelAt = Date.now()
-  return { amount }
+export function computeTravelCost(team, { opponent = null, neutral = false, rng = Math.random } = {}) {
+  const squad = Math.min(24, Math.max(7, (team.players ?? []).length)) + 4
+  const homeCountry = eucsTeamCountry(team.id), destination = opponent && eucsTeamCountry(opponent.id)
+  const international = homeCountry && destination && homeCountry !== destination
+  const base = international ? 420 : homeCountry ? 200 : 360
+  const perPerson = Math.round(base * (0.9 + rng() * 0.2) * (neutral ? 1.15 : 1))
+  return { amount: 700 + squad * perPerson, delegation: squad, perPerson, international: !!international }
 }
 
-/**
- * Po meczu: merch + ewentualny koszt wyjazdu (away liga / obie strony w pucharze).
- */
-export function applyPostMatchFinances(homeTeam, awayTeam, { isCup = false, homeWon = false, awayWon = false, rng = Math.random } = {}) {
-  if (homeTeam) {
-    applyFanShopAfterMatch(homeTeam, { won: homeWon, isHome: true })
-    if (isCup) applyTravelCostAfterMatch(homeTeam, { rng })
-  }
-  if (awayTeam) {
-    applyFanShopAfterMatch(awayTeam, { won: awayWon, isHome: false })
-    applyTravelCostAfterMatch(awayTeam, { rng })
+export function applyTravelCostAfterMatch(team, options = {}) {
+  if (!team) return null
+  const travel = computeTravelCost(team, options)
+  adjustTransferBudget(team, -travel.amount, 'match_travel')
+  ensureTeamFacilities(team)
+  team.facilities.lastTravelCost = travel.amount
+  team.facilities.lastTravelAt = Date.now()
+  return travel
+}
+
+export function applyPostMatchFinances(homeTeam, awayTeam, { isCup = false, homeWon = false, awayWon = false, rng = Math.random, matchId = null, date = null, forfeited = false } = {}) {
+  if (forfeited) return
+  for (const [team, opponent, isHome, won] of [[homeTeam, awayTeam, true, homeWon], [awayTeam, homeTeam, false, awayWon]]) {
+    if (!team) continue
+    ensureTeamFacilities(team)
+    const playedDate = date ?? team.managementDate
+    const season = playedDate ? Number(playedDate.slice(0, 4)) - (Number(playedDate.slice(5, 7)) < 8 ? 1 : 0) : ''
+    const key = matchId == null ? null : `${season}|${matchId}`
+    if (key && team.facilities.settledMatches?.includes(key)) continue
+    if (date) team.managementDate = date
+    applyFanShopAfterMatch(team, { won, isHome, neutral: isCup })
+    const sale = matchCommercials(team, { won, isHome, neutral: isCup })
+    if (isHome) {
+      adjustTransferBudget(team, sale.tickets, 'match_tickets')
+      adjustTransferBudget(team, -sale.matchCosts, 'match_operations')
+    }
+    const travel = !isHome || isCup ? applyTravelCostAfterMatch(team, { opponent, neutral: isCup, rng }).amount : 0
+    team.facilities.lastMatchFinance = { ...sale, travel, date, net: sale.net - travel }
+    if (key) team.facilities.settledMatches = [...(team.facilities.settledMatches ?? []), key].slice(-160)
   }
 }
 
@@ -697,10 +659,12 @@ export function applyPostMatchFinances(homeTeam, awayTeam, { isCup = false, home
  * Ulepsza strukturę o 1 poziom za pieniądze.
  * @returns {{ ok: boolean, error?: string, level?: number, cost?: number, remainingBudget?: number }}
  */
-export function upgradeFacility(team, facilityId) {
+export function upgradeFacility(team, facilityId, { date = team?.managementDate ?? null } = {}) {
   if (!team || !FACILITY_DEFS[facilityId]) {
     return { ok: false, error: 'unknown_facility' }
   }
+  if (team.facilityProject) return { ok: false, error: 'construction_in_progress' }
+  if (!date) return { ok: false, error: 'missing_date' }
   ensureTeamFacilities(team)
   const level = getFacilityLevel(team, facilityId)
   if (level >= FACILITY_LEVEL_MAX) {
@@ -711,11 +675,13 @@ export function upgradeFacility(team, facilityId) {
   if (cost == null || budget < cost) {
     return { ok: false, error: 'insufficient_funds', cost, level, remainingBudget: budget }
   }
-  adjustTransferBudget(team, -cost)
-  team.facilities[facilityId] = level + 1
+  adjustTransferBudget(team, -cost, 'facility_construction', date)
+  team.facilityProject = { facilityId, targetLevel: level + 1, cost, startsOn: date,
+    completesOn: formatISODate(addDays(date, 21 + level * 7)) }
   return {
     ok: true,
-    level: team.facilities[facilityId],
+    level: level + 1,
+    completesOn: team.facilityProject.completesOn,
     cost,
     remainingBudget: getTransferBudget(team),
   }
@@ -758,10 +724,9 @@ export function facilityEffectSummary(facilityId, level, lang = 'pl') {
       : `Morale po treningu ${sign}${(delta * 0.15).toFixed(1)}`
   }
   if (facilityId === 'fanShop') {
-    const est = Math.round((90 + lv * 70) * SPONSOR_INCOME_BOOST)
     return lang === 'en'
-      ? `Merch ~${formatUsd(est)}+ / match (fans/form/rep)`
-      : `Merch ~${formatUsd(est)}+ / mecz (kibice/forma/rep)`
+      ? `Shirt demand +${lv * 9}%; merchandise sales depend on attendance`
+      : `Popyt na koszulki +${lv * 9}%; sprzedaż gadżetów zależy od frekwencji`
   }
   return ''
 }

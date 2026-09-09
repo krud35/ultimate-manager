@@ -1,3 +1,5 @@
+import { postTransferCash, canAffordContract } from '../clubEconomy.js'
+import { syncLoanFinancialCommitments, contractualWeeklyBill, ensureClubEconomy } from '../clubEconomy.js'
 /**
  * Wypożyczenia zawodników — tymczasowe przeniesienie do innego klubu.
  *
@@ -114,6 +116,10 @@ export function startLoan(career, {
     }
   }
 
+  if ((destinationTeam.players?.length ?? 0) >= 32) return { ok: false, error: 'Limit 32 seniorów / Senior roster limit' }
+  const f = ensureClubEconomy(destinationTeam)
+  const loanWage = Math.round((found.player.contract?.weeklyWage ?? 0) * Math.max(0, Math.min(100, Number(wageSplitPct) || 0)) / 100)
+  if (contractualWeeklyBill(destinationTeam) + loanWage > f.weeklyWageLimit) return { ok: false, error: 'Przekroczony limit płac / Weekly wage limit exceeded' }
   const feeAmount = Math.max(0, Math.round(Number(fee) || 0))
   if (!canBuyPlayers(destinationTeam) && feeAmount > 0) {
     return { ok: false, error: 'Klub docelowy nie ma budżetu na opłatę wypożyczenia' }
@@ -129,6 +135,8 @@ export function startLoan(career, {
     customDate: customReturnDate,
   })
   if (!returnDate) return { ok: false, error: 'Nie udało się wyliczyć daty powrotu' }
+  const affordableLoan = canAffordContract(destinationTeam, found.player, loanWage, { fee: feeAmount, date: today, until: returnDate, weeksRemaining: found.player.contract?.weeksRemaining ?? 0 })
+  if (!affordableLoan.ok) return affordableLoan
 
   const [moved] = parentTeam.players.splice(found.index, 1)
   if (!moved) return { ok: false, error: 'Nie udało się przenieść zawodnika' }
@@ -160,8 +168,8 @@ export function startLoan(career, {
   }
   moved.loan = loan
 
-  adjustTransferBudget(destinationTeam, -feeAmount)
-  adjustTransferBudget(parentTeam, +feeAmount)
+  postTransferCash(destinationTeam, -feeAmount)
+  postTransferCash(parentTeam, +feeAmount)
 
   ensureWorldLoans(world)
   world.activeLoans.push({
@@ -180,6 +188,7 @@ export function startLoan(career, {
     status: 'active',
   })
 
+  syncLoanFinancialCommitments(world)
   const loanLogEntry = {
     id: loan.id,
     kind: 'started',
@@ -249,6 +258,7 @@ export function returnLoanedPlayer(career, { playerId }) {
     involvesPlayer: parentTeam.id === career.playerTeamId || destinationTeam.id === career.playerTeamId,
   }
 
+  syncLoanFinancialCommitments(world)
   return { ok: true, world, loanLogEntry, player: moved, parentTeam, destinationTeam }
 }
 
@@ -309,8 +319,10 @@ export function resolveLoanBuyClause(career, { playerId, decision, triggeredBy =
   if (!auto.ok || !auto.terms) {
     return { ok: false, error: 'Zawodnik nie zgodził się na warunki kontraktu' }
   }
-  const preview = previewContractOffer(auto.terms.weeklyWage, auto.terms.years)
-  if (fee + preview.totalCost > budget) {
+  const preview = previewContractOffer(auto.terms.weeklyWage, auto.terms.years, destinationTeam)
+  const affordability = canAffordContract(destinationTeam, found.player, preview.weeklyWage, { fee, date: career.league?.currentDate, weeksRemaining: preview.weeks })
+  if (!affordability.ok) return affordability
+  if (fee > budget) {
     return { ok: false, error: 'Niewystarczający budżet na wykup i kontrakt' }
   }
 
@@ -325,16 +337,16 @@ export function resolveLoanBuyClause(career, { playerId, decision, triggeredBy =
     : null
   const sellerRefund = clearPlayerContractOnExit(parentTeam, found.player)
 
-  adjustTransferBudget(destinationTeam, -fee)
-  adjustTransferBudget(parentTeam, +fee)
+  postTransferCash(destinationTeam, -fee)
+  postTransferCash(parentTeam, +fee)
 
   const signed = signPlayerContract(destinationTeam, found.player, {
     ...auto.terms,
     signedDate: career.league?.currentDate ?? null,
   })
   if (!signed.ok) {
-    adjustTransferBudget(destinationTeam, +fee)
-    adjustTransferBudget(parentTeam, -fee)
+    postTransferCash(destinationTeam, +fee)
+    postTransferCash(parentTeam, -fee)
     if (previousContract) {
       found.player.contract = previousContract
       if (sellerRefund > 0) {
@@ -521,8 +533,8 @@ export function evaluateLoanBuyClauseAiDecision({ player, destinationTeam, buyCl
 /**
  * Klub docelowy (AI) ocenia propozycję wzięcia zawodnika na wypożyczenie.
  */
-export function evaluateLoanOffer({ player, destinationTeam, fee, wageSplitPct, buyClause, seed = null }) {
-  const target = classifyTransferTarget(player, destinationTeam)
+export function evaluateLoanOffer({ player, destinationTeam, fee, wageSplitPct, buyClause, seed = null, buyerAvg = null }) {
+  const target = classifyTransferTarget(player, destinationTeam, buyerAvg)
   const value = getPlayerMarketValue(player)
   const policy = getTransferPolicy(destinationTeam)
   const rng = seed == null ? createRng(null) : createRng(hashSeed(`${seed}|loan-in`))

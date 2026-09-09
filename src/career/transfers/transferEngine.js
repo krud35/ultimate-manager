@@ -1,3 +1,4 @@
+import { postTransferCash, canAffordContract } from '../clubEconomy.js'
 /**
  * Silnik transferów: listing rynku, wykonanie transferu, log.
  */
@@ -334,6 +335,7 @@ export function completeTransferBetweenClubs(career, opts) {
   ensureWorldFinances(world)
   ensurePlayerContract(found.player)
 
+  if ((buyer.players?.length ?? 0) >= 32) return { ok: false, error: 'Limit 32 seniorów / Senior roster limit' }
   // Warunki nowego kontraktu — wymagane przy transferze (AI podaje auto-terms).
   let contractTerms = opts.contract ?? null
   if (!contractTerms) {
@@ -349,15 +351,16 @@ export function completeTransferBetweenClubs(career, opts) {
     contractTerms = auto.terms
   }
 
-  const preview = previewContractOffer(contractTerms.weeklyWage, contractTerms.years)
-  const contractCost = preview.totalCost
+  const preview = previewContractOffer(contractTerms.weeklyWage, contractTerms.years, buyer)
+  const affordability = canAffordContract(buyer, found.player, preview.weeklyWage, { fee, date: career.league?.currentDate, weeksRemaining: preview.weeks })
+  if (!affordability.ok) return affordability
   const budget = getTransferBudget(buyer)
-  if (!canBuyPlayers(buyer) || fee + contractCost > budget) {
+  if (!canBuyPlayers(buyer) || fee > budget) {
     return {
       ok: false,
       error: !canBuyPlayers(buyer)
         ? 'Ujemny lub zerowy budżet — nie można kupować zawodników'
-        : `Niewystarczający budżet (transfer ${formatUsd(fee)} + kontrakt ${formatUsd(contractCost)}; dostępne ${formatUsd(budget)})`,
+        : `Niewystarczający budżet (transfer ${formatUsd(fee)}; dostępne ${formatUsd(budget)})`,
     }
   }
 
@@ -389,8 +392,8 @@ export function completeTransferBetweenClubs(career, opts) {
   buyer.players.push(moved)
   reseedLoyaltyForNewClub(moved)
 
-  adjustTransferBudget(buyer, -fee)
-  adjustTransferBudget(found.team, +fee)
+  postTransferCash(buyer, -fee)
+  postTransferCash(found.team, +fee)
 
   const signed = signPlayerContract(buyer, moved, {
     ...contractTerms,
@@ -400,8 +403,8 @@ export function completeTransferBetweenClubs(career, opts) {
     // Rollback: zawodnik wraca, budżety i stary kontrakt.
     buyer.players.pop()
     found.team.players.splice(found.index, 0, moved)
-    adjustTransferBudget(buyer, +fee)
-    adjustTransferBudget(found.team, -fee)
+    postTransferCash(buyer, +fee)
+    postTransferCash(found.team, -fee)
     if (previousContract) {
       moved.contract = previousContract
       if (sellerRefund > 0) {
@@ -414,6 +417,7 @@ export function completeTransferBetweenClubs(career, opts) {
     return { ok: false, error: signed.error ?? 'Nie udało się podpisać kontraktu' }
   }
 
+  moved.lastTransferDate = career.league?.currentDate ?? null
   const window = getTransferWindowState(career)
   const involvesPlayer =
     buyerId === career.playerTeamId || found.team.id === career.playerTeamId
@@ -437,7 +441,8 @@ export function completeTransferBetweenClubs(career, opts) {
     marketValue: getPlayerMarketValue(moved),
     weeklyWage: signed.contract.weeklyWage,
     contractYears: signed.contract.years,
-    contractCost,
+    contractCost: preview.totalCost,
+    requiredCashReserve: preview.requiredCash,
     involvesPlayer,
     isAiDeal,
   }
@@ -586,14 +591,16 @@ export function negotiatePlayerContract(career, opts) {
   }
 
   const fee = Math.max(0, Math.round(Number(opts.fee) || 0))
-  const preview = previewContractOffer(opts.weeklyWage, opts.years)
+  const preview = previewContractOffer(opts.weeklyWage, opts.years, buyer)
+  const affordability = canAffordContract(buyer, found.player, preview.weeklyWage, { fee, date: career.league?.currentDate, weeksRemaining: preview.weeks })
+  if (!affordability.ok) return affordability
   const budget = getTransferBudget(buyer)
-  if (!canBuyPlayers(buyer) || fee + preview.totalCost > budget) {
+  if (!canBuyPlayers(buyer) || fee > budget) {
     return {
       ok: false,
       error: !canBuyPlayers(buyer)
         ? 'Ujemny lub zerowy budżet — nie można kupować zawodników'
-        : `Brak środków (transfer ${formatUsd(fee)} + kontrakt ${formatUsd(preview.totalCost)}; budżet ${formatUsd(budget)})`,
+        : `Brak środków (transfer ${formatUsd(fee)}; budżet ${formatUsd(budget)})`,
     }
   }
 

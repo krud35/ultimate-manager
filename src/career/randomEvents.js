@@ -1,3 +1,5 @@
+import { eventFinanceScale } from './economyBalance.js'
+import { availableClubCash } from './clubEconomy.js'
 /**
  * Losowe eventy decyzyjne w skrzynce odbiorczej.
  * Efekty (morale / forma / budżet) są w szablonach — resolver czyta templateId + choiceId.
@@ -39,7 +41,7 @@ const SPAWN_CHANCE = 0.26
 /** Support both the released escrow economy and cash-ledger saves. */
 function availableEventFunds(team) {
   return team?.finances?.economyVersion >= 2 && Number.isFinite(team.finances.cash)
-    ? team.finances.cash : getTransferBudget(team)
+    ? availableClubCash(team) : getTransferBudget(team)
 }
 
 function newMessageId(prefix = 'msg') {
@@ -4553,9 +4555,21 @@ function templateById(id) {
   )
 }
 
+export function scaleEventMoneyText(text, scale = 1) {
+  if (typeof text !== 'string' || scale === 1) return text
+  return text.replace(/([$€])(\d[\d.,]*)([kM])?|(\d[\d.\u00a0 ]*)\s*€/g, (_m, symbol, digits, suffix, euros) => {
+    const number = suffix ? Number(digits.replace(',', '.')) * (suffix === 'M' ? 1000000 : 1000) : Number((digits ?? euros).replace(/[.,\s\u00a0]/g, ''))
+    return formatUsd(Math.round(number * scale))
+  })
+}
+function balancedEventChoices(template, context) {
+  return localizeEventChoices(template.id, template.choices(context)).map(c => Object.fromEntries(
+    Object.entries(c).map(([k,v]) => [k, k === 'id' ? v : scaleEventMoneyText(v, context.financeScale ?? 1)])))
+}
+
 export function currentRandomEventChoices(templateId, context = {}) {
   const template = templateById(templateId)
-  return template ? localizeEventChoices(templateId, template.choices(context)) : []
+  return template ? balancedEventChoices(template, context) : []
 }
 
 /** Runtime EN title for saved messages that lack titleEn. */
@@ -4632,8 +4646,9 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
 
   const ctx = template.pickContext(team.players, rand, team)
   if (!ctx) return null
+  ctx.financeScale = eventFinanceScale(team)
 
-  const choices = localizeEventChoices(template.id, template.choices(ctx))
+  const choices = balancedEventChoices(template, ctx)
   if (!choices?.length) return null
 
   const bodyEn =
@@ -4649,9 +4664,9 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
     seasonYear: career.seasonYear ?? null,
     read: false,
     title: template.title(ctx),
-    body: template.body(ctx),
+    body: scaleEventMoneyText(template.body(ctx), ctx.financeScale ?? 1),
     ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
-    ...(bodyEn ? { bodyEn } : {}),
+    ...(bodyEn ? { bodyEn: scaleEventMoneyText(bodyEn, ctx.financeScale ?? 1) } : {}),
     payload: {
       kind: 'decision',
       templateId: template.id,
@@ -4668,7 +4683,7 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
  * więc nie trzeba (i nie da się) wywołać `pickContext`.
  */
 function buildDecisionMessage(template, ctx, { date, seasonIndex = null, seasonYear = null } = {}) {
-  const choices = localizeEventChoices(template.id, template.choices(ctx))
+  const choices = balancedEventChoices(template, ctx)
   if (!choices?.length) return null
 
   const bodyEn =
@@ -4684,9 +4699,9 @@ function buildDecisionMessage(template, ctx, { date, seasonIndex = null, seasonY
     seasonYear,
     read: false,
     title: template.title(ctx),
-    body: template.body(ctx),
+    body: scaleEventMoneyText(template.body(ctx), ctx.financeScale ?? 1),
     ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
-    ...(bodyEn ? { bodyEn } : {}),
+    ...(bodyEn ? { bodyEn: scaleEventMoneyText(bodyEn, ctx.financeScale ?? 1) } : {}),
     payload: {
       kind: 'decision',
       templateId: template.id,
@@ -4773,8 +4788,9 @@ export function pickPostMatchEventMessage(career, { fixture = null, record = nul
 
   const ctx = contexts.get(template.id)
   if (!ctx) return null
+  ctx.financeScale = eventFinanceScale(team)
 
-  const choices = localizeEventChoices(template.id, template.choices(ctx))
+  const choices = balancedEventChoices(template, ctx)
   if (!choices?.length) return null
 
   const bodyEn = typeof template.bodyEn === 'function' ? template.bodyEn(ctx) : null
@@ -4788,9 +4804,9 @@ export function pickPostMatchEventMessage(career, { fixture = null, record = nul
     seasonYear: career.seasonYear ?? null,
     read: false,
     title: template.title(ctx),
-    body: template.body(ctx),
+    body: scaleEventMoneyText(template.body(ctx), ctx.financeScale ?? 1),
     ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
-    ...(bodyEn ? { bodyEn } : {}),
+    ...(bodyEn ? { bodyEn: scaleEventMoneyText(bodyEn, ctx.financeScale ?? 1) } : {}),
     payload: {
       kind: 'decision',
       templateId: template.id,
@@ -4871,8 +4887,10 @@ export function applyRandomEventChoice(career, messageId, choiceId) {
   if (resolved.effects?.some(fx => fx.type === 'recover') && !findPlayer(liveTeam?.players, targetId)?.injury) {
     resolved = { effects: [], summary: 'Zawodnik jest już zdrowy. Nie naliczono opłaty za dodatkowe leczenie.', summaryEn: 'The player has already recovered. No additional treatment fee was charged.' }
   }
-  const { effects, summary } = resolved
-  const summaryEn = resolved.summaryEn ?? summary
+  const scale = ctx.financeScale ?? 1
+  const effects = (resolved.effects ?? []).map(fx => fx.type === 'budget' ? { ...fx, delta: Math.round(fx.delta * scale) } : fx)
+  const summary = scaleEventMoneyText(resolved.summary, scale)
+  const summaryEn = scaleEventMoneyText(resolved.summaryEn ?? resolved.summary, scale)
 
   const world = structuredClone(career.world)
   const team = worldTeamById(world, career.playerTeamId)
@@ -4938,7 +4956,7 @@ export function applyRandomEventChoice(career, messageId, choiceId) {
       {
         id: newMessageId('followup'),
         templateId: resolved.followUp.templateId,
-        ctx: resolved.followUp.ctx ?? ctx,
+        ctx: { ...(resolved.followUp.ctx ?? ctx), financeScale: ctx.financeScale ?? 1 },
         dueDate,
         seasonIndex: career.seasonIndex ?? null,
         seasonYear: career.seasonYear ?? null,

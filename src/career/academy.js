@@ -1,3 +1,5 @@
+import { ensureYouthCohort, clubYouthCountry, claimRegionalYouth, youthWillJoin } from './youthPopulation.js'
+import { getTransferBudget, adjustTransferBudget } from './transfers/clubFinances.js'
 /**
  * Akademia U21: własna pula prospektów per drużyna, zamiast dawnego jednorazowego
  * dosypywania wolnych agentów po emeryturach (youthIntake.js).
@@ -31,7 +33,7 @@ import { AI_ROSTER_HARD_CAP, ensureWorldFreeAgents, PLAYER_STATUS } from './tran
 import { refreshPlayerMarketValue } from './transfers/playerValue.js'
 import { aiAutoPlayerContractTerms } from './transfers/playerNegotiation.js'
 import { signPlayerContract, weeklyWageFromOvr } from './transfers/playerContracts.js'
-import { academyIntakeMult, getFacilityLevel } from './clubFacilities.js'
+import { getFacilityLevel } from './clubFacilities.js'
 import { worldTeamsList } from './worldState.js'
 import { eucsTeamCountry } from '../data/eucsLeagueTeams.js'
 import {
@@ -126,14 +128,34 @@ export function ensureTeamAcademyCandidates(team) {
 }
 
 /** Sprowadza obserwowanego kandydata do akademii (bez kontraktu — jak nabór organiczny). */
-export function signAcademyCandidate(team, candidateId) {
+export function academyCapacity(team) { return 8 + 2 * getFacilityLevel(team, 'academy') }
+export function academyAnnualPlaces(team) { return 3 + Math.floor(getFacilityLevel(team, 'academy') / 3) }
+export function academyRecruitmentCost(player) { return Math.round(4000 + Math.max(0, (player.potential ?? 65) - 60) * 400) }
+
+export function signAcademyCandidate(team, candidateId, { world = null, seasonYear = null } = {}) {
   if (!team) return { ok: false, error: 'missing_team' }
-  const candidates = ensureTeamAcademyCandidates(team)
-  const idx = candidates.findIndex((p) => p.id === candidateId)
-  if (idx < 0) return { ok: false, error: 'not_a_candidate' }
-  const [candidate] = candidates.splice(idx, 1)
-  ensureTeamAcademy(team).push(candidate)
-  return { ok: true, player: candidate }
+  const candidate = ensureTeamAcademyCandidates(team).find(p => p.id === candidateId)
+    ?? world?.regionalYouth?.find(p => p.id === candidateId)
+  if (!candidate || (candidate.offerExpires && team.managementDate > candidate.offerExpires)) return { ok: false, error: 'unavailable' }
+  if (ensureTeamAcademy(team).length >= academyCapacity(team)) return { ok: false, error: 'academy_full' }
+  const year = seasonYear ?? world?.templateSeasonYear ?? candidate.cohortYear ?? 2025
+  if (team.academyAdmissionYear !== year) { team.academyAdmissionYear = year; team.academyAdmissions = 0 }
+  if ((team.academyAdmissions ?? 0) >= academyAnnualPlaces(team)) return { ok: false, error: 'annual_limit' }
+  if (candidate.age >= ACADEMY_AGE_OUT) return { ok: false, error: 'too_old' }
+  if (candidate.regionalYouth && (!world || !world.regionalYouth?.some(p => p.id === candidateId))) return { ok: false, error: 'unavailable' }
+  if (!youthWillJoin(team, candidate)) return { ok: false, error: 'declined' }
+  const cost = academyRecruitmentCost(candidate)
+  if (getTransferBudget(team) < cost) return { ok: false, error: 'insufficient_funds' }
+  const player = candidate.regionalYouth ? claimRegionalYouth(world, candidateId) : candidate
+  team.academyCandidates = ensureTeamAcademyCandidates(team).filter(p => p.id !== candidateId)
+  player.inAcademy = true
+  player.status = PLAYER_STATUS.ACADEMY
+  player.academyJoinedSeason = year
+  player.academySource = candidate.observationOnly ? 'scouted' : 'intake'
+  ensureTeamAcademy(team).push(player)
+  team.academyAdmissions = (team.academyAdmissions ?? 0) + 1
+  adjustTransferBudget(team, -cost, 'academy_recruitment')
+  return { ok: true, player, cost }
 }
 
 /** Kończy obserwację kandydata bez sprowadzania go do akademii. */
@@ -169,21 +191,13 @@ export function worldAcademyPlayersList(world) {
  * "przeciętnego" kandydata zawsze dominuje, ale silne kraje wyraźnie podnoszą szansę na
  * pasmo "gwiazda" (i odwrotnie dla słabych krajów).
  */
-function rollProspectOvrBand(rng, { intakeMult = 1, source = 'intake', countryStrength = 50 } = {}) {
-  const shift = Math.round((intakeMult - 1) * 10)
-  const scoutBonus = source === 'scouted' ? 4 : 0
-  const s = countryStrength / 100
-  const starChance = Math.max(0.03, Math.min(0.35, 0.08 + s * 0.22))
-  const midChance = Math.max(0.15, Math.min(0.5, 0.3 + s * 0.15))
+function rollProspectOvrBand(rng, { countryStrength = 50 } = {}) {
   const r = rng()
-  let band
-  if (r < starChance) band = { min: 72, max: 82 }
-  else if (r < starChance + midChance) band = { min: 66, max: 76 }
-  else band = { min: 58, max: 70 } // większość rolli — pasmo "przeciętny"
-  return {
-    min: Math.max(40, band.min + shift + scoutBonus),
-    max: Math.max(45, band.max + shift + scoutBonus),
-  }
+  // Ready-made elite teenagers are exceptional. Geography changes frequency, not a free OVR bonus.
+  // The shared attribute model has a minimum OVR of 67 after normalization.
+  if (r < 0.003 + countryStrength / 10000) return { min: 78, max: 80 }
+  if (r < 0.15 + countryStrength / 1000) return { min: 73, max: 76 }
+  return { min: 67, max: 72 }
 }
 
 /** Podbija tier sub-statu proporcjonalnie do wagi profilu poszukiwanego zawodnika
@@ -260,36 +274,23 @@ export function createAcademyProspect(rng, { seasonYear, teamId, source = 'intak
  * Pełna parytet AI: każda drużyna w lidze dostaje własnych prospektów.
  * @returns {{ createdByTeam: Record<string, number>, created: object[] }}
  */
-export function runAcademyIntake(world, { seasonYear, seed } = {}) {
+export function runAcademyIntake(world, { seasonYear } = {}) {
   ensureWorldAcademy(world)
-  const createdByTeam = {}
-  const created = []
-
+  ensureYouthCohort(world, seasonYear)
+  const createdByTeam = {}, created = []
   for (const team of worldTeamsList(world)) {
-    const pool = ensureTeamAcademy(team)
-    const mult = academyIntakeMult(team)
-    // Baza podniesiona (dawniej 1 + poziom/4) — nabór organiczny był głównym wąskim
-    // gardłem, przez które liga traciła ~16% zawodników w 5 sezonów (emerytury nie
-    // miały skąd być odbudowywane, patrz ROSTER_STABILIZE_TARGET w careerModel.js).
-    const baseCount = 2 + Math.floor(getFacilityLevel(team, 'academy') / 3)
-    const count = Math.max(0, Math.round(baseCount * Math.min(2, Math.max(0.35, mult))))
-    if (count <= 0) continue
-
-    const rng = mulberry32(hashSeed(seed ?? seasonYear ?? 0, 'academy-intake', team.id))
-    for (let i = 0; i < count; i += 1) {
-      const prospect = createAcademyProspect(rng, {
-        seasonYear,
-        teamId: team.id,
-        source: 'intake',
-        intakeMult: mult,
-        index: i,
-      })
-      pool.push(prospect)
-      created.push(prospect)
+    const country = clubYouthCountry(team)
+    const pool = [...(world.regionalYouth ?? [])].sort((a, b) =>
+      Number(b.academyCountry === country) - Number(a.academyCountry === country) || (b.potential ?? 0) - (a.potential ?? 0))
+    let count = 0
+    for (const candidate of pool) {
+      if (count >= Math.min(2, academyAnnualPlaces(team)) || ensureTeamAcademy(team).length >= academyCapacity(team)) break
+      const result = signAcademyCandidate(team, candidate.id, { world, seasonYear })
+      if (result.ok) { count++; created.push(result.player) }
+      else if (['annual_limit', 'insufficient_funds'].includes(result.error)) break
     }
     createdByTeam[team.id] = count
   }
-
   return { createdByTeam, created }
 }
 
@@ -309,18 +310,28 @@ function moveAcademyPlayerToFreeAgency(team, player, world) {
 }
 
 /**
- * Starzy cały pool akademii o rok (nie jest objęty `ageWorldPlayersOneYear`, bo ten
- * iteruje tylko `team.players`), po czym zwalnia 21-latków z drużyny gracza na wolny
- * rynek. Drużyny AI są obsłużone osobno w `runAiAcademyPromotionPass`.
+ * Zwalnia 21-latków i kończy obserwację kandydatów, którzy wyrośli z akademii.
+ * Cykl sezonu starzy cały świat wcześniej i przekazuje agePlayers: false.
+ * Domyślne starzenie pozostaje dla samodzielnych wywołań i starszych narzędzi.
  */
-export function sweepAgedOutAcademyPlayers(world, { playerTeamId } = {}) {
+export function sweepAgedOutAcademyPlayers(world, { playerTeamId, agePlayers = true } = {}) {
   ensureWorldAcademy(world)
   ensureWorldFreeAgents(world)
   const releasedToFreeAgency = []
 
   for (const team of worldTeamsList(world)) {
     const pool = ensureTeamAcademy(team)
-    for (const p of pool) p.age = (p.age ?? ACADEMY_JOIN_AGE_MIN) + 1
+    if (agePlayers) {
+      for (const p of [...pool, ...ensureTeamAcademyCandidates(team)]) p.age = (p.age ?? ACADEMY_JOIN_AGE_MIN) + 1
+    }
+    const candidates = ensureTeamAcademyCandidates(team)
+    team.academyCandidates = candidates.filter(p => p.age < ACADEMY_AGE_OUT)
+    for (const p of candidates.filter(p => p.age >= ACADEMY_AGE_OUT)) {
+      p.status = PLAYER_STATUS.FREE_AGENT
+      p.inAcademy = false
+      p.contract = null
+      world.freeAgents.push(p)
+    }
     if (team.id !== playerTeamId) continue
 
     const agedOut = pool.filter((p) => p.age >= ACADEMY_AGE_OUT)
@@ -361,7 +372,7 @@ export function runAiAcademyPromotionPass(world, { playerTeamId, seed = 1, leagu
       const ovr = getOverallRating(prospect.skills)
       const agedOut = prospect.age >= ACADEMY_AGE_OUT
       const rosterHasRoom = (team.players?.length ?? 0) < AI_ROSTER_HARD_CAP
-      const worthPromoting = (prospect.potential ?? ovr) >= seniorAvg - 4 || ovr >= seniorAvg - 6
+      const worthPromoting = prospect.age >= 18 && ovr >= seniorAvg - 6
       const promotionChance = agedOut ? 0.85 : 0.3
 
       if (rosterHasRoom && worthPromoting && roll < promotionChance) {
@@ -390,6 +401,7 @@ export function promoteAcademyPlayer(team, playerId, { league = null } = {}) {
   const idx = pool.findIndex((p) => p.id === playerId)
   if (idx < 0) return { ok: false, error: 'not_in_academy' }
   const player = pool[idx]
+  if ((team.players?.length ?? 0) >= AI_ROSTER_HARD_CAP) return { ok: false, error: 'roster_full' }
 
   const auto = aiAutoPlayerContractTerms({
     player,
@@ -403,14 +415,15 @@ export function promoteAcademyPlayer(team, playerId, { league = null } = {}) {
   }
   // Pierwszy profesjonalny kontrakt — niska pensja niezależnie od realnego OVR
   // (rookie jeszcze nic nie udowodnił w seniorach, nie ma siły przetargowej gwiazdy).
-  const rookieOvr = Math.min(getOverallRating(player.skills), ROOKIE_WAGE_OVR_CAP)
-  const terms = { ...auto.terms, weeklyWage: Math.round(weeklyWageFromOvr(rookieOvr)) }
+  const rookieOvr = getOverallRating(player.skills)
+  const terms = { ...auto.terms, years: 1, weeklyWage: Math.round(weeklyWageFromOvr(rookieOvr) * 0.85) }
   const signed = signPlayerContract(team, player, { ...terms, signedDate: null })
   if (!signed.ok) return { ok: false, error: signed.error ?? 'contract_failed' }
 
   pool.splice(idx, 1)
   player.status = PLAYER_STATUS.ACTIVE
   player.inAcademy = false
+  if (team.boardObjective) team.boardObjective.graduates = (team.boardObjective.graduates ?? 0) + 1
   team.players = team.players ?? []
   team.players.push(player)
   refreshPlayerMarketValue(player)

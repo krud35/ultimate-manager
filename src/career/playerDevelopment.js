@@ -1,3 +1,4 @@
+import { ageRegionalYouth } from './youthPopulation.js'
 /**
  * Rozwój zawodników: wiek, potencjał, trening, zmęczenie treningowe, decline 30+.
  * Dotyczy całego świata (gracz + AI).
@@ -599,18 +600,24 @@ export function applyWeeklyDevelopment(league, options = {}) {
 }
 
 /**
- * +1 rok dla całego świata (koniec sezonu).
+ * +1 rok dla wszystkich aktywnych populacji (seniorzy, akademia, kandydaci, FA).
  * @returns {number} liczba zawodników
  */
 export function ageWorldPlayersOneYear(world) {
   let aged = 0
-  for (const team of worldTeamsList(world)) {
-    for (const player of team.players ?? []) {
-      ensurePlayerDevelopment(player)
-      player.age = (player.age ?? 25) + 1
-      aged += 1
-    }
+  const seen = new Set()
+  const pools = worldTeamsList(world).flatMap(team => [
+    team.players ?? [], team.academyPlayers ?? [], team.academyCandidates ?? [],
+  ])
+  pools.push(world.freeAgents ?? [])
+  for (const player of pools.flat()) {
+    if (player.observationOnly || seen.has(String(player.id))) continue
+    seen.add(String(player.id))
+    ensurePlayerDevelopment(player)
+    player.age = (player.age ?? 25) + 1
+    aged += 1
   }
+  ageRegionalYouth(world)
   return aged
 }
 

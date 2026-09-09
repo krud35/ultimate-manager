@@ -25,6 +25,8 @@ import { getPlayerFullName, getOverallRating } from '../data/mockPlayers'
 import { attributeBandLabel, attributeBandToneClass } from '../ui/fogOfWar'
 import { scoutingStrings } from '../ui/strings/scouting'
 import { BoxScoreTable } from './BoxScoreTable'
+import ClubWelcomeMessage from './ClubWelcomeMessage.jsx'
+import { welcomeForMessage } from '../career/clubWelcome.js'
 
 function findWorldPlayer(world, playerId) {
   return findWorldPlayerById(world, playerId).player
@@ -896,6 +898,7 @@ function MessageDetail({
     p.status === 'resolved'
 
   const displayMessage = enrichRandomEventMessage(message)
+  const welcome = useMemo(() => welcomeForMessage(message, career), [message, career])
   const displayChoices = pendingDecision
     ? currentRandomEventChoices(p.templateId, p.context)
     : p.choices
@@ -922,9 +925,9 @@ function MessageDetail({
         <h3 className="mt-2 text-lg font-semibold text-ufa-text">
           {pickCopy(displayMessage, 'title', lang)}
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-ufa-muted">
+        {welcome ? <ClubWelcomeMessage welcome={welcome} lang={lang} /> : <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ufa-muted">
           {pickCopy(displayMessage, 'body', lang)}
-        </p>
+        </p>}
       </div>
 
       {message.type === INBOX_TYPES.TRAINING_REPORT && p.report && (

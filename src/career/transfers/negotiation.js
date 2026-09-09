@@ -24,15 +24,14 @@ import { getTransferPolicy } from './clubFinances.js'
  * - veteran: starszy, tańszy względem OVR, mniejsza perspektywa
  * - quality: klasyczny upgrade / depth
  */
-export function classifyTransferTarget(player, buyerTeam = null) {
-  const ovr = getOverallRating(player?.skills)
+export function classifyTransferTarget(player, buyerTeam = null, precomputedBuyerAvg = null, ovr = getOverallRating(player?.skills)) {
   const age = Number.isFinite(player?.age) ? player.age : 25
   const pot = Number.isFinite(player?.potential) ? player.potential : ovr
   const room = Math.max(0, pot - ovr)
 
-  let buyerAvg = null
+  let buyerAvg = precomputedBuyerAvg
   const buyers = buyerTeam?.players ?? []
-  if (buyers.length) {
+  if (buyers.length && buyerAvg == null) {
     let sum = 0
     for (const p of buyers) sum += getOverallRating(p.skills)
     buyerAvg = sum / buyers.length
@@ -123,8 +122,7 @@ export const TRANSFER_LIST_ACCEPT_BONUS = 0.12
  * @param {number|null} [precomputedRank] — ranking OVR z `buildOvrRankMap`; podaj
  *   go w pętli po składzie, inaczej każdy zawodnik sortuje skład od nowa.
  */
-export function computeAskPrice(player, sellerTeam, precomputedRank = null) {
-  const value = getPlayerMarketValue(player)
+export function computeAskPrice(player, sellerTeam, precomputedRank = null, value = getPlayerMarketValue(player)) {
   const policy = getTransferPolicy(sellerTeam)
   const rank =
     Number.isFinite(precomputedRank) && precomputedRank >= 0
@@ -200,11 +198,11 @@ function mixSeed(seed) {
  *   rank: number,
  * }}
  */
-export function evaluateBuyOffer({ player, sellerTeam, offerAmount, seed = null }) {
+export function evaluateBuyOffer({ player, sellerTeam, offerAmount, seed = null, precomputedRank = null }) {
   const offer = Math.max(0, Math.round(Number(offerAmount) || 0))
   const policy = getTransferPolicy(sellerTeam)
-  const ask = computeAskPrice(player, sellerTeam)
-  const rank = playerOvrRank(sellerTeam.players, player.id)
+  const rank = precomputedRank ?? playerOvrRank(sellerTeam.players, player.id)
+  const ask = computeAskPrice(player, sellerTeam, rank)
   const rosterSize = sellerTeam.players?.length ?? 1
   const chance = acceptanceChance({
     offer,

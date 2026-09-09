@@ -1,10 +1,10 @@
+import ClubManagementPanel from './ClubManagementPanel.jsx'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useUiLang } from '../ui/UiLangContext'
 import { clubBoardStrings } from '../ui/strings/clubBoard'
 import {
   formatUsd,
   getTransferBudget,
-  getSalaryBudget,
   worldTeamById,
   ensureTeamFacilities,
   ensureTeamSponsors,
@@ -28,13 +28,12 @@ import {
   brandDisplayName,
   describeSponsorOfferTotals,
   SPONSOR_SLOTS,
-  supersedeSponsorOfferMessages,
 } from '../career'
 
 function FacilityCard({ team, facilityId, budget, lang, t, busy, onUpgrade }) {
   const level = getFacilityLevel(team, facilityId)
   const cost = facilityUpgradeCost(facilityId, level)
-  const canUpgrade = cost != null && budget >= cost && !busy
+  const canUpgrade = cost != null && budget >= cost && !busy && !team.facilityProject
   const name = facilityName(facilityId, lang)
 
   return (
@@ -226,9 +225,6 @@ export default function ClubBoardView({ career, onChange }) {
   }, [team, career?.seasonYear])
 
   const budget = team ? getTransferBudget(team) : 0
-  const salaryBudget = team ? getSalaryBudget(team) : 0
-  const lastMerch = team?.facilities?.lastMerchAmount
-  const lastTravel = team?.facilities?.lastTravelCost
 
   const handleSponsorChanged = (result) => {
     if (result?.ok) {
@@ -255,10 +251,10 @@ export default function ClubBoardView({ career, onChange }) {
   const handleUpgrade = (facilityId) => {
     if (!team || busy) return
     setBusy(true)
-    const result = upgradeFacility(team, facilityId)
+    const result = upgradeFacility(team, facilityId, { date: career.league.currentDate })
     setBusy(false)
     if (result.ok) {
-      persist(t.upgraded(facilityName(facilityId, lang), result.level))
+      persist(`${lang === 'en' ? 'Construction scheduled until' : 'Budowa potrwa do'} ${result.completesOn}`)
     }
   }
 
@@ -274,24 +270,6 @@ export default function ClubBoardView({ career, onChange }) {
             <h2 className="text-xl font-semibold text-ufa-text">{t.title}</h2>
             <p className="text-sm text-ufa-muted mt-0.5">{t.subtitle}</p>
           </div>
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{t.budget}</p>
-            <p className="text-lg font-semibold tabular-nums text-ufa-gold">{formatUsd(budget)}</p>
-            <p className="text-[10px] uppercase tracking-wide text-ufa-muted mt-2">{t.salaryBudget}</p>
-            <p className="text-lg font-semibold tabular-nums text-ufa-accent">{formatUsd(salaryBudget)}</p>
-            {lastMerch != null && (
-              <p className="text-[11px] text-ufa-muted mt-0.5">
-                {t.lastMerch}:{' '}
-                <span className="text-emerald-400">{formatUsd(lastMerch)}</span>
-              </p>
-            )}
-            {lastTravel != null && (
-              <p className="text-[11px] text-ufa-muted mt-0.5">
-                {t.lastTravel}:{' '}
-                <span className="text-red-400">{formatUsd(lastTravel)}</span>
-              </p>
-            )}
-          </div>
         </div>
         {flash && (
           <p className="mt-3 text-sm text-emerald-400 border border-emerald-500/30 rounded-md bg-emerald-500/10 px-3 py-2">
@@ -300,6 +278,8 @@ export default function ClubBoardView({ career, onChange }) {
         )}
       </div>
 
+      <ClubManagementPanel team={team} seasonYear={career.seasonYear} lang={lang} onChange={() => persist()} />
+      {team.facilityProject && <p className="rounded-lg border border-ufa-border p-3 text-sm">{lang === 'en' ? 'Under construction' : 'Trwa budowa'}: {facilityName(team.facilityProject.facilityId, lang)} → {team.facilityProject.targetLevel}. {lang === 'en' ? 'Completion' : 'Zakończenie'}: {team.facilityProject.completesOn}.</p>}
       <section className="space-y-3">
         <div>
           <h3 className="font-semibold text-ufa-text">{t.facilities}</h3>

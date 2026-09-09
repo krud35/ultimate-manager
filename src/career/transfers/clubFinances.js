@@ -1,13 +1,14 @@
+import { ensureClubEconomy, clubCash, postClubCash, reviewClubBudgets, availableClubCash, clubBudgetAllocation, setClubBudgetAllocation } from '../clubEconomy.js'
 /**
  * Budżety transferowe i polityka transferowa klubów.
- * Skala budżetów wzorowana na polskiej Ekstraklasie (USD).
+ * Budżety startowe dopasowane do płac i kosztów klubów w symulacji.
  */
 
 import { createRng } from '../../matchEngine/rng.js'
 import { formatUsd } from './moneyFormat.js'
 import { adjustTeamReputation } from '../../models/teamReputation.js'
 import { ensureTeamFans, adjustFanMood } from '../../models/teamFans.js'
-import { eucsTeamTier } from '../../data/eucsLeagueTeams.js'
+import { currentEucsTier } from '../competitionMembership.js'
 
 /** Re-eksport formatowania — bezpieczny import razem z budżetami (`formatUsd` z clubFinances). */
 export { formatUsd, formatUsdCompact } from './moneyFormat.js'
@@ -69,10 +70,10 @@ export const TRANSFER_POLICY_PRESETS = [
  * S ≈ Legia/Lech, A ≈ Raków/Pogoń, B ≈ środek tabeli, C ≈ doły.
  */
 const BUDGET_TIERS = [
-  { id: 'S', weight: 2, min: 2_500_000, max: 6_000_000 },
-  { id: 'A', weight: 4, min: 1_200_000, max: 2_800_000 },
-  { id: 'B', weight: 6, min: 450_000, max: 1_200_000 },
-  { id: 'C', weight: 4, min: 150_000, max: 550_000 },
+  { id: 'S', weight: 2, min: 650_000, max: 1_500_000 },
+  { id: 'A', weight: 4, min: 400_000, max: 900_000 },
+  { id: 'B', weight: 6, min: 180_000, max: 450_000 },
+  { id: 'C', weight: 4, min: 70_000, max: 180_000 },
 ]
 
 /**
@@ -83,8 +84,8 @@ const BUDGET_TIERS = [
  */
 const EUCS_TIER_BUDGET_MULT = { 1: 1.7, 2: 1.0, 3: 0.55 }
 
-function eucsBudgetMultFor(teamId) {
-  const tier = eucsTeamTier(teamId)
+function eucsBudgetMultFor(team) {
+  const tier = currentEucsTier(team)
   return tier ? (EUCS_TIER_BUDGET_MULT[tier] ?? 1) : 1
 }
 
@@ -113,10 +114,10 @@ function rollInRange(rng, min, max) {
 }
 
 /** Losowy budżet sezonu dla jednego klubu (USD). */
-export function rollTransferBudget(teamId, seedBase = 0) {
+export function rollTransferBudget(teamId, seedBase = 0, team = { id: teamId }) {
   const rng = createRng(hashString(`${seedBase}|budget|${teamId}`))
   const tier = pickTier(rng)
-  const raw = rollInRange(rng, tier.min, tier.max) * eucsBudgetMultFor(teamId)
+  const raw = 2 * rollInRange(rng, tier.min, tier.max) * eucsBudgetMultFor(team)
   // Zaokrąglenie do 10k — „okrągłe” kwoty jak w raportach klubowych.
   return Math.round(raw / 10_000) * 10_000
 }
@@ -148,7 +149,7 @@ export function ensureTeamFinances(team, options = {}) {
     team.finances = {}
   }
   if (options.force || team.finances.transferBudget == null) {
-    team.finances.transferBudget = rollTransferBudget(team.id, seed)
+    team.finances.transferBudget = rollTransferBudget(team.id, seed, team)
   }
   if (options.force || team.finances.salaryBudget == null) {
     // Uzupełniane przy sync kontraktów (ensureWorldContracts); tu startowe 0.
@@ -157,7 +158,7 @@ export function ensureTeamFinances(team, options = {}) {
   if (options.force || !team.modifiers || typeof team.modifiers !== 'object') {
     team.modifiers = { ...(team.modifiers ?? {}) }
   }
-  if (options.force || !team.modifiers.transferPolicy) {
+  if (!team.modifiers.transferPolicy) {
     team.modifiers.transferPolicy = rollTransferPolicy(team.id, seed)
   }
   return team
@@ -176,30 +177,21 @@ export function ensureWorldFinances(world, options = {}) {
   return world
 }
 
-/** Nowy sezon: świeży budżet + połowa niewydanych środków (+ zachowany budżet pensji). */
+/** Nowy sezon: przegląd limitów i finansowania, bez resetowania gotówki. */
 export function rollSeasonBudgets(world, options = {}) {
   if (!world?.teamsById) return world
-  const seed = options.seed ?? Date.now()
-  const ids = world.teamIds ?? Object.keys(world.teamsById)
-  for (const id of ids) {
-    const team = world.teamsById[id]
-    if (!team) continue
-    const leftover = Math.max(0, Math.floor((team.finances?.transferBudget ?? 0) * 0.5))
-    const salaryKeep = Math.max(0, Math.round(team.finances?.salaryBudget ?? 0))
-    ensureTeamFinances(team, { seed, force: true })
-    team.finances.transferBudget = (team.finances.transferBudget ?? 0) + leftover
-    team.finances.salaryBudget = salaryKeep
-    team.finances._salaryBudgetSynced = true
-  }
+  for (const team of Object.values(world.teamsById)) reviewClubBudgets(team, options.seasonYear ?? options.seed)
+
   return world
 }
 
 export function getTransferBudget(team) {
-  return Math.round(team?.finances?.transferBudget ?? 0)
+  if (!team) return 0
+  return availableClubCash(team)
 }
 
 export function getSalaryBudget(team) {
-  return Math.max(0, Math.round(team?.finances?.salaryBudget ?? 0))
+  return team ? clubBudgetAllocation(team).weeklyWageLimit : 0
 }
 
 export function getTransferPolicy(team) {
@@ -228,31 +220,27 @@ const BOARD_BAILOUT_REPUTATION_PENALTY = -6
 const BOARD_BAILOUT_FAN_MOOD_PENALTY = -10
 
 export function isClubBankrupt(team) {
-  return getTransferBudget(team) <= FORFEIT_BUDGET_THRESHOLD
+  return clubCash(team) <= FORFEIT_BUDGET_THRESHOLD && (team.finances?.distressWeeks ?? 0) >= 8
 }
 
 /** Poziom kondycji finansowej klubu: 'ok' | 'watch' | 'distress' | 'critical'. */
 export function financialHealthTier(team) {
-  const budget = getTransferBudget(team)
+  const budget = clubCash(team)
   if (budget <= FORFEIT_BUDGET_THRESHOLD) return 'critical'
   if (budget <= FINANCIAL_WARNING_THRESHOLD) return 'distress'
   if (budget < 0) return 'watch'
   return 'ok'
 }
 
-export function adjustTransferBudget(team, delta) {
-  if (!team) return
-  if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
-  team.finances.transferBudget = Math.round((team.finances.transferBudget ?? 0) + delta)
+export function adjustTransferBudget(team, delta, category = 'other', date = team?.managementDate ?? null) {
+  postClubCash(team, delta, category, date)
+
 }
 
 export function adjustSalaryBudget(team, delta) {
   if (!team) return
-  if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
-  team.finances.salaryBudget = Math.max(
-    0,
-    Math.round((team.finances.salaryBudget ?? 0) + delta),
-  )
+  const a = clubBudgetAllocation(team)
+  return setClubBudgetAllocation(team, a.seasonPayrollBudget + delta * a.weeks)
 }
 
 /**
@@ -279,11 +267,13 @@ export function processWeeklyFinancialHealth(world, options = {}) {
   for (const id of ids) {
     const team = world.teamsById[id]
     if (!team?.finances) continue
+    ensureClubEconomy(team)
     const tier = financialHealthTier(team)
+    team.finances.distressWeeks = clubCash(team) < 0 ? (team.finances.distressWeeks ?? 0) + 1 : 0
 
-    if (tier === 'critical' && team.finances._bailoutSeason !== seasonKey) {
-      const amount = Math.max(0, BOARD_BAILOUT_TARGET - getTransferBudget(team))
-      if (amount > 0) adjustTransferBudget(team, amount)
+    if (tier === 'critical' && team.finances._bailoutSeason !== seasonKey && team.finances.distressWeeks >= 4) {
+      const amount = Math.max(0, BOARD_BAILOUT_TARGET - clubCash(team))
+      if (amount > 0) postClubCash(team, amount, 'emergency_grant')
       team.finances._bailoutSeason = seasonKey
       // Nie ustawiamy `_warnedTier` na 'critical' tutaj: gdyby klub w tym samym
       // sezonie ponownie wpadł w krytyczny dług (bailout już wykorzystany),
@@ -299,7 +289,7 @@ export function processWeeklyFinancialHealth(world, options = {}) {
     if (tier === 'distress' || tier === 'critical') {
       if (team.finances._warnedTier !== tier) {
         team.finances._warnedTier = tier
-        warnings.push({ teamId: id, tier, budget: getTransferBudget(team) })
+        warnings.push({ teamId: id, tier, budget: clubCash(team) })
       }
     } else if (team.finances._warnedTier) {
       team.finances._warnedTier = null
@@ -337,8 +327,8 @@ export function messagesFromFinancialHealth(result, career, { date = null, seaso
       ...base,
       title: 'Ratunkowa dotacja zarządu',
       titleEn: 'Emergency board bailout',
-      body: `Budżet transferowy spadł do poziomu krytycznego. Zarząd dokłada ${formatUsd(bailout.amount)}, żeby klub mógł dalej funkcjonować — kosztem reputacji i nastroju kibiców. Ta pomoc jest dostępna raz na sezon.`,
-      bodyEn: `The transfer budget hit a critical level. The board injects ${formatUsd(bailout.amount)} to keep the club running — at the cost of reputation and fan mood. This lifeline is available once per season.`,
+      body: `Saldo gotówki spadło do poziomu krytycznego. Zarząd dokłada ${formatUsd(bailout.amount)}, żeby klub mógł dalej funkcjonować — kosztem reputacji i nastroju kibiców. Ta pomoc jest dostępna raz na sezon.`,
+      bodyEn: `The cash balance hit a critical level. The board injects ${formatUsd(bailout.amount)} to keep the club running — at the cost of reputation and fan mood. This lifeline is available once per season.`,
       payload: { kind: 'board_bailout', amount: bailout.amount },
     })
   } else if (warn) {
@@ -350,11 +340,11 @@ export function messagesFromFinancialHealth(result, career, { date = null, seaso
       title: critical ? 'Zarząd alarmuje: budżet krytyczny' : 'Zarząd ostrzega przed długiem',
       titleEn: critical ? 'Board alarm: critical budget' : 'Board warning on debt',
       body: critical
-        ? `Budżet transferowy wynosi ${formatUsd(warn.budget)}. Kolejne mecze mogą kończyć się walkowerem 0–15, dopóki się nie odbijecie.`
-        : `Budżet transferowy jest na minusie (${formatUsd(warn.budget)}). Zarząd oczekuje planu naprawczego — sprzedaży, cięcia kosztów albo nowego sponsora.`,
+        ? `Saldo gotówki wynosi ${formatUsd(warn.budget)}. Kolejne mecze mogą kończyć się walkowerem 0–15, dopóki się nie odbijecie.`
+        : `Saldo gotówki jest na minusie (${formatUsd(warn.budget)}). Zarząd oczekuje planu naprawczego — sprzedaży, cięcia kosztów albo nowego sponsora.`,
       bodyEn: critical
         ? `The transfer budget stands at ${formatUsd(warn.budget)}. Upcoming matches may end in a 0–15 forfeit until you recover.`
-        : `The transfer budget is negative (${formatUsd(warn.budget)}). The board expects a recovery plan — sales, cost cuts, or a new sponsor.`,
+        : `The cash balance is negative (${formatUsd(warn.budget)}). The board expects a recovery plan — sales, cost cuts, or a new sponsor.`,
       payload: { kind: 'board_warning', tier: warn.tier, budget: warn.budget },
     })
   }

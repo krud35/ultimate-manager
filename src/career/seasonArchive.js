@@ -132,7 +132,7 @@ export function buildSeasonArchiveRecord(career, nameById) {
     pointsFor: standing.pointsFor,
     pointsAgainst: standing.pointsAgainst,
     cupChampionId,
-    cupWinner: cupChampionId === career.playerTeamId,
+    cupWinner: !!career.playerTeamId && cupChampionId === career.playerTeamId,
     fallStandingsOrder: fallTable,
     /** Pełna tabela sezonu (skompresowana). */
     teamStats: compactStandings(league.standings),

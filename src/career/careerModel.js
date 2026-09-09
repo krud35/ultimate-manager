@@ -1,3 +1,6 @@
+import { addManagerWelcome } from './managerCareer.js'
+import { evaluateBoardSeason } from './clubManagement.js'
+import { syncCompetitionMembership } from './competitionMembership.js'
 /**
  * Model kariery managerskiej: tworzenie, archiwizacja sezonu, start kolejnego.
  */
@@ -81,7 +84,7 @@ import { ensureCareerNationalTeams } from './nationalTeams.js'
 import { maybeStartNationalTeamSeason } from './nationalTeamSeason.js'
 
 /** Cel łącznej liczby zawodników w lidze (senior roster, 16 drużyn) — utrzymuje pulę graczy w ryzach. */
-const ROSTER_STABILIZE_TARGET = 500
+const ROSTER_STABILIZE_PER_TEAM = 500 / 16
 
 function newId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -222,7 +225,7 @@ export function createCareer(slotIndex, options) {
     fictionalTeamCount: template.fictionalCount ?? 0,
     world,
     league,
-    homeTactics: resolvePlayerDefaultTactics(team.players),
+    homeTactics: resolvePlayerDefaultTactics(team?.players ?? []),
     seasonHistory: [],
     careerStats: emptyCareerStats(),
     allTimeStats: createAllTimeStats(),
@@ -242,7 +245,7 @@ export function createCareer(slotIndex, options) {
   })
   draftCareer.inbox = mergeInbox(draftCareer, sponsorInbox)
 
-  return writeSlot(slotIndex, draftCareer)
+  return writeSlot(slotIndex, addManagerWelcome(draftCareer))
 }
 
 /**
@@ -310,6 +313,7 @@ function createEucsCareer(slotIndex, options) {
 
   const tierIds = Object.fromEntries(EUCS_TIERS.map((t) => [t, eucsTeamsForTier(t).map((x) => x.id)]))
   league.eucsPyramid = { tier1Ids: tierIds[1], tier2Ids: tierIds[2], tier3Ids: tierIds[3] }
+  syncCompetitionMembership(world, league.eucsPyramid)
 
   // Wszystkie 48 klubów piramidy dostają pełny skład + finanse + obiekty OD RAZU (nie
   // tylko poziom gracza) — bo odtąd KAŻDY mecz w tle (liga i puchar) idzie przez ten
@@ -318,6 +322,7 @@ function createEucsCareer(slotIndex, options) {
   // (z buildEucsLeagueTemplate powyżej) — materializeFullPyramidTeams pomija go.
   const allPyramidIds = [...tierIds[1], ...tierIds[2], ...tierIds[3]]
   materializeFullPyramidTeams(world, allPyramidIds, financeSeed)
+  syncCompetitionMembership(world, league.eucsPyramid)
   ensureAiCoachProfiles(world, playerTeamId)
   initWorldPlayerStats(world, { playerTeamId })
   initWorldPlayerDevelopment(world, { playerTeamId })
@@ -356,7 +361,7 @@ function createEucsCareer(slotIndex, options) {
     fictionalTeamCount: 0,
     world,
     league,
-    homeTactics: resolvePlayerDefaultTactics(team.players),
+    homeTactics: resolvePlayerDefaultTactics(team?.players ?? []),
     seasonHistory: [],
     careerStats: emptyCareerStats(),
     allTimeStats: createAllTimeStats(),
@@ -383,7 +388,7 @@ function createEucsCareer(slotIndex, options) {
   ensureCareerNationalTeams(draftCareer)
   maybeStartNationalTeamSeason(draftCareer, { seasonYear, calendar: league.calendar })
 
-  return writeSlot(slotIndex, draftCareer)
+  return writeSlot(slotIndex, addManagerWelcome(draftCareer))
 }
 
 /**
@@ -442,8 +447,8 @@ export function persistCareer(career, patch = {}) {
     league = { ...league, teamsById: world.teamsById }
   }
   const team =
-    worldTeamById(world, career.playerTeamId ?? patch.playerTeamId) ??
-    league?.teamsById?.[career.playerTeamId ?? patch.playerTeamId] ??
+    worldTeamById(world, Object.hasOwn(patch, 'playerTeamId') ? patch.playerTeamId : career.playerTeamId) ??
+    league?.teamsById?.[Object.hasOwn(patch, 'playerTeamId') ? patch.playerTeamId : career.playerTeamId] ??
     null
   const players = team?.players ?? []
   const rawTactics = patch.homeTactics ?? career.homeTactics
@@ -468,6 +473,7 @@ export function finalizeSeason(career) {
   league.phase = 'offseason'
   league.competitionsComplete = true
 
+  evaluateBoardSeason(career.world, league, career.seasonYear)
   const archive = buildSeasonArchive(career)
   const alreadyArchived = career.seasonHistory.some(
     (s) => s.seasonIndex === career.seasonIndex && s.seasonYear === career.seasonYear,
@@ -507,12 +513,13 @@ export function finalizeSeason(career) {
     seasonCycleInbox = [...(retire.inboxMessages ?? [])]
 
     ensureWorldAcademy(career.world)
+    const academySweep = sweepAgedOutAcademyPlayers(career.world, {
+      playerTeamId: career.playerTeamId,
+      agePlayers: false,
+    })
     runAcademyIntake(career.world, {
       seasonYear: (career.seasonYear ?? 2025) + 1,
       seed: (career.seasonYear ?? 2025) * 13331 + (career.seasonIndex ?? 1),
-    })
-    const academySweep = sweepAgedOutAcademyPlayers(career.world, {
-      playerTeamId: career.playerTeamId,
     })
     runAiAcademyPromotionPass(career.world, {
       playerTeamId: career.playerTeamId,
@@ -540,7 +547,7 @@ export function finalizeSeason(career) {
       (sum, t) => sum + (t.players?.length ?? 0),
       0,
     )
-    const rosterDeficit = ROSTER_STABILIZE_TARGET - rosterTotalBeforeFa
+    const rosterDeficit = Math.round(worldTeamsList(career.world).length * ROSTER_STABILIZE_PER_TEAM) - rosterTotalBeforeFa
     const dynamicFaMaxDeals = Math.max(10, Math.min(60, 10 + Math.round(rosterDeficit * 0.8)))
     const faSign = simulateAiFreeAgentSignings(
       { ...career, world: career.world, transferLog: transferLogAfterCycle },
@@ -635,7 +642,7 @@ export function finalizeSeason(career) {
     league: career.league,
     world: ai.world ?? worldAfterCycle,
     transferLog: ai.transferLog ?? transferLogAfterCycle,
-    aiOffseasonTransferWaves: 1,
+    loanLog: ai.loanLog ?? career.loanLog ?? [],
     inbox: mergeInbox(
       { ...career, inbox: career.inbox },
       [...seasonCycleInbox, ...sponsorInbox, ...prizeInbox, ...contractObligationInbox],
@@ -671,6 +678,7 @@ export function startNextSeason(career) {
   resetWorldSeasonInjuryCounts(world)
   ensureWorldFreeAgents(world)
   rollSeasonBudgets(world, {
+    seasonYear: nextYear,
     seed: nextYear * 1009 + base.slotIndex * 17 + nextIndex * 31,
   })
   const seasonStartPayouts = processSeasonStartSponsorPayouts(world, nextYear)
@@ -789,7 +797,8 @@ function startNextSeasonEucs(career) {
     resolveMatch,
   })
   const nextTierIds = { 1: movement.tier1Next, 2: movement.tier2Next, 3: movement.tier3Next }
-  const newTier = EUCS_TIERS.find((t) => nextTierIds[t].includes(base.playerTeamId))
+  syncCompetitionMembership(world, nextTierIds)
+  const newTier = EUCS_TIERS.find((t) => nextTierIds[t].includes(base.playerTeamId)) ?? base.pyramid.tier
 
   applyOffseasonDevelopment(world, {
     leaguePlayerStats:
@@ -805,7 +814,7 @@ function startNextSeasonEucs(career) {
   resetWorldSeasonStats(world)
   resetWorldSeasonInjuryCounts(world)
   ensureWorldFreeAgents(world)
-  rollSeasonBudgets(world, { seed })
+  rollSeasonBudgets(world, { seed, seasonYear: nextYear })
   const seasonStartPayouts = processSeasonStartSponsorPayouts(world, nextYear)
 
   // Wszystkie 48 drużyn piramidy zostają w world.teamsById na stałe (rosną/starzeją
@@ -849,6 +858,7 @@ function startNextSeasonEucs(career) {
     EUCS_TIERS.map((t) => [t, nextTierIds[t]]),
   )
   league.eucsPyramid = { tier1Ids: tierIds[1], tier2Ids: tierIds[2], tier3Ids: tierIds[3] }
+  syncCompetitionMembership(world, league.eucsPyramid)
 
   const otherLeagues = EUCS_TIERS.filter((t) => t !== newTier).map((otherTier) =>
     createOtherLeague({

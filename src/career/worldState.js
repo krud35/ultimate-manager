@@ -1,3 +1,5 @@
+import { initializeClubLiquidity } from './clubEconomy.js'
+import { ensureClubManagement } from './clubManagement.js'
 /**
  * Świat kariery: żywe składy wszystkich drużyn.
  *
@@ -5,6 +7,7 @@
  * Każda kariera dostaje głęboki klon — mutacje sezonowe nie ruszają szablonu.
  */
 
+import { syncCompetitionMembership } from './competitionMembership.js'
 import { UFA_LEAGUE_TEAMS } from '../data/ufaLeagueTeams.js'
 import { buildSeasonLeagueTemplate } from '../data/seasonLeagueBuilder.js'
 import {
@@ -144,6 +147,7 @@ export function createWorldFromTemplate(templateSeasonYear = 2025, options = {})
   ensureWorldFacilities(world, { seed: financeSeed, force: true })
   ensureWorldScouting(world)
   ensureWorldAcademy(world)
+  for (const team of worldTeamsList(world)) ensureClubManagement(team, templateSeasonYear)
   ensureWorldSponsors(world, {
     seed: financeSeed,
     seasonYear: templateSeasonYear,
@@ -152,7 +156,9 @@ export function createWorldFromTemplate(templateSeasonYear = 2025, options = {})
   })
   for (const team of teams) {
     refreshTeamMarketValues(team)
+    ensureClubManagement(team, templateSeasonYear)
   }
+  for (const team of worldTeamsList(world)) initializeClubLiquidity(team, templateSeasonYear)
   return world
 }
 
@@ -297,6 +303,7 @@ export function rehydrateCareerWorld(career) {
 
   if (!Array.isArray(world.activeLoans)) world.activeLoans = []
 
+  syncCompetitionMembership(world, career.league?.eucsPyramid)
   initWorldPlayerStats(world)
   ensureTeamKitColors(world)
   ensureAiCoachProfiles(world, career.playerTeamId ?? null)
@@ -307,6 +314,10 @@ export function rehydrateCareerWorld(career) {
     (career.seasonIndex ?? 1) * 31
   ensureWorldFinances(world, { seed: financeSeed, force: false })
   ensureWorldContracts(world, { seed: financeSeed, force: false, syncBudgets: true })
+  for (const team of worldTeamsList(world)) {
+    team.managementDate = career.league?.currentDate ?? team.managementDate
+    ensureClubManagement(team, career.seasonYear)
+  }
   ensureWorldReputation(world)
   ensureWorldElo(world, { tierByTeamId: pyramidTierByTeamId(career.league) })
   ensureWorldFans(world, { seed: financeSeed, force: false })
