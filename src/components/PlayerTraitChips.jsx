@@ -1,3 +1,4 @@
+import { PLAYER_ARCHETYPES } from '../models/playerArchetypes.js'
 import {
   ensurePlayerTraits,
   getPlayerTraits,
@@ -5,6 +6,7 @@ import {
   traitDescription,
   traitToneClass,
   traitDef,
+  playerSkillBadges,
 } from '../models/playerTraits.js'
 import { useUiLang } from '../ui/UiLangContext'
 
@@ -12,11 +14,36 @@ import { useUiLang } from '../ui/UiLangContext'
  * @param {{ player: object, max?: number | null, className?: string }} props
  * max — ile chipów pokazać (null = wszystkie); reszta jako „+N”.
  */
-export default function PlayerTraitChips({ player, max = null, className = '' }) {
+export default function PlayerTraitChips({ player, max = null, className = '', grouped = false }) {
   const { lang } = useUiLang()
   if (!player) return null
   ensurePlayerTraits(player)
   const traits = getPlayerTraits(player)
+  if (grouped) {
+    const badges = playerSkillBadges(player)
+    return <div className={`space-y-3 ${className}`}>
+      {player.generatedReserve && <p className="text-xs text-ufa-muted">{lang === 'pl' ? 'Wygenerowany zawodnik uzupełniający skład' : 'Generated squad player'}</p>}
+      {PLAYER_ARCHETYPES[player.archetype] && <p className="text-sm font-semibold">{PLAYER_ARCHETYPES[player.archetype][lang === 'pl' ? 'pl' : 'en']}</p>}
+      {['style', 'personality'].map(kind => <div key={kind}>
+        <p className="text-xs text-ufa-muted mb-1">{kind === 'style'
+          ? (lang === 'pl' ? 'Styl gry' : 'Playing style')
+          : (lang === 'pl' ? 'Charakter' : 'Personality')}</p>
+        <div className="flex flex-wrap gap-1">
+          {traits.filter(id => traitDef(id)?.kind === kind).map(id => <span key={id}
+            className={`rounded bg-ufa-bg px-1.5 py-0.5 text-xs ring-1 ring-ufa-border ${traitToneClass(id)}`}
+            title={traitDescription(id, lang)}>{traitLabel(id, lang)}</span>)}
+          {!traits.some(id => traitDef(id)?.kind === kind) && <span className="text-ufa-muted">—</span>}
+        </div>
+      </div>)}
+      <div>
+        <p className="text-xs text-ufa-muted mb-1">{lang === 'pl' ? 'Mocne strony — wynikają z atrybutów' : 'Strengths — derived from attributes'}</p>
+        <div className="flex flex-wrap gap-1">{badges.length ? badges.map(b => <span key={b.id}
+          className="rounded bg-ufa-bg px-1.5 py-0.5 text-xs text-ufa-muted ring-1 ring-ufa-border"
+          title={lang === 'pl' ? 'Opis umiejętności, bez dodatkowego bonusu.' : 'Describes ability; grants no additional bonus.'}
+        >{lang === 'pl' ? b.namePl : b.nameEn}</span>) : <span className="text-ufa-muted">—</span>}</div>
+      </div>
+    </div>
+  }
   if (!traits.length) {
     return <span className={`text-xs text-ufa-muted ${className}`}>—</span>
   }

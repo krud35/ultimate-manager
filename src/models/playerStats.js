@@ -1,3 +1,5 @@
+import { canonicalAttribute, legacyAttribute, rawAttribute } from './attributeAliases.js'
+import { DETAILED_ATTRIBUTES, derivedAttribute, completeDetailedSkills } from './detailedAttributes.js'
 /**
  * Struktura podstatystyk (atomic) i kategorii głównych zawodnika.
  * Legacy flat keys (throwing, catching, speed, …) są wyliczane dynamicznie z fallbackiem.
@@ -8,17 +10,21 @@ export const PLAYER_STAT_CATEGORIES = {
   physical: ['speed', 'endurance', 'agility', 'jump'],
   mental: ['vision', 'composure', 'reactions', 'decisionMaking'],
   offensive: [
-    'cutterMovement',
-    'handlerMovement',
+    'routeCraft',
+    'resetMovement',
     'offensiveSystemsKnowledge',
     'catching',
   ],
   defensive: [
-    'defensiveCutterMovement',
-    'defensiveHandlerMovement',
+    'matchupReading',
+    'resetDefense',
     'defensiveSystemsKnowledge',
     'blocking',
   ],
+}
+
+for (const [category, attributes] of Object.entries(DETAILED_ATTRIBUTES)) {
+  PLAYER_STAT_CATEGORIES[category].push(...Object.keys(attributes))
 }
 
 const LEGACY_KEYS = new Set([
@@ -111,17 +117,21 @@ export const SUB_STAT_LABELS = {
     decisionMaking: 'Decision making',
   },
   offensive: {
-    cutterMovement: 'Cutter movement',
-    handlerMovement: 'Handler movement',
+    routeCraft: 'Route craft',
+    resetMovement: 'Reset movement',
     offensiveSystemsKnowledge: 'Offensive systems',
     catching: 'Catching',
   },
   defensive: {
-    defensiveCutterMovement: 'Def. cutter',
-    defensiveHandlerMovement: 'Def. handler',
+    matchupReading: 'Matchup reading',
+    resetDefense: 'Reset defense',
     defensiveSystemsKnowledge: 'Defensive systems',
     blocking: 'Blocking',
   },
+}
+
+for (const [category, attributes] of Object.entries(DETAILED_ATTRIBUTES)) {
+  for (const [key, definition] of Object.entries(attributes)) SUB_STAT_LABELS[category][key] = definition.label
 }
 
 export const MAIN_CATEGORY_SORT_KEYS = [
@@ -192,8 +202,8 @@ export function deriveNestedFromLegacy(flat = {}) {
       decisionMaking: clampSubStat(vision * 0.58 + throwing * 0.28 + spirit * 0.14, 'mental'),
     },
     offensive: {
-      cutterMovement: clampSubStat(speed * 0.42 + catching * 0.38 + vision * 0.12, 'offensive'),
-      handlerMovement: clampSubStat(throwing * 0.38 + vision * 0.42 + speed * 0.12, 'offensive'),
+      routeCraft: clampSubStat(speed * 0.42 + catching * 0.38 + vision * 0.12, 'offensive'),
+      resetMovement: clampSubStat(throwing * 0.38 + vision * 0.42 + speed * 0.12, 'offensive'),
       offensiveSystemsKnowledge: clampSubStat(
         vision * 0.48 + throwing * 0.32 + spirit * 0.2,
         'offensive',
@@ -201,8 +211,8 @@ export function deriveNestedFromLegacy(flat = {}) {
       catching: clampSubStat(catching, 'offensive'),
     },
     defensive: {
-      defensiveCutterMovement: clampSubStat(defense * 0.48 + speed * 0.38, 'defensive'),
-      defensiveHandlerMovement: clampSubStat(
+      matchupReading: clampSubStat(defense * 0.48 + speed * 0.38, 'defensive'),
+      resetDefense: clampSubStat(
         defense * 0.42 + vision * 0.28 + speed * 0.18,
         'defensive',
       ),
@@ -244,14 +254,14 @@ function computeNormalizedPlayerSkills(raw = {}) {
     for (const [cat, keys] of Object.entries(PLAYER_STAT_CATEGORIES)) {
       if (!isCategoryObject(raw[cat])) continue
       for (const key of keys) {
-        if (typeof raw[cat][key] === 'number') {
-          base[cat][key] = clampSubStat(raw[cat][key], cat)
+        if (Number.isFinite(rawAttribute(raw, cat, key))) {
+          base[cat][key] = clampSubStat(rawAttribute(raw, cat, key), cat)
         }
       }
     }
-    return base
+    return completeDetailedSkills(base)
   }
-  return deriveNestedFromLegacy(raw)
+  return completeDetailedSkills(deriveNestedFromLegacy(raw))
 }
 
 function readLegacyFlatFromRaw(raw) {
@@ -264,10 +274,14 @@ function readLegacyFlatFromRaw(raw) {
 
 export function getSubStat(skills, category, key, fallback = DEFAULT_SUB) {
   const normalized = hasNestedShape(skills) ? skills : normalizePlayerSkills(skills)
-  const val = normalized?.[category]?.[key]
+  key = canonicalAttribute(category, key)
+  const val = rawAttribute(normalized, category, key)
   if (typeof val === 'number' && Number.isFinite(val)) return val
-  const legacy = readLegacySkill(normalized, mapSubToLegacy(category, key))
-  return legacy ?? fallback
+  const detailed = derivedAttribute(normalized, category, key)
+  if (detailed != null) return detailed
+  const legacy = skills?.[mapSubToLegacy(category, key)]
+  if (Number.isFinite(legacy)) return legacy
+  return normalizePlayerSkills(skills)?.[category]?.[key] ?? fallback
 }
 
 function mapSubToLegacy(category, key) {
@@ -292,7 +306,7 @@ export function getCategoryOverall(skills, category) {
 /** Deterministyczny roll w zakresie kategorii (stabilny per zawodnik). */
 export function rollSubStatForPlayer(playerId, category, key, salt = 'attr-v5') {
   let h = (Number(playerId) || 1) >>> 0
-  const tag = `${salt}:${category}:${key}`
+  const tag = `${salt}:${category}:${legacyAttribute(category, key)}`
   for (let i = 0; i < tag.length; i += 1) {
     h = Math.imul(h ^ tag.charCodeAt(i), 0x85ebca6b)
     h >>>= 0
@@ -366,16 +380,20 @@ function tierForSubStat(category, key, tiers) {
     'mental.composure': t.overall * 0.5 + t.playmaking * 0.3 + t.defense * 0.2,
     'mental.reactions': t.defense * 0.45 + t.receiving * 0.35 + t.scoring * 0.2,
     'mental.decisionMaking': t.playmaking * 0.5 + t.throwing * 0.35 + t.overall * 0.15,
-    'offensive.cutterMovement': t.receiving * 0.45 + t.scoring * 0.55,
-    'offensive.handlerMovement': t.playmaking * 0.5 + t.throwing * 0.5,
+    'offensive.routeCraft': t.receiving * 0.45 + t.scoring * 0.55,
+    'offensive.resetMovement': t.playmaking * 0.5 + t.throwing * 0.5,
     'offensive.offensiveSystemsKnowledge': t.playmaking * 0.45 + t.throwing * 0.35 + t.overall * 0.2,
     'offensive.catching': t.receiving * 0.7 + t.scoring * 0.3,
-    'defensive.defensiveCutterMovement': t.defense * 0.55 + t.receiving * 0.25 + t.scoring * 0.2,
-    'defensive.defensiveHandlerMovement': t.defense * 0.5 + t.playmaking * 0.3 + t.throwing * 0.2,
+    'defensive.matchupReading': t.defense * 0.55 + t.receiving * 0.25 + t.scoring * 0.2,
+    'defensive.resetDefense': t.defense * 0.5 + t.playmaking * 0.3 + t.throwing * 0.2,
     'defensive.defensiveSystemsKnowledge': t.defense * 0.4 + t.playmaking * 0.35 + t.overall * 0.25,
     'defensive.blocking': t.defense * 0.85 + t.overall * 0.15,
   }
-  const tier = map[`${category}.${key}`] ?? t.overall
+  const parents = DETAILED_ATTRIBUTES[category]?.[key]?.from
+  const inheritedTier = parents?.length
+    ? parents.reduce((sum, parent) => sum + (map[`${category}.${parent}`] ?? t.overall), 0) / parents.length
+    : t.overall
+  const tier = map[`${category}.${key}`] ?? inheritedTier
   return Math.max(0, Math.min(1, tier))
 }
 
@@ -561,26 +579,32 @@ export function regeneratePlayerSkills(player, teamMax = null, options = {}) {
   return player
 }
 
-function shiftSkillsByDelta(skills, delta) {
-  const nested = normalizePlayerSkills(skills)
-  for (const [cat, keys] of Object.entries(PLAYER_STAT_CATEGORIES)) {
-    for (const key of keys) {
-      const cur = nested[cat][key]
-      nested[cat][key] = clampSubStat(cur + delta, cat)
-    }
-  }
-  return nested
+/** Feasible OVR uses exactly the same category bounds as normalization/development. */
+export function clampOverallTarget(target) {
+  if (!Number.isFinite(target)) throw new TypeError('OVR target must be finite')
+  const ranges = Object.keys(PLAYER_STAT_CATEGORIES).map(categoryStatRange)
+  return clamp(target, Math.round(avg(ranges.map(r => r.min))), Math.round(avg(ranges.map(r => r.max))))
 }
 
-function scaleSkillsToTargetOvr(skills, targetOvr) {
-  let nested = normalizePlayerSkills(skills)
-  for (let pass = 0; pass < 10; pass += 1) {
-    const current = getOverallRating(nested)
-    const delta = targetOvr - current
-    if (Math.abs(delta) < 0.35) break
-    nested = shiftSkillsByDelta(nested, delta * 0.92)
+/** Shift the original profile, preserving differences until a category bound is reached.
+ * Never mutate normalized/cached input. Reject infeasible targets explicitly.
+ */
+export function scaleSkillsToTargetOvr(skills, targetOvr) {
+  const target = clampOverallTarget(targetOvr)
+  if (target !== Math.round(targetOvr)) throw new RangeError(`Unreachable OVR target: ${targetOvr}`)
+  const base = normalizePlayerSkills(skills)
+  let low = -100
+  let high = 100
+  for (let pass = 0; pass < 40; pass += 1) {
+    const delta = (low + high) / 2
+    const candidate = Object.fromEntries(Object.entries(PLAYER_STAT_CATEGORIES).map(([cat, keys]) =>
+      [cat, Object.fromEntries(keys.map(key => [key, clampSubStat(base[cat][key] + delta, cat)]))]))
+    const current = getOverallRating(candidate)
+    if (current === target) return candidate
+    if (current < target) low = delta
+    else high = delta
   }
-  return nested
+  throw new RangeError(`Could not fit profile to OVR ${target}`)
 }
 
 function hash01(seed, salt) {
@@ -632,7 +656,7 @@ export function applyHistoricalOvrFromUfa(players) {
     const score = ufaPerformanceScore(p.ufaReference)
     const noise = hash01(p.id, 'hist-ovr')
     const target = historicalTargetOvrFromScore(score, noise)
-    p.skills = scaleSkillsToTargetOvr(p.skills, target)
+    p.skills = scaleSkillsToTargetOvr(p.skills, clampOverallTarget(target))
     p.skillsGen = SKILLS_GEN_VERSION
   }
   return players
@@ -706,7 +730,7 @@ export function balanceTeamPlayerSkills(players, teamKey = 'team') {
 
   for (const p of players) {
     const target = targets.get(p.id) ?? 78
-    p.skills = scaleSkillsToTargetOvr(p.skills, target)
+    p.skills = scaleSkillsToTargetOvr(p.skills, clampOverallTarget(target))
     p.skillsGen = SKILLS_GEN_VERSION
   }
   return players
@@ -714,7 +738,8 @@ export function balanceTeamPlayerSkills(players, teamKey = 'team') {
 
 export function ensurePlayerSkills(player) {
   if (!player) return player
-  if (hasNestedShape(player.skills)) return player
+  if (Object.entries(PLAYER_STAT_CATEGORIES).every(([category, keys]) =>
+    keys.every(key => Number.isFinite(player.skills?.[category]?.[key])))) return player
   return {
     ...player,
     skills: normalizePlayerSkills(player.skills ?? {}),

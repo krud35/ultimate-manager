@@ -112,7 +112,8 @@ export function stallThrowModifiers({
     const composureDrain = fatigueComposurePenalty ?? 0
     const badChance =
       (0.1 + (58 - mental.decisionMaking) * 0.005 + pressure * 0.015 + composureDrain * 0.012) *
-      traitMods.badDecisionMult
+      traitMods.badDecisionMult * (traitMods.pressureNoiseMult ?? 1)
+      * (traitMods.isClutchPoint ? (traitMods.clutchNoiseMult ?? 1) : 1)
     badDecision = rng.float() < clamp(badChance, 0.05, 0.55)
   } else if (tier === 'high') {
     forcedContested = true
@@ -125,6 +126,10 @@ export function stallThrowModifiers({
     blockRiskMod -= 6
   }
 
+  if (tier !== 'low') {
+    accuracyPenalty *= traitMods.pressureNoiseMult ?? 1
+    if (traitMods.isClutchPoint) accuracyPenalty *= traitMods.clutchNoiseMult ?? 1
+  }
   return {
     tier,
     accuracyBonus,

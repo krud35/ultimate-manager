@@ -8,8 +8,8 @@ import {
   SKILLS_GEN_VERSION,
   buildBalancedSubStats,
   buildPlayerArchetypeTiers,
-  getOverallRating,
-  normalizePlayerSkills,
+  clampOverallTarget,
+  scaleSkillsToTargetOvr,
 } from '../models/playerStats.js'
 
 const OVR_BULK_MIN = 74
@@ -44,24 +44,6 @@ function hashSeed(...parts) {
 
 function lerp(a, b, t) {
   return a + (b - a) * Math.max(0, Math.min(1, t))
-}
-
-function scaleSkillsToTargetOvr(skills, targetOvr) {
-  const nested = normalizePlayerSkills(skills)
-  for (let pass = 0; pass < 8; pass += 1) {
-    const current = getOverallRating(nested)
-    if (Math.abs(current - targetOvr) <= 0.5) break
-    const factor = targetOvr / Math.max(1, current)
-    for (const cat of Object.keys(nested)) {
-      const block = nested[cat]
-      if (!block || typeof block !== 'object') continue
-      for (const key of Object.keys(block)) {
-        if (typeof block[key] !== 'number') continue
-        block[key] = Math.max(40, Math.min(99, Math.round(block[key] * factor)))
-      }
-    }
-  }
-  return nested
 }
 
 /**
@@ -133,7 +115,7 @@ export function applyRandomOvrBands(players, seedKey, teamStrengthOffset = 0) {
       const rankT = 1 - bulkI / bulkN
       target = lerp(OVR_BULK_MIN, OVR_BULK_MAX, rankT * 0.85 + noise * 0.15)
     }
-    target = Math.max(60, Math.min(97, Math.round(target + teamStrengthOffset)))
+    target = clampOverallTarget(target + teamStrengthOffset)
     p.skills = scaleSkillsToTargetOvr(p.skills, target)
     p.skillsGen = SKILLS_GEN_VERSION
   }

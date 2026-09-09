@@ -784,6 +784,7 @@ export function runContinuousThrowSimulation({
   seedStates = null,
   postResetClearout = false,
   lastThrowerId = null,
+  afterTurnover = false,
   hardStallCount = stallCount,
   requireForwardPass = false,
   onThrowCommitted = null,
@@ -1112,7 +1113,8 @@ export function runContinuousThrowSimulation({
           return {
             ...tickOffenseAgentDuringFlight(agent, {
               discSample,
-              throwerId: thrower.id,
+              lastThrowerId,
+            throwerId: thrower.id,
               throwerPos,
               forceSide,
               possessionTeam,
@@ -1544,6 +1546,7 @@ export function runContinuousThrowSimulation({
           setupElapsedMs: ms,
           postCatchReorg,
           lastThrowerId,
+          afterTurnover,
           hardStallCount: Math.max(hardStallCount ?? 1, decisionStall),
           requireForwardPass,
           attackStyle,

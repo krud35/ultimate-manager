@@ -78,7 +78,8 @@ export function decisionNoiseAmplitude(player, stallCount = 1) {
   const mods = playerMatchMods(player)
   const base = (1 - dm / 100) * 38
   const pressure = stallCount >= 5 ? (1 - composure / 100) * (stallCount - 4) * 5 : 0
-  return (base + pressure) * (mods.decisionNoiseMult ?? 1)
+  return (base + pressure * (mods.pressureNoiseMult ?? 1)) * (mods.decisionNoiseMult ?? 1)
+    * (mods.isClutchPoint ? (mods.clutchNoiseMult ?? 1) : 1)
 }
 
 /** Kara celności za stall > 4 (punkty score) — composure chroni pod presją. */

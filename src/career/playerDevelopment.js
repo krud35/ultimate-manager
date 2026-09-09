@@ -1,4 +1,5 @@
 import { ageRegionalYouth } from './youthPopulation.js'
+import { generatedPotentialForAge } from '../models/playerArchetypes.js'
 /**
  * Rozwój zawodników: wiek, potencjał, trening, zmęczenie treningowe, decline 30+.
  * Dotyczy całego świata (gracz + AI).
@@ -178,6 +179,9 @@ export function rollInitialAge(player) {
  */
 export function computePotential(player, ovr, perf01) {
   const age = player.age ?? 25
+  if (player.developmentModel === 'talent-v1' && Number.isFinite(player.innatePotential)) {
+    return clamp(generatedPotentialForAge(player, ovr), 62, 95)
+  }
   let gap
   if (age <= 21) gap = 12 + perf01 * 14
   else if (age <= 23) gap = 9 + perf01 * 12
@@ -317,6 +321,8 @@ export function ensurePlayerDevelopment(player, options = {}) {
     // ignorować, więc przy pierwszym liczeniu potencjału używamy OVR sprzed boostu.
     const potentialBaseline = Number.isFinite(player.eucsBaselineOvr) ? player.eucsBaselineOvr : ovr
     player.potential = computePotential(player, potentialBaseline, perf)
+  } else if (player.developmentModel === 'talent-v1' && Number.isFinite(player.innatePotential)) {
+    player.potential = clamp(player.potential, ovr, Math.max(ovr, player.innatePotential))
   } else {
     // Potencjał nie powinien spaść poniżej OVR − 2 (chyba że veteran)
     const minPot = player.age >= 30 ? Math.min(player.potential, ovr + 1) : player.potential
@@ -508,7 +514,8 @@ export function applyDailyDevelopment(league, options = {}) {
       const perf = performanceScore01(player, league.playerStats)
       if ((player.age ?? 99) <= 25 && perf >= 0.65 && rng() < 0.12 * dayScale) {
         const ovr = getOverallRating(player.skills)
-        player.potential = clamp((player.potential ?? ovr) + 1, ovr, 95)
+        player.potential = clamp((player.potential ?? ovr) + 1, ovr,
+          player.developmentModel === 'talent-v1' ? Math.max(ovr, player.innatePotential) : 95)
       }
 
       if (getOverallRating(player.skills) !== before) changes += 1
@@ -659,7 +666,7 @@ export function applyOffseasonDevelopment(world, options = {}) {
       const ovr = getOverallRating(player.skills)
       player.potential = computePotential(player, ovr, perf)
       // Sezonowa forma młodych: nie gub wysokiego potencjału od razu
-      if (player.age <= 26 && perf >= 0.6) {
+      if (player.developmentModel !== 'talent-v1' && player.age <= 26 && perf >= 0.6) {
         player.potential = clamp(
           Math.max(player.potential, ovrBefore + 8 + Math.round(perf * 6)),
           62,

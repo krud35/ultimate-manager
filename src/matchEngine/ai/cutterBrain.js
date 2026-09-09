@@ -1,3 +1,4 @@
+import { uplineSpaceBonus, giveAndGoOfferBonus } from './traitBehavior.js'
 import { clampAgentPosition, evaluatePlayerSituation } from './spatialEvaluator.js'
 import { attackDirectionX, clampFieldX, clampFieldY, fieldCenterY } from '../fieldDimensions.js'
 import { forceMarkLayoutSide, normalizeForceMark } from '../throwTechnique.js'
@@ -453,9 +454,9 @@ function pickClearTarget(x, y, disc, attackSign, forceSide, rng) {
  * jest normalnym atakiem na wolną przestrzeń, która akurat jest z tyłu — a nie osobną
  * mechaniką obok reszty decyzji.
  */
-function pickResetTarget(disc, throwerPos, attackSign, forceSide, rng, cells = null) {
+function pickResetTarget(disc, throwerPos, attackSign, forceSide, rng, cells = null, mods = {}) {
   const slot = resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng })
-  const resetCells = (cells ?? []).filter((c) => c.depth === 'reset')
+  const resetCells = (cells ?? []).filter((c) => c.depth === 'reset' || uplineSpaceBonus(mods, (c.x - disc.x) * attackSign, c.y - disc.y) > 0)
   if (!resetCells.length) return slot
   // Spośród komórek resetowych bierz najwolniejszą, ale nie odbiegaj daleko od slotu —
   // reset ma pozostać realnym, bliskim wyjściem spod stallu, nie ucieczką przez pół boiska.
@@ -463,6 +464,7 @@ function pickResetTarget(disc, throwerPos, attackSign, forceSide, rng, cells = n
   let bestScore = -Infinity
   for (const c of resetCells) {
     const score = c.freeness * 100 - Math.hypot(c.x - slot.x, c.y - slot.y) * 2.5
+      + uplineSpaceBonus(mods, (c.x - disc.x) * attackSign, c.y - disc.y)
     if (score > bestScore) {
       bestScore = score
       best = c
@@ -540,6 +542,7 @@ function resetFitness(agent, resetSlot, preferBonus = 0) {
 function pickPostCatchRole(agent, situation, isDump, stackIndex, rng, canCut, coachMods, ctx = {}) {
 
   if (situation?.inThrowLane) return 'clear'
+  if (canCut && (coachMods?.postCatchOfferBonus ?? 0) >= 0.4 && rng.float() < coachMods.postCatchOfferBonus) return 'offer'
   // UWAGA: `preferDumpRole` NIE wypala tu skrótem. Wcześniej zwracał reset
   // bezwarunkowo, więc resetowi handlerzy w ogóle nie przechodzili przez ocenę
   // sytuacyjną — mechanizm dynamiczny działał wyłącznie dla pozostałych. Preferencja
@@ -646,7 +649,9 @@ export function tickCutterBrain(agent, tickCtx) {
     return { ...agent, state: CUTTER_STATE.WAITING, vx: 0, vy: 0 }
   }
 
-  const coachMods = mergeTraitAndCoachMods(agent.player ?? agent, offenseTactics, 'offense')
+  const baseMods = mergeTraitAndCoachMods(agent.player ?? agent, offenseTactics, 'offense')
+  const coachMods = { ...baseMods, postCatchOfferBonus: (baseMods.postCatchOfferBonus ?? 0)
+    + giveAndGoOfferBonus(baseMods, agent.player?.id ?? agent.id, tickCtx.lastThrowerId, elapsedMs) }
   const subRole = agent.subRole ?? subRoleForAgent(agent, offenseTactics)
   const attackSign = attackDirectionX(possessionTeam)
 
@@ -759,6 +764,7 @@ export function tickCutterBrain(agent, tickCtx) {
           claimAwareness: claimAwarenessFor(agent?.player ?? agent),
           viewer: { x: agent.x, y: agent.y, player: agent?.player ?? agent },
         }),
+        coachMods,
       )
       targetX = tgt.x
       targetY = tgt.y

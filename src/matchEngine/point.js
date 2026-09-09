@@ -1,3 +1,4 @@
+import { isClutchPoint } from './ai/traitBehavior.js'
 import { MATCH_CONFIG } from './config.js'
 import { recordBlock, recordDrop, recordGoal, recordTurnover, recordThrowResult, recordRunMeters } from './boxScore.js'
 import {
@@ -110,6 +111,8 @@ export function simulatePoint({
   awayTeam,
   pullTeam,
   pointIndex,
+  homeScore = 0,
+  awayScore = 0,
   rng,
   boxScore = null,
   matchStats = null,
@@ -204,6 +207,7 @@ export function simulatePoint({
   let discYMeters = fieldCenterY()
   /** Pozycje ofensywy między rzutami (po złapaniu — bez snapu do stacka). */
   /** Stan zawodników z końca poprzedniego rzutu — zapewnia płynne przejście między rzutami. */
+  let transitionPasses = 0
   let liveAgentStates = null
   /** Po dump/reset (+0m) — wymuszone głębokie cięcia w następnej symulacji setupu. */
   let postResetClearout = false
@@ -269,6 +273,7 @@ export function simulatePoint({
       teamById(possession).tactics,
       getLineupForTeam(pointLineups, defId),
       defTeam.tactics,
+      { isClutchPoint: isClutchPoint(homeScore, awayScore, MATCH_CONFIG.pointsToWin) },
     )
 
     if (!isPersonDefense(defStyle)) return
@@ -304,6 +309,7 @@ export function simulatePoint({
       fieldX != null && Number.isFinite(fieldX)
         ? fieldX
         : discMetersFromState(discPosition, geo(possession))
+    transitionPasses = 2
     possession = possession === 'home' ? 'away' : 'home'
     discPosition = discPositionFromFieldMeters(absX, geo(possession))
     discHolder = null
@@ -418,6 +424,7 @@ export function simulatePoint({
       seedStates: liveAgentStates,
       postResetClearout,
       lastThrowerId,
+      afterTurnover: transitionPasses > 0,
       hardStallCount: Math.max(stallCount, decisionStallFromHoldMs(holdMs)),
       requireForwardPass: resetChain >= 3,
       onThrowCommitted: (decision) => {
@@ -871,6 +878,7 @@ export function simulatePoint({
       stallCount = 0
 
       lastThrowerId = thrower.id
+      transitionPasses = Math.max(0, transitionPasses - 1)
       if (yardsGained < 2) {
         postResetClearout = true
         resetChain += 1
@@ -947,6 +955,7 @@ export function simulatePoint({
           }),
         )
       } else {
+        transitionPasses = Math.max(0, transitionPasses - 1)
         discHolder = receiver
       }
     } else {
@@ -1146,6 +1155,8 @@ export function simulatePointFast({
   awayTeam,
   pullTeam,
   pointIndex,
+  homeScore = 0,
+  awayScore = 0,
   rng,
   boxScore = null,
   matchStats = null,
@@ -1224,6 +1235,7 @@ export function simulatePointFast({
       teamById(possession).tactics,
       getLineupForTeam(pointLineups, defId),
       teamById(defId).tactics,
+      { isClutchPoint: isClutchPoint(homeScore, awayScore, MATCH_CONFIG.pointsToWin) },
     )
     if (!isPersonDefense(defStyle)) return
     personMatchups = createPersonMatchups(
@@ -1234,9 +1246,11 @@ export function simulatePointFast({
   }
   setupPersonMatchupsForPossession()
 
+  let transitionPasses = 0
   function applyTurnoverAtPosition(turnoverThrowerId) {
     if (boxScore && turnoverThrowerId) recordTurnover(boxScore, turnoverThrowerId)
     const absX = discMetersFromState(discPosition, possession)
+    transitionPasses = 2
     possession = possession === 'home' ? 'away' : 'home'
     discPosition = discPositionFromFieldMeters(absX, possession)
     discHolder = null
@@ -1289,6 +1303,7 @@ export function simulatePointFast({
       defender: markerDefender,
       separation: null,
       tactics: offenseTeam.tactics,
+      afterTurnover: transitionPasses > 0,
     })
 
     const primaryPickFn = throwType === THROW_TYPE.DUMP_SWING ? pickDumpReceiver : pickReceiver

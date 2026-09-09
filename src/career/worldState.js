@@ -12,6 +12,7 @@ import { UFA_LEAGUE_TEAMS } from '../data/ufaLeagueTeams.js'
 import { buildSeasonLeagueTemplate } from '../data/seasonLeagueBuilder.js'
 import {
   SKILLS_GEN_VERSION,
+  normalizePlayerSkills,
   applyHistoricalOvrFromUfa,
   ensurePlayerStats,
   regeneratePlayerSkills,
@@ -80,6 +81,8 @@ function cloneTemplateTeam(team) {
     // gotowe z `materializeFullPyramidTeams` i mają `tier` od zawsze — bez tej linii
     // gubiły go akurat kluby z poziomu gracza, czyli te, które przechodzą przez szablon.
     tier: team.tier ?? null,
+    rosterShape: team.rosterShape ?? null,
+    rosterCoverage: team.rosterCoverage ? { ...team.rosterCoverage, gaps: [...team.rosterCoverage.gaps] } : null,
     tacticalIdentity: team.tacticalIdentity ? structuredClone(team.tacticalIdentity) : null,
     players: structuredClone(team.players ?? []),
   }
@@ -215,6 +218,7 @@ export function initWorldPlayerStats(world, options = {}) {
       }
     }
     for (const player of players) {
+      player.skills = normalizePlayerSkills(player.skills ?? {})
       ensurePlayerStats(player)
       ensurePlayerMorale(player)
       ensurePlayerForm(player)

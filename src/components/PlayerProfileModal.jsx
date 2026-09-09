@@ -577,7 +577,7 @@ export default function PlayerProfileModal({
         {isOwnPlayer && (
           <div className="px-5 py-4 border-b border-ufa-border/80 text-sm">
             <p className="text-xs uppercase tracking-wide text-ufa-muted mb-2">{t.traits}</p>
-            <PlayerTraitChips player={player} />
+            <PlayerTraitChips player={player} grouped />
           </div>
         )}
 
