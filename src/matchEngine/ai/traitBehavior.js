@@ -17,3 +17,15 @@ export function giveAndGoOfferBonus(mods, playerId, lastThrowerId, elapsedMs) {
 export function isClutchPoint(homeScore = 0, awayScore = 0, target = 15) {
   return Math.max(homeScore, awayScore) >= target - 2 && Math.abs(homeScore - awayScore) <= 2
 }
+
+/** Fixed windows avoid a per-tick probability depending on frame rate. */
+export function throwingFakePhase(ms, enabled) {
+  if (!enabled || ms < 300) return 0
+  const phase = (ms - 300) % 1500
+  return phase < 280 ? Math.sin(Math.PI * phase / 280) : 0
+}
+export function doubleMoveSetup(timing) {
+  const skill = Math.max(0, Math.min(1, timing / 100))
+  return { durationMs: 440 - 160 * skill, earlyPriority: 7 * skill,
+    extraDelayMs: 260 * (1 - skill), distanceM: 1.2 + 0.6 * skill }
+}

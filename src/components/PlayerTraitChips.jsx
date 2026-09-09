@@ -1,4 +1,3 @@
-import { PLAYER_ARCHETYPES } from '../models/playerArchetypes.js'
 import {
   ensurePlayerTraits,
   getPlayerTraits,
@@ -23,7 +22,6 @@ export default function PlayerTraitChips({ player, max = null, className = '', g
     const badges = playerSkillBadges(player)
     return <div className={`space-y-3 ${className}`}>
       {player.generatedReserve && <p className="text-xs text-ufa-muted">{lang === 'pl' ? 'Wygenerowany zawodnik uzupełniający skład' : 'Generated squad player'}</p>}
-      {PLAYER_ARCHETYPES[player.archetype] && <p className="text-sm font-semibold">{PLAYER_ARCHETYPES[player.archetype][lang === 'pl' ? 'pl' : 'en']}</p>}
       {['style', 'personality'].map(kind => <div key={kind}>
         <p className="text-xs text-ufa-muted mb-1">{kind === 'style'
           ? (lang === 'pl' ? 'Styl gry' : 'Playing style')

@@ -1,4 +1,4 @@
-import { uplineSpaceBonus, giveAndGoOfferBonus } from './traitBehavior.js'
+import { uplineSpaceBonus, giveAndGoOfferBonus, doubleMoveSetup } from './traitBehavior.js'
 import { clampAgentPosition, evaluatePlayerSituation } from './spatialEvaluator.js'
 import { attackDirectionX, clampFieldX, clampFieldY, fieldCenterY } from '../fieldDimensions.js'
 import { forceMarkLayoutSide, normalizeForceMark } from '../throwTechnique.js'
@@ -375,6 +375,11 @@ function pickCutTarget(
     // 4. Osobista preferencja zawodnika.
     if (cell.depth === 'deep') score += deepBias * SPACE_BIAS_WEIGHT
     if (cell.depth === 'under') score += underBias * SPACE_BIAS_WEIGHT
+    // Length preference changes space selection, never physical speed.
+    const cutLength = traitMods.cutLengthMult ?? 1
+    score += (cutLength - 1) * Math.min(24, Math.hypot(cell.x - agent.x, cell.y - agent.y)) * 2
+    const edgeDistance = Math.min(cell.y, fieldCenterY() * 2 - cell.y)
+    score += (traitMods.sidelineBias ?? 0) * Math.max(0, 5 - Math.abs(edgeDistance - 3)) * 3
     // 5. Szum, żeby cała linia nie atakowała jednej komórki.
     score += (rng?.float ? rng.float() : 0.5) * SPACE_NOISE
     if (score > bestScore) {
@@ -811,6 +816,7 @@ export function tickCutterBrain(agent, tickCtx) {
     const timing = coachMods.timingCutBias ?? 0
     let cutRoll = (fatigueWaiting ? 0.006 : 0.022) * (coachMods.cutRollMult ?? 1)
     let priorityGate = (fatigueWaiting ? 72 : 64) + (coachMods.cutPriorityDelta ?? 0)
+    if (coachMods.doubleMove) priorityGate -= doubleMoveSetup(subStat(player, 'offensive', 'cutTiming')).earlyPriority
     let allowClogEscape = clogged
     if (timing > 0) {
       if (clogged) {
@@ -856,7 +862,7 @@ export function tickCutterBrain(agent, tickCtx) {
     }
   } else if (state === CUTTER_STATE.INITIATING_CUT) {
     // Rozpoznanie, decyzja i ruszenie z miejsca kosztują czas — nie zero ticków.
-    if (stateMs >= cutInitiationMs(agent.player ?? agent)) {
+    if (stateMs >= cutInitiationMs(agent.player ?? agent) + (coachMods.doubleMove ? doubleMoveSetup(subStat(agent.player ?? agent, 'offensive', 'cutTiming')).extraDelayMs : 0)) {
       state = CUTTER_STATE.ACTIVE_CUT
       stateMs = 0
       agent.continuationCut = true
@@ -868,12 +874,12 @@ export function tickCutterBrain(agent, tickCtx) {
     // Rzut do MNIE jest w powietrzu — nie ma czego rozważać, biegnij pod dysk.
     const committedToFlight = flightIsForMe
     // Deep cut dostaje okno zaangażowania; pod nie podlega też pierwsze spojrzenie.
-    const inCommitWindow = goingDeep && stateMs < DEEP_LOOK_MS
+    const inCommitWindow = goingDeep && stateMs < DEEP_LOOK_MS * (coachMods.cutCommitMult ?? 1)
     if (
       !globalThis.__OFF_CUTREVIEW &&
       !committedToFlight &&
       !inCommitWindow &&
-      stateMs - (agent.cutReviewMs ?? 0) >= CUT_REVIEW_MS
+      stateMs - (agent.cutReviewMs ?? 0) >= CUT_REVIEW_MS * (coachMods.cutCommitMult ?? 1)
     ) {
       agent.cutReviewMs = stateMs
       const fresh = pickCutTarget(
@@ -883,7 +889,7 @@ export function tickCutterBrain(agent, tickCtx) {
       // ZAWRÓĆ: biegłem deep, rzut nie przyszedł. W realnym ultimate to nie jest
       // zejście z gry — zawodnik hamuje i wraca po dysk (under cut), a dopiero gdy
       // i to jest zamknięte, czyści przestrzeń.
-      if (goingDeep && !discInFlight && stateMs >= DEEP_GIVE_UP_MS) {
+      if (goingDeep && !discInFlight && stateMs >= DEEP_GIVE_UP_MS * (coachMods.cutCommitMult ?? 1)) {
         agent.cutReviewMs = stateMs
         if (fresh.score < CUT_ABANDON_SCORE) {
           // Nic nie ma — zejdź i zwolnij przestrzeń.
@@ -902,7 +908,7 @@ export function tickCutterBrain(agent, tickCtx) {
           const dx = tx - agent.x
           const dy = ty - agent.y
           const d = Math.hypot(dx, dy)
-          const runM = Math.min(UNDER_CUT_MAX_M, Math.max(0, d - UNDER_CUT_KEEP_M))
+          const runM = Math.min(UNDER_CUT_MAX_M * (coachMods.cutLengthMult ?? 1), Math.max(0, d - UNDER_CUT_KEEP_M))
           targetX = clampFieldX(agent.x + (d > 1e-6 ? dx / d : 0) * runM)
           targetY = clampFieldY(agent.y + (d > 1e-6 ? dy / d : 0) * runM)
           agent.cutKind = 'in'
@@ -917,7 +923,7 @@ export function tickCutterBrain(agent, tickCtx) {
         const clr = structuralTarget()
         targetX = clr.x
         targetY = clr.y
-      } else if (fresh.score > (agent.cutScore ?? 0) + CUT_RETARGET_MARGIN) {
+      } else if (fresh.score > (agent.cutScore ?? 0) + CUT_RETARGET_MARGIN * (coachMods.cutCommitMult ?? 1)) {
         targetX = fresh.x
         targetY = fresh.y
         agent.cutKind = fresh.kind
@@ -942,7 +948,7 @@ export function tickCutterBrain(agent, tickCtx) {
       Math.min(
         MAX_ACTIVE_CUT_MS,
         Math.max(ACTIVE_CUT_MS_BASE, travelMs) + plantMs * 0.65,
-      ) * (coachMods.clearActiveCutMult ?? 1)
+      ) * (coachMods.clearActiveCutMult ?? 1) * (coachMods.cutCommitMult ?? 1)
     if (stateMs >= activeCutMs) {
       state = CUTTER_STATE.CLEARING
       stateMs = 0
@@ -961,6 +967,13 @@ export function tickCutterBrain(agent, tickCtx) {
     }
   }
 
+  if (state === CUTTER_STATE.INITIATING_CUT && agent.state !== CUTTER_STATE.INITIATING_CUT) {
+    agent.feintOrigin = { x: agent.x, y: agent.y }
+    agent.feintElapsedMs = 0
+  }
+  if (coachMods.doubleMove && [CUTTER_STATE.INITIATING_CUT, CUTTER_STATE.ACTIVE_CUT].includes(state)) {
+    agent.feintElapsedMs = (agent.feintElapsedMs ?? 0) + dtSec * 1000
+  }
   let x = agent.x
   let y = agent.y
   let vx = agent.vx ?? 0
@@ -968,7 +981,7 @@ export function tickCutterBrain(agent, tickCtx) {
 
   const reorganizing = reorgWindow || state === CUTTER_STATE.CLEARING
 
-  if (state === CUTTER_STATE.ACTIVE_CUT || state === CUTTER_STATE.CLEARING) {
+  if (state === CUTTER_STATE.ACTIVE_CUT || state === CUTTER_STATE.CLEARING || (state === CUTTER_STATE.INITIATING_CUT && coachMods.doubleMove)) {
     const player = agent.player ?? agent
     let speed
     if (reorganizing) {
@@ -995,7 +1008,13 @@ export function tickCutterBrain(agent, tickCtx) {
       const craft = 0.9 + (movement / 100) * 0.12
       speed = maxSpeedMps(player) * speedMult * craft
     }
-    const spaced = spacingAdjustedTarget(agent, targetX, targetY, teammates)
+    const setup = doubleMoveSetup(subStat(player, 'offensive', 'cutTiming'))
+    const origin = agent.feintOrigin
+    const feint = coachMods.doubleMove && origin && agent.feintElapsedMs < setup.durationMs
+    const distance = origin ? Math.max(0.1, Math.hypot(targetX - origin.x, targetY - origin.y)) : 1
+    const moveX = feint ? clampFieldX(origin.x - (targetX - origin.x) / distance * setup.distanceM) : targetX
+    const moveY = feint ? clampFieldY(origin.y - (targetY - origin.y) / distance * setup.distanceM) : targetY
+    const spaced = spacingAdjustedTarget(agent, moveX, moveY, teammates)
     const moved = integrateAgentMotion(
       { ...agent, x, y, vx, vy },
       spaced.x,

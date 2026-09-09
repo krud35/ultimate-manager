@@ -1,4 +1,5 @@
 import { recordMatchDevelopment } from '../career/matchDevelopment.js'
+import { recordPlayingStyleMatch } from '../career/playingStyleEvidence.js'
 import { teamForMatchEngine } from '../data/ufaLeagueTeams.js'
 import { simulateMatch } from '../matchEngine/index.js'
 import {
@@ -153,6 +154,7 @@ export function applyMatchResultToLeague(league, matchRecord) {
 
   const isCup = (matchRecord.competition ?? fixture.competition) === 'cup'
   recordMatchDevelopment(league, matchRecord)
+  recordPlayingStyleMatch(league, matchRecord)
 
   if (!isCup) {
     applyGameToStandings(

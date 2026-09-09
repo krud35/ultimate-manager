@@ -1,3 +1,5 @@
+import { attackDirectionX } from '../fieldDimensions.js'
+import { clampAgentPosition } from './spatialEvaluator.js'
 import { fieldCenterY } from '../fieldDimensions.js'
 import { FORCE_SIDES } from '../tacticsModifiers.js'
 import { forceMarkLayoutSide, normalizeForceMark } from '../throwTechnique.js'
@@ -243,6 +245,7 @@ export function tickDefenderBrain(agent, ctx) {
     state = DEFENDER_STATE.MARKING_STALL
     const attackSign = ctx.attackSign ?? 1
     const goal = forceMarkPosition(throwerAgent.x, throwerAgent.y, forceSide, attackSign)
+    goal.y += (ctx.fakePhase ?? 0) * (1 - subStat(player, 'defensive', 'marking') / 100) * 2.5
     const dist = Math.hypot(agent.x - goal.x, agent.y - goal.y)
     // Z daleka sprint do marka; z bliska shuffle / hold.
     const base = defenderSpeedMps(player)
@@ -827,6 +830,17 @@ export function resolveCupRotation(ctx) {
  * Kto jest markerem, rozstrzyga rotacja łuku, a nie slot z lineup (resolveCupRotation).
  */
 export function tickDefenseAgent(agent, ctx) {
+  const player = agent.player ?? agent
+  const recovery = mergeTraitAndCoachMods(player, ctx.defenseTactics, 'defense').recoveryDefense
+  if (recovery && ctx.afterTurnover && (ctx.ms ?? 0) < 2200 && !ctx.isMarkerOnThrower && ctx.disc) {
+    const sign = ctx.attackSign ?? attackDirectionX(ctx.possessionTeam)
+    const target = ctx.targetOffense ?? ctx.disc
+    const goal = clampAgentPosition(target.x + sign * 3, target.y)
+    if ((goal.x - agent.x) * sign > 1) return {
+      ...moveToward(agent, goal.x, goal.y, defenderSpeedMps(player), ctx.dtSec, true, ctx),
+      state: DEFENDER_STATE.COVERING_CUTTER, isActiveMark: false,
+    }
+  }
   if (ZONE_SLOT_ROLES.has(agent.fieldRole)) {
     const rotation = resolveCupRotation(ctx)
     const myId = agent.id ?? agent.player?.id

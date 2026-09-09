@@ -1,3 +1,5 @@
+import { recordStyleThrow, captureStyleInstructions } from './styleEvidence.js'
+import { getTraitMods } from '../models/playerTraits.js'
 import { isClutchPoint } from './ai/traitBehavior.js'
 import { MATCH_CONFIG } from './config.js'
 import { recordBlock, recordDrop, recordGoal, recordTurnover, recordThrowResult, recordRunMeters } from './boxScore.js'
@@ -115,6 +117,7 @@ export function simulatePoint({
   awayScore = 0,
   rng,
   boxScore = null,
+  collectStyleEvidence = true,
   matchStats = null,
   stamina = null,
   wind = null,
@@ -406,7 +409,10 @@ export function simulatePoint({
       resetChain,
     )
 
+    captureStyleInstructions(collectStyleEvidence ? boxScore : null, offenseLineup, offenseTeam.tactics, 'offense')
+    captureStyleInstructions(collectStyleEvidence ? boxScore : null, defenseLineup, defenseTeam.tactics, 'defense')
     const sim = runThrowMotionSimulation({
+      behaviorBoxScore: collectStyleEvidence ? boxScore : null,
       rng,
       thrower,
       offenseLineup,
@@ -897,6 +903,7 @@ export function simulatePoint({
       }
       if (boxScore) {
         recordThrowResult(boxScore, thrower.id, { success: true, receiverId: receiver.id, yardsGained })
+        recordStyleThrow(collectStyleEvidence ? boxScore : null, thrower, 'full', { type: throwType, success: true, curve: sim.plannedShape?.curve ?? null, execution: sim.styleExecution, technique: sim.throwTechnique, tactics: offenseTeam.tactics })
       }
 
       const successNarrative = buildThrowNarrative({
@@ -990,6 +997,7 @@ export function simulatePoint({
       }
       if (boxScore) {
         recordThrowResult(boxScore, thrower.id, { success: false })
+        recordStyleThrow(collectStyleEvidence ? boxScore : null, thrower, 'full', { type: throwType, success: false, curve: sim.motionTrace?.plannedShape?.curve ?? sim.plannedShape?.curve ?? null, technique: sim.throwTechnique, tactics: offenseTeam.tactics })
       }
 
       const failNarrative = buildThrowNarrative({
@@ -1159,6 +1167,7 @@ export function simulatePointFast({
   awayScore = 0,
   rng,
   boxScore = null,
+  collectStyleEvidence = true,
   matchStats = null,
   wind = null,
 }) {
@@ -1273,7 +1282,9 @@ export function simulatePointFast({
     const defenseStyle = stylesForTeam(defendingTeamId()).defenseStyle
 
     const thrower = discHolder ?? pickThrower(rng, offenseLineup, offenseTeam.tactics)
-    const stallCount = sampleFastStallCount(rng)
+    captureStyleInstructions(collectStyleEvidence ? boxScore : null, offenseLineup, offenseTeam.tactics, 'offense')
+    captureStyleInstructions(collectStyleEvidence ? boxScore : null, defenseLineup, defenseTeam.tactics, 'defense')
+    const stallCount = Math.max(1, Math.round(sampleFastStallCount(rng) * (getTraitMods(thrower).decisionTimeMult ?? 1)))
 
     if (stallCount >= STALL_MAX) {
       events.push(
@@ -1431,6 +1442,7 @@ export function simulatePointFast({
       }
       if (boxScore) {
         recordThrowResult(boxScore, thrower.id, { success: true, receiverId: receiver.id, yardsGained })
+        recordStyleThrow(collectStyleEvidence ? boxScore : null, thrower, 'fast', { type: effectiveThrowType, success: true, technique: result.throwTechnique, tactics: offenseTeam.tactics })
       }
 
       events.push(
@@ -1476,6 +1488,7 @@ export function simulatePointFast({
       }
       if (boxScore) {
         recordThrowResult(boxScore, thrower.id, { success: false })
+        recordStyleThrow(collectStyleEvidence ? boxScore : null, thrower, 'fast', { type: effectiveThrowType, success: false, technique: result.throwTechnique, tactics: offenseTeam.tactics })
       }
 
       events.push(

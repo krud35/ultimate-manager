@@ -1,3 +1,5 @@
+import { processPlayingStyleDevelopment } from './playingStyleDevelopment.js'
+import { playingStyleMessages } from './playingStyleMessages.js'
 import { processManagerCareer } from './managerCareer.js'
 import { processClubManagement } from './clubManagement.js'
 import { processMonthlyOwnerFunding } from './clubEconomy.js'
@@ -64,6 +66,9 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
       tag: `day-${trainingDate}`,
     })
   }
+  inboxMessages.push(...playingStyleMessages(processPlayingStyleDevelopment(
+    career.world ?? nextLeague, trainingDate ?? nextLeague.currentDate, career.seasonYear,
+  ), career.playerTeamId))
   if (career.world) {
     // Campaign reports are due on the monthly anniversary of departure.
     const academyReports = advanceAcademyCampaigns(
