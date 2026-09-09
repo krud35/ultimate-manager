@@ -72,6 +72,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
   const budget = getTransferBudget(buyer)
 
   const [teamFilter, setTeamFilter] = useState('all')
+  const [availabilityFilter, setAvailabilityFilter] = useState('all')
   const [sortKey, setSortKey] = useState('value')
   const [query, setQuery] = useState('')
   const [pageSize, setPageSize] = useState(20)
@@ -112,6 +113,9 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
     let list = market
     if (teamFilter === '__fa__') list = list.filter((r) => r.freeAgent)
     else if (teamFilter !== 'all') list = list.filter((r) => r.teamId === teamFilter)
+    if (availabilityFilter === 'transfer') list = list.filter((r) => r.listed)
+    else if (availabilityFilter === 'loan') list = list.filter((r) => r.loanListed)
+    else if (availabilityFilter === 'free-agent') list = list.filter((r) => r.freeAgent)
     const q = query.trim().toLowerCase()
     if (q) {
       list = list.filter(
@@ -129,7 +133,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
       return b.marketValue - a.marketValue
     })
     return sorted
-  }, [market, teamFilter, query, sortKey])
+  }, [market, teamFilter, availabilityFilter, query, sortKey])
 
   const pageCount = pageSize === 0 ? 1 : Math.max(1, Math.ceil(rows.length / pageSize))
   const safePage = Math.min(page, pageCount - 1)
@@ -142,7 +146,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
 
   useEffect(() => {
     setPage(0)
-  }, [teamFilter, query, sortKey, pageSize])
+  }, [teamFilter, availabilityFilter, query, sortKey, pageSize])
 
   const ownRoster = useMemo(() => {
     const players = [...(buyer?.players ?? [])]
@@ -397,6 +401,17 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                     {name}
                   </option>
                 ))}
+              <select
+                value={availabilityFilter}
+                onChange={(e) => setAvailabilityFilter(e.target.value)}
+                className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-1.5 text-sm text-ufa-text"
+                aria-label={t.availabilityFilter}
+              >
+                <option value="all">{t.availabilityAll}</option>
+                <option value="transfer">{t.availabilityTransfer}</option>
+                <option value="loan">{t.availabilityLoan}</option>
+                <option value="free-agent">{t.availabilityFreeAgent}</option>
+              </select>
               </select>
               <select
                 value={sortKey}
@@ -455,6 +470,11 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                           <span className="text-[10px] text-ufa-gold">★ #1</span>
                         )}
                         {row.listed && (
+                        {row.loanListed && (
+                          <span className="rounded bg-sky-400/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300 ring-1 ring-sky-400/40">
+                            {t.loanListedBadge}
+                          </span>
+                        )}
                           <span className="rounded bg-ufa-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
                             {t.transferListedBadge}
                           </span>

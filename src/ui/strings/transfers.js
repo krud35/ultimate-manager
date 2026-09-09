@@ -86,6 +86,12 @@ const pl = {
 
   searchPlaceholder: 'Szukaj zawodnika / klubu…',
 
+  availabilityFilter: 'Status dostępności',
+  availabilityAll: 'Status: wszystkie',
+  availabilityTransfer: 'Status: do transferu',
+  availabilityLoan: 'Status: do wypożyczenia',
+  availabilityFreeAgent: 'Status: wolny agent',
+
   sortValue: 'Sortuj: wartość',
 
   sortAge: 'Sortuj: wiek',
@@ -99,6 +105,7 @@ const pl = {
   yourRosterValues: 'Twój skład · wartości',
 
   transferListedBadge: 'Na liście',
+  loanListedBadge: 'Do wypożyczenia',
   myListedTitle: 'Twoi zawodnicy na liście transferowej',
   myListedEmpty: 'Żaden z Twoich zawodników nie jest na liście transferowej.',
   removeFromListAction: 'Zdejmij z listy',
@@ -327,6 +334,12 @@ const en = {
 
   searchPlaceholder: 'Search player / club…',
 
+  availabilityFilter: 'Availability status',
+  availabilityAll: 'Status: all',
+  availabilityTransfer: 'Status: for transfer',
+  availabilityLoan: 'Status: for loan',
+  availabilityFreeAgent: 'Status: free agent',
+
   sortValue: 'Sort: value',
 
   sortAge: 'Sort: age',
@@ -340,6 +353,7 @@ const en = {
   yourRosterValues: 'Your roster · values',
 
   transferListedBadge: 'Listed',
+  loanListedBadge: 'For loan',
   myListedTitle: 'Your transfer-listed players',
   myListedEmpty: 'None of your players are on the transfer list.',
   removeFromListAction: 'Remove from list',
