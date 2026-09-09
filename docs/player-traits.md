@@ -1,16 +1,23 @@
 # Player traits
 
-New players receive two personality traits and one or two playing styles. Overall
+New players receive 1–3 personality traits (25% / 50% / 25%) and 1–6 playing styles (3–6 for explicit all-rounders), according to age. Overall
 rating and skills do not affect the count or personality RNG. Optional `archetype`
 IDs and their 2x style weights are defined in `src/models/traitDesign.js`. These
 weights are used by the new UltiLeague archetype generator. Existing saves are not
 assigned new archetypes. Unknown archetypes use uniform weights.
 
-The profile displays style, personality and attribute-derived strengths separately.
+Thirty equally likely hidden personality types bias trait selection. The first trait comes
+from the type’s three preferred traits; later draws use weights 4 / 1 / 0.25 for
+preferred / neutral / unlikely traits. Overlapping effect groups multiply weight by
+0.35. Direct conflicts remain forbidden. Type/count/style have separate RNG streams.
+The type has no gameplay modifiers. Existing players are not assigned a type on load.
+
+The profile displays individual style, personality and attribute-derived strengths separately.
+The playing archetype and personality type are hidden.
 Strength badges grant no modifiers. Speed, catching, timing, jumping and huck
 ability no longer earn a second trait bonus for already high attributes.
 
-## Migration (traitsGen 4)
+## Migration (traitsGen 6)
 
 Loading preserves existing personality. Version changes never reroll an existing
 array, including an empty array. Only missing traits or explicit `force` generate.
@@ -54,3 +61,44 @@ node --import ./scripts/register-world-tests.mjs scripts/check-player-behavior.m
 Tests cover deterministic generation, OVR-independent personality, archetype style
 weights, alias migration without rerolls, removal of physical bonus stacking,
 pressure/clutch context, new style preferences and spatial/fast point smoke tests.
+
+## Conditional style weights
+
+Attacks the disc high uses the weakest of jump, cutTiming and catching to weight
+its generation (0.25 / 1 / 2 / 4 at thresholds 75 / 80 / 85). This intentionally
+affects playing style only; personality still ignores skills. Full style categories
+and effects are listed in playing-styles.md.
+
+## Initial style generation (phase 1)
+
+Configuration: src/models/playingStyleGeneration.js. Category selection uses role
+weights, then archetype preferences and ability weights select a compatible trait
+inside that category. Unknown archetypes use equal category weights and the regular
+count distribution; missing age defaults to the 23–26 band (25). No archetype is
+assigned by this fallback.
+
+| Age | Regular count weights, 1 / 2 / 3 / 4 / 5 / 6 (%) | All-rounder (%) |
+|---|---|---|
+| ≤19 | 65 / 30 / 5 / 0 / 0 / 0 | 0 / 0 / 80 / 20 / 0 / 0 |
+| 20–22 | 30 / 45 / 20 / 5 / 0 / 0 | 0 / 0 / 60 / 30 / 10 / 0 |
+| 23–26 | 10 / 25 / 40 / 20 / 5 / 0 | 0 / 0 / 30 / 45 / 20 / 5 |
+| 27–30 | 5 / 15 / 30 / 30 / 15 / 5 | 0 / 0 / 15 / 40 / 30 / 15 |
+| ≥31 | 0 / 10 / 25 / 35 / 20 / 10 | 0 / 0 / 10 / 30 / 35 / 25 |
+
+| Family | Thrower | Receiver | Offense | Defense |
+|---|---:|---:|---:|---:|
+| Handler | 55 | 10 | 25 | 10 |
+| Cutter | 10 | 55 | 25 | 10 |
+| Defender | 10 | 20 | 15 | 55 |
+| All-rounder / unknown | 25 | 25 | 25 | 25 |
+
+Weights are conditional on eligibility, not guaranteed final population shares.
+The first specialist style uses its primary category. At least two categories
+for 3+ styles; at most four from one category. All-rounders always draw from the
+least populated available category: 1–1–1–0, 1–1–1–1, 2–1–1–1, 2–2–1–1.
+Existing traits are never refilled or rerolled on load, including empty lists.
+In-season acquisition, retention, loss and replacement now run from observed match
+practice. See [playing-style-evidence.md](playing-style-evidence.md) for thresholds,
+save behavior and the explicit simulation coverage limits.
+
+Validation: node scripts/test-playing-style-generation.mjs

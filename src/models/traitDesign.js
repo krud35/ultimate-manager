@@ -16,7 +16,8 @@ export const STYLE_TRAITS = new Set([
   'wants_the_disc', 'disciplined', 'shutdown', 'poacher', 'physical_mark', 'soft_mark',
   'force_happy', 'iso_ball', 'zone_breaker', 'foul_prone',
   'give_and_go', 'upline_seeker', 'swing_first', 'attack_turnover', 'settle_turnover',
-  'deny_deep', 'deny_under',
+  'deny_deep', 'deny_under', 'good_insides', 'good_arounds', 'long_cuts', 'quick_cuts',
+  'fakes_a_lot', 'double_move_cutter', 'sideline_receiver', 'attacks_disc_high', 'recovery_defense',
 ])
 
 export const ATTRIBUTE_BADGES = {
@@ -33,6 +34,16 @@ export const ATTRIBUTE_BADGES = {
 
 const style = (id, namePl, nameEn, descPl, descEn) => ({ id, namePl, nameEn, descPl, descEn, polarity: 'mixed', tags: ['style'] })
 export const NEW_STYLE_DEFS = {
+  fakes_a_lot: style('fakes_a_lot', 'Często stosuje zwody rzutowe', 'Fakes a lot', 'Częściej zwodzi marka przed podaniem, poświęcając czas posiadania.', 'Uses more throwing fakes to move the mark, at the cost of possession time.'),
+  double_move_cutter: style('double_move_cutter', 'Cutter ze zwodem', 'Double-move cutter', 'Poprzedza cut zwodem; dobry timing pomaga rozpocząć przygotowanie wcześniej.', 'Prepares cuts with a fake; good timing helps start the setup earlier.'),
+  sideline_receiver: style('sideline_receiver', 'Receiver przy linii', 'Sideline receiver', 'Chętniej szuka okien podania blisko linii bocznej, gdzie ma mniej miejsca na chwyt.', 'Prefers receiving windows near the sideline, with less catch space.'),
+  attacks_disc_high: style('attacks_disc_high', 'Atakuje dysk wysoko', 'Attacks the disc high', 'Chętniej planuje chwyt w wyskoku; wykonanie zależy od wyskoku, timingu i chwytu.', 'Prefers planning jumping catches; execution depends on jump, timing and catching.'),
+  recovery_defense: style('recovery_defense', 'Priorytet powrotu do obrony', 'Recovery defense', 'Po stracie najpierw wraca chronić przestrzeń za plecami, zamiast naciskać dysk.', 'After a turnover prioritizes recovering goal-side over pressuring the disc.'),
+  good_insides: style('good_insides', 'Dobre inside-out', 'Good insides', 'Precyzyjniej wykonuje zakrzywienie inside-out backhandem i forehandem.', 'Executes inside-out backhand and forehand curves more precisely.'),
+  good_arounds: style('good_arounds', 'Dobre outside-in', 'Good arounds', 'Precyzyjniej wykonuje zakrzywienie outside-in backhandem i forehandem.', 'Executes outside-in backhand and forehand curves more precisely.'),
+  long_cuts: style('long_cuts', 'Długie cuty', 'Long cuts', 'Wybiera dalsze cele i dłużej kontynuuje kierunek przed powrotem pod dysk.', 'Chooses farther targets and commits longer before cutting back under.'),
+  quick_cuts: style('quick_cuts', 'Krótkie cuty', 'Quick cuts', 'Wybiera bliższe cele i częściej zmienia kierunek; częściej zatłacza przestrzeń.', 'Chooses closer targets and changes direction more often; crowds space more often.'),
+  thinks_fast: { ...style('thinks_fast', 'Szybko podejmuje decyzje', 'Thinks fast', 'Szybciej ocenia opcje i decyduje o podaniu, bez poprawy trafności decyzji.', 'Evaluates options and commits to a pass sooner, without improving decision quality.'), tags: ['mental'], polarity: 'positive' },
   give_and_go: style('give_and_go', 'Oddaje i rusza', 'Give and go', 'Po podaniu chętniej rusza po krótkie podanie zwrotne.', 'After passing, more often offers a short return pass.'),
   upline_seeker: style('upline_seeker', 'Szuka upline', 'Upline seeker', 'Jako reset chętniej atakuje przestrzeń przed dyskiem wzdłuż linii.', 'As a reset, prefers space upfield along the sideline.'),
   swing_first: style('swing_first', 'Przerzuca ciężar gry', 'Switches play', 'Chętniej przenosi dysk na drugą stronę boiska.', 'More often moves the disc across the field.'),
@@ -44,11 +55,15 @@ export const NEW_STYLE_DEFS = {
 
 // Keep stable IDs where possible, so career events and team talks retain their meaning.
 export const TRAIT_COPY = {
+  chip_on_shoulder: ['Potrzeba udowadniania swojej wartości', 'Something to prove', 'Przeciwności motywują go, ale błędy i krytyka mocniej go dotykają.', 'Adversity motivates them, but mistakes and criticism sting more.'],
+  greedy: ['Wysokie oczekiwania finansowe', 'High wage expectations', 'Oczekuje wysokiego wynagrodzenia.', 'Expects high wages.'],
+  diva: ['Wymagający wobec klubu', 'Demanding of the club', 'Oczekuje wysokiego wynagrodzenia i ważnej roli; mocniej reaguje na krytykę.', 'Expects high wages and an important role; reacts more strongly to criticism.'],
+  film_junkie: ['Analizujący nagrania', 'Film student', 'Analiza meczów wspiera rozwój i realizację instrukcji.', 'Studies games to support development and following instructions.'],
   dump_guy: ['Reset przede wszystkim', 'Reset first', 'Wcześniej szuka resetu, rzadziej przedłuża posiadanie.', 'Looks for a reset earlier instead of holding the disc.'],
   safe_hands: ['Ostrożny z dyskiem', 'Cautious with the disc', 'Wymaga bezpieczniejszego okna podania; nie gwarantuje bezbłędnej gry.', 'Requires a safer passing window; does not guarantee error-free execution.'],
   creative_thrower: ['Kreatywny rzucający', 'Creative thrower', 'Chętnie rozważa nietypowe podania, bez automatycznej skłonności do błędów.', 'Prefers considering unusual passes, without inherently making more mistakes.'],
   force_happy: ['Szuka breaków', 'Looks for breaks', 'Chętniej szuka podania na zamkniętą stronę marka.', 'Prefers looking for a pass to the break side of the mark.'],
-  layout_machine: ['Odważny w walce o dysk', 'Dives for the disc', 'Częściej podejmuje trudną próbę layoutu, ryzykując uraz.', 'Attempts difficult layouts more often, risking injury.'],
+  layout_machine: ['Odważny w walce o dysk', 'Dives for the disc', 'Częściej podejmuje trudną próbę layoutu, bez dodatkowej kary do ryzyka urazu.', 'Attempts difficult layouts more often, without an additional injury-risk penalty.'],
   shutdown: ['Trzyma swojego', 'Sticks to the matchup', 'Preferuje bliskie krycie swojego zawodnika i rzadziej odchodzi do pomocy.', 'Prefers close matchup coverage and helps less often.'],
   disciplined: ['Trzyma strukturę', 'Keeps the structure', 'Preferuje pozostanie w strukturze ofensywnej.', 'Prefers staying within the offensive structure.'],
   selfish: ['Nastawiony na własne statystyki', 'Stats driven', 'Mocniej reaguje na własne gole i asysty oraz szuka osobistego udziału w zdobyczy.', 'Values personal goals and assists and seeks a direct role in scoring.'],

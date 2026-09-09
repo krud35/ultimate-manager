@@ -181,7 +181,7 @@ const ARC_OVERCOOK_BIAS = 0.35
 
 export function executeThrowShape(
   thrower,
-  { arc = THROW_ARC.NORMAL, curve = 'natural', loftStat = DEFAULT, rng = null } = {},
+  { arc = THROW_ARC.NORMAL, curve = 'natural', technique = null, loftStat = DEFAULT, rng = null } = {},
 ) {
   const intended = arc === THROW_ARC.OVER ? ARC_OVER_MULT : arc === THROW_ARC.FLAT ? ARC_FLAT_MULT : 1
 
@@ -193,7 +193,11 @@ export function executeThrowShape(
 
   // Krzywizna też bywa nietrafiona: rzut pod prąd naturalnego fade'u (inside-out) albo się
   // nie zakręci wcale, albo przekręci za mocno. Rzut z naturalnym fadem robi się sam.
-  const curveSpread = (1 - control) * (curve === 'reverse' ? 0.55 : curve === 'straight' ? 0.3 : 0.18)
+  const mods = playerMatchMods(thrower)
+  const shaped = technique === 'backhand' || technique === 'forehand'
+  const bonus = shaped ? (curve === 'reverse' ? mods.insideControlBonus : curve === 'natural' ? mods.aroundControlBonus : 0) : 0
+  const curveControl = Math.min(1, control + (bonus ?? 0))
+  const curveSpread = (1 - curveControl) * (curve === 'reverse' ? 0.55 : curve === 'straight' ? 0.3 : 0.18)
   const curveNoise = rng?.float ? (rng.float() * 2 - 1) * curveSpread : 0
 
   return {

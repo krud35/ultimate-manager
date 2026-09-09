@@ -1,3 +1,5 @@
+import { initialStyleCount, generatePlayingStyles } from './playingStyleGeneration.js'
+import { PLAYER_PERSONALITIES, personalityTraitWeight } from './playerPersonalities.js'
 import { ARCHETYPE_TRAIT_PREFERENCES, STYLE_TRAITS, ATTRIBUTE_BADGES, NEW_STYLE_DEFS, TRAIT_COPY } from './traitDesign.js'
 /**
  * Cechy charakteru zawodników — katalog + przypisanie + agregacja modyfikatorów.
@@ -10,7 +12,7 @@ import {
 } from './playerStats.js'
 
 /** Versioned migration without rerolling existing personalities. */
-export const TRAITS_GEN_VERSION = 4
+export const TRAITS_GEN_VERSION = 6
 
 /** Alias starych ID → aktualne (migracja zapisów). */
 const TRAIT_ID_ALIASES = {
@@ -654,6 +656,8 @@ export function playerSkillBadges(player) {
 }
 
 const TRAIT_CONFLICTS = [
+  ['long_cuts', 'quick_cuts'],
+  ['thinks_fast', 'overthinker'],
   ['attack_turnover', 'settle_turnover'],
   ['deny_deep', 'deny_under'],
   ['huck_lover', 'dump_guy'],
@@ -676,10 +680,10 @@ const TRAIT_CONFLICTS = [
   ['loyal', 'mercenary'],
   ['modest', 'greedy'],
   ['modest', 'diva'],
-  ['professional', 'diva'],
+
   ['homebody', 'restless'],
-  ['showman', 'anxious'],
-  ['charismatic', 'shy'],
+
+
   ['curious', 'uncoachable'],
   ['coachable', 'uncoachable'],
   ['adaptive', 'stubborn'],
@@ -760,16 +764,40 @@ function normalizeTraitId(id) {
 }
 
 /** Separate RNG streams keep personality identical across OVR and archetype changes. */
+export function personalityTypeForPlayer(player) {
+ const types = Object.keys(PLAYER_PERSONALITIES)
+ return types[Math.floor(mulberry32(hashSeed(player?.id, 'personality-type-v1'))() * types.length)]
+}
+
+export function styleAbilityWeight(id, player) {
+  if (id !== 'attacks_disc_high') return 1
+  const scores = [['physical', 'jump'], ['offensive', 'cutTiming'], ['offensive', 'catching']]
+    .map(([category, key]) => getSubStat(player?.skills, category, key))
+  const weakest = Math.min(...scores)
+  return weakest >= 85 ? 4 : weakest >= 80 ? 2 : weakest >= 75 ? 1 : 0.25
+}
+
 export function rollTraitsForPlayer(player) {
   const selected = []
   for (const kind of ['personality', 'style']) {
     const rng = mulberry32(hashSeed(player?.id, 'traits-v4:' + kind))
-    const count = kind === 'personality' ? 2 : (rng() < 0.5 ? 1 : 2)
-    const preferred = ARCHETYPE_TRAIT_PREFERENCES[player?.archetype] ?? []
+    const countRoll = mulberry32(hashSeed(player?.id, 'personality-count-v1'))()
+    const count = kind === 'personality' ? (countRoll < 0.25 ? 1 : countRoll < 0.75 ? 2 : 3)
+      : initialStyleCount(player, mulberry32(hashSeed(player?.id, 'style-count-v1')))
+    const preferred = kind === 'personality' ? PLAYER_PERSONALITIES[personalityTypeForPlayer(player)]
+      : ARCHETYPE_TRAIT_PREFERENCES[player?.archetype] ?? []
     const pool = Object.keys(TRAIT_DEFS).filter(id => TRAIT_DEFS[id].kind === kind)
+    if (kind === 'style') {
+      selected.push(...generatePlayingStyles(player, count, rng,
+        styles => pool.filter(id => !styles.includes(id) && !conflictsWith(id, new Set([...selected, ...styles]))),
+        id => (preferred.includes(id) ? 2 : 1) * styleAbilityWeight(id, player)))
+      continue
+    }
     for (let slot = 0; slot < count; slot++) {
-      const eligible = pool.filter(id => !selected.includes(id) && !conflictsWith(id, new Set(selected)))
-      const weight = id => kind === 'style' && preferred.includes(id) ? 2 : 1
+      const eligible = pool.filter(id => !selected.includes(id) && !conflictsWith(id, new Set(selected))
+        && (kind !== 'personality' || slot !== 0 || preferred.includes(id)))
+      const weight = id => kind === 'personality' ? personalityTraitWeight(id, preferred, selected)
+        : (preferred.includes(id) ? 2 : 1) * styleAbilityWeight(id, player)
       let roll = rng() * eligible.reduce((sum, id) => sum + weight(id), 0)
       const chosen = eligible.find(id => { roll -= weight(id); return roll < 0 })
       if (chosen) selected.push(chosen)
@@ -785,8 +813,9 @@ export function ensurePlayerTraits(player, options = {}) {
   if (!player) return player
   const next = []
   const seen = new Set()
-  const source = options.force === true || !Array.isArray(player.traits)
-    ? rollTraitsForPlayer(player) : player.traits
+  const generate = options.force === true || !Array.isArray(player.traits)
+  const source = generate ? rollTraitsForPlayer(player) : player.traits
+  if (generate) player.personalityType = personalityTypeForPlayer(player)
   for (const raw of source) {
     const id = normalizeTraitId(raw)
     if (!id || !TRAIT_DEFS[id] || seen.has(id) || conflictsWith(id, seen)) continue
@@ -825,6 +854,16 @@ export function getTraitMods(player) {
 
 function computeTraitMods(player) {
   const mods = {
+    fakeFrequency: 0,
+    doubleMove: 0,
+    sidelineBias: 0,
+    highDiscAttack: 0,
+    recoveryDefense: 0,
+    insideControlBonus: 0,
+    aroundControlBonus: 0,
+    decisionTimeMult: 1,
+    cutLengthMult: 1,
+    cutCommitMult: 1,
     pressureNoiseMult: 1,
     clutchNoiseMult: 1,
     layoutAttemptMult: 1,
@@ -1029,7 +1068,6 @@ function computeTraitMods(player) {
         break
       case 'layout_machine':
         mods.layoutAttemptMult *= 1.35
-        mods.injuryChanceMult *= 1.2
         break
       case 'aggressive_cutter':
         mods.cutRollMult *= 1.45
@@ -1247,7 +1285,6 @@ function computeTraitMods(player) {
         mods.breakSideOptionBonus += 0.18
         mods.heroThrowWeightMult *= 1.2
         mods.acceptanceThresholdDelta -= 5
-        mods.badDecisionMult *= 1.12
         break
       case 'iso_ball':
         mods.dumpEarlyBias -= 0.35
@@ -1269,6 +1306,16 @@ function computeTraitMods(player) {
         mods.injuryChanceMult *= 1.15
         mods.decisionNoiseMult *= 1.08
         break
+      case 'fakes_a_lot': mods.fakeFrequency = 1; break
+      case 'double_move_cutter': mods.doubleMove = 1; break
+      case 'sideline_receiver': mods.sidelineBias = 1; break
+      case 'attacks_disc_high': mods.highDiscAttack = 1; break
+      case 'recovery_defense': mods.recoveryDefense = 1; break
+      case 'good_insides': mods.insideControlBonus = 0.08; break
+      case 'good_arounds': mods.aroundControlBonus = 0.08; break
+      case 'thinks_fast': mods.decisionTimeMult = 0.8; break
+      case 'long_cuts': mods.cutLengthMult = 1.35; mods.cutCommitMult = 1.3; break
+      case 'quick_cuts': mods.cutLengthMult = 0.7; mods.cutCommitMult = 0.7; mods.clogChanceMult *= 1.15; break
       case 'give_and_go': mods.giveAndGoBias += 1; break
       case 'upline_seeker': mods.uplineBias += 1; break
       case 'swing_first': mods.swingBias += 1; break
@@ -1302,4 +1349,14 @@ export function throwTypeBlockRiskTraitBonus(player, throwType) {
   if (throwType === 'huck') return m.huckBlockRisk
   if (throwType === 'over_the_top') return m.ottBlockRisk
   return 0
+}
+
+/** Career style changes preserve mental traits and invalidate cached match modifiers. */
+export function replacePlayerTraits(player, traits) {
+  player.traits = [...traits]
+  traitModsCache.delete(player)
+  return ensurePlayerTraits(player)
+}
+export function conflictingPlayerTraits(id, selected) {
+  return selected.filter(other => conflictsWith(id, new Set([other])))
 }

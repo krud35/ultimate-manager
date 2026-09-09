@@ -15,12 +15,12 @@ const kind = (traits, name) => traits.filter(id => TRAIT_DEFS[id].kind === name)
 let basePreferred = 0, biasedPreferred = 0
 for (let id = 1; id <= 3000; id++) {
   const base = rollTraitsForPlayer({ id, skills: {} })
-  assert.equal(kind(base, 'personality').length, 2)
-  assert([1, 2].includes(kind(base, 'style').length))
+  assert([1, 2, 3].includes(kind(base, 'personality').length))
+  assert(kind(base, 'style').length >= 1 && kind(base, 'style').length <= 6)
   assert.equal(new Set(base).size, base.length)
   const other = rollTraitsForPlayer({ id, archetype: 'deep_handler', skills: demoHomeTeam.players[0].skills })
   assert.deepEqual(kind(base, 'personality'), kind(other, 'personality'))
-  assert.deepEqual(rollTraitsForPlayer({ id, skills: demoHomeTeam.players[0].skills }), base)
+  assert.deepEqual(kind(rollTraitsForPlayer({ id, skills: demoHomeTeam.players[0].skills }), 'personality'), kind(base, 'personality'))
   const preferred = ARCHETYPE_TRAIT_PREFERENCES.deep_handler
   basePreferred += base.filter(t => preferred.includes(t)).length
   biasedPreferred += other.filter(t => preferred.includes(t)).length
@@ -79,7 +79,7 @@ assert(mergeTraitAndCoachMods(make(['deny_under']), null, 'defense').denyUnderBi
 // Real spatial and fast point simulation exercise context wiring, not just modifiers.
 for (const simulate of [simulatePoint, simulatePointFast]) {
   const home = structuredClone(demoHomeTeam), away = structuredClone(demoAwayTeam)
-  const styles = ['give_and_go', 'upline_seeker', 'swing_first', 'attack_turnover', 'settle_turnover', 'deny_deep', 'deny_under']
+  const styles = ['fakes_a_lot', 'double_move_cutter', 'sideline_receiver', 'attacks_disc_high', 'recovery_defense', 'good_insides', 'good_arounds', 'long_cuts', 'quick_cuts', 'thinks_fast', 'give_and_go', 'upline_seeker', 'swing_first', 'attack_turnover', 'settle_turnover', 'deny_deep', 'deny_under']
   for (const team of [home, away]) team.players.forEach((p, i) => { p.traits = [styles[i % styles.length], 'clutch']; p.traitsGen = TRAITS_GEN_VERSION })
   const result = simulate({ homeTeam: home, awayTeam: away, pullTeam: 'away', pointIndex: 26,
     homeScore: 13, awayScore: 12, rng: createRng(91) })

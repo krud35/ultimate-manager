@@ -1,3 +1,5 @@
+import { observeStyleTick, recordStyleEvidence, instructionContext } from '../styleEvidence.js'
+import { throwingFakePhase } from './traitBehavior.js'
 import {
   layoutPlayersOnField,
   resolveFieldTactics,
@@ -788,6 +790,7 @@ export function runContinuousThrowSimulation({
   hardStallCount = stallCount,
   requireForwardPass = false,
   onThrowCommitted = null,
+  behaviorBoxScore = null,
 }) {
   const holdStartMs = Math.max(0, startHoldMs ?? 0)
   const setupBudgetMs = Math.max(
@@ -826,6 +829,7 @@ export function runContinuousThrowSimulation({
    * WYKONANYCH rzutów 29.1% i 33.5% — te same opcje, przefiltrowane przez czas.
    */
   let scanCache = null
+  let previousBehaviorFake = 0, previousBehaviorWindow = 0
   let scanCacheMs = -1e9
 
   const offenseLayout = layoutPlayersOnField(
@@ -1022,6 +1026,9 @@ export function runContinuousThrowSimulation({
       }
     }
 
+    const behaviorBefore = behaviorBoxScore ? new Map([...offenseAgents, ...defenseAgents].map(a => [a.id, {
+      x:a.x,y:a.y,state:a.state,cutKind:a.cutKind,jumping:a.jumping,feintElapsedMs:a.feintElapsedMs,
+    }])) : null
     const offensePositions = offenseAgents.map((a) => ({
       id: a.id,
       player: a.player,
@@ -1489,6 +1496,8 @@ export function runContinuousThrowSimulation({
           attackSign,
           defenseTactics: defenseTeam?.tactics,
           spaceCells,
+          afterTurnover,
+          fakePhase: throwingFakePhase(ms, playerMatchMods(thrower).fakeFrequency),
           // Patrz komentarz przy bliźniaczym wywołaniu w pętli lotu.
           offenseAgents,
           defenseAgents,
@@ -1529,12 +1538,23 @@ export function runContinuousThrowSimulation({
       discSnapshot = discPositionHeld(throwerAgent.x, throwerAgent.y, attackSign)
     }
 
+    if (behaviorBoxScore) {
+      const clock = ms
+      const fakeWindow = !flight ? throwingFakePhase(clock, 1) : 0
+      const fakePhase = !flight ? throwingFakePhase(clock, playerMatchMods(thrower).fakeFrequency) : 0
+      observeStyleTick(behaviorBoxScore, behaviorBefore, offenseAgents, defenseAgents, {
+        dtSec:DT_SEC, throwerId:thrower.id, disc:{...discSnapshot,inFlight:!!flight},
+        afterTurnover,attackSign,offenseTactics:offenseTeam?.tactics,defenseTactics:defenseTeam?.tactics,
+        fakePhase,previousFakePhase:previousBehaviorFake,fakeWindow,previousFakeWindow:previousBehaviorWindow,fieldWidth:fieldCenterY()*2,
+      })
+      previousBehaviorFake=fakePhase; previousBehaviorWindow=fakeWindow
+    }
     frames.push(
       snapshotFrame(ms, offenseAgents, defenseAgents, thrower.id, discSnapshot, markerId, liveStall),
     )
 
     if (!flight) {
-      if (ms - scanCacheMs >= THROWER_SCAN_MS || scanCache === null) {
+      if (ms - scanCacheMs >= THROWER_SCAN_MS * (playerMatchMods(thrower).decisionTimeMult ?? 1)) {
         scanCacheMs = ms
         scanCache = scanThrowOptions(thrower, offenseAgents, defenseAgents, {
           disc,
@@ -1555,6 +1575,7 @@ export function runContinuousThrowSimulation({
         })
       }
       const option = scanCache
+      if(option) recordStyleEvidence(behaviorBoxScore,thrower.id,'full','throwWindowSeconds',DT_SEC,instructionContext(offenseTeam?.tactics,thrower.id))
 
       const atkStyle = attackStyle
       const defStyle = defenseStyle
@@ -1575,10 +1596,10 @@ export function runContinuousThrowSimulation({
         }) *
           throwReleaseGateMultiplier(atkStyle, defStyle) +
         throwerPatienceBonusMs(thrower)) *
-        (throwerCoach.releaseGateMult ?? 1)
+        (throwerCoach.releaseGateMult ?? 1) * (throwerCoach.decisionTimeMult ?? 1)
       // Jitter w górę częściej niż w dół — rzadziej „przyśpieszamy” set play.
       const releaseGateMs = gateBase * (0.95 + rng.float() * 0.25)
-      if (option && ms >= Math.max(0, releaseGateMs)) {
+      if (option && !throwingFakePhase(ms, throwerCoach.fakeFrequency) && ms >= Math.max(0, releaseGateMs)) {
         if (globalThis.__DEC) {
           globalThis.__DEC.push({
             score: option.score,
@@ -1796,6 +1817,8 @@ export function runContinuousThrowSimulation({
     discY,
     motionTrace,
     endStates: snapshotAgentStates(offenseAgents, defenseAgents),
+    plannedShape: {curve: flight?.throwCurve},
+    styleExecution: {curveError:flight?.curveExecutionError,arcError:flight?.arcExecutionError},
     geometricResolution: geoResolution,
     geometricShadow: (() => {
       const g = summarizeShadowContest(shadowContest, flight)

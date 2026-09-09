@@ -12,7 +12,7 @@ import eucsRealRosters from './eucs/eucsRealRosters.json' with { type: 'json' }
 import { buildTeamRoster } from './playerStatsFromUfa.js'
 import { rollRandomSkillsForRoster } from './randomRosterSkills.js'
 import { rollTeamTacticalIdentity } from './seasonLeagueBuilder.js'
-import { rollTraitsForPlayer, TRAITS_GEN_VERSION } from '../models/playerTraits.js'
+import { rollTraitsForPlayer, personalityTypeForPlayer, TRAITS_GEN_VERSION } from '../models/playerTraits.js'
 import { eucsNationalityOverride } from './eucs/eucsNationalityOverrides.js'
 import { eucsResultAdjustment, applyEucsOvrDistribution } from './eucsRosterBalance.js'
 
@@ -285,7 +285,9 @@ export function buildEucsLeagueTemplate(options) {
     finalizeGeneratedPotential(players)
 
     for (const p of players) {
-      p.traits = rollTraitsForPlayer({ ...p, id: hashSeed(seed, p.id, 'career-traits') })
+      const traitProfile = { ...p, id: hashSeed(seed, p.id, 'career-traits') }
+      p.traits = rollTraitsForPlayer(traitProfile)
+      p.personalityType = personalityTypeForPlayer(traitProfile)
       p.traitsGen = TRAITS_GEN_VERSION
       // Domyślnie narodowość = kraj klubu (realne rosterowe nazwiska to głównie zawodnicy
       // krajowi w amatorskim ultimate; wygenerowane składy nie mają realnych imion, więc

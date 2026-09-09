@@ -1,3 +1,5 @@
+import { standingReachM } from './statFormulas.js'
+import { playerMatchMods } from '../playerModsRegistry.js'
 import { pacedSpeedMps, speedRangeFor } from './flightSpeed.js'
 import { buildThrowPathPoints } from '../fieldViz.js'
 import { DISC_STATE, discPositionHeld, discPositionInFlight } from '../discState.js'
@@ -96,7 +98,7 @@ export function sprintSpeedMps(player, role) {
 // zależą od tego) — Faza 4 dopiero użyje tej realnej wysokości do realnego kontestu.
 const JUMP_GRAVITY_MPS2 = 9.81
 
-function tickJumpArc(agent, discX, discY, timeToDiscMs, player, rng, discZ = 2) {
+function tickJumpArc(agent, discX, discY, timeToDiscMs, player, rng, discZ = 2, role = 'offense') {
   if (agent.layout) {
     if (!agent.jumping) return agent
     const vz = (agent.vz ?? 0) - JUMP_GRAVITY_MPS2 * DT_SEC
@@ -105,8 +107,14 @@ function tickJumpArc(agent, discX, discY, timeToDiscMs, player, rng, discZ = 2) 
     return { ...agent, z, vz }
   }
   const dist = Math.hypot(discX - agent.x, discY - agent.y)
-  if (dist >= LAYOUT_DIST_M || timeToDiscMs > LAYOUT_TIME_MS) return agent
-  const isReceiver = agent.id === player?.id
+  const attackHigh = role === 'offense' && playerMatchMods(player).highDiscAttack
+  const jumpWindow = attackHigh ? Math.sqrt(2 * jumpHeightM(player) / JUMP_GRAVITY_MPS2)
+    * (0.7 + subStat(player, 'offensive', 'cutTiming') / 330) * 1000 : LAYOUT_TIME_MS
+  if (dist >= LAYOUT_DIST_M || timeToDiscMs > jumpWindow) return agent
+  // Niski dysk nie wymaga pionowego wyskoku: wybicie oddalałoby od niego ręce.
+  // Poziomy layout potrzebuje osobnego modelu ułożenia ciała.
+  if (discZ <= standingReachM(player) + (agent.z ?? 0)) return agent
+  const isReceiver = role === 'offense'
   const chance = aerialContestChance(player, discZ, isReceiver)
   if (rng && rng.float() > chance + 0.12) return agent
   // Jedno źródło prawdy dla wysokości wybicia — ta sama wielkość, którą kontest
@@ -332,6 +340,7 @@ export function createFlightContext({
   const arc = executeThrowShape(thrower, {
     arc: shape.arc,
     curve: shape.curve,
+    technique: trajectory === 'overhead' ? null : throwTechnique,
     loftStat: discLoftStat,
     rng,
   })
@@ -507,7 +516,7 @@ export function interceptForFlight(flight) {
 export function tickFlightContestAgent(agent, intercept, player, role, discSample, rng, speedMult = 1) {
   const speed = sprintSpeedMps(player, role) * speedMult
   let next = { ...agent, ...integrateAgentMotion(agent, intercept.x, intercept.y, speed, DT_SEC, true, role) }
-  next = tickJumpArc(next, discSample.x, discSample.y, discSample.timeToDisc, player, rng, discSample.z)
+  next = tickJumpArc(next, discSample.x, discSample.y, discSample.timeToDisc, player, rng, discSample.z, role)
   return next
 }
 
