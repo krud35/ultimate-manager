@@ -1,3 +1,4 @@
+import { academyCapacity, academyAnnualPlaces } from '../career/academy.js'
 import { useState } from 'react'
 import { useUiLang } from '../ui/UiLangContext'
 import { academyStrings } from '../ui/strings/academy'
@@ -78,9 +79,10 @@ export default function AcademyView({ career, onCareerUpdate }) {
 
   function handleSign(candidateId) {
     setActionError(null)
-    const result = signAcademyCandidate(team, candidateId)
+    const result = signAcademyCandidate(team, candidateId, { world: career.world, seasonYear: career.seasonYear })
     if (!result.ok) {
-      setActionError(t.promoteConfirmError)
+      const errors = lang === 'en' ? { academy_full: 'The academy is full.', annual_limit: 'Annual intake limit reached.', unavailable: 'The candidate is no longer available.', declined: 'The candidate declined the move.', insufficient_funds: 'Insufficient funds for recruitment.' } : { academy_full: 'Akademia jest pełna.', annual_limit: 'Wykorzystano roczny limit przyjęć.', unavailable: 'Kandydat nie jest już dostępny.', declined: 'Kandydat odrzucił propozycję przeprowadzki.', insufficient_funds: 'Brak środków na rekrutację.' }
+      setActionError(errors[result.error] ?? t.promoteConfirmError)
       return
     }
     onCareerUpdate({ world: career.world })
@@ -163,6 +165,8 @@ export default function AcademyView({ career, onCareerUpdate }) {
         <h2 className="text-xl font-bold text-ufa-text">{t.title}</h2>
         <p className="mt-1 text-sm text-ufa-muted">{t.intro}</p>
         <p className="mt-1 text-sm font-medium text-ufa-text">{t.academyLevelLabel(academyLevel)}</p>
+        <p className="mt-2 text-sm">{lang === 'en' ? 'Places' : 'Miejsca'}: {prospects.length}/{academyCapacity(team)} · {lang === 'en' ? 'Admissions this season' : 'Przyjęcia w sezonie'}: {team.academyAdmissionYear === career.seasonYear ? team.academyAdmissions : 0}/{academyAnnualPlaces(team)}</p>
+        <p className="mt-1 text-xs text-ufa-muted">{lang === 'en' ? 'Scouts discover a shared regional cohort. Other clubs can recruit the same players. Recruitment costs 2,000 plus 200 per potential point above 60; academy maintenance costs 40 per player weekly. Youth minutes support development.' : 'Skauci odkrywają wspólny rocznik regionalny. Inne kluby mogą pozyskać tych samych graczy. Rekrutacja kosztuje 2000 plus 200 za punkt potencjału powyżej 60; utrzymanie akademii to 40 tygodniowo za zawodnika. Minuty młodzieżowe wspierają rozwój.'}</p>
       </div>
 
       <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
@@ -179,6 +183,7 @@ export default function AcademyView({ career, onCareerUpdate }) {
                   <th className="px-2 py-2 font-medium">{t.colAge}</th>
                   <th className="px-2 py-2 font-medium">{t.colOvr}</th>
                   <th className="px-2 py-2 font-medium">{t.colPotential}</th>
+                  <th className="px-2 py-2 font-medium">{lang === 'en' ? 'Youth minutes' : 'Minuty U21'}</th>
                   <th className="px-2 py-2 font-medium">{t.colSource}</th>
                   <th className="px-2 py-2 font-medium">{t.colJoined}</th>
                   <th className="px-2 py-2 font-medium" />
@@ -198,6 +203,7 @@ export default function AcademyView({ career, onCareerUpdate }) {
                         {getOverallRating(p.skills)}
                       </td>
                       <td className="px-2 py-2.5 tabular-nums text-ufa-muted">{p.potential ?? '—'}</td>
+                      <td className="px-2 py-2.5 tabular-nums text-ufa-muted">{p.youthMinutes ?? 0}</td>
                       <td className="px-2 py-2.5 text-ufa-muted">
                         {p.academySource === 'scouted' ? t.sourceScouted : t.sourceIntake}
                       </td>

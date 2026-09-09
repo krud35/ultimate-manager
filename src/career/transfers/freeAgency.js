@@ -2,29 +2,23 @@
  * Wolni agenci: zwolnienia, podpisywanie, odnowienia kontraktów.
  */
 
+import { canAffordContract, clubCash, ensureClubEconomy, contractualWeeklyBill } from '../clubEconomy.js'
 import { getOverallRating } from '../../models/playerStats.js'
 import { getPlayerFullName } from '../../data/mockPlayers.js'
 import { worldTeamById, worldTeamsList } from '../worldState.js'
 import {
-  canBuyPlayers,
-  getTransferBudget,
   ensureWorldFinances,
 } from './clubFinances.js'
 import {
   clearPlayerContractOnExit,
   ensurePlayerContract,
-  getContractRemainingCost,
   signPlayerContract,
-  reserveContractFunds,
 } from './playerContracts.js'
 import {
   aiAutoPlayerContractTerms,
-  computePlayerContractDemands,
   evaluatePlayerContractOffer,
-  previewContractOffer,
 } from './playerNegotiation.js'
-import { formatUsd, getPlayerMarketValue, refreshPlayerMarketValue } from './playerValue.js'
-import { isTransferWindowOpen } from './transferWindow.js'
+import { getPlayerMarketValue, refreshPlayerMarketValue } from './playerValue.js'
 import { buildOvrRankMap } from './negotiation.js'
 
 export const PLAYER_STATUS = {
@@ -32,6 +26,12 @@ export const PLAYER_STATUS = {
   FREE_AGENT: 'free_agent',
   RETIRED: 'retired',
   ACADEMY: 'academy',
+}
+
+function canAffordAiRenewal(team, player, wage) {
+  const reserveForDepth = Math.max(0, 14 - team.players.length) * 800
+  return canAffordContract(team, player, wage).ok &&
+    contractualWeeklyBill(team, player.id) + wage + reserveForDepth <= ensureClubEconomy(team).weeklyWageLimit
 }
 
 export function ensureWorldFreeAgents(world) {
@@ -84,22 +84,13 @@ export function releasePlayerToFreeAgency(team, player, world) {
 export function signFreeAgent(career, opts) {
   const world = career.world
   if (!world) return { ok: false, error: 'Brak świata kariery' }
-  if (!isTransferWindowOpen(career)) {
-    return { ok: false, error: 'Okno transferowe jest zamknięte' }
-  }
   ensureWorldFreeAgents(world)
   ensureWorldFinances(world)
 
   const buyerId = opts.buyerTeamId ?? career.playerTeamId
   const buyer = worldTeamById(world, buyerId)
   if (!buyer) return { ok: false, error: 'Brak klubu' }
-  if (!canBuyPlayers(buyer) && buyerId === career.playerTeamId) {
-    // AI may still try when recovering — block all when ≤ 0
-  }
-  if (getTransferBudget(buyer) <= 0) {
-    return { ok: false, error: 'Ujemny lub zerowy budżet — nie można podpisywać zawodników' }
-  }
-
+  if ((buyer.players?.length ?? 0) >= 32) return { ok: false, error: 'Limit 32 seniorów / Senior roster limit' }
   const faIdx = world.freeAgents.findIndex((p) => String(p.id) === String(opts.playerId))
   if (faIdx < 0) return { ok: false, error: 'Zawodnik nie jest wolnym agentem' }
   const player = world.freeAgents[faIdx]
@@ -117,14 +108,6 @@ export function signFreeAgent(career, opts) {
       return { ok: false, error: 'Zawodnik nie zgodził się na warunki' }
     }
     contractTerms = auto.terms
-  }
-
-  const preview = previewContractOffer(contractTerms.weeklyWage, contractTerms.years)
-  if (preview.totalCost > getTransferBudget(buyer)) {
-    return {
-      ok: false,
-      error: `Brak środków na kontrakt (${formatUsd(preview.totalCost)}; budżet ${formatUsd(getTransferBudget(buyer))})`,
-    }
   }
 
   const signed = signPlayerContract(buyer, player, {
@@ -204,7 +187,8 @@ export function renewPlayerContract(career, opts) {
     }
   }
 
-  const oldRefund = clearPlayerContractOnExit(team, player)
+  const previousContract = player.contract
+  clearPlayerContractOnExit(team, player)
   const signed = signPlayerContract(team, player, {
     weeklyWage: evaluation.contractTerms.weeklyWage,
     years: evaluation.contractTerms.years,
@@ -213,10 +197,7 @@ export function renewPlayerContract(career, opts) {
     signedDate: career.league?.currentDate ?? null,
   })
   if (!signed.ok) {
-    // Przywróć stare środki jeśli rezerwacja się nie udała — best-effort
-    if (oldRefund > 0) {
-      reserveContractFunds(team, oldRefund)
-    }
+    player.contract = previousContract
     return { ok: false, error: signed.error, playerEvaluation: evaluation }
   }
 
@@ -267,7 +248,7 @@ export function listFreeAgents(world) {
  * AI: decyzja czy zatrzymać / zwolnić / przedłużyć.
  * @returns {{ renewed: number, released: number }}
  */
-export function processAiContractCycle(world, { playerTeamId = null, seed = 1, league = null } = {}) {
+export function processAiContractCycle(world, { playerTeamId = null, seed = 1, league = null, maxRemainingWeeks = null } = {}) {
   ensureWorldFreeAgents(world)
   let renewed = 0
   let released = 0
@@ -280,7 +261,7 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
 
     const avg =
       players.reduce((s, p) => s + getOverallRating(p.skills), 0) / players.length
-    const budget = getTransferBudget(team)
+    const budget = clubCash(team)
     const rankMap = buildOvrRankMap(players)
     const desperate = budget <= 0
 
@@ -298,6 +279,7 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
       .sort((a, b) => a.ovr - b.ovr)
 
     for (const row of ranked) {
+      if (maxRemainingWeeks != null && row.weeks > maxRemainingWeeks) continue
       // Zawodnik na wypożyczeniu nie należy kontraktowo do tego klubu — nie
       // zwalniaj/odnawiaj go tutaj (kontrakt/decyzje zostają przy klubie macierzystym).
       if (row.p.loan) continue
@@ -320,15 +302,15 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
             renew: true,
           })
           if (auto.ok && auto.terms) {
-            const cost = previewContractOffer(auto.terms.weeklyWage, auto.terms.years).totalCost
-            const refund = getContractRemainingCost(row.p.contract)
-            if (cost - refund <= getTransferBudget(team) + 50_000 || isStar) {
+            if (canAffordAiRenewal(team, row.p, auto.terms.weeklyWage)) {
+              const previousContract = row.p.contract
               clearPlayerContractOnExit(team, row.p)
               const signed = signPlayerContract(team, row.p, {
                 ...auto.terms,
                 signedDate: null,
               })
               if (signed.ok) renewed += 1
+              else row.p.contract = previousContract
             }
           }
         }
@@ -337,7 +319,7 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
 
       // Release candidates
       const rosterOk = (team.players?.length ?? 0) > 14
-      if (rosterOk && (youngBad || oldWeak || (desperate && row.rank >= players.length - 3))) {
+      if (maxRemainingWeeks == null && rosterOk && (youngBad || oldWeak || (desperate && row.rank >= players.length - 3))) {
         const releaseChance = desperate ? 0.55 : youngBad ? 0.35 : oldWeak ? 0.28 : 0.1
         if (roll < releaseChance) {
           const res = releasePlayerToFreeAgency(team, row.p, world)
@@ -356,12 +338,12 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
           renew: true,
         })
         if (auto.ok && auto.terms) {
-          const cost = previewContractOffer(auto.terms.weeklyWage, auto.terms.years).totalCost
-          const refund = getContractRemainingCost(row.p.contract)
-          if (cost - refund <= Math.max(0, getTransferBudget(team))) {
+          if (canAffordAiRenewal(team, row.p, auto.terms.weeklyWage)) {
+            const previousContract = row.p.contract
             clearPlayerContractOnExit(team, row.p)
             const signed = signPlayerContract(team, row.p, auto.terms)
             if (signed.ok) renewed += 1
+            else row.p.contract = previousContract
           } else if (rosterOk && desperate && roll < 0.4) {
             const res = releasePlayerToFreeAgency(team, row.p, world)
             if (res.ok) released += 1
@@ -388,7 +370,7 @@ export function simulateAiFreeAgentSignings(
   { maxDeals = 4, seed = 1, rosterTarget = 31 } = {},
 ) {
   const world = career.world
-  if (!world || !isTransferWindowOpen(career)) {
+  if (!world) {
     return { deals: 0, transferLog: career.transferLog ?? [] }
   }
   ensureWorldFreeAgents(world)
@@ -396,38 +378,49 @@ export function simulateAiFreeAgentSignings(
   let transferLog = [...(career.transferLog ?? [])]
   let salt = seed >>> 0
 
-  const fas = [...(world.freeAgents ?? [])].sort(
-    (a, b) => getOverallRating(b.skills) - getOverallRating(a.skills),
-  )
+  const activeFreeAgents = new Set(world.freeAgents ?? [])
+  const ratings = new Map([...activeFreeAgents].map(p => [p, getOverallRating(p.skills)]))
+  const fas = [...activeFreeAgents].sort((a, b) => ratings.get(b) - ratings.get(a))
 
-  for (const team of worldTeamsList(world)) {
+  for (const team of worldTeamsList(world).sort((a, b) => a.players.length - b.players.length)) {
     if (deals >= maxDeals) break
     if (team.id === career.playerTeamId) continue
-    if (getTransferBudget(team) <= 0) continue
-    if ((team.players?.length ?? 0) >= AI_ROSTER_HARD_CAP) continue
+    if ((team.players?.length ?? 0) >= Math.min(AI_ROSTER_HARD_CAP, rosterTarget)) continue
 
     // Im dalej pod celem, tym więcej podpisań może zrobić ten klub w tym przebiegu.
     const roomToTarget = Math.max(0, rosterTarget - (team.players?.length ?? 0))
     const signsAllowedForTeam = 1 + Math.min(3, roomToTarget)
     let signedForTeam = 0
+    let squadRatingTotal = team.players.reduce((sum, p) => sum + getOverallRating(p.skills), 0)
+    let wageBill = contractualWeeklyBill(team)
+    const wageLimit = ensureClubEconomy(team).weeklyWageLimit
+    const affordableTarget = Math.min(24, Math.max(14, Math.floor(wageLimit / 1000)))
 
     for (const player of fas) {
       if (deals >= maxDeals || signedForTeam >= signsAllowedForTeam) break
-      if ((team.players?.length ?? 0) >= AI_ROSTER_HARD_CAP) break
-      if (!world.freeAgents.includes(player)) continue
-      const avg =
-        (team.players ?? []).reduce((s, p) => s + getOverallRating(p.skills), 0) /
-          Math.max(1, team.players?.length ?? 1)
-      const ovr = getOverallRating(player.skills)
-      if (ovr < avg - 6) continue
+      if ((team.players?.length ?? 0) >= Math.min(AI_ROSTER_HARD_CAP, rosterTarget)) break
+      if (!activeFreeAgents.has(player)) continue
+      const avg = squadRatingTotal / Math.max(1, team.players.length)
+      const ovr = ratings.get(player)
+      const shortage = Math.max(0, affordableTarget - team.players.length)
+      if (ovr < avg - (shortage > 0 ? 12 : 6)) continue
       salt = (Math.imul(salt, 1664525) + 1013904223) >>> 0
       if ((salt % 1000) / 1000 > 0.35) continue
 
+      const auto = aiAutoPlayerContractTerms({ player, sellerTeam: null, buyerTeam: team, league: career.league })
+      if (!auto.ok) continue
+      // Preserve enough payroll room to fill a playable squad, instead of buying one star.
+      const remaining = wageLimit - wageBill
+      if (shortage > 0 && auto.terms.weeklyWage > remaining / shortage * 1.25) continue
+
       const result = signFreeAgent(
         { ...career, world, transferLog },
-        { playerId: player.id, buyerTeamId: team.id },
+        { playerId: player.id, buyerTeamId: team.id, contract: auto.terms },
       )
       if (result.ok) {
+        activeFreeAgents.delete(player)
+        squadRatingTotal += ovr
+        wageBill = contractualWeeklyBill(team)
         deals += 1
         signedForTeam += 1
         transferLog = result.transferLog

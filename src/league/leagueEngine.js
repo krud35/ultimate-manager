@@ -258,6 +258,9 @@ export function applyMatchResultToLeague(league, matchRecord) {
   const homeWon = (matchRecord.homeScore ?? 0) > (matchRecord.awayScore ?? 0)
   const awayWon = (matchRecord.awayScore ?? 0) > (matchRecord.homeScore ?? 0)
   applyPostMatchFinances(homeTeam, awayTeam, {
+    matchId: matchRecord.fixtureId ?? matchRecord.id,
+    forfeited: !!matchRecord.forfeited,
+    date: matchRecord.date ?? league.currentDate,
     isCup,
     homeWon,
     awayWon,

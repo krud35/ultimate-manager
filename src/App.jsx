@@ -1,6 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import ManagerCareerPanel from './components/ManagerCareerPanel.jsx'
+import { addManagerWelcome, processManagerCareer } from './career/managerCareer.js'
+import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
+import {
+  advanceCareerDay,
+  simulateCareerUntil,
+} from './career/calendarSimulation.js'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
-import { playerTeam, teamForMatchEngine } from './data/ufaLeagueTeams'
+import {
+  playerTeam,
+  teamForMatchEngine,
+} from './data/ufaLeagueTeams'
 import {
   listSlots,
   createCareer,
@@ -14,96 +30,43 @@ import {
   worldTeamById,
   worldTeamsList,
   teamFromLeague,
-  applyDailyDevelopment,
-  applyDailyDevelopmentDateRangeAsync,
   isTransferWindowOpen,
-  getTransferWindowState,
-  simulateAiTransferActivity,
-  simulateAiTransfersForDateRange,
-  messagesFromTrainingReports,
-  messagesFromTrainingInjuries,
   messagesFromInjuries,
-  messagesFromNewMatchInjuries,
   messageFromMatchAnalysis,
   pickPostMatchEventMessage,
-  messagesFromNewPlayerMatches,
   messagesFromNewTransferLogEntries,
-  generateIncomingTransferOffers,
-  generateRandomEvents,
-  processPendingEventFollowUps,
   mergeInbox,
   unreadInboxCount,
   respondToIncomingBid,
   updateInboxMessage,
-  expireStaleTransferOffers,
   resolveInboxDecision,
-  processUltiworldTick,
   unreadUltiworldCount,
-  processWeeklyWages,
-  processWeeklyWagesTimes,
-  processMonthlySponsorPayouts,
-  processMonthlySponsorPayoutsForRange,
-  messagesFromSponsorPayouts,
-  processMonthlyTvPayouts,
-  processMonthlyTvPayoutsForRange,
-  messagesFromTvPayouts,
   setMoneyCurrency,
   signSponsorOfferFromInbox,
   supersedeSponsorOfferMessages,
-  processDelayedTransferReplies,
-  processDelayedTransferRepliesForDateRange,
-  processWeeklyFinancialHealth,
-  messagesFromFinancialHealth,
   firstImportantInboxMessage,
   isImportantInboxMessage,
   queueIncomingBidCounter,
   queueOutgoingPlayerContract,
   acceptOutgoingClubCounter,
   acceptPlayerContractCounter,
-  spawnPendingRegistrationNotices,
-  markPreAgreedNotified,
   confirmPendingRegistration,
   declinePendingRegistration,
   formatUsd,
   renewPlayerContract,
   setPlayerTransferListed,
   isClubBankrupt,
-  messagesFromScoutMissions,
-  resolveScoutMissions,
-  decayScoutingKnowledge,
   recordMatchKnowledgeGain,
-  recordMatchKnowledgeGainForNewMatches,
-  advanceAcademyCampaigns,
-  messagesFromAcademyCampaignReports,
-  advancePlayerSearchCampaigns,
-  messagesFromPlayerSearchReports,
-  processLoanReturns,
-  processLoanReturnsForDateRange,
-  generateIncomingLoanOffers,
   queueLoanOutOffer,
   respondToIncomingLoanRequest,
-  checkForcedTransferListDemands,
-  messagesFromForcedTransferListDemands,
 } from './career'
-import { advanceNationalTeamsForDate } from './career/nationalTeamSeason.js'
-import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
-import {
-  processTeamTrainingsForDate,
-  processTeamTrainingsDateRangeAsync,
-  weeklyTeamTrainingMaintenance,
-} from './career/teamTraining.js'
+
 import {
   applyMatchResultToLeague,
   cloneLeague,
   leagueRecordFromEngineResult,
-  advanceCalendarDay,
-  simulateUntilDateAsync,
-  simulateUntilPlayerMatchOrEndAsync,
   isOfficialSeasonEnded,
   tryForfeitMatchRecord,
-  parseISODate,
-  formatISODate,
-  addDays,
 } from './league'
 import { resolvePlayerDefaultTactics } from './matchEngine'
 
@@ -135,7 +98,12 @@ import CalendarSimOverlay from './components/CalendarSimOverlay'
 import WelcomeModal from './components/WelcomeModal'
 import TutorialGuide from './components/TutorialGuide'
 import { buildSeasonStateFromLeague } from './seasonEngine/seasonStateFromLeague.js'
-import { displaySeasonLabel, pickLabel, pickCopy, UI_LANG } from './ui/locale'
+import {
+  displaySeasonLabel,
+  pickLabel,
+  pickCopy,
+  UI_LANG,
+} from './ui/locale'
 import { useUiLang } from './ui/UiLangContext'
 import { LangSwitch } from './ui/LangSwitch'
 import { ScreenBackground } from './ui/backgrounds/ScreenBackground.jsx'
@@ -497,199 +465,6 @@ function friendlySaveErrorMessage(err, lang) {
   return err?.message || String(err)
 }
 
-function computeCalendarDayStep(career, nextLeague, { weekTick = false, trainingDate = null } = {}) {
-  const inboxMessages = []
-  if (trainingDate) {
-    const training = processTeamTrainingsForDate(nextLeague, trainingDate, {
-      playerTeamId: career.playerTeamId,
-    })
-    inboxMessages.push(...messagesFromTrainingReports(training.reports, career))
-    inboxMessages.push(...messagesFromTrainingInjuries(training.reports, career))
-    applyDailyDevelopment(nextLeague, {
-      playerTeamId: career.playerTeamId,
-      date: trainingDate,
-      tag: `day-${trainingDate}`,
-    })
-  }
-  if (career.world) {
-    // Comiesięczny hak (dzień===1, samo-gatujące) — woływane codziennie, nie tylko w
-    // weekTick, wzorem processMonthlyTvPayouts/processMonthlySponsorPayouts.
-    const academyReports = advanceAcademyCampaigns(
-      worldTeamById(career.world, career.playerTeamId),
-      trainingDate ?? nextLeague.currentDate,
-    )
-    inboxMessages.push(
-      ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
-    )
-    // Kadry narodowe (Fazy 1-5) — kwalifikacje/turniej ME/MŚ mają konkretne daty
-    // (przerwy reprezentacyjne, patrz seasonCalendar.js), więc muszą być sprawdzane
-    // codziennie jak reszta tego bloku, nie tylko w weekTick. Zwraca już gotowe
-    // wiadomości (nie surowe raporty), więc bez pośredniego messagesFromX.
-    inboxMessages.push(
-      ...advanceNationalTeamsForDate(career, career.world, trainingDate ?? nextLeague.currentDate),
-    )
-  }
-  if (weekTick) {
-    weeklyTeamTrainingMaintenance(nextLeague, {
-      playerTeamId: career.playerTeamId,
-    })
-    if (career.world) {
-      processWeeklyWages(career.world)
-      decayScoutingKnowledge(career.world, career.playerTeamId)
-      const playerSearchReports = advancePlayerSearchCampaigns(
-        worldTeamById(career.world, career.playerTeamId),
-      )
-      inboxMessages.push(
-        ...messagesFromPlayerSearchReports(playerSearchReports, { ...career, league: nextLeague }),
-      )
-      const financialHealth = processWeeklyFinancialHealth(career.world, {
-        seasonYear: career.seasonYear,
-      })
-      inboxMessages.push(
-        ...messagesFromFinancialHealth(
-          financialHealth,
-          { ...career, league: nextLeague },
-          { date: trainingDate ?? nextLeague.currentDate, seasonYear: career.seasonYear },
-        ),
-      )
-      const forcedListDemands = checkForcedTransferListDemands(career.world, {
-        leaguePlayerStats: nextLeague.playerStats,
-        standings: nextLeague.standings,
-      })
-      inboxMessages.push(
-        ...messagesFromForcedTransferListDemands(forcedListDemands, { ...career, league: nextLeague }),
-      )
-    }
-  }
-
-  let world = career.world
-  let transferLog = career.transferLog ?? []
-  let loanLog = career.loanLog ?? []
-  let aiTransfersLastDate = career.aiTransfersLastDate ?? null
-  const probe = { ...career, league: nextLeague, world }
-  if (
-    isTransferWindowOpen(probe) &&
-    (getTransferWindowState(probe).kind === 'january' ||
-      getTransferWindowState(probe).kind === 'summer')
-  ) {
-    const simDate = trainingDate ?? nextLeague.currentDate
-    if (simDate && aiTransfersLastDate !== simDate) {
-      const ai = simulateAiTransferActivity(
-        { ...probe, transferLog, loanLog },
-        { mode: 'daily', date: simDate },
-      )
-      world = ai.world ?? world
-      transferLog = ai.transferLog ?? transferLog
-      loanLog = ai.loanLog ?? loanLog
-      aiTransfersLastDate = simDate
-    }
-  }
-
-  const offerCareer = { ...career, league: nextLeague, world, transferLog, inbox: career.inbox }
-  const offerDate = trainingDate ?? nextLeague.currentDate
-  if (world && offerDate) {
-    const monthly = processMonthlySponsorPayouts(world, offerDate)
-    inboxMessages.push(
-      ...messagesFromSponsorPayouts(monthly, { ...career, league: nextLeague, world }, {
-        kind: 'monthly',
-        date: offerDate,
-      }),
-    )
-    const monthlyTv = processMonthlyTvPayouts(world, offerDate)
-    inboxMessages.push(
-      ...messagesFromTvPayouts(monthlyTv, { ...career, league: nextLeague, world }, {
-        date: offerDate,
-      }),
-    )
-  }
-  let inboxBase = expireStaleTransferOffers(
-    { ...offerCareer, inbox: career.inbox },
-    { date: offerDate },
-  )
-  const delayed = processDelayedTransferReplies(
-    { ...offerCareer, loanLog, inbox: inboxBase },
-    { date: offerDate },
-  )
-  world = delayed.world ?? world
-  transferLog = delayed.transferLog ?? transferLog
-  loanLog = delayed.loanLog ?? loanLog
-  inboxBase = delayed.inbox ?? inboxBase
-  if (delayed.resolved > 0) {
-    inboxMessages.push(
-      ...messagesFromNewTransferLogEntries(career.transferLog, transferLog, {
-        ...career,
-        league: nextLeague,
-        world,
-      }),
-    )
-  }
-  const loanReturns = processLoanReturns(
-    { ...offerCareer, world, transferLog, loanLog, inbox: inboxBase },
-    { date: offerDate },
-  )
-  world = loanReturns.world ?? world
-  loanLog = loanReturns.loanLog ?? loanLog
-  transferLog = loanReturns.transferLog ?? transferLog
-  if (loanReturns.inboxMessages?.length) inboxMessages.push(...loanReturns.inboxMessages)
-  const regNotices = spawnPendingRegistrationNotices(
-    { ...offerCareer, world, transferLog, inbox: inboxBase },
-    { date: offerDate },
-  )
-  if (regNotices.length) {
-    inboxBase = markPreAgreedNotified(inboxBase, regNotices)
-    inboxMessages.push(...regNotices)
-  }
-  inboxMessages.push(
-    ...generateIncomingTransferOffers({ ...offerCareer, world, transferLog, inbox: inboxBase }, { date: offerDate }),
-  )
-  inboxMessages.push(
-    ...generateIncomingLoanOffers({ ...offerCareer, world, inbox: inboxBase }, { date: offerDate }),
-  )
-  inboxMessages.push(...generateRandomEvents(offerCareer, { date: offerDate }))
-  const followUps = processPendingEventFollowUps(offerCareer, { date: offerDate })
-  if (followUps.messages.length) inboxMessages.push(...followUps.messages)
-  inboxMessages.push(
-    ...messagesFromNewMatchInjuries(
-      offerCareer,
-      career.league?.matchHistory ?? [],
-      nextLeague.matchHistory ?? [],
-      { date: offerDate },
-    ),
-  )
-
-  const uw = processUltiworldTick(
-    { ...career, league: nextLeague, world, transferLog, loanLog, ultiworld: career.ultiworld },
-    { date: offerDate },
-  )
-  world = uw.world ?? world
-  const leagueOut = uw.league ?? nextLeague
-  inboxMessages.push(...(uw.inboxMessages ?? []))
-
-  if (world && offerDate) {
-    const resolvedScoutMissions = resolveScoutMissions(world, career.playerTeamId, leagueOut, offerDate)
-    inboxMessages.push(
-      ...messagesFromScoutMissions(
-        resolvedScoutMissions,
-        { ...career, league: leagueOut, world },
-        { date: offerDate },
-      ),
-    )
-  }
-
-  const inbox = mergeInbox({ ...career, inbox: inboxBase }, inboxMessages)
-
-  return {
-    league: leagueOut,
-    world,
-    transferLog,
-    loanLog,
-    aiTransfersLastDate,
-    inbox,
-    inboxMessages,
-    ultiworld: uw.ultiworld,
-    pendingEventFollowUps: followUps.pendingEventFollowUps,
-  }
-}
 
 export default function App() {
   const { lang: uiLang, setLang: setUiLang } = useUiLang()
@@ -809,6 +584,7 @@ export default function App() {
     // "rehydratuje" cały zapis, co przy każdym zapisie na dysk powodowałoby
     // zauważalne zawieszenie UI. Ekran 'slots' odświeża listę sam przy
     // wejściu (handleExitToSlots itd.).
+    addManagerWelcome(next)
     setCareer(save ? saveCareerNow(next) : next)
   }, [])
 
@@ -870,24 +646,11 @@ export default function App() {
     try {
       try {
         while (daysAdvanced < maxDays) {
-          const dayBefore = dayLeague.currentDate
-          const result = advanceCalendarDay(dayLeague)
-          const step = computeCalendarDayStep(workingCareer, dayLeague, {
-            weekTick: !!result.weekTick,
-            trainingDate: dayBefore,
-          })
-          workingCareer = {
-            ...workingCareer,
-            league: step.league,
-            world: step.world,
-            transferLog: step.transferLog,
-            loanLog: step.loanLog,
-            aiTransfersLastDate: step.aiTransfersLastDate,
-            inbox: step.inbox,
-            ultiworld: step.ultiworld,
-            pendingEventFollowUps: step.pendingEventFollowUps,
-          }
-          dayLeague = step.league
+          const result = advanceCareerDay({ ...workingCareer, league: dayLeague })
+          workingCareer = result.career
+          if (workingCareer.managerCareer?.status === 'unemployed') { dayLeague = workingCareer.league; break }
+          const step = { ...workingCareer, inboxMessages: result.inboxMessages }
+          dayLeague = workingCareer.league
           daysAdvanced += 1
 
           setCalendarSim({
@@ -944,528 +707,32 @@ export default function App() {
     }
   }, [career, simProgress, calendarSim, syncCareer, uiLang])
 
-  const applyFastForwardSideEffects = useCallback(
-    async (nextLeague, rangeStart, weekTicks, { includeEndDay = false, onProgress } = {}) => {
-      const rangeEnd = nextLeague.currentDate
-      const reportProgress = ( partial) => {
-        onProgress?.(partial)
-      }
-
-      reportProgress({
-        label: shellStrings(uiLang).simTeamTraining,
-        detail: shellStrings(uiLang).simProcessingSessions,
-        current: 0,
-        total: 1,
-        indeterminate: true,
-      })
-      const rangeResult = await processTeamTrainingsDateRangeAsync(
-        nextLeague,
-        rangeStart,
-        rangeEnd,
-        {
-          playerTeamId: career.playerTeamId,
-          onProgress: (p) =>
-            reportProgress({
-              label: shellStrings(uiLang).simTeamTraining,
-              detail: p.currentDate ? shellStrings(uiLang).simDay(p.currentDate) : undefined,
-              current: p.daysAdvanced,
-              total: p.total,
-            }),
-        },
-      )
-      const reports = [...(rangeResult.reports ?? [])]
-
-      reportProgress({
-        label: shellStrings(uiLang).simDevelopment,
-        detail: shellStrings(uiLang).simFatigue,
-        current: 0,
-        total: 1,
-        indeterminate: true,
-      })
-      await applyDailyDevelopmentDateRangeAsync(nextLeague, rangeStart, rangeEnd, {
-        playerTeamId: career.playerTeamId,
-        onProgress: (p) =>
-          reportProgress({
-            label: shellStrings(uiLang).simDevelopment,
-            detail: p.currentDate ? shellStrings(uiLang).simDay(p.currentDate) : undefined,
-            current: p.daysAdvanced,
-            total: p.total,
-          }),
-      })
-
-      if (includeEndDay && rangeEnd) {
-        const endTraining = processTeamTrainingsForDate(nextLeague, rangeEnd, {
-          playerTeamId: career.playerTeamId,
-        })
-        if (endTraining.reports?.length) reports.push(...endTraining.reports)
-        applyDailyDevelopment(nextLeague, {
-          playerTeamId: career.playerTeamId,
-          date: rangeEnd,
-          tag: `day-${rangeEnd}`,
-        })
-      }
-      const academyReports = []
-      const playerSearchReports = []
-      const forcedListMessages = []
-      for (let i = 0; i < weekTicks; i += 1) {
-        weeklyTeamTrainingMaintenance(nextLeague, {
-          playerTeamId: career.playerTeamId,
-        })
-        if (career.world) {
-          decayScoutingKnowledge(career.world, career.playerTeamId)
-          playerSearchReports.push(
-            ...advancePlayerSearchCampaigns(worldTeamById(career.world, career.playerTeamId)),
-          )
-          const forcedListDemands = checkForcedTransferListDemands(career.world, {
-            leaguePlayerStats: nextLeague.playerStats,
-            standings: nextLeague.standings,
-          })
-          forcedListMessages.push(
-            ...messagesFromForcedTransferListDemands(forcedListDemands, { ...career, league: nextLeague }),
-          )
-        }
-      }
-      let financialHealthMessages = []
-      if (weekTicks > 0 && career.world) {
-        processWeeklyWagesTimes(career.world, weekTicks)
-        const financialHealth = processWeeklyFinancialHealth(career.world, {
-          seasonYear: career.seasonYear,
-        })
-        financialHealthMessages = messagesFromFinancialHealth(
-          financialHealth,
-          { ...career, league: nextLeague },
-          { date: rangeEnd, seasonYear: career.seasonYear },
-        )
-      }
-
-      // Bulk fast-forward skips the per-day computeCalendarDayStep loop, which is
-      // normally the only place resolveScoutMissions runs — without this, missions
-      // (incl. recalled/concluded academy campaigns) would never resolve for players
-      // who mostly use "Simulate until match" instead of stepping day by day. The
-      // monthly academy hak (dzień===1) needs the same per-day granularity, not the
-      // weekly weekTicks loop above — so it's collected in this same day cursor.
-      const resolvedScoutMissions = []
-      // Kadry narodowe (Fazy 1-5) — tak samo jak scouting/academy powyżej, mają konkretne
-      // daty, więc muszą przejść przez ten sam kursor dzień-po-dniu, inaczej mecz
-      // reprezentacji wypadający w środku skoku "symuluj do meczu" nigdy by się nie
-      // rozstrzygnął. Zwraca gotowe wiadomości (nie surowe raporty).
-      const nationalTeamMessages = []
-      if (career.world && rangeStart) {
-        let cursor = parseISODate(rangeStart)
-        const end = parseISODate(rangeEnd)
-        while (cursor <= end) {
-          const dateStr = formatISODate(cursor)
-          academyReports.push(
-            ...advanceAcademyCampaigns(worldTeamById(career.world, career.playerTeamId), dateStr),
-          )
-          resolvedScoutMissions.push(
-            ...resolveScoutMissions(career.world, career.playerTeamId, nextLeague, dateStr),
-          )
-          nationalTeamMessages.push(...advanceNationalTeamsForDate(career, career.world, dateStr))
-          cursor = addDays(cursor, 1)
-        }
-      }
-
-      return {
-        reports,
-        academyReports,
-        playerSearchReports,
-        resolvedScoutMissions,
-        nationalTeamMessages,
-        financialHealthMessages,
-        forcedListMessages,
-      }
-    },
-    [career],
-  )
-
-  const handleSimulateUntilMatch = useCallback(async () => {
-    if (!career?.league || simProgress) return
-    const nextLeague = cloneLeague(career.league)
-    const rangeStart = nextLeague.currentDate
-    const prevMatchHistory = [...(nextLeague.matchHistory ?? [])]
-
-    setSimProgress({
-      label: shellStrings(uiLang).simUntilMatch,
-      detail: shellStrings(uiLang).simFrom(rangeStart),
-      current: 0,
-      total: 35,
-    })
-
+  const runFastForward = useCallback(async ({ targetDate = null, untilMatch = false } = {}) => {
+    if (!career?.league || simProgress || calendarSim) return
+    if (targetDate && targetDate <= career.league.currentDate) return
+    const league = cloneLeague(career.league)
+    setSimProgress({ label: untilMatch ? shellStrings(uiLang).simUntilMatch : shellStrings(uiLang).simUntilDate,
+      detail: league.currentDate, current: 0, total: 1, indeterminate: true })
     try {
-      const result = await simulateUntilPlayerMatchOrEndAsync(nextLeague, {
-        maxDays: 120,
-        onProgress: (p) =>
-          setSimProgress({
-            label: shellStrings(uiLang).simCalendar,
-            detail: p.currentDate ? shellStrings(uiLang).simDay(p.currentDate) : undefined,
-            current: p.daysAdvanced,
-            total: p.total,
-          }),
+      const result = await simulateCareerUntil({ ...career, league }, {
+        targetDate, untilMatch, maxDays: untilMatch ? 120 : 400,
+        onProgress: p => setSimProgress({ label: shellStrings(uiLang).simCalendar,
+          detail: shellStrings(uiLang).simDay(p.currentDate), indeterminate: true }),
       })
-
-      const {
-        reports,
-        academyReports,
-        playerSearchReports,
-        resolvedScoutMissions,
-        nationalTeamMessages,
-        financialHealthMessages,
-        forcedListMessages,
-      } = await applyFastForwardSideEffects(
-        nextLeague,
-        rangeStart,
-        result.weekTicks ?? 0,
-        {
-          includeEndDay: !!result.blocked,
-          onProgress: setSimProgress,
-        },
-      )
-
-      setSimProgress({
-        label: shellStrings(uiLang).simTransfersInbox,
-        detail: shellStrings(uiLang).simClosingDay,
-        indeterminate: true,
-      })
-      await new Promise((r) => setTimeout(r, 0))
-
-      let world = career.world
-      let transferLog = career.transferLog ?? []
-      let loanLog = career.loanLog ?? []
-      const probe = { ...career, league: nextLeague, world, transferLog, loanLog }
-      const ai = simulateAiTransfersForDateRange(probe, rangeStart, nextLeague.currentDate)
-      world = ai.world ?? world
-      transferLog = ai.transferLog ?? transferLog
-      loanLog = ai.loanLog ?? loanLog
-
-      const monthlyPayouts = world
-        ? processMonthlySponsorPayoutsForRange(world, rangeStart, nextLeague.currentDate)
-        : []
-      const monthlyTvPayouts = world
-        ? processMonthlyTvPayoutsForRange(world, rangeStart, nextLeague.currentDate)
-        : []
-
-      const inboxBaseExpired = expireStaleTransferOffers(
-        { ...career, league: nextLeague, world, inbox: career.inbox },
-        { date: nextLeague.currentDate },
-      )
-      const delayed = processDelayedTransferRepliesForDateRange(
-        { ...career, league: nextLeague, world, transferLog, loanLog, inbox: inboxBaseExpired },
-        rangeStart,
-        nextLeague.currentDate,
-      )
-      world = delayed.world ?? world
-      transferLog = delayed.transferLog ?? transferLog
-      loanLog = delayed.loanLog ?? loanLog
-      const inboxAfterDelayed = delayed.inbox ?? inboxBaseExpired
-
-      const loanReturns = processLoanReturnsForDateRange(
-        { ...career, league: nextLeague, world, transferLog, loanLog, inbox: inboxAfterDelayed },
-        rangeStart,
-        nextLeague.currentDate,
-      )
-      world = loanReturns.world ?? world
-      loanLog = loanReturns.loanLog ?? loanLog
-      transferLog = loanReturns.transferLog ?? transferLog
-      const inboxBase = inboxAfterDelayed
-
-      const regNotices = spawnPendingRegistrationNotices(
-        { ...career, league: nextLeague, world, transferLog, inbox: inboxBase },
-        { date: nextLeague.currentDate },
-      )
-      const inboxAfterReg = regNotices.length
-        ? markPreAgreedNotified(inboxBase, regNotices)
-        : inboxBase
-
-      recordMatchKnowledgeGainForNewMatches(
-        world,
-        career.playerTeamId,
-        prevMatchHistory,
-        nextLeague.matchHistory,
-      )
-
-      const followUps = processPendingEventFollowUps(
-        { ...career, league: nextLeague },
-        { date: nextLeague.currentDate },
-      )
-
-      const inboxMessages = [
-        ...messagesFromTrainingReports(reports, career),
-        ...messagesFromTrainingInjuries(reports, career),
-        ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
-        ...messagesFromPlayerSearchReports(playerSearchReports, { ...career, league: nextLeague }),
-        ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
-        ...nationalTeamMessages,
-        ...financialHealthMessages,
-        ...forcedListMessages,
-        ...followUps.messages,
-        ...messagesFromNewPlayerMatches(
-          { ...career, league: nextLeague },
-          prevMatchHistory,
-          nextLeague.matchHistory,
-          nextLeague,
-        ),
-        ...messagesFromNewMatchInjuries(
-          { ...career, league: nextLeague, world },
-          prevMatchHistory,
-          nextLeague.matchHistory,
-          { date: nextLeague.currentDate },
-        ),
-        ...messagesFromNewTransferLogEntries(career.transferLog, transferLog, {
-          ...career,
-          league: nextLeague,
-          world,
-        }),
-        ...regNotices,
-        ...generateIncomingTransferOffers(
-          { ...career, league: nextLeague, world, transferLog, inbox: inboxAfterReg },
-          { date: nextLeague.currentDate },
-        ),
-        ...generateIncomingLoanOffers(
-          { ...career, league: nextLeague, world, inbox: inboxAfterReg },
-          { date: nextLeague.currentDate },
-        ),
-        ...loanReturns.inboxMessages ?? [],
-        ...generateRandomEvents(
-          { ...career, league: nextLeague, world },
-          { date: nextLeague.currentDate },
-        ),
-        ...messagesFromSponsorPayouts(
-          monthlyPayouts,
-          { ...career, league: nextLeague, world },
-          { kind: 'monthly', date: nextLeague.currentDate },
-        ),
-        ...messagesFromTvPayouts(monthlyTvPayouts, { ...career, league: nextLeague, world }, {
-          date: nextLeague.currentDate,
-        }),
-      ]
-
-      const uw = processUltiworldTick(
-        { ...career, league: nextLeague, world, transferLog, loanLog, ultiworld: career.ultiworld },
-        { date: nextLeague.currentDate },
-      )
-      world = uw.world ?? world
-      const leagueOut = uw.league ?? nextLeague
-      inboxMessages.push(...(uw.inboxMessages ?? []))
-
-      const next = persistCareer(career, {
-        league: leagueOut,
-        world,
-        transferLog,
-        loanLog,
-        aiTransfersLastDate: nextLeague.currentDate,
-        inbox: mergeInbox({ ...career, inbox: inboxAfterReg }, inboxMessages),
-        ultiworld: uw.ultiworld,
-        pendingEventFollowUps: followUps.pendingEventFollowUps,
-      })
-      syncCareer(next, { save: true })
-      // Stay on hub — user opens the match via "Go to match" when ready.
-      if (isOfficialSeasonEnded(nextLeague) || nextLeague.status === 'complete') {
-        setActiveTab('hub')
-      }
+      syncCareer(persistCareer(result.career), { save: true })
+      if (targetDate) setLeagueFixture(null)
+      if (isOfficialSeasonEnded(result.career.league)) setActiveTab('hub')
+      else if (targetDate) setActiveTab('calendar')
     } catch (err) {
       console.error('[calendar sim]', err)
       setAppError(friendlySaveErrorMessage(err, uiLang))
     } finally {
       setSimProgress(null)
     }
-  }, [career, syncCareer, applyFastForwardSideEffects, simProgress, uiLang])
+  }, [career, simProgress, calendarSim, syncCareer, uiLang])
 
-  const handleSimulateUntilDate = useCallback(
-    async (targetDate) => {
-      if (!career?.league || !targetDate || simProgress) return
-      const nextLeague = cloneLeague(career.league)
-      if (targetDate <= nextLeague.currentDate) return
-      const rangeStart = nextLeague.currentDate
-      const prevMatchHistory = [...(nextLeague.matchHistory ?? [])]
-
-      setSimProgress({
-        label: shellStrings(uiLang).simUntilDate,
-        detail: `${rangeStart} → ${targetDate}`,
-        current: 0,
-        total: 1,
-      })
-
-      try {
-        const result = await simulateUntilDateAsync(nextLeague, targetDate, {
-          maxDays: 400,
-          autoSimulatePlayer: true,
-          onProgress: (p) =>
-            setSimProgress({
-              label: shellStrings(uiLang).simCalendar,
-              detail: p.currentDate
-                ? shellStrings(uiLang).simDay(p.currentDate)
-                : `${rangeStart} → ${targetDate}`,
-              current: p.daysAdvanced,
-              total: p.total,
-            }),
-        })
-
-        const {
-          reports,
-          academyReports,
-          playerSearchReports,
-          resolvedScoutMissions,
-          nationalTeamMessages,
-          financialHealthMessages,
-        } = await applyFastForwardSideEffects(
-          nextLeague,
-          rangeStart,
-          result.weekTicks ?? 0,
-          { onProgress: setSimProgress },
-        )
-
-        setSimProgress({
-          label: shellStrings(uiLang).simTransfersInbox,
-          detail: shellStrings(uiLang).simClosingDay,
-          indeterminate: true,
-        })
-        await new Promise((r) => setTimeout(r, 0))
-
-        let world = career.world
-        let transferLog = career.transferLog ?? []
-        let loanLog = career.loanLog ?? []
-        const probe = { ...career, league: nextLeague, world, transferLog, loanLog }
-        const ai = simulateAiTransfersForDateRange(probe, rangeStart, nextLeague.currentDate)
-        world = ai.world ?? world
-        transferLog = ai.transferLog ?? transferLog
-        loanLog = ai.loanLog ?? loanLog
-
-        const monthlyPayouts = world
-          ? processMonthlySponsorPayoutsForRange(world, rangeStart, nextLeague.currentDate)
-          : []
-        const monthlyTvPayouts = world
-          ? processMonthlyTvPayoutsForRange(world, rangeStart, nextLeague.currentDate)
-          : []
-
-        const inboxBaseExpired = expireStaleTransferOffers(
-          { ...career, league: nextLeague, world, inbox: career.inbox },
-          { date: nextLeague.currentDate },
-        )
-        const delayed = processDelayedTransferRepliesForDateRange(
-          { ...career, league: nextLeague, world, transferLog, loanLog, inbox: inboxBaseExpired },
-          rangeStart,
-          nextLeague.currentDate,
-        )
-        world = delayed.world ?? world
-        transferLog = delayed.transferLog ?? transferLog
-        loanLog = delayed.loanLog ?? loanLog
-        const inboxAfterDelayed = delayed.inbox ?? inboxBaseExpired
-
-        const loanReturns = processLoanReturnsForDateRange(
-          { ...career, league: nextLeague, world, transferLog, loanLog, inbox: inboxAfterDelayed },
-          rangeStart,
-          nextLeague.currentDate,
-        )
-        world = loanReturns.world ?? world
-        loanLog = loanReturns.loanLog ?? loanLog
-        transferLog = loanReturns.transferLog ?? transferLog
-        const inboxBase = inboxAfterDelayed
-
-        const regNotices = spawnPendingRegistrationNotices(
-          { ...career, league: nextLeague, world, transferLog, inbox: inboxBase },
-          { date: nextLeague.currentDate },
-        )
-        const inboxAfterReg = regNotices.length
-          ? markPreAgreedNotified(inboxBase, regNotices)
-          : inboxBase
-
-        recordMatchKnowledgeGainForNewMatches(
-          world,
-          career.playerTeamId,
-          prevMatchHistory,
-          nextLeague.matchHistory,
-        )
-
-        const followUps = processPendingEventFollowUps(
-          { ...career, league: nextLeague },
-          { date: nextLeague.currentDate },
-        )
-
-        const inboxMessages = [
-          ...messagesFromTrainingReports(reports, career),
-          ...messagesFromTrainingInjuries(reports, career),
-          ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
-          ...messagesFromPlayerSearchReports(playerSearchReports, { ...career, league: nextLeague }),
-          ...messagesFromScoutMissions(resolvedScoutMissions, { ...career, league: nextLeague, world }, { date: nextLeague.currentDate }),
-          ...nationalTeamMessages,
-          ...financialHealthMessages,
-          ...followUps.messages,
-          ...messagesFromNewPlayerMatches(
-            { ...career, league: nextLeague },
-            prevMatchHistory,
-            nextLeague.matchHistory,
-            nextLeague,
-          ),
-          ...messagesFromNewMatchInjuries(
-            { ...career, league: nextLeague, world },
-            prevMatchHistory,
-            nextLeague.matchHistory,
-            { date: nextLeague.currentDate },
-          ),
-          ...messagesFromNewTransferLogEntries(career.transferLog, transferLog, {
-            ...career,
-            league: nextLeague,
-            world,
-          }),
-          ...regNotices,
-          ...generateIncomingTransferOffers(
-            { ...career, league: nextLeague, world, transferLog, inbox: inboxAfterReg },
-            { date: nextLeague.currentDate },
-          ),
-          ...generateIncomingLoanOffers(
-            { ...career, league: nextLeague, world, inbox: inboxAfterReg },
-            { date: nextLeague.currentDate },
-          ),
-          ...loanReturns.inboxMessages ?? [],
-          ...generateRandomEvents(
-            { ...career, league: nextLeague, world },
-            { date: nextLeague.currentDate },
-          ),
-          ...messagesFromSponsorPayouts(
-            monthlyPayouts,
-            { ...career, league: nextLeague, world },
-            { kind: 'monthly', date: nextLeague.currentDate },
-          ),
-          ...messagesFromTvPayouts(monthlyTvPayouts, { ...career, league: nextLeague, world }, {
-            date: nextLeague.currentDate,
-          }),
-        ]
-
-        const uw = processUltiworldTick(
-          { ...career, league: nextLeague, world, transferLog, loanLog, ultiworld: career.ultiworld },
-          { date: nextLeague.currentDate },
-        )
-        world = uw.world ?? world
-        const leagueOut = uw.league ?? nextLeague
-        inboxMessages.push(...(uw.inboxMessages ?? []))
-
-        const next = persistCareer(career, {
-          league: leagueOut,
-          world,
-          transferLog,
-          loanLog,
-          aiTransfersLastDate: nextLeague.currentDate,
-          inbox: mergeInbox({ ...career, inbox: inboxAfterReg }, inboxMessages),
-          ultiworld: uw.ultiworld,
-          pendingEventFollowUps: followUps.pendingEventFollowUps,
-        })
-        syncCareer(next, { save: true })
-        setLeagueFixture(null)
-        if (isOfficialSeasonEnded(nextLeague) || nextLeague.status === 'complete') {
-          setActiveTab('hub')
-        } else {
-          setActiveTab('calendar')
-        }
-      } catch (err) {
-        console.error('[calendar sim]', err)
-        setAppError(friendlySaveErrorMessage(err, uiLang))
-      } finally {
-        setSimProgress(null)
-      }
-    },
-    [career, syncCareer, applyFastForwardSideEffects, simProgress, uiLang],
-  )
+  const handleSimulateUntilMatch = useCallback(() => runFastForward({ untilMatch: true }), [runFastForward])
+  const handleSimulateUntilDate = useCallback(targetDate => runFastForward({ targetDate }), [runFastForward])
 
   const handleTrainingChange = useCallback(() => {
     if (!career) return
@@ -1799,9 +1066,10 @@ export default function App() {
     (messageId, choiceId) => {
       if (!career || !messageId || !choiceId) return
       const result = resolveInboxDecision(career, messageId, choiceId)
-      if (!result.ok) return
+      if (!result.ok) return result
       const next = persistCareer(career, result.careerPatch)
       syncCareer(next)
+      return result
     },
     [career, syncCareer],
   )
@@ -2031,7 +1299,7 @@ export default function App() {
     const loaded = getSlot(slotIndex)
     if (!loaded) return
     const ensured = ensureCareerHomeTactics(loaded)
-    setCareer(ensured)
+    setCareer(addManagerWelcome(ensured))
     setLeagueFixture(null)
     setMatchStamina(null)
     setTeamProfileId(null)
@@ -2174,6 +1442,17 @@ export default function App() {
     )
   }
 
+  const updateManagerCareer = next => { setLeagueFixture(null); setActiveTab('career'); syncCareer(persistCareer(next), {save:true}) }
+  const waitForManagerJob = async () => {
+    let next = structuredClone(career)
+    if (isOfficialSeasonEnded(next.league)) next = startNextSeason(next)
+    else for (let i=0; i<7 && !isOfficialSeasonEnded(next.league); i++) {
+      next = advanceCareerDay(next, {autoSimulatePlayer:true}).career
+      await new Promise(resolve=>setTimeout(resolve,0))
+    }
+    updateManagerCareer(processManagerCareer(next))
+  }
+  if (career && league && career.managerCareer?.status === 'unemployed') return <main className="min-h-screen bg-ufa-bg p-4 text-ufa-text"><div className="mx-auto max-w-5xl space-y-4"><button type="button" className="rounded border border-ufa-border px-3 py-2" onClick={handleExitToSlots}>{uiLang==='en'?'Save and exit':'Zapisz i wyjdź'}</button><ManagerCareerPanel career={career} onUpdate={updateManagerCareer} onWait={waitForManagerJob} /></div></main>
   if (!career || !league || !userTeam) {
     return (
       <div className="min-h-screen bg-ufa-bg flex items-center justify-center text-ufa-muted">
@@ -2417,7 +1696,7 @@ export default function App() {
         )}
 
         {activeTab === 'career' && (
-          <CareerHistoryView career={career} onStartNextSeason={handleStartNextSeason} />
+          <><ManagerCareerPanel career={career} onUpdate={updateManagerCareer} onWait={waitForManagerJob} /><CareerHistoryView career={career} onStartNextSeason={handleStartNextSeason} /></>
         )}
 
         {activeTab === 'roster' && (
@@ -2460,7 +1739,7 @@ export default function App() {
         )}
 
         {activeTab === 'club-board' && (
-          <ClubBoardView career={career} onChange={handleClubBoardChange} />
+          <><ClubBoardView career={career} onChange={handleClubBoardChange} /><ManagerCareerPanel career={career} onUpdate={updateManagerCareer} onWait={waitForManagerJob} /></>
         )}
 
         {activeTab === 'academy' && (

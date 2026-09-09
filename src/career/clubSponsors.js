@@ -83,7 +83,7 @@ function newId(prefix) {
  * Ten mnożnik podnosi całą bazę sponsorską (i analogicznie merch w `clubFacilities.js`)
  * o ~50%, żeby zarządzanie klubem (reputacja, sponsorzy, sklep) miało realny wpływ na budżet.
  */
-export const SPONSOR_INCOME_BOOST = 1.5
+export const SPONSOR_INCOME_BOOST = 3
 
 /**
  * Roczna baza zależna od reputacji i slotu.
@@ -289,11 +289,11 @@ export function generateSponsorOffers(team, slot, options = {}) {
       signingPayout = totalValue
     } else if (model === 'seasonal') {
       signingPayout = roundMoney(totalValue * 0.05)
-      perSeason = roundMoney((totalValue - signingPayout) / years)
+      perSeason = Math.round((totalValue - signingPayout) / years)
     } else {
       signingPayout = roundMoney(totalValue * 0.04)
       const months = years * 12
-      perMonth = roundMoney((totalValue - signingPayout) / months)
+      perMonth = Math.round((totalValue - signingPayout) / months)
     }
 
     const bonus = model === 'upfront' ? null : rollBonus(rng, annual)
@@ -383,7 +383,7 @@ export function signSponsorOffer(team, slot, offerId, options = {}) {
 
   const paid = Math.max(0, Math.round(contract.signingPayout ?? 0))
   if (paid > 0) {
-    adjustTransferBudget(team, paid)
+    adjustTransferBudget(team, paid, 'sponsorship')
     contract.paidToDate += paid
   }
 
@@ -428,7 +428,7 @@ export function processMonthlySponsorPayouts(world, dateIso) {
       if (!c || c.paymentModel !== 'monthly') continue
       const pay = Math.max(0, Math.round(c.perMonthAmount ?? 0))
       if (pay <= 0) continue
-      adjustTransferBudget(team, pay)
+      adjustTransferBudget(team, pay, 'sponsorship')
       c.paidToDate = (c.paidToDate ?? 0) + pay
       amount += pay
       brands.push(c.brandName)
@@ -481,7 +481,7 @@ export function processSeasonStartSponsorPayouts(world, seasonYear) {
       if ((c.yearsRemaining ?? 0) <= 0) continue
       const pay = Math.max(0, Math.round(c.perSeasonAmount ?? 0))
       if (pay <= 0) continue
-      adjustTransferBudget(team, pay)
+      adjustTransferBudget(team, pay, 'sponsorship')
       c.paidToDate = (c.paidToDate ?? 0) + pay
       amount += pay
       brands.push(c.brandName)
@@ -527,7 +527,7 @@ export function processSeasonEndSponsorPayouts(world, league, seasonYear) {
         const placeMult = Math.max(0.7, Math.min(1.2, 1.18 - (place - 1) * 0.018))
         const pay = roundMoney(base * placeMult)
         if (pay > 0) {
-          adjustTransferBudget(team, pay)
+          adjustTransferBudget(team, pay, 'sponsorship')
           c.paidToDate = (c.paidToDate ?? 0) + pay
           amount += pay
           brands.push(c.brandName)
@@ -547,7 +547,7 @@ export function processSeasonEndSponsorPayouts(world, league, seasonYear) {
         }
         if (hit) {
           const pay = Math.max(0, Math.round(bonus.amount))
-          adjustTransferBudget(team, pay)
+          adjustTransferBudget(team, pay, 'sponsorship')
           c.paidToDate = (c.paidToDate ?? 0) + pay
           if (!c.bonusesPaid) c.bonusesPaid = {}
           c.bonusesPaid[`${bonus.type}:${seasonYear}`] = pay

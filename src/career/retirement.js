@@ -50,7 +50,8 @@ export function processSeasonRetirements(career, options = {}) {
   const inboxMessages = []
   let salt = (options.seed ?? (career.seasonYear ?? 2025) * 997) >>> 0
 
-  for (const team of worldTeamsList(world)) {
+  const freeAgentPool = { id: null, name: null, players: world.freeAgents }
+  for (const team of [...worldTeamsList(world), freeAgentPool]) {
     const keep = []
     for (const player of team.players ?? []) {
       const age = player.age ?? 25
@@ -110,5 +111,6 @@ export function processSeasonRetirements(career, options = {}) {
     team.players = keep
   }
 
+  world.freeAgents = freeAgentPool.players
   return { retired, inboxMessages }
 }

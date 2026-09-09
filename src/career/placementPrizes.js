@@ -26,7 +26,7 @@ function placementCurveMult(place, totalTeams) {
  */
 export function processLeaguePlacementPrizes(world, league, tier) {
   if (!world?.teamsById || !league?.standings) return []
-  const base = LEAGUE_PLACEMENT_BASE_BY_TIER[tier]
+  const base = 2 * (LEAGUE_PLACEMENT_BASE_BY_TIER[tier] ?? 0)
   if (!base) return []
 
   const table = standingsTable(league.standings)
@@ -152,7 +152,7 @@ export function applyCupPlacementPrizes(cup, teamsById) {
   for (const teamId of seenTeamIds) {
     const outcome = teamCupOutcome(cup, teamId)
     if (!outcome) continue
-    const amount = CUP_ROUND_PRIZE[outcome]
+    const amount = 2 * CUP_ROUND_PRIZE[outcome]
     if (!amount) continue
     const team = teamsById[teamId]
     if (!team) continue

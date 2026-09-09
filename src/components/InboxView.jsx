@@ -4,7 +4,8 @@ import {
   randomEventBodyEn,
   localizeEventChoices,
 } from '../career/randomEventCopyEn.js'
-import { randomEventTitleEn } from '../career/randomEvents.js'
+import { randomEventTitleEn, currentRandomEventChoices } from '../career/randomEvents.js'
+import { injuryLabelEn } from '../models/playerInjury.js'
 import { inboxStrings } from '../ui/strings/inbox'
 import { translateTransferError, translateSponsorSignError } from '../ui/strings/transferErrors'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -24,6 +25,8 @@ import { getPlayerFullName, getOverallRating } from '../data/mockPlayers'
 import { attributeBandLabel, attributeBandToneClass } from '../ui/fogOfWar'
 import { scoutingStrings } from '../ui/strings/scouting'
 import { BoxScoreTable } from './BoxScoreTable'
+import ClubWelcomeMessage from './ClubWelcomeMessage.jsx'
+import { welcomeForMessage } from '../career/clubWelcome.js'
 
 function findWorldPlayer(world, playerId) {
   return findWorldPlayerById(world, playerId).player
@@ -95,6 +98,11 @@ function formatDayLabel(iso, lang = UI_LANG.PL) {
 
 function enrichRandomEventMessage(message) {
   const p = message?.payload ?? {}
+  if (message?.type === INBOX_TYPES.INJURY) {
+    const label = p.labelEn ?? injuryLabelEn(p.label)
+    return { ...message, bodyEn: message.bodyEn?.replaceAll(p.label, label) ??
+      `${p.name ?? 'Player'} suffered ${label}. Out for ${p.daysRemaining} days.` }
+  }
   if (message?.type !== INBOX_TYPES.RANDOM_EVENT || p.kind !== 'decision') {
     return message
   }
@@ -874,6 +882,7 @@ function MessageDetail({
   onSponsorSign = null,
 }) {
   const { lang } = useUiLang()
+  const [decisionError, setDecisionError] = useState(null)
   const t = inboxStrings(lang)
   const meta = INBOX_TYPE_META[message.type]
   const p = message.payload ?? {}
@@ -889,8 +898,9 @@ function MessageDetail({
     p.status === 'resolved'
 
   const displayMessage = enrichRandomEventMessage(message)
+  const welcome = useMemo(() => welcomeForMessage(message, career), [message, career])
   const displayChoices = pendingDecision
-    ? localizeEventChoices(p.templateId, p.choices)
+    ? currentRandomEventChoices(p.templateId, p.context)
     : p.choices
 
   return (
@@ -915,9 +925,9 @@ function MessageDetail({
         <h3 className="mt-2 text-lg font-semibold text-ufa-text">
           {pickCopy(displayMessage, 'title', lang)}
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-ufa-muted">
+        {welcome ? <ClubWelcomeMessage welcome={welcome} lang={lang} /> : <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ufa-muted">
           {pickCopy(displayMessage, 'body', lang)}
-        </p>
+        </p>}
       </div>
 
       {message.type === INBOX_TYPES.TRAINING_REPORT && p.report && (
@@ -1026,7 +1036,7 @@ function MessageDetail({
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 text-sm">
           <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2">
             <dt className="text-[10px] uppercase text-ufa-muted">{t.injuryLabel}</dt>
-            <dd className="font-semibold text-red-300">{p.label ?? '—'}</dd>
+            <dd className="font-semibold text-red-300">{lang === UI_LANG.EN ? (p.labelEn ?? injuryLabelEn(p.label)) || '—' : p.label ?? '—'}</dd>
           </div>
           <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
             <dt className="text-[10px] uppercase text-ufa-muted">{t.unavailable}</dt>
@@ -1076,6 +1086,7 @@ function MessageDetail({
 
       {message.type === INBOX_TYPES.RANDOM_EVENT && pendingDecision && (
         <div className="space-y-2">
+          {decisionError?.id === message.id && <p role="alert" className="text-sm text-red-300">{lang === UI_LANG.EN ? decisionError.errorEn : decisionError.error}</p>}
           <p className="text-xs font-medium uppercase tracking-wide text-ufa-muted">
             {lang === UI_LANG.EN ? 'Your decision' : 'Twoja decyzja'}
           </p>
@@ -1085,17 +1096,15 @@ function MessageDetail({
                 key={choice.id}
                 type="button"
                 disabled={!onResolveDecision}
-                onClick={() => onResolveDecision?.(message.id, choice.id)}
+                onClick={() => {
+                  const result = onResolveDecision?.(message.id, choice.id)
+                  setDecisionError(result?.ok === false ? { id: message.id, ...result } : null)
+                }}
                 className="rounded-lg border border-violet-400/35 bg-violet-400/5 px-4 py-3 text-left transition-colors hover:border-violet-400/60 hover:bg-violet-400/10 disabled:opacity-40"
               >
                 <span className="block text-sm font-medium text-ufa-text">
                   {pickLabel(choice, lang) || choice.label}
                 </span>
-                {choice.hint || choice.hintEn ? (
-                  <span className="mt-0.5 block text-xs text-ufa-muted">
-                    {lang === 'en' ? choice.hintEn ?? choice.hint : choice.hint ?? choice.hintEn}
-                  </span>
-                ) : null}
               </button>
             ))}
           </div>

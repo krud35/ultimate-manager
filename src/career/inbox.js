@@ -4,6 +4,7 @@
  */
 
 import { getPlayerFullName } from '../data/mockPlayers.js'
+import { injuryLabelEn } from '../models/playerInjury.js'
 import { getOverallRating } from '../models/playerStats.js'
 import { getPlayerForm, formLabel } from '../models/playerForm.js'
 import { getPlayerMorale, moraleLabel } from '../models/playerMorale.js'
@@ -339,7 +340,7 @@ export function messageFromInjury(career, injury) {
   const name = injury.name || 'Zawodnik'
   const nameEn = injury.name || 'Player'
   const days = injury.daysRemaining
-  const labelEn = injury.labelEn ?? injury.label
+  const labelEn = injury.labelEn ?? injuryLabelEn(injury.label)
   const sourcePl = injury.source === 'training' ? 'na treningu' : 'w meczu'
   const sourceEn = injury.source === 'training' ? 'in training' : 'in a match'
   return createInboxMessage({
@@ -355,6 +356,7 @@ export function messageFromInjury(career, injury) {
       playerId: injury.playerId,
       name,
       label: injury.label,
+      labelEn,
       daysRemaining: days,
       source: injury.source === 'training' ? 'training' : 'match',
     },
@@ -1172,6 +1174,10 @@ export function expireStaleTransferOffers(career, { date = null } = {}) {
  */
 export function generateRandomEvents(career, { date = null } = {}) {
   const msg = pickRandomEventMessage(career, { date })
+  if (msg) {
+    const team = worldTeamById(career.world, career.playerTeamId)
+    team.randomEventHistory = [...(team.randomEventHistory ?? []), { templateId: msg.payload.templateId, date: msg.date }].slice(-100)
+  }
   return msg ? [msg] : []
 }
 

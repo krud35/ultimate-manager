@@ -10,13 +10,13 @@
 
 import { adjustTransferBudget } from './transfers/clubFinances.js'
 import { formatUsd } from './transfers/moneyFormat.js'
-import { eucsTeamTier } from '../data/eucsLeagueTeams.js'
+import { currentEucsTier } from './competitionMembership.js'
 
 /** Miesięczna kwota wg poziomu piramidy (EUR w kontekście Ligi Europejskiej). */
-export const TV_MONEY_MONTHLY_BY_TIER = { 1: 15_000, 2: 6_000, 3: 2_000 }
+export const TV_MONEY_MONTHLY_BY_TIER = { 1: 30_000, 2: 12_000, 3: 4_000 }
 
-function tvMonthlyAmountFor(teamId) {
-  const tier = eucsTeamTier(teamId)
+function tvMonthlyAmountFor(team) {
+  const tier = currentEucsTier(team)
   if (!tier) return 0
   return TV_MONEY_MONTHLY_BY_TIER[tier] ?? 0
 }
@@ -37,11 +37,11 @@ export function processMonthlyTvPayouts(world, dateIso) {
   for (const id of ids) {
     const team = world.teamsById[id]
     if (!team) continue
-    const amount = tvMonthlyAmountFor(id)
+    const amount = tvMonthlyAmountFor(team)
     if (amount <= 0) continue
     if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
     if (team.finances._tvLastMonthlyYm === ym) continue
-    adjustTransferBudget(team, amount)
+    adjustTransferBudget(team, amount, 'tv', dateIso)
     team.finances._tvLastMonthlyYm = ym
     results.push({ teamId: id, amount })
   }

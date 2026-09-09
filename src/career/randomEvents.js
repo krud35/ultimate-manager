@@ -1,3 +1,5 @@
+import { eventFinanceScale } from './economyBalance.js'
+import { availableClubCash } from './clubEconomy.js'
 /**
  * Losowe eventy decyzyjne w skrzynce odbiorczej.
  * Efekty (morale / forma / budżet) są w szablonach — resolver czyta templateId + choiceId.
@@ -9,7 +11,10 @@ import { ensurePlayerMorale, getPlayerMorale } from '../models/playerMorale.js'
 import { ensurePlayerForm } from '../models/playerForm.js'
 import { ensurePlayerTraits, getTraitMods } from '../models/playerTraits.js'
 import { noteLoyaltyFromTreatment } from '../models/playerLoyalty.js'
-import { isPlayerInjured } from '../models/playerInjury.js'
+import { isPlayerInjured, injurePlayer, injuryLabelEn } from '../models/playerInjury.js'
+import { signPlayerContract, clearPlayerContractOnExit } from './transfers/playerContracts.js'
+import { setPlayerTransferListed } from './transfers/transferEngine.js'
+import { EXTRA_RANDOM_EVENTS, EXTRA_FOLLOWUP_EVENTS } from './randomEventStories.js'
 import { adjustTeamReputation } from '../models/teamReputation.js'
 import {
   ensureTeamFans,
@@ -25,13 +30,19 @@ import {
 import { worldTeamById } from './worldState.js'
 import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/index.js'
 import { randomEventBodyEn, localizeEventChoices } from './randomEventCopyEn.js'
-import { hasActiveSponsor, getActiveSponsors, brandDisplayName } from './clubSponsors.js'
+import { hasActiveSponsor, getActiveSponsors, brandDisplayName, refreshSponsorOffers } from './clubSponsors.js'
 import { addDays, formatISODate, parseISODate } from '../league/seasonCalendar.js'
 
 /** Zgodne z INBOX_TYPES.RANDOM_EVENT — bez importu inbox (unikamy cyklu). */
 export const RANDOM_EVENT_TYPE = 'random_event'
 
 const SPAWN_CHANCE = 0.26
+
+/** Support both the released escrow economy and cash-ledger saves. */
+function availableEventFunds(team) {
+  return team?.finances?.economyVersion >= 2 && Number.isFinite(team.finances.cash)
+    ? availableClubCash(team) : getTransferBudget(team)
+}
 
 function newMessageId(prefix = 'msg') {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -108,15 +119,65 @@ function applyTeamForm(roster, delta) {
  * Aplikuje listę efektów na drużynę gracza (mutacja in-place na sklonowanym world).
  * @returns {{ bits: string[], bitsEn: string[] }} krótkie fragmenty podsumowania PL|EN
  */
-function applyEffects(team, effects) {
+function applyEffects(team, effects, career) {
   const bits = []
   const bitsEn = []
   const roster = team.players ?? []
 
-  for (const fx of effects ?? []) {
+  // Pay fees before checking a new contract's wage reserve.
+  const ordered = [...(effects ?? [])].sort((a, b) => Number(b?.type === 'budget') - Number(a?.type === 'budget'))
+  for (const fx of ordered) {
     if (!fx) continue
-    if (fx.type === 'budget') {
-      adjustTransferBudget(team, fx.delta)
+    if (fx.type === 'endSponsor') {
+      const slot = ['main', 'secondary'].find((s) => {
+        const sponsor = team.sponsors?.[s]
+        return sponsor && (fx.sponsorId ? sponsor.id === fx.sponsorId : brandDisplayName(sponsor, 'pl') === fx.sponsorName)
+      })
+      if (slot) {
+        team.sponsors[slot] = null
+        refreshSponsorOffers(team, slot, { seasonYear: career.seasonYear, seed: `${career.id}|${career.league?.currentDate}|termination` })
+        bits.push('umowa sponsorska zakończona')
+        bitsEn.push('sponsor contract terminated')
+      }
+    } else if (fx.type === 'extendContract') {
+      const p = findPlayer(roster, fx.playerId)
+      const c = p.contract
+      // Release the old escrow before reserving the replacement contract.
+      // Cash-ledger contracts simply clear the previous agreement here.
+      clearPlayerContractOnExit(team, p)
+      const result = signPlayerContract(team, p, {
+        ...c, years: Math.min(5, Math.max(2, Math.ceil((c.weeksRemaining + 52) / 52))),
+        weeklyWage: Math.ceil(c.weeklyWage * 1.1), signedDate: career.league?.currentDate,
+      })
+      if (!result.ok) throw new Error('Nie można sfinansować nowego kontraktu. / Cannot afford the new contract.')
+      bits.push(`nowa umowa: ${p.contract.weeksRemaining} tyg., ${formatUsd(p.contract.weeklyWage)}/tydz.`)
+      bitsEn.push(`new contract: ${p.contract.weeksRemaining} weeks, ${formatUsd(p.contract.weeklyWage)}/week`)
+    } else if (fx.type === 'transferList') {
+      setPlayerTransferListed(team, fx.playerId, true)
+      bits.push('zawodnik na liście transferowej')
+      bitsEn.push('player transfer-listed')
+    } else if (fx.type === 'injury') {
+      const p = findPlayer(roster, fx.playerId)
+      injurePlayer(p, { days: fx.days, label: fx.label, source: 'training', team })
+      bits.push(`${playerName(p)}: ${fx.label}, ${p.injury.daysRemaining} dni`)
+      bitsEn.push(`${playerName(p)}: ${injuryLabelEn(fx.label)}, ${p.injury.daysRemaining} days`)
+    } else if (fx.type === 'recover') {
+      const p = findPlayer(roster, fx.playerId)
+      const recovered = Math.min(p.injury?.daysRemaining ?? 0, fx.days)
+      if (p.injury) {
+        p.injury.daysRemaining -= recovered
+        if (p.injury.daysRemaining <= 0) p.injury = null
+      }
+      bits.push(`rehabilitacja krótsza o ${recovered} dni`)
+      bitsEn.push(`recovery shortened by ${recovered} days`)
+    } else if (fx.type === 'skill') {
+      const p = findPlayer(roster, fx.playerId)
+      const before = p.skills[fx.skill]
+      p.skills[fx.skill] = Math.min(99, before + fx.delta)
+      bits.push(`${playerName(p)}: ${fx.skill} +${p.skills[fx.skill] - before}`)
+      bitsEn.push(`${playerName(p)}: ${fx.skill} +${p.skills[fx.skill] - before}`)
+    } else if (fx.type === 'budget') {
+      adjustTransferBudget(team, fx.delta, 'random_event', career.league?.currentDate)
       const sign = fx.delta >= 0 ? '+' : ''
       bits.push(`budżet ${sign}${formatUsd(fx.delta)}`)
       bitsEn.push(`budget ${sign}${formatUsd(fx.delta)}`)
@@ -217,6 +278,7 @@ function fanContextBits(team) {
 
 /** @type {EventTemplate[]} */
 export const RANDOM_EVENT_TEMPLATES = [
+  ...EXTRA_RANDOM_EVENTS,
   {
     id: 'sponsor_clinic',
     weight: 1.1,
@@ -827,6 +889,7 @@ export const RANDOM_EVENT_TEMPLATES = [
       const sponsor = pickRandom(getActiveSponsors(team), rng)
       if (!sponsor) return null
       return {
+        sponsorId: sponsor.id,
         sponsorName: brandDisplayName(sponsor, 'pl'),
         sponsorNameEn: brandDisplayName(sponsor, 'en'),
       }
@@ -901,6 +964,7 @@ export const RANDOM_EVENT_TEMPLATES = [
       const loud = pickRandom(sortByOvrDesc(roster).slice(0, 5), rng)
       if (!sponsor || !loud) return null
       return {
+        sponsorId: sponsor.id,
         sponsorName: brandDisplayName(sponsor, 'pl'),
         sponsorNameEn: brandDisplayName(sponsor, 'en'),
         playerId: loud.id,
@@ -979,6 +1043,7 @@ export const RANDOM_EVENT_TEMPLATES = [
       const sponsor = pickRandom(getActiveSponsors(team), rng)
       if (!sponsor) return null
       return {
+        sponsorId: sponsor.id,
         sponsorName: brandDisplayName(sponsor, 'pl'),
         sponsorNameEn: brandDisplayName(sponsor, 'en'),
       }
@@ -3607,6 +3672,7 @@ export const RANDOM_EVENT_TEMPLATES = [
       const sponsor = pickRandom(getActiveSponsors(team), rng)
       if (!sponsor) return null
       return {
+        sponsorId: sponsor.id,
         sponsorName: brandDisplayName(sponsor, 'pl'),
         sponsorNameEn: brandDisplayName(sponsor, 'en'),
       }
@@ -3657,6 +3723,7 @@ export const RANDOM_EVENT_TEMPLATES = [
       if (choiceId === 'cut_now') {
         return {
           effects: [
+            { type: 'endSponsor', sponsorId: ctx.sponsorId, sponsorName: ctx.sponsorName },
             { type: 'reputation', delta: 1 },
             { type: 'moraleTeam', delta: -1 },
           ],
@@ -3707,8 +3774,8 @@ export const RANDOM_EVENT_TEMPLATES = [
         id: 'preempt_contract',
         label: 'Zaproponuj od razu lepszy kontrakt',
         labelEn: 'Offer a better contract right away',
-        hint: '−budżet, lojalność mocno +, temat zamknięty',
-        hintEn: '−budget, loyalty up sharply, topic closed',
+        hint: '−$3000, nowa umowa na 2–5 lat, pensja +10%, morale +8',
+        hintEn: '−$3,000, new 2–5 year contract, wage +10%, morale +8',
       },
       {
         id: 'ignore',
@@ -3734,6 +3801,7 @@ export const RANDOM_EVENT_TEMPLATES = [
       if (choiceId === 'preempt_contract') {
         return {
           effects: [
+            { type: 'extendContract', playerId: ctx.starId },
             { type: 'morale', playerId: ctx.starId, delta: 8 },
             { type: 'budget', delta: -3000 },
           ],
@@ -3789,8 +3857,8 @@ export const RANDOM_EVENT_TEMPLATES = [
         id: 'rest',
         label: 'Daj kilka dni przerwy od razu',
         labelEn: 'Give them a few days off right away',
-        hint: 'Forma −2 teraz, ryzyko znika',
-        hintEn: 'Form −2 now, risk disappears',
+        hint: 'Niedostępność 3 dni, forma −2',
+        hintEn: 'Unavailable for 3 days, form −2',
       },
     ],
     resolve(ctx, choiceId, rng) {
@@ -3809,7 +3877,7 @@ export const RANDOM_EVENT_TEMPLATES = [
       }
       if (choiceId === 'rest') {
         return {
-          effects: [{ type: 'form', playerId: ctx.playerId, delta: -2 }],
+          effects: [{ type: 'form', playerId: ctx.playerId, delta: -2 }, { type: 'injury', playerId: ctx.playerId, days: 3, label: 'przeciążenie mięśniowe' }],
           summary: `${ctx.playerName} dostał kilka dni przerwy. Ryzyko zażegnane.`,
           summaryEn: `${ctx.playerName} got a few days off. Risk avoided.`,
         }
@@ -4131,6 +4199,7 @@ export const POST_MATCH_EVENT_TEMPLATES = [
  * szablony nie mają `pickContext` — kontekst już istnieje, zanim wiadomość powstanie.
  */
 export const RANDOM_EVENT_FOLLOWUP_TEMPLATES = [
+  ...EXTRA_FOLLOWUP_EVENTS,
   {
     id: 'sponsor_investigation_cleared',
     title: (ctx) => `Śledztwo zakończone: ${ctx.sponsorName} czysty`,
@@ -4209,6 +4278,7 @@ export const RANDOM_EVENT_FOLLOWUP_TEMPLATES = [
       if (choiceId === 'cut_public') {
         return {
           effects: [
+            { type: 'endSponsor', sponsorId: ctx.sponsorId, sponsorName: ctx.sponsorName },
             { type: 'reputation', delta: 4 },
             { type: 'moraleTeam', delta: 1 },
           ],
@@ -4218,7 +4288,7 @@ export const RANDOM_EVENT_FOLLOWUP_TEMPLATES = [
       }
       if (choiceId === 'cut_quiet') {
         return {
-          effects: [{ type: 'reputation', delta: 1 }],
+          effects: [{ type: 'endSponsor', sponsorId: ctx.sponsorId, sponsorName: ctx.sponsorName }, { type: 'reputation', delta: 1 }],
           summary: `Cicho zakończyłeś współpracę z ${ctx.sponsorName}. Bez rozgłosu, ale problem zniknął.`,
           summaryEn: `You quietly ended the deal with ${ctx.sponsorNameEn}. No headlines, but the problem is gone.`,
         }
@@ -4247,15 +4317,15 @@ export const RANDOM_EVENT_FOLLOWUP_TEMPLATES = [
         id: 'lock_in',
         label: 'Podpisz przedłużenie kontraktu',
         labelEn: 'Sign a contract extension',
-        hint: '−budżet, lojalność mocno +, temat zamknięty',
-        hintEn: '−budget, loyalty up sharply, topic closed',
+        hint: '−$5000, nowa umowa na 2–5 lat, pensja +10%, morale +10',
+        hintEn: '−$5,000, new 2–5 year contract, wage +10%, morale +10',
       },
       {
         id: 'open_talks',
-        label: 'Otwórz rozmowy transferowe',
-        labelEn: 'Open transfer talks',
-        hint: 'Możliwy zysk finansowy, niepokój w szatni',
-        hintEn: 'Possible financial gain, unease in the locker room',
+        label: 'Wystaw zawodnika na listę transferową',
+        labelEn: 'Put the player on the transfer list',
+        hint: 'Kluby mogą składać oferty; brak natychmiastowej wypłaty',
+        hintEn: 'Clubs can make offers; no immediate payment',
       },
       {
         id: 'block',
@@ -4269,6 +4339,7 @@ export const RANDOM_EVENT_FOLLOWUP_TEMPLATES = [
       if (choiceId === 'lock_in') {
         return {
           effects: [
+            { type: 'extendContract', playerId: ctx.starId },
             { type: 'morale', playerId: ctx.starId, delta: 10 },
             { type: 'budget', delta: -5000 },
           ],
@@ -4279,12 +4350,12 @@ export const RANDOM_EVENT_FOLLOWUP_TEMPLATES = [
       if (choiceId === 'open_talks') {
         return {
           effects: [
-            { type: 'budget', delta: 15000 },
+            { type: 'transferList', playerId: ctx.starId },
             { type: 'reputation', delta: 2 },
             { type: 'moraleTeam', delta: -2 },
           ],
-          summary: `Otworzyłeś rozmowy transferowe. Kasa napłynęła, ale szatnia czuje niepewność co do przyszłości ${ctx.starName}.`,
-          summaryEn: `You opened transfer talks. Cash flowed in, but the locker room feels uneasy about ${ctx.starName}'s future.`,
+          summary: `${ctx.starName} trafia na listę transferową. Przychód pojawi się dopiero po zaakceptowanej i sfinalizowanej sprzedaży.`,
+          summaryEn: `${ctx.starName} is now transfer-listed. Income will arrive only after an accepted sale is completed.`,
         }
       }
       return {
@@ -4391,21 +4462,21 @@ export const RANDOM_EVENT_FOLLOWUP_TEMPLATES = [
         id: 'rest_now',
         label: 'Wyślij na przymusowy odpoczynek',
         labelEn: 'Send them for mandatory rest',
-        hint: 'Forma −3 teraz, unikasz ryzyka',
-        hintEn: 'Form −3 now, you avoid the risk',
+        hint: 'Niedostępność 4 dni, forma −3',
+        hintEn: 'Unavailable for 4 days, form −3',
       },
       {
         id: 'risk_it',
         label: 'Graj mimo ostrzeżenia',
         labelEn: 'Play on despite the warning',
-        hint: 'Ryzyko poważniejszego spadku formy',
-        hintEn: 'Risk of a more serious form drop',
+        hint: '40%: kontuzja 10 dni, forma −6, morale −4; inaczej forma +2',
+        hintEn: '40%: 10-day injury, form −6, morale −4; otherwise form +2',
       },
     ],
     resolve(ctx, choiceId, rng) {
       if (choiceId === 'rest_now') {
         return {
-          effects: [{ type: 'form', playerId: ctx.playerId, delta: -3 }],
+          effects: [{ type: 'form', playerId: ctx.playerId, delta: -3 }, { type: 'injury', playerId: ctx.playerId, days: 4, label: 'przeciążenie mięśniowe' }],
           summary: `${ctx.playerName} odpoczywa. Ryzyko uniknięte.`,
           summaryEn: `${ctx.playerName} rests up. Risk avoided.`,
         }
@@ -4414,6 +4485,7 @@ export const RANDOM_EVENT_FOLLOWUP_TEMPLATES = [
       if (unlucky) {
         return {
           effects: [
+            { type: 'injury', playerId: ctx.playerId, days: 10, label: 'uraz mięśniowy' },
             { type: 'form', playerId: ctx.playerId, delta: -6 },
             { type: 'morale', playerId: ctx.playerId, delta: -4 },
           ],
@@ -4483,6 +4555,23 @@ function templateById(id) {
   )
 }
 
+export function scaleEventMoneyText(text, scale = 1) {
+  if (typeof text !== 'string' || scale === 1) return text
+  return text.replace(/([$€])(\d[\d.,]*)([kM])?|(\d[\d.\u00a0 ]*)\s*€/g, (_m, symbol, digits, suffix, euros) => {
+    const number = suffix ? Number(digits.replace(',', '.')) * (suffix === 'M' ? 1000000 : 1000) : Number((digits ?? euros).replace(/[.,\s\u00a0]/g, ''))
+    return formatUsd(Math.round(number * scale))
+  })
+}
+function balancedEventChoices(template, context) {
+  return localizeEventChoices(template.id, template.choices(context)).map(c => Object.fromEntries(
+    Object.entries(c).map(([k,v]) => [k, k === 'id' ? v : scaleEventMoneyText(v, context.financeScale ?? 1)])))
+}
+
+export function currentRandomEventChoices(templateId, context = {}) {
+  const template = templateById(templateId)
+  return template ? balancedEventChoices(template, context) : []
+}
+
 /** Runtime EN title for saved messages that lack titleEn. */
 export function randomEventTitleEn(templateId, ctx) {
   const template = templateById(templateId)
@@ -4494,8 +4583,17 @@ export function randomEventTitleEn(templateId, ctx) {
   }
 }
 
-function eligibleTemplates(career, team) {
+function eventFamily(id) {
+  return id?.startsWith('sponsor_') ? 'sponsor' : id?.startsWith('foreign_interest') ? 'foreign_interest' : id?.startsWith('nagging_pain') ? 'nagging_pain' : id?.replace(/_result$/, '')
+}
+
+function eligibleTemplates(career, team, simDate) {
   return RANDOM_EVENT_TEMPLATES.filter((t) => {
+    const family = eventFamily(t.id)
+    const recent = [...(career.inbox ?? []), ...(team.randomEventHistory ?? [])]
+    if (recent.some((m) => eventFamily(m.payload?.templateId ?? m.templateId) === family &&
+      (m.payload?.status === 'pending' || (m.date && simDate <= formatISODate(addDays(parseISODate(m.date), t.cooldownDays ?? 21)))))) return false
+    if ((career.pendingEventFollowUps ?? []).some((f) => eventFamily(f.templateId) === family)) return false
     if (typeof t.canSpawn === 'function') {
       try {
         return !!t.canSpawn(career, team)
@@ -4528,6 +4626,10 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
   const team = worldTeamById(career.world, career.playerTeamId)
   if (!team?.players?.length) return null
 
+  const recent = [...(career.inbox ?? []), ...(team.randomEventHistory ?? [])]
+  if (recent.some((m) => (m.payload?.templateId || m.templateId) && m.date &&
+    simDate < formatISODate(addDays(parseISODate(m.date), 3)))) return null
+
   const rand =
     rng ??
     mulberry32(
@@ -4538,14 +4640,15 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
 
   if (rand() > SPAWN_CHANCE) return null
 
-  const pool = eligibleTemplates(career, team)
+  const pool = eligibleTemplates(career, team, simDate)
   const template = pickWeighted(pool, rand)
   if (!template) return null
 
   const ctx = template.pickContext(team.players, rand, team)
   if (!ctx) return null
+  ctx.financeScale = eventFinanceScale(team)
 
-  const choices = localizeEventChoices(template.id, template.choices(ctx))
+  const choices = balancedEventChoices(template, ctx)
   if (!choices?.length) return null
 
   const bodyEn =
@@ -4561,9 +4664,9 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
     seasonYear: career.seasonYear ?? null,
     read: false,
     title: template.title(ctx),
-    body: template.body(ctx),
+    body: scaleEventMoneyText(template.body(ctx), ctx.financeScale ?? 1),
     ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
-    ...(bodyEn ? { bodyEn } : {}),
+    ...(bodyEn ? { bodyEn: scaleEventMoneyText(bodyEn, ctx.financeScale ?? 1) } : {}),
     payload: {
       kind: 'decision',
       templateId: template.id,
@@ -4580,7 +4683,7 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
  * więc nie trzeba (i nie da się) wywołać `pickContext`.
  */
 function buildDecisionMessage(template, ctx, { date, seasonIndex = null, seasonYear = null } = {}) {
-  const choices = localizeEventChoices(template.id, template.choices(ctx))
+  const choices = balancedEventChoices(template, ctx)
   if (!choices?.length) return null
 
   const bodyEn =
@@ -4596,9 +4699,9 @@ function buildDecisionMessage(template, ctx, { date, seasonIndex = null, seasonY
     seasonYear,
     read: false,
     title: template.title(ctx),
-    body: template.body(ctx),
+    body: scaleEventMoneyText(template.body(ctx), ctx.financeScale ?? 1),
     ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
-    ...(bodyEn ? { bodyEn } : {}),
+    ...(bodyEn ? { bodyEn: scaleEventMoneyText(bodyEn, ctx.financeScale ?? 1) } : {}),
     payload: {
       kind: 'decision',
       templateId: template.id,
@@ -4668,9 +4771,11 @@ export function pickPostMatchEventMessage(career, { fixture = null, record = nul
 
   if (rand() > POST_MATCH_SPAWN_CHANCE) return null
 
+  const contexts = new Map()
   const pool = POST_MATCH_EVENT_TEMPLATES.filter((t) => {
     try {
       const ctx = t.pickContext(team.players, rand, team, matchCtx)
+      contexts.set(t.id, ctx)
       return !!ctx
     } catch {
       return false
@@ -4681,10 +4786,11 @@ export function pickPostMatchEventMessage(career, { fixture = null, record = nul
   const template = pickWeighted(pool, rand)
   if (!template) return null
 
-  const ctx = template.pickContext(team.players, rand, team, matchCtx)
+  const ctx = contexts.get(template.id)
   if (!ctx) return null
+  ctx.financeScale = eventFinanceScale(team)
 
-  const choices = localizeEventChoices(template.id, template.choices(ctx))
+  const choices = balancedEventChoices(template, ctx)
   if (!choices?.length) return null
 
   const bodyEn = typeof template.bodyEn === 'function' ? template.bodyEn(ctx) : null
@@ -4698,9 +4804,9 @@ export function pickPostMatchEventMessage(career, { fixture = null, record = nul
     seasonYear: career.seasonYear ?? null,
     read: false,
     title: template.title(ctx),
-    body: template.body(ctx),
+    body: scaleEventMoneyText(template.body(ctx), ctx.financeScale ?? 1),
     ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
-    ...(bodyEn ? { bodyEn } : {}),
+    ...(bodyEn ? { bodyEn: scaleEventMoneyText(bodyEn, ctx.financeScale ?? 1) } : {}),
     payload: {
       kind: 'decision',
       templateId: template.id,
@@ -4759,7 +4865,7 @@ export function applyRandomEventChoice(career, messageId, choiceId) {
     }
   }
 
-  const choice = (payload.choices ?? []).find((c) => c.id === choiceId)
+  const choice = currentRandomEventChoices(payload.templateId, payload.context).find((c) => c.id === choiceId)
   if (!choice) {
     return {
       ok: false,
@@ -4770,9 +4876,21 @@ export function applyRandomEventChoice(career, messageId, choiceId) {
 
   const ctx = payload.context ?? {}
   const rng = mulberry32(hashSeed(`${message.id}|${choiceId}|resolve`))
-  const resolved = template.resolve(ctx, choiceId, rng)
-  const { effects, summary } = resolved
-  const summaryEn = resolved.summaryEn ?? summary
+  let resolved = template.resolve(ctx, choiceId, rng)
+  const liveTeam = worldTeamById(career.world, career.playerTeamId)
+  const targetId = ctx.playerId ?? ctx.starId
+  const sponsorPresent = !ctx.sponsorName || getActiveSponsors(liveTeam).some((s) =>
+    ctx.sponsorId ? s.id === ctx.sponsorId : brandDisplayName(s, 'pl') === ctx.sponsorName)
+  if ((targetId && !findPlayer(liveTeam?.players, targetId)) || !sponsorPresent) {
+    resolved = { effects: [], summary: 'Sprawa nieaktualna: zawodnik lub sponsor nie jest już związany z klubem.', summaryEn: 'This case is no longer applicable: the player or sponsor has left the club.' }
+  }
+  if (resolved.effects?.some(fx => fx.type === 'recover') && !findPlayer(liveTeam?.players, targetId)?.injury) {
+    resolved = { effects: [], summary: 'Zawodnik jest już zdrowy. Nie naliczono opłaty za dodatkowe leczenie.', summaryEn: 'The player has already recovered. No additional treatment fee was charged.' }
+  }
+  const scale = ctx.financeScale ?? 1
+  const effects = (resolved.effects ?? []).map(fx => fx.type === 'budget' ? { ...fx, delta: Math.round(fx.delta * scale) } : fx)
+  const summary = scaleEventMoneyText(resolved.summary, scale)
+  const summaryEn = scaleEventMoneyText(resolved.summaryEn ?? resolved.summary, scale)
 
   const world = structuredClone(career.world)
   const team = worldTeamById(world, career.playerTeamId)
@@ -4784,7 +4902,23 @@ export function applyRandomEventChoice(career, messageId, choiceId) {
     }
   }
 
-  const { bits: effectBits, bitsEn: effectBitsEn } = applyEffects(team, effects)
+  const cost = (effects ?? []).reduce((sum, fx) => sum + (fx.type === 'budget' ? Math.min(0, fx.delta) : 0), 0)
+  // New optional purchases have a free alternative. Legacy fines/mandatory expenses
+  // may still create debt; rejecting every choice would strand an old decision.
+  const optionalPurchase = [...EXTRA_RANDOM_EVENTS, ...EXTRA_FOLLOWUP_EVENTS].some(t => t.id === template.id) ||
+    (effects ?? []).some(fx => fx.type === 'extendContract')
+  if (optionalPurchase && cost < 0 && availableEventFunds(team) + cost < 0) {
+    return { ok: false, error: 'Brak środków na tę decyzję. Wybierz tańszą opcję.', errorEn: 'Insufficient funds. Choose a cheaper option.' }
+  }
+  for (const fx of effects ?? []) {
+    if (fx.type === 'extendContract' && (!findPlayer(team.players, fx.playerId)?.contract || findPlayer(team.players, fx.playerId)?.loan)) {
+      return { ok: false, error: 'Nie można przedłużyć tej umowy.', errorEn: 'This contract cannot be extended.' }
+    }
+  }
+  let effectResult
+  try { effectResult = applyEffects(team, effects, career) }
+  catch (error) { return { ok: false, error: error.message, errorEn: error.message } }
+  const { bits: effectBits, bitsEn: effectBitsEn } = effectResult
   const outcomeSummary =
     summary + (effectBits.length ? ` (${effectBits.join(', ')})` : '')
   const outcomeSummaryEn =
@@ -4822,7 +4956,7 @@ export function applyRandomEventChoice(career, messageId, choiceId) {
       {
         id: newMessageId('followup'),
         templateId: resolved.followUp.templateId,
-        ctx: resolved.followUp.ctx ?? ctx,
+        ctx: { ...(resolved.followUp.ctx ?? ctx), financeScale: ctx.financeScale ?? 1 },
         dueDate,
         seasonIndex: career.seasonIndex ?? null,
         seasonYear: career.seasonYear ?? null,

@@ -24,7 +24,7 @@ import { resolveTeamName, UI_LANG } from '../ui/locale.js'
 export function createLeagueSeason(options = {}) {
   const world = options.world ?? createWorldFromTemplate()
   initWorldPlayerStats(world, {
-    playerTeamId: options.playerTeamId ?? PLAYER_TEAM_ID,
+    playerTeamId: Object.hasOwn(options, 'playerTeamId') ? options.playerTeamId : PLAYER_TEAM_ID,
   })
 
   // Kopia, nie alias: `world.teamIds` bywa dalej mutowane (np. materializeFullPyramidTeams
@@ -36,7 +36,7 @@ export function createLeagueSeason(options = {}) {
     : world.teamIds
       ? [...world.teamIds]
       : UFA_LEAGUE_TEAMS.map((t) => t.id)
-  const playerTeamId = options.playerTeamId ?? PLAYER_TEAM_ID
+  const playerTeamId = Object.hasOwn(options, 'playerTeamId') ? options.playerTeamId : PLAYER_TEAM_ID
   const seasonYear = options.seasonYear ?? 2025
   const simSeedBase = options.simSeedBase ?? seasonYear * 1000 + 805
   const calendar = buildSeasonCalendar({ seasonYear, teamIds })

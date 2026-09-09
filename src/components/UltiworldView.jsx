@@ -62,7 +62,7 @@ export default function UltiworldView({ career, onUltiworldChange }) {
     return list
   }, [uw.articles, filter])
 
-  const selected = filtered.find((a) => a.id === selectedId) ?? filtered[0] ?? null
+  const selected = (uw.articles ?? []).find((a) => a.id === selectedId) ?? null
 
   const selectArticle = (article) => {
     setSelectedId(article.id)
@@ -114,7 +114,7 @@ export default function UltiworldView({ career, onUltiworldChange }) {
             <button
               key={id}
               type="button"
-              onClick={() => setFilter(id)}
+              onClick={() => { setFilter(id); setSelectedId(null) }}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                 filter === id
                   ? 'bg-ufa-accent text-ufa-bg'
@@ -127,7 +127,7 @@ export default function UltiworldView({ career, onUltiworldChange }) {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && !selected ? (
         <div className="rounded-xl border border-ufa-border bg-ufa-panel p-10 text-center shadow-xl shadow-black/30">
           <p className="text-sm text-ufa-muted">
             {(uw.articles ?? []).length === 0 ? t.emptyAll : t.emptyFilter}
@@ -136,6 +136,7 @@ export default function UltiworldView({ career, onUltiworldChange }) {
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
           <div className="overflow-hidden rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
+            {filtered.length === 0 && <p className="p-4 text-sm text-ufa-muted">{t.emptyFilter}</p>}
             <ul className="max-h-[70vh] divide-y divide-ufa-border/80 overflow-y-auto">
               {filtered.map((article) => {
                 const style = CATEGORY_STYLE[article.category] ?? CATEGORY_STYLE.feature

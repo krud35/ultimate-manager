@@ -1,3 +1,4 @@
+import { remainingPayrollWeeks } from '../clubEconomy.js'
 /**
  * Negocjacje kontraktowe z zawodnikiem (po zgodzie klubu na transfer).
  *
@@ -90,7 +91,8 @@ export function computePlayerContractDemands({
   const ovr = getOverallRating(player?.skills)
   const pot = Number.isFinite(player?.potential) ? player.potential : ovr
   const morale = getPlayerMorale(player)
-  const currentWage = roundWage(player.contract?.weeklyWage ?? weeklyWageFromOvr(ovr))
+  // Anchor expectations to the current market; repeated renewals must not compound forever.
+  const currentWage = roundWage(Math.min(player.contract?.weeklyWage ?? weeklyWageFromOvr(ovr), weeklyWageFromOvr(ovr) * 1.25))
   const sellerRep = getTeamReputation(sellerTeam)
   const buyerRep = getTeamReputation(buyerTeam)
   const teamCount =
@@ -118,8 +120,8 @@ export function computePlayerContractDemands({
   willingness = Math.max(0.08, Math.min(0.95, willingness))
 
   // Bazowa pensja: obecna + premia za OVR / chęć (niska chęć → wyższe żądania).
-  let demandMult = renew ? 1.08 : 1.05
-  demandMult += (1 - willingness) * (renew ? 0.18 : 0.35)
+  let demandMult = 1.02
+  demandMult += (1 - willingness) * (renew ? 0.06 : 0.18)
   demandMult += ((buyerRep - REPUTATION_DEFAULT) / 100) * -0.08
   demandMult += (buyerForm - sellerForm) * -0.06
   if (morale >= 75 && sellerForm >= 0.7) demandMult += renew ? 0.06 : 0.12
@@ -430,7 +432,7 @@ export function aiAutoPlayerContractTerms({
     return { ok: false, demands }
   }
 
-  const bump = 1.0 + (1 - demands.willingness) * 0.12 + r.float() * 0.08
+  const bump = 1.0 + (1 - demands.willingness) * 0.05 + r.float() * 0.04
   const weeklyWage = roundWage(demands.minWeeklyWage * bump)
   const years = demands.preferredYears
   let promises = [...(demands.preferredPromises ?? [])]
@@ -459,7 +461,7 @@ export function aiAutoPlayerContractTerms({
 }
 
 /** Podgląd kosztów oferty dla UI. */
-export function previewContractOffer(weeklyWage, years) {
+export function previewContractOffer(weeklyWage, years, team = null) {
   const y = Math.max(1, Math.min(5, Math.round(Number(years) || 1)))
   const w = roundWage(weeklyWage)
   const weeks = y * WEEKS_PER_CONTRACT_YEAR
@@ -468,6 +470,7 @@ export function previewContractOffer(weeklyWage, years) {
     years: y,
     weeks,
     totalCost: contractTotalCost(w, weeks),
+    requiredCash: w * Math.min(weeks, remainingPayrollWeeks(team)),
   }
 }
 

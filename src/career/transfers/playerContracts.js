@@ -1,7 +1,9 @@
+import { referenceWeeklyWage } from '../economyBalance.js'
+import { ensureClubEconomy, postClubCash, clubCash, canAffordContract, syncLoanFinancialCommitments, contractualWeeklyBill } from '../clubEconomy.js'
 /**
  * Kontrakty finansowe zawodników: długość, pensja tygodniowa, bonusy, obietnice.
- * Przy podpisaniu cała suma kontraktu idzie z budżetu transferowego → budżet pensji;
- * co tydzień znika z budżetu pensji; niewypłacona reszta wraca do transferowego.
+ * Podpisanie tworzy zobowiązanie bez zamrażania gotówki. Pensje obciążają gotówkę
+ * co tydzień; limit płac jest oddzielnym ograniczeniem nowych kontraktów.
  */
 
 import { createRng } from '../../matchEngine/rng.js'
@@ -11,7 +13,7 @@ import { applyDebtMoraleToTeam, ensurePlayerMorale, getPlayerMorale } from '../.
 import { noteLoyaltyFromTreatment } from '../../models/playerLoyalty.js'
 import { getPlayerFullName } from '../../data/mockPlayers.js'
 import { standingsTable } from '../../league/standings.js'
-import { getTransferBudget, adjustTransferBudget } from './clubFinances.js'
+import { adjustTransferBudget } from './clubFinances.js'
 import { formatUsd } from './moneyFormat.js'
 
 export const WEEKS_PER_CONTRACT_YEAR = 52
@@ -24,35 +26,35 @@ export const CONTRACT_BONUS_DEFS = [
     id: 'goals_season',
     labelPl: 'Bonus za gole (sezon)',
     labelEn: 'Goals bonus (season)',
-    defaultAmount: 8000,
+    defaultAmount: 16000,
     defaultTarget: 15,
   },
   {
     id: 'assists_season',
     labelPl: 'Bonus za asysty (sezon)',
     labelEn: 'Assists bonus (season)',
-    defaultAmount: 6000,
+    defaultAmount: 12000,
     defaultTarget: 12,
   },
   {
     id: 'championship',
     labelPl: 'Bonus za mistrzostwo',
     labelEn: 'Championship bonus',
-    defaultAmount: 25000,
+    defaultAmount: 50000,
     defaultTarget: null,
   },
   {
     id: 'cup_win',
     labelPl: 'Bonus za puchar',
     labelEn: 'Cup win bonus',
-    defaultAmount: 15000,
+    defaultAmount: 30000,
     defaultTarget: null,
   },
   {
     id: 'appearances',
     labelPl: 'Bonus za występy',
     labelEn: 'Appearances bonus',
-    defaultAmount: 5000,
+    defaultAmount: 10000,
     defaultTarget: 20,
   },
 ]
@@ -114,11 +116,11 @@ function clamp(n, lo, hi) {
 
 /**
  * Bazowa tygodniówka z OVR (USD):
- * 65→~180, 70→~420, 75→~1.0k, 80→~2.4k, 85→~5.7k, 90→~13.5k
+ * 65→~288, 70→~462, 75→~746, 80→1200, 85→~1932, 90→~3112.
  */
 export function weeklyWageFromOvr(ovr) {
   const x = Math.max(50, Math.min(99, Number(ovr) || 50))
-  return 80 * Math.pow(1.188, x - 60)
+  return referenceWeeklyWage(x)
 }
 
 /** Zaokrąglenie pensji do sensownych kwot. */
@@ -319,13 +321,7 @@ export function teamWageLiability(team) {
  * @param {object} team
  */
 export function teamWeeklyWageBill(team) {
-  let sum = 0
-  for (const p of team?.players ?? []) {
-    const w = p?.contract?.weeklyWage
-    const rem = p?.contract?.weeksRemaining ?? 0
-    if (w > 0 && rem > 0) sum += w
-  }
-  return Math.max(0, Math.round(sum))
+  return contractualWeeklyBill(team)
 }
 
 /**
@@ -346,101 +342,42 @@ export function ensureWorldContracts(world, options = {}) {
       syncTeamSalaryBudget(team, { seed, forceInit: !!options.force })
     }
   }
+  syncLoanFinancialCommitments(world)
   return world
 }
 
 /**
- * Ustawia salaryBudget = suma niewypłaconych pensji i odejmuje to od transferBudget
- * (przy pierwszej inicjalizacji). Przy forceInit zawsze przelicza.
+ * Migruje dawną rezerwę płac do rachunku gotówki. Idempotentne;
+ * salaryBudget pozostaje zgodnym wstecznie aliasem tygodniowego limitu płac.
  *
  * @param {object} team
  * @param {{ seed?: number, forceInit?: boolean }} [options]
  */
-export function syncTeamSalaryBudget(team, options = {}) {
+export function syncTeamSalaryBudget(team) {
   if (!team) return team
-  if (!team.finances || typeof team.finances !== 'object') {
-    team.finances = { transferBudget: 0, salaryBudget: 0 }
-  }
-
-  const liability = teamWageLiability(team)
-  const hasSalary =
-    team.finances.salaryBudget != null && Number.isFinite(team.finances.salaryBudget)
-
-  if (!options.forceInit && hasSalary && team.finances._salaryBudgetSynced) {
-    return team
-  }
-
-  // Pierwsza synchronizacja (lub force): zablokuj pensje z budżetu transferowego.
-  const transfer = Math.max(0, Math.round(team.finances.transferBudget ?? 0))
-  if (liability > transfer) {
-    // Dołóż środki, żeby klub nie startował z zerowym budżetem transferowym.
-    const cushion = Math.round(liability * 0.35)
-    team.finances.transferBudget = Math.max(0, cushion)
-    team.finances.salaryBudget = liability
-  } else {
-    team.finances.transferBudget = transfer - liability
-    team.finances.salaryBudget = liability
-  }
+  ensureClubEconomy(team)
   team.finances._salaryBudgetSynced = true
   return team
 }
 
-/**
- * Rezerwuje kwotę kontraktu: transferBudget → salaryBudget.
- * @returns {{ ok: boolean, error?: string }}
- */
+/** Legacy API: commitments no longer move cash into escrow. */
 export function reserveContractFunds(team, amount) {
-  if (!team) return { ok: false, error: 'Brak drużyny' }
-  if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
-  const cost = Math.max(0, Math.round(Number(amount) || 0))
-  const transfer = Math.max(0, Math.round(team.finances.transferBudget ?? 0))
-  if (cost > transfer) {
-    return {
-      ok: false,
-      error: `Brak środków na kontrakt (potrzeba ${cost}, budżet transferowy ${transfer})`,
-    }
-  }
-  team.finances.transferBudget = transfer - cost
-  team.finances.salaryBudget = Math.max(0, Math.round(team.finances.salaryBudget ?? 0)) + cost
-  return { ok: true }
+  return { ok: !!team && Number.isFinite(amount) }
 }
+export function releaseContractFunds() { return 0 }
 
-/**
- * Zwraca niewypłaconą pensję do budżetu transferowego (odejście zawodnika).
- */
-export function releaseContractFunds(team, amount) {
-  if (!team) return
-  if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
-  const refund = Math.max(0, Math.round(Number(amount) || 0))
-  const salary = Math.max(0, Math.round(team.finances.salaryBudget ?? 0))
-  const take = Math.min(salary, refund)
-  team.finances.salaryBudget = salary - take
-  team.finances.transferBudget = Math.round((team.finances.transferBudget ?? 0) + take)
-}
-
-/**
- * Podpisuje nowy kontrakt w klubie kupującym (rezerwuje środki).
- * @returns {{ ok: boolean, error?: string, contract?: object }}
- */
 export function signPlayerContract(team, player, terms) {
   if (!team || !player) return { ok: false, error: 'Brak drużyny/zawodnika' }
   const contract = buildContract(player, terms)
-  const cost = getContractRemainingCost(contract)
-  const reserved = reserveContractFunds(team, cost)
-  if (!reserved.ok) return reserved
+  const affordability = canAffordContract(team, player, contract.weeklyWage, { date: terms.signedDate ?? team.managementDate, weeksRemaining: contract.weeksRemaining })
+  if (!affordability.ok) return affordability
   player.contract = contract
   return { ok: true, contract }
 }
 
-/**
- * Zdejmuje kontrakt z zawodnika opuszczającego klub — zwrot niewypłaconej pensji.
- */
 export function clearPlayerContractOnExit(team, player) {
-  if (!player?.contract) return 0
-  const refund = getContractRemainingCost(player.contract)
-  releaseContractFunds(team, refund)
-  player.contract = null
-  return refund
+  if (player) player.contract = null
+  return 0
 }
 
 /**
@@ -448,7 +385,7 @@ export function clearPlayerContractOnExit(team, player) {
  * @param {import('../worldState.js').WorldState} world
  * @returns {{ paid: number, teams: number }}
  */
-export function processWeeklyWages(world) {
+export function processWeeklyWages(world, { date = null } = {}) {
   if (!world?.teamsById) return { paid: 0, teams: 0 }
 
   // Dwuprzebiegowe: najpierw zbierz należności per klub (włącznie z udziałem w
@@ -456,11 +393,13 @@ export function processWeeklyWages(world) {
   // fizycznie siedzą u destination), potem odejmij z budżetów w drugiej pętli
   // po WSZYSTKICH klubach — inaczej macierzysty nigdy nie zobaczyłby swojego
   // udziału, bo jego pętla po `players[]` nigdy nie napotka wypożyczonego gracza.
+  if (date && world.lastWageDate >= date) return { paid: 0, teams: 0 }
+  if (date) world.lastWageDate = date
   const ownBillByTeam = new Map()
   const loanShareByTeam = new Map()
 
   for (const team of worldTeamsList(world)) {
-    if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
+    ensureClubEconomy(team)
     for (const player of team.players ?? []) {
       const c = player.contract
       if (!c || !(c.weeksRemaining > 0) || !(c.weeklyWage > 0)) continue
@@ -489,19 +428,18 @@ export function processWeeklyWages(world) {
   let teams = 0
   for (const team of worldTeamsList(world)) {
     if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
+    if (date) team.finances.lastPayrollDate = date
     const weekBill = (ownBillByTeam.get(team.id) ?? 0) + (loanShareByTeam.get(team.id) ?? 0)
     if (weekBill <= 0) {
-      applyDebtMoraleToTeam(team, getTransferBudget(team))
+      applyDebtMoraleToTeam(team, clubCash(team))
       continue
     }
-    const salary = Math.max(0, Math.round(team.finances.salaryBudget ?? 0))
-    const deduct = Math.min(salary, Math.round(weekBill))
-    team.finances.salaryBudget = salary - deduct
-    // Niedobór (np. stary save) — nie pożeraj budżetu transferowego.
-    paid += deduct
+    postClubCash(team, -weekBill, 'wages', date)
+    paid += weekBill
     teams += 1
-    applyDebtMoraleToTeam(team, getTransferBudget(team))
+    applyDebtMoraleToTeam(team, clubCash(team))
   }
+  syncLoanFinancialCommitments(world)
   return { paid, teams }
 }
 
