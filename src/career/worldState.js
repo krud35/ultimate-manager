@@ -41,7 +41,7 @@ import { ensureWorldFans } from '../models/teamFans.js'
 import { ensureWorldFacilities } from './clubFacilities.js'
 import { ensureWorldSponsors, refreshSponsorOffers } from './clubSponsors.js'
 import { ensureWorldScouting } from './scouting.js'
-import { ensureWorldAcademy } from './academy.js'
+import { ensureWorldAcademy, initializeWorldAcademies } from './academy.js'
 import { officialSeasonEndDate } from '../league/seasonCalendar.js'
 import { areCompetitionsComplete, isOfficialSeasonEnded } from '../league/dayEngine.js'
 import { ensureAiCoachProfiles } from '../matchEngine/aiCoachProfile.js'
@@ -158,7 +158,11 @@ export function createWorldFromTemplate(templateSeasonYear = 2025, options = {})
     refreshTeamMarketValues(team)
     ensureClubManagement(team, templateSeasonYear)
   }
-  for (const team of worldTeamsList(world)) initializeClubLiquidity(team, templateSeasonYear)
+  initializeWorldAcademies(world, templateSeasonYear)
+  for (const team of worldTeamsList(world)) {
+    ensureClubManagement(team, templateSeasonYear)
+    initializeClubLiquidity(team, templateSeasonYear)
+  }
   return world
 }
 
@@ -324,6 +328,8 @@ export function rehydrateCareerWorld(career) {
   ensureWorldFacilities(world, { seed: financeSeed, force: false })
   ensureWorldScouting(world)
   ensureWorldAcademy(world)
+  initializeWorldAcademies(world, career.seasonYear)
+  for (const team of worldTeamsList(world)) ensureClubManagement(team, career.seasonYear)
   ensureWorldSponsors(world, {
     seed: financeSeed,
     seasonYear: career.seasonYear ?? world.templateSeasonYear ?? 2025,

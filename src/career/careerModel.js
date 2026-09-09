@@ -1,5 +1,6 @@
 import { addManagerWelcome } from './managerCareer.js'
-import { evaluateBoardSeason } from './clubManagement.js'
+import { initializeWorldAcademies } from './academy.js'
+import { evaluateBoardSeason, ensureClubManagement } from './clubManagement.js'
 import { syncCompetitionMembership } from './competitionMembership.js'
 /**
  * Model kariery managerskiej: tworzenie, archiwizacja sezonu, start kolejnego.
@@ -55,7 +56,6 @@ import { processAiContractCycle, simulateAiFreeAgentSignings, ensureWorldFreeAge
 import { processSeasonRetirements } from './retirement.js'
 import {
   ensureWorldAcademy,
-  runAcademyIntake,
   sweepAgedOutAcademyPlayers,
   runAiAcademyPromotionPass,
   applyAcademyOffseasonDevelopment,
@@ -322,6 +322,8 @@ function createEucsCareer(slotIndex, options) {
   // (z buildEucsLeagueTemplate powyżej) — materializeFullPyramidTeams pomija go.
   const allPyramidIds = [...tierIds[1], ...tierIds[2], ...tierIds[3]]
   materializeFullPyramidTeams(world, allPyramidIds, financeSeed)
+  initializeWorldAcademies(world, seasonYear)
+  for (const team of worldTeamsList(world)) ensureClubManagement(team, seasonYear)
   syncCompetitionMembership(world, league.eucsPyramid)
   ensureAiCoachProfiles(world, playerTeamId)
   initWorldPlayerStats(world, { playerTeamId })
@@ -516,10 +518,6 @@ export function finalizeSeason(career) {
     const academySweep = sweepAgedOutAcademyPlayers(career.world, {
       playerTeamId: career.playerTeamId,
       agePlayers: false,
-    })
-    runAcademyIntake(career.world, {
-      seasonYear: (career.seasonYear ?? 2025) + 1,
-      seed: (career.seasonYear ?? 2025) * 13331 + (career.seasonIndex ?? 1),
     })
     runAiAcademyPromotionPass(career.world, {
       playerTeamId: career.playerTeamId,

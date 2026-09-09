@@ -1,3 +1,4 @@
+import { recordMatchDevelopment } from '../career/matchDevelopment.js'
 import { teamForMatchEngine } from '../data/ufaLeagueTeams.js'
 import { simulateMatch } from '../matchEngine/index.js'
 import {
@@ -151,6 +152,7 @@ export function applyMatchResultToLeague(league, matchRecord) {
   fixture.playedByPlayer = !!matchRecord.playedByPlayer
 
   const isCup = (matchRecord.competition ?? fixture.competition) === 'cup'
+  recordMatchDevelopment(league, matchRecord)
 
   if (!isCup) {
     applyGameToStandings(

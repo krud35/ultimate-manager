@@ -1,3 +1,4 @@
+import { setPlayerLoanListed } from './career/transfers/transferEngine.js'
 import ManagerCareerPanel from './components/ManagerCareerPanel.jsx'
 import { addManagerWelcome, processManagerCareer } from './career/managerCareer.js'
 import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
@@ -1265,6 +1266,15 @@ export default function App() {
     [career, syncCareer],
   )
 
+  const handleToggleLoanList = useCallback((playerId) => {
+    if (!career?.world) return { ok: false }
+    const team = worldTeamById(career.world, career.playerTeamId)
+    const player = team?.players?.find(p => String(p.id) === String(playerId))
+    const result = setPlayerLoanListed(team, playerId, !player?.loanListed)
+    if (result.ok) syncCareer(persistCareer(career, { world: career.world }))
+    return result
+  }, [career, syncCareer])
+
   const handleProposeLoanOut = useCallback(
     (playerId, terms) => {
       if (!career?.world) return { ok: false }
@@ -1708,6 +1718,7 @@ export default function App() {
             clubOnly
             onExtendContract={handleExtendContract}
             onToggleTransferList={handleToggleTransferList}
+            onToggleLoanList={handleToggleLoanList}
             onProposeLoanOut={handleProposeLoanOut}
           />
         )}

@@ -79,6 +79,7 @@ export default function RosterView({
   clubOnly = false,
   onExtendContract = null,
   onToggleTransferList = null,
+  onToggleLoanList = null,
   onProposeLoanOut = null,
 }) {
   const { lang } = useUiLang()
@@ -410,6 +411,7 @@ export default function RosterView({
         isOwnPlayer={clubOnly}
         onExtendContract={clubOnly ? onExtendContract : null}
         onToggleTransferList={clubOnly ? onToggleTransferList : null}
+        onToggleLoanList={clubOnly ? onToggleLoanList : null}
         onProposeLoanOut={
           clubOnly && onProposeLoanOut
             ? () => {

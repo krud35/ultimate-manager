@@ -166,7 +166,15 @@ export default function AcademyView({ career, onCareerUpdate }) {
         <p className="mt-1 text-sm text-ufa-muted">{t.intro}</p>
         <p className="mt-1 text-sm font-medium text-ufa-text">{t.academyLevelLabel(academyLevel)}</p>
         <p className="mt-2 text-sm">{lang === 'en' ? 'Places' : 'Miejsca'}: {prospects.length}/{academyCapacity(team)} · {lang === 'en' ? 'Admissions this season' : 'Przyjęcia w sezonie'}: {team.academyAdmissionYear === career.seasonYear ? team.academyAdmissions : 0}/{academyAnnualPlaces(team)}</p>
-        <p className="mt-1 text-xs text-ufa-muted">{lang === 'en' ? 'Scouts discover a shared regional cohort. Other clubs can recruit the same players. Recruitment costs 2,000 plus 200 per potential point above 60; academy maintenance costs 40 per player weekly. Youth minutes support development.' : 'Skauci odkrywają wspólny rocznik regionalny. Inne kluby mogą pozyskać tych samych graczy. Rekrutacja kosztuje 2000 plus 200 za punkt potencjału powyżej 60; utrzymanie akademii to 40 tygodniowo za zawodnika. Minuty młodzieżowe wspierają rozwój.'}</p>
+        <p className="mt-1 text-xs text-ufa-muted">{lang === 'en' ? 'Intake waves: 1 September and 1 March. 4–8 juniors per wave enter observation for 60 days. Scouts can discover additional candidates from the same regional pool.' : 'Fale naboru: 1 września i 1 marca. 4–8 juniorów w każdej fali trafia pod obserwację na 60 dni. Skauci mogą znaleźć dodatkowych kandydatów ze wspólnej puli regionalnej.'}</p>
+        <p className="mt-1 text-xs text-ufa-muted">{lang === 'en' ? `Recruitment: ${formatUsd(4000)} + ${formatUsd(400)} per potential point above 60. Academy upkeep: ${formatUsd(80)} per player weekly.` : `Rekrutacja: ${formatUsd(4000)} + ${formatUsd(400)} za punkt potencjału powyżej 60. Utrzymanie: ${formatUsd(80)} za zawodnika tygodniowo.`}</p>
+        <ol aria-label={lang === 'en' ? 'Youth development stages' : 'Etapy rozwoju juniora'} className="mt-4 grid gap-2 sm:grid-cols-3">
+          {[
+            [lang === 'en' ? 'Observed junior' : 'Obserwowany junior', candidates.length, lang === 'en' ? 'Scout, assess and recruit' : 'Obserwuj, oceń i przyjmij'],
+            [lang === 'en' ? 'Academy player' : 'Zawodnik akademii', prospects.length, lang === 'en' ? 'Train and develop in U21' : 'Trenuj i rozwijaj w U21'],
+            [lang === 'en' ? 'First-team graduate' : 'Wychowanek w pierwszym składzie', (team.players ?? []).filter(p => p.academyJoinedSeason != null).length, lang === 'en' ? 'Promote and sign a senior contract' : 'Awansuj i podpisz kontrakt seniorski'],
+          ].map(([label, count, hint], i) => <li key={label} className="rounded-lg border border-ufa-border bg-ufa-panel p-3"><p className="text-xs text-ufa-accent">{i + 1}. {label}</p><p className="mt-1 text-xl font-bold text-ufa-text">{count}</p><p className="text-xs text-ufa-muted">{hint}</p></li>)}
+        </ol>
       </div>
 
       <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
@@ -205,7 +213,7 @@ export default function AcademyView({ career, onCareerUpdate }) {
                       <td className="px-2 py-2.5 tabular-nums text-ufa-muted">{p.potential ?? '—'}</td>
                       <td className="px-2 py-2.5 tabular-nums text-ufa-muted">{p.youthMinutes ?? 0}</td>
                       <td className="px-2 py-2.5 text-ufa-muted">
-                        {p.academySource === 'scouted' ? t.sourceScouted : t.sourceIntake}
+                        {p.academySource === 'foundation' ? (lang === 'en' ? 'Inherited squad' : 'Początkowy skład') : p.academySource === 'scouted' ? t.sourceScouted : t.sourceIntake}
                       </td>
                       <td className="px-2 py-2.5 tabular-nums text-ufa-muted">
                         {p.academyJoinedSeason ?? '—'}

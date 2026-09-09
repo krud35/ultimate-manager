@@ -21,16 +21,22 @@ export function ensureYouthCohort(world, year) {
   if (!world || !Number.isFinite(year)) return []
   world.regionalYouth ??= []
   world.youthCohortYears ??= []
-  if (world.youthCohortYears.includes(year)) return world.regionalYouth
-  world.youthCohortYears.push(year)
+  world.youthCohortVersions ??= {}
+  if (world.youthCohortVersions[year] === 2) return world.regionalYouth
+  const expanding = world.youthCohortYears.includes(year)
+  if (!expanding) world.youthCohortYears.push(year)
   const teams = Object.values(world.teamsById ?? {})
   for (const countryId of Object.keys(ACADEMY_COUNTRIES)) {
     const local = teams.filter(t => clubYouthCountry(t) === countryId).length
-    const count = Math.max(2, local * 5 + Math.round(teams.length * academyCountryStrength(countryId) / 1000))
-    const rng = createRng(hash(`${world.templateSeasonYear}|youth|${year}|${countryId}`))
+    const regionalExtra = Math.round(teams.length * academyCountryStrength(countryId) / 1000)
+    const previousCount = expanding ? Math.max(2, local * 5 + regionalExtra) : 0
+    const count = Math.max(16, local * 20 + regionalExtra) - previousCount
+    // Expand old saves once, without recreating any claimed or departed junior.
+    const source = expanding ? 'regional-expanded' : 'regional'
+    const rng = createRng(hash(`${world.templateSeasonYear}|youth|${year}|${countryId}|${source}`))
     for (let i = 0; i < count; i++) {
       const p = createAcademyProspect(() => rng.float(), { teamId: `region-${countryId}`,
-        seasonYear: year, countryId, source: 'regional', index: i })
+        seasonYear: year, countryId, source, index: i })
       p.regionalYouth = true
       p.cohortYear = year
       p.inAcademy = false
@@ -38,20 +44,23 @@ export function ensureYouthCohort(world, year) {
       world.regionalYouth.push(p)
     }
   }
+  world.youthCohortVersions[year] = 2
   return world.regionalYouth
 }
 
-export function discoverRegionalYouth(world, team, countryId, count, rng) {
+export function discoverRegionalYouth(world, team, countryId, count, rng, { date = team.managementDate, cohortYear = null } = {}) {
   if (!world) return []
   const known = new Set((team.academyCandidates ?? []).map(p => p.id))
-  const pool = (world.regionalYouth ?? []).filter(p => p.academyCountry === countryId && p.age < 21 && !known.has(p.id))
+  const pool = (world.regionalYouth ?? []).filter(p => p.academyCountry === countryId && p.age < 21 && (cohortYear == null || p.cohortYear === cohortYear) && !known.has(p.id))
   const discovered = []
   while (discovered.length < count && pool.length) {
     const [player] = pool.splice(Math.floor(rng() * pool.length), 1)
     // Observation snapshots are not a second player registration. Claims use the registry.
     const candidate = structuredClone(player)
     candidate.observationOnly = true
-    candidate.offerExpires = formatISODate(addDays(team.managementDate ?? `${player.cohortYear}-08-01`, 60))
+    candidate.status = 'observed_junior'
+    candidate.inAcademy = false
+    candidate.offerExpires = formatISODate(addDays(date ?? `${player.cohortYear}-08-01`, 60))
     discovered.push(candidate)
     ;(team.academyCandidates ??= []).push(candidate)
   }

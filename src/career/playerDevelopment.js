@@ -515,8 +515,11 @@ export function applyDailyDevelopment(league, options = {}) {
     }
 
     for (const prospect of team.academyPlayers ?? []) {
+      ensurePlayerDevelopment(prospect)
+      prospect.developmentFatigue = clamp((prospect.developmentFatigue ?? 0) - (prospect.trainingFocus === 'rest' ? 28 : 14) * dayScale, 0, 100)
+      tickPlayerInjury(prospect, { restBonus: prospect.trainingFocus === 'rest' })
       const before = getOverallRating(prospect.skills)
-      applyAcademyDailyGrowth(prospect, dayScale, rng)
+      if (!(prospect.injury?.daysRemaining > 0)) applyAcademyDailyGrowth(prospect, dayScale, rng)
       if (getOverallRating(prospect.skills) !== before) changes += 1
     }
   }

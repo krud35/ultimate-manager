@@ -1,12 +1,12 @@
-import { ensureYouthCohort, clubYouthCountry, claimRegionalYouth, youthWillJoin } from './youthPopulation.js'
+import { ensureYouthCohort, clubYouthCountry, claimRegionalYouth, youthWillJoin, discoverRegionalYouth } from './youthPopulation.js'
 import { getTransferBudget, adjustTransferBudget } from './transfers/clubFinances.js'
 /**
  * Akademia U21: własna pula prospektów per drużyna, zamiast dawnego jednorazowego
  * dosypywania wolnych agentów po emeryturach (youthIntake.js).
  *
- * Nabór organiczny (`runAcademyIntake`) skaluje się z poziomem obiektu `academy`.
- * Celowany nabór (misja skautingowa `academyProspect`, patrz scouting.js) skaluje
- * się z `scoutingDept` i produkuje jednego kandydata do zaakceptowania w skrzynce.
+ * Jesienny i wiosenny nabór (`runAcademyIntake`) odkrywa juniorów ze wspólnej puli.
+ * Misje skautingowe mogą odkrywać dodatkowych kandydatów. Przyjęcie do akademii
+ * oraz awans do seniorów są osobnymi decyzjami.
  * Prospekt, którego menedżer nie awansuje do seniorów zanim skończy 21 lat, trafia
  * na wolny rynek (`world.freeAgents`) — tak jak dziś, ale jako nadwyżka realnego
  * pipeline'u, a nie cały mechanizm.
@@ -116,7 +116,7 @@ export function ensureTeamAcademy(team) {
 }
 
 /**
- * Kandydaci "pod obserwacją" — wygenerowani przez trwającą kampanię `academyProspect`
+ * Kandydaci "pod obserwacją" — odkryci przez nabór lub kampanię `academyProspect`
  * (patrz scouting.js), ale jeszcze nie zaakceptowani do akademii. Znajomość każdego
  * (0-100, rośnie co tydzień) żyje w `team.scouting.players[id]`, ten sam mechanizm co dla
  * zwykłych zawodników — tu trzymamy tylko same obiekty zawodników.
@@ -128,8 +128,8 @@ export function ensureTeamAcademyCandidates(team) {
 }
 
 /** Sprowadza obserwowanego kandydata do akademii (bez kontraktu — jak nabór organiczny). */
-export function academyCapacity(team) { return 8 + 2 * getFacilityLevel(team, 'academy') }
-export function academyAnnualPlaces(team) { return 3 + Math.floor(getFacilityLevel(team, 'academy') / 3) }
+export function academyCapacity(team) { return 20 + 2 * getFacilityLevel(team, 'academy') }
+export function academyAnnualPlaces(team) { return 8 + Math.floor(getFacilityLevel(team, 'academy') * 0.8) }
 export function academyRecruitmentCost(player) { return Math.round(4000 + Math.max(0, (player.potential ?? 65) - 60) * 400) }
 
 export function signAcademyCandidate(team, candidateId, { world = null, seasonYear = null } = {}) {
@@ -171,6 +171,24 @@ export function rejectAcademyCandidate(team, candidateId) {
 export function ensureWorldAcademy(world) {
   if (!world?.teamsById) return world
   for (const team of worldTeamsList(world)) ensureTeamAcademy(team)
+  return world
+}
+
+/** The inherited youth squad is seeded once, including when upgrading an older save. */
+export function initializeWorldAcademies(world, seasonYear) {
+  ensureWorldAcademy(world)
+  for (const team of worldTeamsList(world)) {
+    if (team.academyRosterInitialized) continue
+    team.academyRosterInitialized = true
+    if (team.academyPlayers.length) continue
+    const rng = mulberry32(hashSeed(world.templateSeasonYear, team.id, 'initial-academy'))
+    for (let i = 0; i < Math.min(5, academyCapacity(team)); i++) {
+      const player = createAcademyProspect(rng, { teamId: team.id, seasonYear,
+        source: 'foundation', countryId: clubYouthCountry(team), index: i })
+      player.age = 16 + Math.floor(rng() * 2)
+      team.academyPlayers.push(player)
+    }
+  }
   return world
 }
 
@@ -222,7 +240,7 @@ export function createAcademyProspect(rng, { seasonYear, teamId, source = 'intak
   const scoutedCountry = countryId ? ACADEMY_COUNTRIES[countryId] : null
   const countryStrength = scoutedCountry ? academyCountryStrength(countryId) : 50
   const nationality = scoutedCountry ? scoutedCountry.nameEn : eucsTeamCountry(teamId)
-  const { min, max } = rollProspectOvrBand(rng, { intakeMult, source, countryStrength })
+  const { min, max } = source === 'foundation' ? { min: 67, max: 70 } : rollProspectOvrBand(rng, { intakeMult, source, countryStrength })
   const targetOvr = Math.max(40, Math.min(88, min + Math.floor(rng() * Math.max(1, max - min + 1))))
   const tiers = buildPlayerArchetypeTiers(rng)
   let skills = buildBalancedSubStats(hashSeed(id, 'skills'), (cat, key) =>
@@ -270,26 +288,25 @@ export function createAcademyProspect(rng, { seasonYear, teamId, source = 'intak
 // --- sezonowy nabór organiczny ---
 
 /**
- * Sezonowy nabór organiczny — bezpośredni zamiennik `spawnYouthFreeAgents`.
- * Pełna parytet AI: każda drużyna w lidze dostaje własnych prospektów.
+ * Dwie fale obserwacji w sezonie. Każdy klub poznaje 4–8 juniorów z regionalnej
+ * puli; zapis fali zapobiega ponownemu naborowi przy zapisie/odczycie.
  * @returns {{ createdByTeam: Record<string, number>, created: object[] }}
  */
-export function runAcademyIntake(world, { seasonYear } = {}) {
+export function runAcademyIntake(world, { seasonYear, wave = 'autumn', date = `${wave === 'spring' ? seasonYear + 1 : seasonYear}-${wave === 'spring' ? '03' : '09'}-01` } = {}) {
   ensureWorldAcademy(world)
   ensureYouthCohort(world, seasonYear)
   const createdByTeam = {}, created = []
   for (const team of worldTeamsList(world)) {
-    const country = clubYouthCountry(team)
-    const pool = [...(world.regionalYouth ?? [])].sort((a, b) =>
-      Number(b.academyCountry === country) - Number(a.academyCountry === country) || (b.potential ?? 0) - (a.potential ?? 0))
-    let count = 0
-    for (const candidate of pool) {
-      if (count >= Math.min(2, academyAnnualPlaces(team)) || ensureTeamAcademy(team).length >= academyCapacity(team)) break
-      const result = signAcademyCandidate(team, candidate.id, { world, seasonYear })
-      if (result.ok) { count++; created.push(result.player) }
-      else if (['annual_limit', 'insufficient_funds'].includes(result.error)) break
-    }
-    createdByTeam[team.id] = count
+    const key = `${seasonYear}-${wave}`
+    team.academyIntakeWaves ??= []
+    if (team.academyIntakeWaves.includes(key)) continue
+    team.academyIntakeWaves = [...team.academyIntakeWaves.slice(-3), key]
+    const rng = mulberry32(hashSeed(team.id, key, 'intake'))
+    const count = 4 + Math.floor(rng() * 5)
+    const candidates = discoverRegionalYouth(world, team, clubYouthCountry(team), count, rng, { date, cohortYear: seasonYear })
+    for (const p of candidates) p.academyIntakeWave = wave
+    created.push(...candidates)
+    createdByTeam[team.id] = candidates.length
   }
   return { createdByTeam, created }
 }

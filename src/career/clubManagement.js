@@ -1,3 +1,4 @@
+import { refreshAiDevelopmentListings } from './developmentListings.js'
 import { CLUB_STRATEGY_DEFS } from './clubObjectives.js'
 import { currentEucsTier } from './competitionMembership.js'
 import { rebalanceAiBudget } from './clubEconomy.js'
@@ -6,7 +7,7 @@ import { getCategoryOverall } from '../models/playerStats.js'
 import { getFacilityLevel, FACILITY_IDS, FACILITY_DEFS, upgradeFacility } from './clubFacilities.js'
 import { ensureClubEconomy, clubFinanceForecast, postClubCash, clubCash, contractualWeeklyBill } from './clubEconomy.js'
 import { getTransferBudget } from './transfers/clubFinances.js'
-import { academyCapacity, signAcademyCandidate, runAiAcademyPromotionPass } from './academy.js'
+import { academyCapacity, signAcademyCandidate, runAiAcademyPromotionPass, runAcademyIntake } from './academy.js'
 import { ensureYouthCohort, clubYouthCountry, discoverRegionalYouth } from './youthPopulation.js'
 import { createRng } from '../matchEngine/rng.js'
 import { applyOffseasonCampGrowth } from './playerDevelopment.js'
@@ -80,8 +81,20 @@ export function processClubManagement(career, date, { weekTick = false } = {}) {
   const world = career.world
   if (!world) return { inboxMessages: messages, transferLog: career.transferLog ?? [] }
   const teams = Object.values(world.teamsById)
+  refreshAiDevelopmentListings(world, { date, excludeTeamId: career.playerTeamId })
   const monthly = date.slice(8, 10) === '01' && !(world.lastManagementCycleMonth >= date.slice(0, 7))
   if (monthly) ensureYouthCohort(world, career.seasonYear)
+  if (['09-01', '03-01'].includes(date.slice(5))) {
+    const wave = date.slice(5) === '09-01' ? 'autumn' : 'spring'
+    const intake = runAcademyIntake(world, { seasonYear: career.seasonYear, wave, date })
+    const count = intake.createdByTeam[career.playerTeamId]
+    if (count) messages.push({ id: `academy-wave-${career.playerTeamId}-${date}`, date, read: false, type: 'club_news',
+      title: wave === 'autumn' ? 'Jesienny nabór do akademii' : 'Wiosenny nabór do akademii',
+      titleEn: wave === 'autumn' ? 'Autumn academy intake' : 'Spring academy intake',
+      body: `${count} juniorów trafiło pod obserwację. Oceń ich w Akademii i zdecyduj, kogo przyjąć. Obserwacja trwa 60 dni; przyjęcie wymaga wolnego miejsca i opłaty rekrutacyjnej.`,
+      bodyEn: `${count} juniors are now under observation. Review them in Academy and decide whom to recruit. Observation lasts 60 days; recruitment requires space and a recruitment fee.`,
+      payload: { kind: 'academy_intake', wave, count } })
+  }
   for (const team of teams) {
     ensureClubManagement(team, career.seasonYear)
     ensureClubEconomy(team)
@@ -108,8 +121,9 @@ export function processClubManagement(career, date, { weekTick = false } = {}) {
       const rng = createRng(seed(`${team.id}|youth-minutes|${date}`))
       // A lightweight youth competition: minutes and growth, no senior match simulation.
       for (const p of (team.academyPlayers ?? []).slice(0, academyCapacity(team))) {
+        if (p.injury?.daysRemaining > 0 || p.trainingFocus === 'rest') continue
         p.youthMinutes = (p.youthMinutes ?? 0) + 30 + rng.int(0, 30)
-        if (rng.float() < 0.15 + (team.staff.youthCoach ?? 0) * 0.1) applyOffseasonCampGrowth(p, () => rng.float())
+        if (!(p.injury?.daysRemaining > 0) && rng.float() < 0.15 + (team.staff.youthCoach ?? 0) * 0.1) applyOffseasonCampGrowth(p, () => rng.float())
       }
     }
     if (!monthly || team.lastManagementMonth === date.slice(0, 7)) continue

@@ -102,6 +102,7 @@ export {
   acceptIncomingBid,
   respondToIncomingBid,
   setPlayerTransferListed,
+  setPlayerLoanListed,
   checkForcedTransferListDemands,
   negotiatePlayerContract,
   renewPlayerContract,

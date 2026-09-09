@@ -1,3 +1,4 @@
+import { setPlayerLoanListed } from '../career/transfers/transferEngine.js'
 import ClubFinanceSummary from './ClubFinanceSummary.jsx'
 import { useUiLang } from '../ui/UiLangContext'
 import { pickLabel } from '../ui/locale'
@@ -308,6 +309,14 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
         </section>
       )}
 
+      {isClub && <section className="rounded-xl border border-ufa-border bg-ufa-panel p-4">
+        <h3 className="text-sm font-semibold text-ufa-text">{lang === 'en' ? 'Loan list' : 'Lista wypożyczeń'}</h3>
+        <p className="mt-1 text-xs text-ufa-muted">{lang === 'en' ? 'Manage availability in the player profile. Listed players attract more loan offers.' : 'Zarządzaj dostępnością w profilu zawodnika. Wystawieni gracze przyciągają więcej ofert wypożyczenia.'}</p>
+        <ul className="mt-3 space-y-2">{(buyer?.players ?? []).filter(p => p.loanListed).map(p => <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-ufa-border p-2 text-sm">
+          <span>{getPlayerFullName(p)}</span><button type="button" className="text-sky-300" onClick={() => { setPlayerLoanListed(buyer, p.id, false); setListedRefreshTick(n => n + 1); onCareerUpdate({ world: career.world }) }}>{lang === 'en' ? 'Remove' : 'Zdejmij'}</button>
+        </li>)}</ul>
+        {!(buyer?.players ?? []).some(p => p.loanListed) && <p className="mt-2 text-xs text-ufa-muted">{lang === 'en' ? 'No players listed for loan.' : 'Brak zawodników na liście wypożyczeń.'}</p>}
+      </section>}
       {isClub && (loansOut.length > 0 || loansIn.length > 0) && (
         <section className="rounded-xl border border-ufa-border bg-ufa-panel p-4 sm:p-6 shadow-xl shadow-black/30 space-y-4">
           {loansOut.length > 0 && (

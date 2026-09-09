@@ -997,7 +997,7 @@ export function generateIncomingLoanOffers(career, { date = null } = {}) {
   )
   const rng = mulberry32(seed)
 
-  if (rng() > 0.05) return []
+  if (rng() > (playerTeam.players.some(p => p.loanListed && !p.loan) ? 0.15 : 0.05)) return []
 
   const aiTeams = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
   if (!aiTeams.length) return []
@@ -1012,10 +1012,11 @@ export function generateIncomingLoanOffers(career, { date = null } = {}) {
   const weighted = []
   for (const player of roster) {
     const rank = rankedByOvr.findIndex((p) => String(p.id) === String(player.id))
-    if (rank <= 2) continue // nie proś o gwiazdy/kluczowych graczy
+    if (rank <= 2 && !player.loanListed) continue // listed stars are explicitly offered by the manager
     const form = getPlayerForm(player)
-    if (form < 45) continue
+    if (form < 45 && !player.loanListed) continue
     let w = Math.max(0.05, 1 - rank / roster.length)
+    if (player.loanListed) w *= 6
     weighted.push({ player, w })
   }
   if (!weighted.length) return []
@@ -1032,7 +1033,8 @@ export function generateIncomingLoanOffers(career, { date = null } = {}) {
   }
   const chosen = chosenRow.player
 
-  const buyer = aiTeams[Math.floor(rng() * aiTeams.length)]
+  const destinations = aiTeams.filter(team => (team.players ?? []).filter(p => getOverallRating(p.skills) > getOverallRating(chosen.skills)).length < 21)
+  const buyer = destinations[Math.floor(rng() * destinations.length)]
   if (!buyer) return []
 
   refreshPlayerMarketValue(chosen)

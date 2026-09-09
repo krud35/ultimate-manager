@@ -130,6 +130,7 @@ export default function PlayerProfileModal({
   knowledge = null,
   onExtendContract = null,
   onToggleTransferList = null,
+  onToggleLoanList = null,
   onProposeLoanOut = null,
   loanCounterpartyName = null,
   isShortlisted = false,
@@ -351,6 +352,7 @@ export default function PlayerProfileModal({
                   OVR {ovr}
                 </span>
               )}
+              {player.loanListed && <span className="rounded border border-sky-400/40 px-2 py-1 text-xs text-sky-300">{lang === 'en' ? 'Listed for loan' : 'Na liście wypożyczeń'}</span>}
               {isOwnPlayer && player.transferListed && (
                 <span className="rounded bg-ufa-gold/15 px-2 py-0.5 text-xs font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
                   {t.transferListedBadge}
@@ -544,6 +546,12 @@ export default function PlayerProfileModal({
                   {extendFlash.text}
                 </p>
               )}
+            </div>
+          )}
+          {isOwnPlayer && onToggleLoanList && !player.loan && (
+            <div className="rounded-lg border border-sky-400/30 bg-sky-400/5 p-3">
+              <p className="mb-2 text-xs text-ufa-muted">{lang === 'en' ? 'Loan listing invites offers from other clubs. Listing for a loan removes the player from the transfer list.' : 'Lista wypożyczeń zwiększa zainteresowanie innych klubów. Wystawienie na wypożyczenie usuwa zawodnika z listy transferowej.'}</p>
+              <button type="button" className="rounded border border-sky-400/40 px-3 py-2 text-sm text-sky-300" onClick={() => onToggleLoanList(player.id)}>{player.loanListed ? (lang === 'en' ? 'Remove from loan list' : 'Zdejmij z listy wypożyczeń') : (lang === 'en' ? 'Add to loan list' : 'Dodaj do listy wypożyczeń')}</button>
             </div>
           )}
           {isOwnPlayer && onToggleTransferList && !player.loan && (

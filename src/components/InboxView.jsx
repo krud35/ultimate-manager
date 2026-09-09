@@ -1183,10 +1183,10 @@ function MessageDetail({
         !(message.type === INBOX_TYPES.SCOUT_REPORT && p.kind === 'playerSearchWatch') && (
           <button
             type="button"
-            onClick={() => onNavigate(meta.navigateTo)}
+            onClick={() => onNavigate(p.kind === 'academy_intake' ? 'academy' : meta.navigateTo)}
             className="rounded-md border border-ufa-border px-4 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
           >
-            {t.goTo}: {pickLabel(meta, lang)}
+            {t.goTo}: {p.kind === 'academy_intake' ? (lang === 'en' ? 'Academy' : 'Akademia') : pickLabel(meta, lang)}
           </button>
         )}
     </div>

@@ -1,3 +1,4 @@
+import { refreshAiDevelopmentListings } from '../developmentListings.js'
 import { buildSquadPlan, playerSquadProfile } from '../clubManagement.js'
 /**
  * Transfery między klubami AI w oknie transferowym.
@@ -39,103 +40,6 @@ function hashSeed(str) {
 
 export const AI_LISTING_COMFORTABLE_ROSTER = 24
 
-function isoWeekKey(dateIso) {
-  const d = new Date(`${String(dateIso).slice(0, 10)}T12:00:00`)
-  const day = Math.floor(d.getTime() / (7 * 86400000))
-  return String(day)
-}
-
-/**
- * Kluby AI co tydzień przeglądają skład i same wystawiają nadwyżkowych zawodników
- * na listę transferową (nigdy gwiazdy). Pełna re-ewaluacja co tydzień — może też
- * zdjąć zawodnika z listy, gdy warunki już nie zachodzą.
- */
-function refreshAiTransferListings(world, { date, seed, excludeTeamId = null, market } = {}) {
-  if (!date) return
-  const weekKey = isoWeekKey(date)
-  for (const team of worldTeamsList(world)) {
-    if (team.id === excludeTeamId) continue
-    if (team._lastListingReviewWeek === weekKey) continue
-    team._lastListingReviewWeek = weekKey
-
-    const rng = createRng(hashSeed(`${seed ?? 1}-${team.id}-listing-${weekKey}`))
-    const players = team.players ?? []
-    if (!players.length) continue
-    const avg = market.average(team)
-    const policy = getTransferPolicy(team)
-    const rankMap = market.ranks(team)
-
-    for (const player of players) {
-      if (player.loan) {
-        player.transferListed = false
-        continue
-      }
-      const ovr = market.rating(player)
-      const rank = rankMap.get(String(player.id)) ?? players.length
-      const isStar = rank <= 1 || ovr >= avg + 5
-      if (isStar) {
-        player.transferListed = false
-        continue
-      }
-      const overstocked = players.length > AI_LISTING_COMFORTABLE_ROSTER
-      const ageDecline = (player.age ?? 25) >= 31 && ovr < avg
-      const belowAvg = ovr < avg - 6 && rank >= players.length - 6
-
-      let chance = 0.05
-      if (overstocked) chance += 0.15
-      if (ageDecline) chance += 0.1
-      if (belowAvg) chance += 0.12
-      if (policy.id === 'sell') chance += 0.15
-      else if (policy.id === 'hardline') chance -= 0.08
-
-      player.transferListed = rng.float() < Math.max(0, Math.min(0.6, chance))
-    }
-  }
-}
-
-/**
- * Kluby AI co tydzień oceniają, których zawodników warto wypożyczyć (nie
- * "nadwyżka na sprzedaż" jak `transferListed` — tu chodzi o brak minut na boisku:
- * młode talenty zablokowane przez pierwszy skład, gracze głęboko w rotacji.
- */
-function refreshAiLoanListings(world, { date, seed, excludeTeamId = null, market } = {}) {
-  if (!date) return
-  const weekKey = isoWeekKey(date)
-  for (const team of worldTeamsList(world)) {
-    if (team.id === excludeTeamId) continue
-    if (team._lastLoanListingReviewWeek === weekKey) continue
-    team._lastLoanListingReviewWeek = weekKey
-
-    const rng = createRng(hashSeed(`${seed ?? 1}-${team.id}-loanlisting-${weekKey}`))
-    const players = team.players ?? []
-    if (!players.length) continue
-    const avg = market.average(team)
-    const rankMap = market.ranks(team)
-
-    for (const player of players) {
-      if (player.loan || player.transferListed) {
-        player.loanListed = false
-        continue
-      }
-      const ovr = market.rating(player)
-      const rank = rankMap.get(String(player.id)) ?? players.length
-      const isStar = rank <= 1 || ovr >= avg + 5
-      if (isStar) {
-        player.loanListed = false
-        continue
-      }
-      const target = classifyTransferTarget(player, team, avg, ovr)
-      const blockedProspect = target.prospect && rank >= 7
-      const belowAvg = ovr < avg - 4 && rank >= players.length - 6
-
-      let chance = 0.04
-      if (blockedProspect) chance += 0.22
-      if (belowAvg) chance += 0.14
-
-      player.loanListed = rng.float() < Math.max(0, Math.min(0.55, chance))
-    }
-  }
-}
 
 /**
  * Jedna próba wypożyczenia AI → AI (poza drużyną gracza).
@@ -316,7 +220,7 @@ function tryOneAiDeal(career, rng, excludePlayerIds, market) {
     // Build a bounded, affordable shortlist. No repeated buyer × seller roster sorts.
     const candidates = shuffle(market.rows().filter(row =>
       row.seller.id !== buyer.id && row.seller.players.length > MIN_ROSTER && row.ask <= budget &&
-      !excludePlayerIds.has(String(row.player.id)) && !row.player.loan &&
+      !excludePlayerIds.has(String(row.player.id)) && !row.player.loan && !row.player.loanListed &&
       (!row.player.lastTransferDate || !career.league?.currentDate || (new Date(career.league.currentDate) - new Date(row.player.lastTransferDate)) >= 120 * 86400000) &&
       row.ovr >= buyerAvg - 9 && !market.onCooldown('buy', buyer, row.player)), rng)
       .sort((a, b) => {
@@ -406,8 +310,8 @@ export function simulateAiTransferActivity(career, options = {}) {
   const rng = createRng(seed ^ (seed >>> 16) ^ 0x9e3779b9)
 
   const market = createMarketContext(career, date)
-  refreshAiTransferListings(career.world, { date, seed, excludeTeamId: career.playerTeamId, market })
-  refreshAiLoanListings(career.world, { date, seed, excludeTeamId: career.playerTeamId, market })
+  refreshAiDevelopmentListings(career.world, { date, excludeTeamId: career.playerTeamId })
+
   const deals = []
   const loanDeals = []
   const exclude = new Set()

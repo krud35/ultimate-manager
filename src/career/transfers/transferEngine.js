@@ -69,8 +69,11 @@ export const TRANSFER_LIST_MORALE_HIT = -4
 export function setPlayerTransferListed(team, playerId, listed) {
   const player = (team?.players ?? []).find((p) => String(p.id) === String(playerId))
   if (!player) return { ok: false, error: 'not_on_roster' }
+  if (player.loan) return { ok: false, error: 'on_loan' }
   const wasListed = !!player.transferListed
   player.transferListed = !!listed
+  if (listed) player.loanListed = false
+  player.developmentListing = null
   if (listed && !wasListed) {
     // Jednorazowy, niewielki spadek morale/lojalności — zawodnik wie, że klub go nie
     // chce. Nie odwracamy przy zdjęciu z listy (unika farmienia morale przez toggle).
@@ -80,6 +83,16 @@ export function setPlayerTransferListed(team, playerId, listed) {
     noteLoyaltyFromTreatment(player, player.morale - before)
   }
   return { ok: true, player, listed: player.transferListed }
+}
+
+export function setPlayerLoanListed(team, playerId, listed) {
+  const player = team?.players?.find(p => String(p.id) === String(playerId))
+  if (!player) return { ok: false, error: 'not_on_roster' }
+  if (player.loan) return { ok: false, error: 'on_loan' }
+  player.loanListed = !!listed
+  if (listed) player.transferListed = false
+  player.developmentListing = null
+  return { ok: true, player, listed: player.loanListed }
 }
 
 /** Progi „wymuszenia" wpisu na listę transferową przez niezadowolonego zawodnika. */
@@ -418,6 +431,10 @@ export function completeTransferBetweenClubs(career, opts) {
   }
 
   moved.lastTransferDate = career.league?.currentDate ?? null
+  moved.loanListed = false
+  moved.transferListed = false
+  moved.developmentListing = null
+  moved.recentPlayingTime = []
   const window = getTransferWindowState(career)
   const involvesPlayer =
     buyerId === career.playerTeamId || found.team.id === career.playerTeamId

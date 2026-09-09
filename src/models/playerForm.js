@@ -1,5 +1,5 @@
 /**
- * Forma zawodnika (0–100) — wyłącznie wskaźnik (bez wpływu na skills / silnik).
+ * Forma zawodnika (0–100) — wskaźnik występów i modyfikator rozwoju przez grę.
  * Domyślnie „dobra” (~72). Rośnie przez grę i dobre występy, spada przez błędy.
  */
 

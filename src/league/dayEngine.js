@@ -1,3 +1,4 @@
+import { recordMatchDevelopment } from '../career/matchDevelopment.js'
 /**
  * Silnik dnia kalendarza: mecze AI, blokada na mecz gracza, faza sezonu.
  */
@@ -250,6 +251,7 @@ function applyCupMatchResult(league, fixture, record) {
   target.awayScore = record.awayScore
   target.winnerTeamId = record.winner
   target.playedByPlayer = !!record.playedByPlayer
+  recordMatchDevelopment(league, record)
 
   if (record.boxScore?.length) {
     if (!league.cupPlayerStats) league.cupPlayerStats = createLeaguePlayerStats()

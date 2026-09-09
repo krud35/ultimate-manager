@@ -167,6 +167,10 @@ export function startLoan(career, {
     createdAt: new Date().toISOString(),
   }
   moved.loan = loan
+  moved.loanListed = false
+  moved.transferListed = false
+  moved.developmentListing = null
+  moved.recentPlayingTime = []
 
   postTransferCash(destinationTeam, -feeAmount)
   postTransferCash(parentTeam, +feeAmount)

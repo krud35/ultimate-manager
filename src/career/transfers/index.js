@@ -100,6 +100,7 @@ export {
   respondToIncomingBid,
   negotiatePlayerContract,
   setPlayerTransferListed,
+  setPlayerLoanListed,
   checkForcedTransferListDemands,
 } from './transferEngine.js'
 
