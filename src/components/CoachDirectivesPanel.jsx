@@ -7,6 +7,8 @@ import {
   TACTICS_MODIFIERS,
   COACH_SLIDER_KEYS,
   COACH_DIRECTIVE_META,
+  COACH_DIRECTIVE_KIND,
+  COACH_DIRECTIVE_KEYS_BY_PHASE,
   COACH_FORCE_PRIMARY,
   COACH_FORCE_ADVANCED,
   normalizeCoachDirectives,
@@ -40,10 +42,31 @@ function poleWord(key, value, lang = 'pl') {
   return coachDirectivePoleWord(key, value, lang)
 }
 
+const PHASE_SECTIONS = [
+  { phase: 'offense', label: 'W ataku', labelEn: 'In attack' },
+  { phase: 'defense', label: 'W obronie', labelEn: 'In defence' },
+]
+
 function CoachSlider({ directiveKey, value, onChange, compact }) {
   const { lang } = useUiLang()
   const meta = COACH_DIRECTIVE_META[directiveKey]
   const desc = coachSliderPoleDescription(directiveKey, value, lang)
+  // 'tri' i 'toggle' żyją w tej samej skali −1…1 co suwaki, ale mają zatrzaski, więc
+  // renderujemy je jako przyciski — suwak sugerowałby wartości pośrednie, których te
+  // dyrektywy nie przyjmują (normalizeCoachDirectives i tak by je zaokrągliło).
+  const kind = COACH_DIRECTIVE_KIND[directiveKey] ?? 'scale'
+  const pole = (side) => (lang === 'en' ? meta?.[`${side}En`] ?? meta?.[side] : meta?.[side])
+  const stops =
+    kind === 'tri'
+      ? [
+          { value: -1, label: pole('left') },
+          { value: 0, label: pole('center') },
+          { value: 1, label: pole('right') },
+        ]
+      : [
+          { value: 0, label: pole('left') },
+          { value: 1, label: pole('right') },
+        ]
   if (!meta) return null
 
   return (
@@ -56,29 +79,51 @@ function CoachSlider({ directiveKey, value, onChange, compact }) {
     >
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-xs font-semibold text-ufa-text">{pickLabel(meta, lang)}</p>
-        <span className="text-[10px] tabular-nums text-ufa-muted">
-          {Number(value).toFixed(2)}
-        </span>
+        {kind === 'scale' && (
+          <span className="text-[10px] tabular-nums text-ufa-muted">
+            {Number(value).toFixed(2)}
+          </span>
+        )}
       </div>
-      <div className="flex items-center justify-between gap-2 text-[10px] text-ufa-muted">
-        <span className="truncate">{lang === 'en' ? meta.leftEn ?? meta.left : meta.left}</span>
-        <span className="shrink-0 opacity-70">
-          {lang === 'en' ? meta.centerEn ?? meta.center : meta.center}
-        </span>
-        <span className="truncate text-right">
-          {lang === 'en' ? meta.rightEn ?? meta.right : meta.right}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={-1}
-        max={1}
-        step={0.05}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-ufa-accent"
-        aria-label={pickLabel(meta, lang)}
-      />
+      {kind === 'scale' && (
+        <div className="flex items-center justify-between gap-2 text-[10px] text-ufa-muted">
+          <span className="truncate">{pole('left')}</span>
+          <span className="shrink-0 opacity-70">{pole('center')}</span>
+          <span className="truncate text-right">{pole('right')}</span>
+        </div>
+      )}
+      {kind === 'scale' ? (
+        <input
+          type="range"
+          min={-1}
+          max={1}
+          step={0.05}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full accent-ufa-accent"
+          aria-label={pickLabel(meta, lang)}
+        />
+      ) : (
+        <div className="flex gap-1" role="group" aria-label={pickLabel(meta, lang)}>
+          {stops.map((stop) => {
+            const on = Math.abs(value - stop.value) < 0.01
+            return (
+              <button
+                key={stop.value}
+                type="button"
+                onClick={() => onChange(stop.value)}
+                className={`flex-1 rounded-md px-2 py-1.5 text-[11px] font-medium transition ${
+                  on
+                    ? 'bg-ufa-accent/20 text-ufa-accent ring-1 ring-ufa-accent/50'
+                    : 'text-ufa-muted ring-1 ring-ufa-border hover:text-ufa-text'
+                }`}
+              >
+                {stop.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
       {!compact && (
         <p className="text-[11px] leading-snug text-ufa-muted">{desc}</p>
       )}
@@ -299,26 +344,30 @@ export default function CoachDirectivesPanel({
             compact={compact}
           />
 
-          <div>
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ufa-muted">
-              {t.scales}
-            </p>
-            <div
-              className={
-                compact ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-3 lg:grid-cols-2'
-              }
-            >
-              {COACH_SLIDER_KEYS.map((key) => (
-                <CoachSlider
-                  key={key}
-                  directiveKey={key}
-                  value={directives[key]}
-                  onChange={(v) => setSlider(key, v)}
-                  compact={compact}
-                />
-              ))}
+          {/* Rozdzielone po FAZIE gry, nie po linii: O-Line po stracie broni, a D-Line po
+              bloku atakuje, więc każda linia ma komplet obu zestawów. */}
+          {PHASE_SECTIONS.map((section) => (
+            <div key={section.phase}>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ufa-muted">
+                {lang === 'en' ? section.labelEn : section.label}
+              </p>
+              <div
+                className={
+                  compact ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-3 lg:grid-cols-2'
+                }
+              >
+                {COACH_DIRECTIVE_KEYS_BY_PHASE[section.phase].map((key) => (
+                  <CoachSlider
+                    key={key}
+                    directiveKey={key}
+                    value={directives[key]}
+                    onChange={(v) => setSlider(key, v)}
+                    compact={compact}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
     </section>
