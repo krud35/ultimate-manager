@@ -203,6 +203,7 @@ export function listTransferMarket(world, buyerTeamId) {
         contractYears,
         contractRemaining,
         listed: !!player.transferListed,
+        loanListed: !!player.loanListed,
       })
     }
   }
@@ -242,6 +243,7 @@ export function listTransferMarketWithFreeAgents(world, buyerTeamId) {
       contractYears: null,
       contractRemaining: 0,
       freeAgent: true,
+      loanListed: false,
       listed: false,
     })
   }
@@ -287,6 +289,7 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
       sellerBudget: getTransferBudget(team),
       weeklyWage: player.contract?.weeklyWage ?? 0,
       contractYears: player.contract?.years ?? null,
+      loanListed: !!player.loanListed,
       contractRemaining: getContractRemainingCost(player.contract),
       listed: !!player.transferListed,
     }
@@ -311,6 +314,7 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
     sellerBudget: 0,
     weeklyWage: null,
     contractYears: null,
+    loanListed: false,
     contractRemaining: 0,
     freeAgent: true,
     listed: false,
