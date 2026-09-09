@@ -16,6 +16,7 @@ import {
   defaultSubRoleForSlot,
 } from './playerSubRoles.js'
 import { offenseLineSlotsForAttackStyle } from './offenseLineSlots.js'
+import { normalizePlayerSubTagsMap, normalizeAutoSubMode } from './autoSub.js'
 
 const LINE_SIZE = MATCH_CONFIG.lineupSize
 
@@ -23,6 +24,16 @@ const LINE_SIZE = MATCH_CONFIG.lineupSize
 
 function lineHasPlayers(ids) {
   return (ids ?? []).some((id) => id != null)
+}
+
+/** Kolejność ławki dla auto-zmian: unikalne identyfikatory, bez pustych wpisów. */
+function normalizePlayerSubPriorityIds(ids) {
+  const seen = new Set()
+  return (Array.isArray(ids) ? ids : []).filter((id) => {
+    if (id == null || seen.has(String(id))) return false
+    seen.add(String(id))
+    return true
+  })
 }
 
 function pickAttackStyle(...candidates) {
@@ -105,6 +116,12 @@ export function normalizeTactics(tactics) {
     /** @deprecated alias = O-Line force */
     forceSide: coachPair.forceSide,
     ...normalizeLinePlayerInstructions(tactics),
+    /** Tagi rezerwowych: na którą linię i na jaki slot mogą wejść (patrz autoSub.js). */
+    playerSubTags: normalizePlayerSubTagsMap(tactics?.playerSubTags),
+    /** Kolejność wyboru rezerwowych przez auto-zmiany (od góry = pierwszy). */
+    playerSubPriorityIds: normalizePlayerSubPriorityIds(tactics?.playerSubPriorityIds),
+    /** Sposób prowadzenia auto-zmian — ten sam zestaw trybów dla AI i gracza. */
+    autoSubMode: normalizeAutoSubMode(tactics?.autoSubMode),
     playerSubRoles: fillSubRolesFromOffenseLine({
       ...tactics,
       oLineAttackStyle,

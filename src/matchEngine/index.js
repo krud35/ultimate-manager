@@ -97,6 +97,12 @@ export {
 } from './defenseZoneRoles.js'
 export { tacticsForTeam, autoRotateTacticsForTeam, autoSubstituteTacticsForTeam, AUTO_SUB_STAMINA_MIN, suggestAiPlayerInstructions, suggestAiPlayerSubRoles, resolveAiTeamIdentity } from './aiLineup.js'
 export {
+  SUB_LINE_TAGS,
+  SUB_POSITION_TAGS,
+  SUB_TAG_DEFS,
+  normalizePlayerSubTagsMap,
+} from './autoSub.js'
+export {
   AI_COACH_ARCHETYPES,
   rollAiCoachProfilesForWorld,
   ensureAiCoachProfiles,
