@@ -25,6 +25,7 @@ import FormationPreview from './FormationPreview'
 import PlayerSlotPicker from './PlayerSlotPicker'
 import CoachDirectivesPanel from './CoachDirectivesPanel'
 import ZoneDefenseRolesPanel from './ZoneDefenseRolesPanel'
+import PlayerSubTagsPanel from './PlayerSubTagsPanel'
 
 const LINE_SIZE = POINT_LINEUP_SIZE
 
@@ -903,6 +904,16 @@ export default function TacticsForm({
               {showO && renderLineup('offense')}
               {showD && renderLineup('defense')}
             </div>
+          )}
+
+          {showLines && lineupMode === 'dual' && (
+            <PlayerSubTagsPanel
+              roster={roster}
+              tactics={tactics}
+              onTacticsChange={onTacticsChange}
+              staminaMap={staminaMap}
+              leaguePlayerStats={leaguePlayerStats}
+            />
           )}
 
           {showLines && !compact && (

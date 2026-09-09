@@ -11,17 +11,20 @@ import {
 } from './tacticsModifiers.js'
 import { normalizeTactics } from './lineups.js'
 import {
-  getStamina,
-  STAMINA_CONFIG,
-  staminaParticipationFactor,
-} from './stamina.js'
+  autoSubLineups,
+  normalizeAutoSubMode,
+  scorePlayerForOffense,
+  scorePlayerForDefense,
+  offenseDefaultScore,
+  defenseDefaultScore,
+  OWN_LINE_STAMINA_MIN,
+} from './autoSub.js'
 import {
   getCategoryOverall,
   getSubStat,
   normalizePlayerSkills,
   readLegacySkill,
 } from '../models/playerStats.js'
-import { getPlayerMorale, moraleSkillMultiplier } from '../models/playerMorale.js'
 import { teamTacticalIdentity } from '../data/teamTacticalIdentities.js'
 import {
   applyAiCoachProfileToIdentity,
@@ -38,8 +41,11 @@ import { padLine } from './lineups.js'
 
 const LINE_SIZE = MATCH_CONFIG.lineupSize
 
-/** Próg auto-substytucji w symulacji (drużyna gracza i AI): STA poniżej → zmiana. */
-export const AUTO_SUB_STAMINA_MIN = 60
+/**
+ * Próg auto-substytucji na WŁASNEJ linii — alias na OWN_LINE_STAMINA_MIN z autoSub.js,
+ * gdzie mieszka cała polityka zmian (drużyna gracza i AI idą tym samym kodem).
+ */
+export const AUTO_SUB_STAMINA_MIN = OWN_LINE_STAMINA_MIN
 
 function fillLineFromCandidates(candidates, size = LINE_SIZE) {
   const line = []
@@ -53,6 +59,10 @@ function fillLineFromCandidates(candidates, size = LINE_SIZE) {
   while (line.length < size) line.push(null)
   return line.slice(0, size)
 }
+
+// Miary zawodnika (skill × stamina × morale) mieszkają w autoSub.js razem z polityką
+// zmian — tu tylko re-eksport, żeby stare importy z aiLineup.js dalej działały.
+export { scorePlayerForOffense, scorePlayerForDefense }
 
 function offenseSkillScore(player) {
   const skills = normalizePlayerSkills(player.skills ?? {})
@@ -74,68 +84,17 @@ function defenseSkillScore(player) {
   )
 }
 
-/** Kara za zmęczenie — poniżej exhausted praktycznie wyklucza z najlepszej siódemki. */
-function staminaFit(stamina) {
-  const s = stamina ?? STAMINA_CONFIG.default
-  if (s < STAMINA_CONFIG.exhaustedThreshold) return 0.15
-  if (s < STAMINA_CONFIG.lowFatigueThreshold) return 0.45
-  if (s < STAMINA_CONFIG.midFatigueThreshold) return 0.7
-  if (s < STAMINA_CONFIG.tiredThreshold) return 0.88
-  return staminaParticipationFactor(s)
-}
-
-export function scorePlayerForOffense(player, staminaMap) {
-  const stam = staminaMap ? getStamina(staminaMap, player.id) : STAMINA_CONFIG.default
-  return (
-    offenseSkillScore(player) *
-    staminaFit(stam) *
-    moraleSkillMultiplier(getPlayerMorale(player))
-  )
-}
-
-export function scorePlayerForDefense(player, staminaMap) {
-  const stam = staminaMap ? getStamina(staminaMap, player.id) : STAMINA_CONFIG.default
-  return (
-    defenseSkillScore(player) *
-    staminaFit(stam) *
-    moraleSkillMultiplier(getPlayerMorale(player))
-  )
-}
-
 /**
  * Ranking "kogo trener CHCE grać" — czyste umiejętności + morale, BEZ bieżącej
  * staminy. To jest domyślna siódemka O/D; stamina decyduje tylko o tym, czy dany
  * zawodnik z tej siódemki jest w danym momencie zdolny zagrać (patrz pickDefaultLine).
  */
-function offenseDefaultScore(player) {
-  return offenseSkillScore(player) * moraleSkillMultiplier(getPlayerMorale(player))
-}
-
-function defenseDefaultScore(player) {
-  return defenseSkillScore(player) * moraleSkillMultiplier(getPlayerMorale(player))
-}
-
-/**
- * Siódemka: najlepsi wg czystych umiejętności, pomijając tylko tych poniżej progu
- * staminy (`minStamina`) — a nie przeliczając całego rankingu wagą staminy co punkt.
- * Gdy brakuje świeżych do 7, dobiera kolejnych najlepszych mimo zmęczenia (lepsze
- * niż pusty slot).
- */
-function pickDefaultLine(pool, scoreFn, staminaMap, minStamina = STAMINA_CONFIG.exhaustedThreshold) {
-  const bySkill = [...pool].sort((a, b) => scoreFn(b) - scoreFn(a))
-  const fresh = bySkill.filter((p) => getStamina(staminaMap, p.id) >= minStamina)
-  const chosen = fresh.slice(0, LINE_SIZE)
-  if (chosen.length < LINE_SIZE) {
-    for (const p of bySkill) {
-      if (chosen.length >= LINE_SIZE) break
-      if (!chosen.some((c) => c.id === p.id)) chosen.push(p)
-    }
-  }
-  return chosen
-}
+// offenseDefaultScore / defenseDefaultScore: patrz import z autoSub.js
 
 function topBySkill(pool, scoreFn, n = LINE_SIZE) {
-  return [...pool].sort((a, b) => scoreFn(b) - scoreFn(a)).slice(0, n)
+  // Ocena jest stała w obrębie sortowania. Stabilny sort zachowuje kolejność remisów.
+  return pool.map(player => ({ player, score: scoreFn(player) }))
+    .sort((a, b) => b.score - a.score).slice(0, n).map(entry => entry.player)
 }
 
 function clampNum(v, lo, hi) {
@@ -156,7 +115,7 @@ function weightedFit(skills, entries) {
 /** Wyraźny lider 1v1 w puli → wyższe dopasowanie do stylów iso (side/split stack). */
 function starGapScore(pool, scoreFn) {
   if (pool.length < 2) return 55
-  const sorted = [...pool].sort((a, b) => scoreFn(b) - scoreFn(a))
+  const sorted = topBySkill(pool, scoreFn, 2)
   const gap = scoreFn(sorted[0]) - scoreFn(sorted[1])
   return clampNum(50 + gap * 2.5, 0, 100)
 }
@@ -337,7 +296,16 @@ export function tacticsForTeam(team, options = {}) {
     (a, b) => scorePlayerForDefense(b, staminaMap) - scorePlayerForDefense(a, staminaMap),
   )
 
+  // O-Line i D-Line mają być OSOBNYMI jednostkami: D dobierana z tych, którzy nie
+  // weszli do O. Inaczej najlepszy zawodnik lądował w obu siódemkach i grał każdy punkt,
+  // a progi staminy w autoSub.js nie miały czego pilnować. Przy rosterze < 2 × 7 luka
+  // domykana jest najlepszymi mimo powtórzenia — lepsze niż pusty slot.
   const oLine = fillLineFromCandidates(oSorted)
+  const oTaken = new Set(oLine.filter((id) => id != null))
+  const dLine = fillLineFromCandidates([
+    ...dSorted.filter((p) => !oTaken.has(p.id)),
+    ...dSorted.filter((p) => oTaken.has(p.id)),
+  ])
   const attackStyle =
     identity.oLineAttackStyle ?? identity.attackStyle ?? ATTACK_STYLES.VERTICAL_STACK
   const aiInstr = withInstr
@@ -357,32 +325,36 @@ export function tacticsForTeam(team, options = {}) {
     oLinePlayerInstructions: aiInstr.offense,
     dLinePlayerInstructions: aiInstr.defense,
     playerSubRoles: suggestAiPlayerSubRoles(oLine, attackStyle),
+    autoSubMode: normalizeAutoSubMode(identity.autoSubMode),
     lineupWhenOffenseStartPlayerIds: oLine,
-    lineupWhenDefenseStartPlayerIds: fillLineFromCandidates(dSorted),
+    lineupWhenDefenseStartPlayerIds: dLine,
   })
 }
 
 /**
- * AI: zachowuje styl drużyny, przebudowuje siódemki O/D pod skill + świeżość.
- * Zmęczeni (STA < AUTO_SUB_STAMINA_MIN) spadają na ławkę, jeśli jest rezerwa.
+ * AI między punktami: styl drużyny zostaje, siódemki idą przez WSPÓLNY mechanizm zmian
+ * (autoSubLineups) — ten sam, którym jedzie drużyna gracza. Różnica jest tylko taka, że
+ * AI dodatkowo odświeża sobie podrole i rozkazy indywidualne.
+ *
+ * Tryb zmian bierze z profilu trenera (identity.autoSubMode); jawny `options.mode`
+ * wygrywa, jeśli podany.
  */
-export function autoRotateTacticsForTeam(team, staminaMap, rng = null) {
+export function autoRotateTacticsForTeam(team, staminaMap, rng = null, options = {}) {
   void rng // zachowany w sygnaturze dla kompatybilności wywołań; nie steruje już losową rotacją.
-  const identity = resolveAiTeamIdentity(team)
+  const identity = options.identity ?? resolveAiTeamIdentity(team)
   const existing = normalizeTactics(team.tactics ?? tacticsForTeam(team, { staminaMap }))
 
   const players = availablePlayers(team.players)
   const pool = players.length ? players : team.players ?? []
 
-  // Domyślna siódemka = najlepsi wg czystych umiejętności (nie wg bieżącej staminy).
-  // Zamiana slotu następuje tylko gdy dany zawodnik jest niedostępny/zmęczony
-  // (STA < AUTO_SUB_STAMINA_MIN) — patrz pickDefaultLine — a nie co punkt losowo, jak wcześniej.
-  const oCandidates = pickDefaultLine(pool, offenseDefaultScore, staminaMap, AUTO_SUB_STAMINA_MIN)
-  const dCandidates = pickDefaultLine(pool, defenseDefaultScore, staminaMap, AUTO_SUB_STAMINA_MIN)
-  const oSortedFull = [...pool].sort((a, b) => offenseDefaultScore(b) - offenseDefaultScore(a))
-  const dSortedFull = [...pool].sort((a, b) => defenseDefaultScore(b) - defenseDefaultScore(a))
+  const subbed = autoSubLineups({ ...team, tactics: existing }, staminaMap, {
+    mode: options.mode ?? existing.autoSubMode ?? identity.autoSubMode,
+    pointIndex: options.pointIndex ?? 0,
+  })
+  const oSortedFull = topBySkill(pool, offenseDefaultScore, pool.length)
+  const dSortedFull = topBySkill(pool, defenseDefaultScore, pool.length)
 
-  const oLine = fillLineFromCandidates(oCandidates)
+  const oLine = subbed.lineupWhenOffenseStartPlayerIds
   const attackStyle = existing.oLineAttackStyle ?? identity.oLineAttackStyle
   const suggestedSubs = suggestAiPlayerSubRoles(oLine, attackStyle)
   const keptSubs = normalizePlayerSubRolesMap(existing.playerSubRoles)
@@ -425,73 +397,35 @@ export function autoRotateTacticsForTeam(team, staminaMap, rng = null) {
     forceSide: existing.forceSide ?? identity.forceSide,
     oLinePlayerInstructions: aiInstr.offense,
     dLinePlayerInstructions: aiInstr.defense,
+    autoSubMode: normalizeAutoSubMode(
+      options.mode ?? existing.autoSubMode ?? identity.autoSubMode,
+    ),
     playerSubRoles: normalizePlayerSubRolesMap(mergedSubs),
+    autoSubLineAssignments: subbed.autoSubLineAssignments,
     lineupWhenOffenseStartPlayerIds: oLine,
-    lineupWhenDefenseStartPlayerIds: fillLineFromCandidates(dCandidates),
+    lineupWhenDefenseStartPlayerIds: subbed.lineupWhenDefenseStartPlayerIds,
   })
 }
 
-function playerNeedsAutoSub(player, staminaMap, minStamina) {
-  if (!player) return true
-  if (!isPlayerAvailable(player)) return true
-  return getStamina(staminaMap, player.id) < minStamina
-}
-
 /**
- * Zamienia tylko słabe / kontuzjowane sloty — resztę składu i rozkazy zostawia.
- * Używane dla drużyny gracza w trakcie symulacji.
+ * Drużyna gracza w trakcie symulacji: dokładnie ten sam mechanizm zmian co u AI
+ * (autoSubLineups) — progi 60 na swojej linii / 80 na cudzej, tagi rezerwowych, tryb
+ * zmian z taktyki. Podrole O-Line są dociągane do slotów formacji po zmianie.
+ *
+ * @param {object} team
+ * @param {Record<string|number, number>} staminaMap
+ * @param {object} [options]
+ * @param {string} [options.mode] nadpisuje tryb z taktyki
+ * @param {number} [options.pointIndex] numer punktu (tryb power_lines)
  */
-export function autoSubstituteTacticsForTeam(
-  team,
-  staminaMap,
-  { minStamina = AUTO_SUB_STAMINA_MIN } = {},
-) {
+export function autoSubstituteTacticsForTeam(team, staminaMap, options = {}) {
   const existing = normalizeTactics(team.tactics ?? defaultTacticsForPlayers(team.players ?? []))
-  const roster = team.players ?? []
-  const byId = Object.fromEntries(roster.map((p) => [p.id, p]))
-
-  function subLine(lineIds, scoreFn) {
-    const next = padLine(lineIds)
-    const used = new Set(next.filter((id) => id != null))
-    const freshBench = () =>
-      roster
-        .filter(
-          (p) =>
-            isPlayerAvailable(p) &&
-            getStamina(staminaMap, p.id) >= minStamina &&
-            !used.has(p.id),
-        )
-        .sort((a, b) => scoreFn(b, staminaMap) - scoreFn(a, staminaMap))
-    const anyBench = () =>
-      roster
-        .filter((p) => isPlayerAvailable(p) && !used.has(p.id))
-        .sort((a, b) => scoreFn(b, staminaMap) - scoreFn(a, staminaMap))
-
-    for (let i = 0; i < next.length; i += 1) {
-      const pid = next[i]
-      const player = pid != null ? byId[pid] : null
-      if (player && !playerNeedsAutoSub(player, staminaMap, minStamina)) continue
-
-      const rep = freshBench()[0] ?? anyBench()[0] ?? null
-      if (!rep) {
-        if (player && !isPlayerAvailable(player)) next[i] = null
-        continue
-      }
-      if (pid != null) used.delete(pid)
-      used.add(rep.id)
-      next[i] = rep.id
-    }
-    return next
-  }
-
-  const oLine = subLine(
-    existing.lineupWhenOffenseStartPlayerIds,
-    scorePlayerForOffense,
-  )
-  const dLine = subLine(
-    existing.lineupWhenDefenseStartPlayerIds,
-    scorePlayerForDefense,
-  )
+  const subbed = autoSubLineups({ ...team, tactics: existing }, staminaMap, {
+    mode: options.mode ?? existing.autoSubMode,
+    pointIndex: options.pointIndex ?? 0,
+  })
+  const oLine = subbed.lineupWhenOffenseStartPlayerIds
+  const dLine = subbed.lineupWhenDefenseStartPlayerIds
 
   const attackStyle = existing.oLineAttackStyle ?? existing.attackStyle
   const slots = offenseLineSlotsForAttackStyle(attackStyle)
@@ -511,6 +445,7 @@ export function autoSubstituteTacticsForTeam(
 
   return normalizeTactics({
     ...existing,
+    autoSubLineAssignments: subbed.autoSubLineAssignments,
     playerSubRoles: normalizePlayerSubRolesMap(map),
     lineupWhenOffenseStartPlayerIds: oLine,
     lineupWhenDefenseStartPlayerIds: dLine,

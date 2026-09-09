@@ -20,6 +20,13 @@ import {
 } from '../models/playerStats.js'
 import { EVENT } from './events.js'
 import { huckRate } from './matchStats.js'
+import {
+  scorePlayerForOffense,
+  scorePlayerForDefense,
+  OWN_LINE_STAMINA_MIN,
+} from './autoSub.js'
+import { getStamina } from './stamina.js'
+import { isPlayerAvailable } from '../models/playerInjury.js'
 
 const ATTACK_ALTERNATES = {
   [ATTACK_STYLES.VERTICAL_STACK]: [ATTACK_STYLES.HORIZONTAL_STACK, ATTACK_STYLES.HEX_OFFENSE],
@@ -103,17 +110,20 @@ export function analyzePointForSide(pointEvents, side, boxScore) {
     }
   }
 
-  const strugglingPlayers = []
+  // KUMULATYWNA migawka box score naszej strony. Sam werdykt „kto słabo gra" zapada
+  // dopiero w adaptAiTacticsBetweenPoints, z OKNA ostatnich punktów (updateStruggleWindow).
+  // Wcześniej liczyło się to wprost z sumy całego meczu, więc próg 2 strat bez gola/asysty/
+  // bloku raz przekroczony zostawał spełniony do końca meczu — zawodnik miał dożywotnią
+  // etykietę i dopisane na stałe rozkazy give_space / wait_your_turn / no_hucks.
+  const playerBox = {}
   if (boxScore) {
     for (const row of Object.values(boxScore)) {
       if (row.teamId !== side) continue
-      const pp = Math.max(1, row.pointsPlayed || 1)
-      const toRate = (row.turnovers ?? 0) / pp
-      const production = (row.goals ?? 0) + (row.assists ?? 0) + (row.blocks ?? 0)
-      if ((row.turnovers ?? 0) >= 2 && production === 0) {
-        strugglingPlayers.push({ id: row.playerId, turnovers: row.turnovers, toRate })
-      } else if (toRate >= 0.75 && (row.turnovers ?? 0) >= 2) {
-        strugglingPlayers.push({ id: row.playerId, turnovers: row.turnovers, toRate })
+      playerBox[String(row.playerId)] = {
+        id: row.playerId,
+        turnovers: row.turnovers ?? 0,
+        production: (row.goals ?? 0) + (row.assists ?? 0) + (row.blocks ?? 0),
+        pointsPlayed: row.pointsPlayed ?? 0,
       }
     }
   }
@@ -130,7 +140,7 @@ export function analyzePointForSide(pointEvents, side, boxScore) {
     weScored,
     theyScored,
     throwerTos,
-    strugglingPlayers,
+    playerBox,
     huckComp,
     throwComp,
     offenseFailed: !weScored && ourTurnovers >= 2,
@@ -165,7 +175,85 @@ export function createAiAdaptSideState() {
     panicLevel: 0,
     /** Punkty stracone z rzędu w BIEŻĄCYM meczu (reset przy zdobyciu punktu). */
     lossStreakInMatch: 0,
+    /** Ostatnia kumulatywna migawka box score — z niej liczymy przyrost per punkt. */
+    playerBoxSnapshot: null,
+    /** Przyrosty z ostatnich STRUGGLE_WINDOW_POINTS punktów (najstarszy z przodu). */
+    struggleWindow: [],
+    /** Rozkazy dopisane PRZEZ TRENERA, per zawodnik — żeby dało się je potem zdjąć. */
+    coachAddedInstr: {},
   }
+}
+
+/** Ile ostatnich punktów bierzemy pod uwagę, oceniając formę zawodnika w meczu. */
+const STRUGGLE_WINDOW_POINTS = 4
+
+/**
+ * Kto odstaje W OSTATNICH punktach — z RÓŻNIC w box score, nie z sumy meczu.
+ * Aktualizuje okno w stanie adaptacji i zwraca listę { id, turnovers, toRate }.
+ */
+function updateStruggleWindow(state, playerBox) {
+  const prev = state.playerBoxSnapshot ?? {}
+  const delta = {}
+  for (const [key, row] of Object.entries(playerBox ?? {})) {
+    const before = prev[key] ?? { turnovers: 0, production: 0, pointsPlayed: 0 }
+    delta[key] = {
+      id: row.id,
+      turnovers: Math.max(0, (row.turnovers ?? 0) - (before.turnovers ?? 0)),
+      production: Math.max(0, (row.production ?? 0) - (before.production ?? 0)),
+      pointsPlayed: Math.max(0, (row.pointsPlayed ?? 0) - (before.pointsPlayed ?? 0)),
+    }
+  }
+  state.struggleWindow = [...(state.struggleWindow ?? []), delta].slice(-STRUGGLE_WINDOW_POINTS)
+  state.playerBoxSnapshot = playerBox ?? {}
+
+  const totals = {}
+  for (const frame of state.struggleWindow) {
+    for (const [key, row] of Object.entries(frame)) {
+      const acc = totals[key] ?? { id: row.id, turnovers: 0, production: 0, pointsPlayed: 0 }
+      acc.turnovers += row.turnovers
+      acc.production += row.production
+      acc.pointsPlayed += row.pointsPlayed
+      totals[key] = acc
+    }
+  }
+
+  const struggling = []
+  for (const acc of Object.values(totals)) {
+    if (acc.turnovers < 2) continue
+    const toRate = acc.turnovers / Math.max(1, acc.pointsPlayed)
+    if (acc.production === 0 || toRate >= 0.75) {
+      struggling.push({ id: acc.id, turnovers: acc.turnovers, toRate })
+    }
+  }
+  return struggling
+}
+
+/**
+ * Zmiennik za zdjętego z linii: najlepszy DOSTĘPNY, świeży ma pierwszeństwo — ta sama
+ * miara i ten sam próg co w autoSubstituteTacticsForTeam (aiLineup.js). Wcześniej
+ * wchodził tu `bench[0]`, czyli pierwszy z listy w kolejności rostera: bez patrzenia
+ * na umiejętności, staminę ani kontuzję.
+ */
+function pickDemotionReplacement(players, line, excludedIds, staminaMap, scoreFn, displacedPlayer) {
+  const pool = (players ?? []).filter(
+    (p) =>
+      p?.id != null &&
+      !line.includes(p.id) &&
+      !excludedIds.has(p.id) &&
+      isPlayerAvailable(p),
+  )
+  if (!pool.length) return null
+  const byScore = [...pool].sort((a, b) => scoreFn(b, staminaMap) - scoreFn(a, staminaMap))
+  const fresh = staminaMap
+    ? byScore.filter((p) => getStamina(staminaMap, p.id) >= OWN_LINE_STAMINA_MIN)
+    : byScore
+  const replacement = fresh[0] ?? byScore[0]
+  // Dwie straty mogą uzasadniać chwilowy odpoczynek, ale nie automatyczne wyrzucenie
+  // najlepszego zawodnika na resztę meczu. Zmiana ma sens tylko, gdy zastępca nie
+  // osłabia linii istotnie (maks. 10% gorsza bieżąca ocena).
+  const displacedScore = displacedPlayer ? scoreFn(displacedPlayer, staminaMap) : 0
+  if (displacedScore > 0 && scoreFn(replacement, staminaMap) < displacedScore * 0.9) return null
+  return replacement.id
 }
 
 export function createAiAdaptState() {
@@ -240,6 +328,7 @@ export function adaptAiTacticsBetweenPoints({
   theirScore = 0,
   rng = null,
   isAi = true,
+  staminaMap = null,
 }) {
   if (!isAi || !tactics) return { tactics, adaptSide }
 
@@ -294,46 +383,68 @@ export function adaptAiTacticsBetweenPoints({
   }
 
   // --- 1) Słabo grający zawodnicy: mniej minut + instrukcje ---
+  // Ocena z okna ostatnich punktów, nie z sumy meczu — i z pamięcią, co trener sam
+  // dopisał, żeby móc to zdjąć, gdy zawodnik przestanie odstawać.
+  const struggling = updateStruggleWindow(state, analysis.playerBox)
   const benchPenaltyIds = new Set()
-  for (const p of analysis.strugglingPlayers ?? []) {
+  const coachTags = {}
+  const tagNow = (playerId, tag) => {
+    addInstr(instr, playerId, tag)
+    const key = String(playerId)
+    coachTags[key] = [...new Set([...(coachTags[key] ?? []), tag])]
+  }
+  for (const p of struggling) {
     benchPenaltyIds.add(p.id)
     // Po rozdzieleniu osi: `give_space` to już tylko USTAWIENIE (schodzi z pasa rzutu),
     // a częstotliwość cutów siedzi w parze dominate / wait_your_turn. Intencja „zejdź na
     // drugi plan" wymaga więc obu tagów naraz.
-    addInstr(instr, p.id, 'give_space')
-    addInstr(instr, p.id, 'wait_your_turn')
+    tagNow(p.id, 'give_space')
+    tagNow(p.id, 'wait_your_turn')
     removeInstr(instr, p.id, 'dominate')
     removeInstr(instr, p.id, 'throw_hucks')
-    addInstr(instr, p.id, 'no_hucks')
+    tagNow(p.id, 'no_hucks')
   }
   for (const [tid, tos] of Object.entries(analysis.throwerTos ?? {})) {
     if (tos >= 2) {
       removeInstr(instr, tid, 'throw_hucks')
-      addInstr(instr, tid, 'no_hucks')
-      addInstr(instr, tid, 'dump_first')
+      tagNow(tid, 'no_hucks')
+      tagNow(tid, 'dump_first')
     }
   }
+  // Rehabilitacja: zdejmujemy DOKŁADNIE te tagi, które trener sam dopisał wcześniej,
+  // a których teraz już nie wystawia. Rozkazów ustawionych ręcznie to nie rusza.
+  for (const [key, tags] of Object.entries(state.coachAddedInstr ?? {})) {
+    const stillTagged = coachTags[key] ?? []
+    for (const tag of tags) {
+      if (!stillTagged.includes(tag)) removeInstr(instr, key, tag)
+    }
+  }
+  state.coachAddedInstr = coachTags
 
   if (benchPenaltyIds.size) {
-    const demote = (lineKey) => {
+    const demote = (lineKey, scoreFn) => {
       const line = [...(next[lineKey] ?? [])]
       for (let i = line.length - 1; i >= 0; i -= 1) {
         if (!benchPenaltyIds.has(line[i])) continue
-        // Przesuń na koniec / zamień z pierwszym z ławki
         const id = line[i]
-        const bench = (team.players ?? [])
-          .map((p) => p.id)
-          .filter((pid) => pid != null && !line.includes(pid) && !benchPenaltyIds.has(pid))
-        if (bench.length) {
-          line[i] = bench[0]
+        const rep = pickDemotionReplacement(
+          team.players,
+          line,
+          benchPenaltyIds,
+          staminaMap,
+          scoreFn,
+          team.players?.find((p) => p.id === id),
+        )
+        if (rep != null) {
+          line[i] = rep
           benchPenaltyIds.delete(id)
         }
       }
       next[lineKey] = line
     }
     if (willing()) {
-      demote('lineupWhenOffenseStartPlayerIds')
-      demote('lineupWhenDefenseStartPlayerIds')
+      demote('lineupWhenOffenseStartPlayerIds', scorePlayerForOffense)
+      demote('lineupWhenDefenseStartPlayerIds', scorePlayerForDefense)
     }
   }
 
