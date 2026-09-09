@@ -414,8 +414,8 @@ function computeTraitAndCoachMods(player, tactics = null, role = 'offense', line
   }
 
   let merged = {
-    ...traits,
     ...emptyExtra,
+    ...traits,
     resetFirstStallBias: traits.resetFirstStallBias ?? 0,
     dumpEarlyBias: traits.dumpEarlyBias ?? 0,
     huckAcceptanceDelta: traits.huckAcceptanceDelta ?? 0,

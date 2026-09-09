@@ -1,18 +1,20 @@
+import { assignRosterArchetypes, finalizeGeneratedPotential } from '../models/playerArchetypes.js'
+import { sampleRosterCoverage } from './rosterStructures.js'
 /**
  * Liga Europejska (EUCS Open) — piramida 3 poziomów (16+16+16), zbudowana z realnych
- * klubów (nazwy/wyniki: src/data/eucs/eucsPyramidTeams.json). Składy zawodników są
- * zawsze losowe (brak publicznych danych o zawodnikach na poziomie klubu w tym źródle),
- * a siła składu jest skalowana realnym winPct/goal-diff klubu w ramach jego poziomu.
+ * klubów (nazwy/wyniki: src/data/eucs/eucsPyramidTeams.json). Nazwiska pochodzą
+ * z rosterów, a umiejętności są losowane. Siłę określa docelowa średnia ligi
+ * z ograniczoną korektą winPct uwzględniającą liczbę rozegranych spotkań.
  */
 import eucsPyramidTeams from './eucs/eucsPyramidTeams.json' with { type: 'json' }
 import eucsClubHistory from './eucs/eucsClubHistory.json' with { type: 'json' }
 import eucsRealRosters from './eucs/eucsRealRosters.json' with { type: 'json' }
 import { buildTeamRoster } from './playerStatsFromUfa.js'
-import { applyRandomOvrBands, rollRandomSkillsForRoster } from './randomRosterSkills.js'
+import { rollRandomSkillsForRoster } from './randomRosterSkills.js'
 import { rollTeamTacticalIdentity } from './seasonLeagueBuilder.js'
 import { rollTraitsForPlayer, TRAITS_GEN_VERSION } from '../models/playerTraits.js'
 import { eucsNationalityOverride } from './eucs/eucsNationalityOverrides.js'
-import { getOverallRating } from '../models/playerStats.js'
+import { eucsResultAdjustment, applyEucsOvrDistribution } from './eucsRosterBalance.js'
 
 export const EUCS_LEAGUE_TIER_SLOTS = 16
 export const EUCS_TIERS = [1, 2, 3]
@@ -178,6 +180,18 @@ function inventRawPlayer(rng, index) {
   }
 }
 
+/** Deterministic reserves shared by preview and career generation. */
+function fillReserveRows(rawRows, teamId, seed) {
+    const reserveRng = mulberry32(hashSeed(seed, teamId, 'reserve-fill-v1'))
+    while (rawRows.length < 21) {
+      const row = inventRawPlayer(reserveRng, rawRows.length)
+      row.jersey = Math.max(0, ...rawRows.map(p => p.jersey ?? 0)) + 1
+      row.generatedReserve = true
+      rawRows.push(row)
+    }
+    return rawRows
+}
+
 /**
  * Podgląd składu (numer + imię i nazwisko, BEZ statystyk/skilli) — tani do pokazania
  * w profilu klubu przy wyborze drużyny, bez uruchamiania pełnego builda umiejętności.
@@ -187,11 +201,11 @@ function inventRawPlayer(rng, index) {
 export function eucsTeamRosterPreview(teamId, seed) {
   const raw = EUCS_TEAMS.find((t) => t.id === teamId)
   if (!raw) return []
+  const effectiveSeed = seed ?? raw.tier * 7919 + 1
   const realRows = realRawRowsFor(teamId)
   if (realRows) {
-    return realRows.map((p) => ({ jersey: p.jersey, firstName: p.firstName, lastName: p.lastName }))
+    return fillReserveRows(realRows, teamId, effectiveSeed).map((p) => ({ jersey: p.jersey, firstName: p.firstName, lastName: p.lastName }))
   }
-  const effectiveSeed = seed ?? raw.tier * 7919 + 1
   const teamRng = mulberry32(hashSeed(effectiveSeed, raw.id, 'roster'))
   const rosterSize = 22 + Math.floor(teamRng() * 8)
   const rows = []
@@ -202,27 +216,10 @@ export function eucsTeamRosterPreview(teamId, seed) {
   return rows
 }
 
-/** Maks. przesunięcie OVR między najsłabszą a najsilniejszą drużyną W RAMACH poziomu. */
-const TIER_STRENGTH_SPREAD = 6.5
-
-/**
- * Bazowe przesunięcie OVR MIĘDZY poziomami piramidy — rosnąca (niby-wykładnicza) luka,
- * żeby Liga 2 była zauważalnie słabsza od Ligi 1, a Liga 3 wyraźnie słabsza od Ligi 2
- * (ale nie degenerująco), i żeby w Lidze 3 prawie nie było zawodników z OVR 90+.
- */
-const TIER_BASE_OFFSET = { 1: 0, 2: -4, 3: -6 }
-
-/** Przesunięcie OVR drużyny: baza poziomu + pozycja w ramach realnego winPct tego poziomu (+ szum). */
+/** Historical results contribute at most ±2.5; career noise adds ±0.5. */
 function strengthOffsetFromRealResult(team, tierTeams, seed) {
-  const values = tierTeams.map((t) => t.winPct ?? 0)
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const span = max - min
-  const norm = span > 0 ? ((team.winPct ?? 0) - min) / span : 0.5
   const rng = mulberry32(hashSeed(seed, team.id, 'eucs-strength-noise'))
-  const noise = (rng() - 0.5) * 2
-  const withinTier = (norm - 0.5) * 2 * TIER_STRENGTH_SPREAD + noise * 1.5
-  return (TIER_BASE_OFFSET[team.tier] ?? 0) + withinTier
+  return eucsResultAdjustment(team, tierTeams) + (rng() - 0.5)
 }
 
 const idCursorBase = 900000000
@@ -271,6 +268,7 @@ export function buildEucsLeagueTemplate(options) {
       }
     }
 
+    fillReserveRows(rawRows, rawTeam.id, seed)
     const idStart = idStartForTeam(rawTeam.id)
 
     let players = buildTeamRoster(identity.name, rawRows, idStart, {
@@ -278,19 +276,13 @@ export function buildEucsLeagueTemplate(options) {
       balance: false,
     })
     players = rollRandomSkillsForRoster(players, `${seed}:${rawTeam.id}`)
+    players.forEach((p, i) => { if (rawRows[i].generatedReserve) p.generatedReserve = true })
+    const rosterCoverage = sampleRosterCoverage(tier, mulberry32(hashSeed(seed, rawTeam.id, 'coverage-v1')))
+    assignRosterArchetypes(players, tier, mulberry32(hashSeed(seed, rawTeam.id, 'archetypes-v1')), rosterCoverage)
     const teamStrengthOffset = strengthOffsetFromRealResult(rawTeam, tierTeamsRaw, seed)
-    applyRandomOvrBands(players, `${seed}:${rawTeam.id}:ovr`, teamStrengthOffset)
+    const rosterShape = applyEucsOvrDistribution(players, tier, teamStrengthOffset, mulberry32(hashSeed(seed, rawTeam.id, 'eucs-ovr-v2')), rosterCoverage)
 
-    // Potencjał zawodnika liczy się później (ensurePlayerDevelopment) z bieżącego OVR —
-    // ale bieżący OVR zawiera już "boost" między-poziomowy (TIER_BASE_OFFSET), którego
-    // NIE chcemy przenosić na sufit rozwoju. Zapisujemy więc "OVR bez boostu" jako
-    // podpowiedź; ensurePlayerDevelopment użyje jej zamiast bieżącego OVR przy pierwszym
-    // liczeniu potencjału, więc sam boost wpływa tylko na obecną siłę, nie na sufit.
-    const tierBoost = TIER_BASE_OFFSET[tier] ?? 0
-    for (const p of players) {
-      const actualOvr = getOverallRating(p.skills)
-      p.eucsBaselineOvr = Math.max(60, Math.min(97, Math.round(actualOvr - tierBoost)))
-    }
+    finalizeGeneratedPotential(players)
 
     for (const p of players) {
       p.traits = rollTraitsForPlayer({ ...p, id: hashSeed(seed, p.id, 'career-traits') })
@@ -307,6 +299,8 @@ export function buildEucsLeagueTemplate(options) {
     teams.push({
       ...identity,
       isFictional: false,
+      rosterShape,
+      rosterCoverage,
       players,
     })
   }

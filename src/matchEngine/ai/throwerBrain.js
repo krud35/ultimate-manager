@@ -1,3 +1,4 @@
+import { stylePassBonus } from './traitBehavior.js'
 import { attackDirectionX, opponentGoalLineM } from '../fieldDimensions.js'
 import { THROW_TYPE, throwProfile } from '../throwTypes.js'
 
@@ -606,6 +607,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     setupElapsedMs = 0,
     postCatchReorg = false,
     lastThrowerId = null,
+    afterTurnover = false,
     hardStallCount = stallCount,
     requireForwardPass = false,
     attackStyle = ATTACK_STYLES.VERTICAL_STACK,
@@ -993,6 +995,8 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
       if (nearPoach && agent.player.id !== abandonedId) score -= 11
     }
 
+    score += stylePassBonus(throwerMods, { lateral: catchPt.y - (throwerPos?.y ?? disc.y),
+      forward: forwardProgress, distance: distFromThrower, afterTurnover })
     score = applyAttackThrowBias(score, {
       attackStyle,
       forceSide,

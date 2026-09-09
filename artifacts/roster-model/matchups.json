@@ -1,0 +1,86 @@
+[
+  {
+    "label": "weak tier 1 vs strong tier 2",
+    "mode": "fast",
+    "games": 8,
+    "winsA": 4,
+    "meanMarginA": -0.875
+  },
+  {
+    "label": "weak tier 1 vs strong tier 2",
+    "mode": "spatial",
+    "games": 2,
+    "winsA": 1,
+    "meanMarginA": 2
+  },
+  {
+    "label": "weak tier 2 vs strong tier 3",
+    "mode": "fast",
+    "games": 8,
+    "winsA": 6,
+    "meanMarginA": 3.625
+  },
+  {
+    "label": "weak tier 2 vs strong tier 3",
+    "mode": "spatial",
+    "games": 2,
+    "winsA": 0,
+    "meanMarginA": -6.5
+  },
+  {
+    "label": "control_handler vs all_rounder, OVR 81",
+    "mode": "fast",
+    "games": 4,
+    "winsA": 4,
+    "meanMarginA": 5.5
+  },
+  {
+    "label": "deep_handler vs all_rounder, OVR 81",
+    "mode": "fast",
+    "games": 4,
+    "winsA": 3,
+    "meanMarginA": 2.75
+  },
+  {
+    "label": "mobile_handler vs all_rounder, OVR 81",
+    "mode": "fast",
+    "games": 4,
+    "winsA": 3,
+    "meanMarginA": 1.25
+  },
+  {
+    "label": "under_cutter vs all_rounder, OVR 81",
+    "mode": "fast",
+    "games": 4,
+    "winsA": 2,
+    "meanMarginA": 1.5
+  },
+  {
+    "label": "deep_cutter vs all_rounder, OVR 81",
+    "mode": "fast",
+    "games": 4,
+    "winsA": 2,
+    "meanMarginA": -0.5
+  },
+  {
+    "label": "matchup_defender vs all_rounder, OVR 81",
+    "mode": "fast",
+    "games": 4,
+    "winsA": 2,
+    "meanMarginA": 0.5
+  },
+  {
+    "label": "reading_defender vs all_rounder, OVR 81",
+    "mode": "fast",
+    "games": 4,
+    "winsA": 2,
+    "meanMarginA": 1.25
+  },
+  {
+    "label": "all_rounder vs all_rounder, OVR 81",
+    "mode": "fast",
+    "games": 4,
+    "winsA": 2,
+    "meanMarginA": -0.5
+  }
+]

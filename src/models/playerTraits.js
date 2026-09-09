@@ -1,20 +1,25 @@
+import { ARCHETYPE_TRAIT_PREFERENCES, STYLE_TRAITS, ATTRIBUTE_BADGES, NEW_STYLE_DEFS, TRAIT_COPY } from './traitDesign.js'
 /**
  * Cechy charakteru zawodników — katalog + przypisanie + agregacja modyfikatorów.
- * Efekty są lekkie; strojenie liczb w TRAIT_EFFECTS.
+ * Styl gry i charakter losowane osobno; mocne strony wynikają z atrybutów.
  */
 
 import {
-  getOverallRating,
-  getCategoryOverall,
   getSubStat,
   normalizePlayerSkills,
 } from './playerStats.js'
 
-/** Bump → regeneracja cech przy wczytaniu kariery / szablonu. */
-export const TRAITS_GEN_VERSION = 3
+/** Versioned migration without rerolling existing personalities. */
+export const TRAITS_GEN_VERSION = 4
 
 /** Alias starych ID → aktualne (migracja zapisów). */
 const TRAIT_ID_ALIASES = {
+  checkdown: 'dump_guy',
+  glory_hunter: 'selfish',
+  sky_baller: 'layout_machine',
+  man_d_specialist: 'shutdown',
+  showboat: 'creative_thrower',
+  vocal: 'leader',
   low_motor: 'lazy',
   ice_cold: 'composed',
   layout_artist: 'layout_machine',
@@ -23,6 +28,9 @@ const TRAIT_ID_ALIASES = {
 
 /** Usunięte cechy — drop przy ensure / odczycie. */
 const REMOVED_TRAIT_IDS = new Set([
+  ...Object.keys(ATTRIBUTE_BADGES),
+  'big_man',
+  'turnover_prone',
   'ball_watcher',
   'clear_machine',
   'space_aware',
@@ -49,15 +57,6 @@ export const TRAIT_DEFS = {
     nameEn: 'Leader',
     descPl: 'Podnosi na duchu kolegów z drużyny.',
     descEn: 'Lifts the spirits of teammates around him.',
-    polarity: 'positive',
-    tags: ['mental'],
-  },
-  vocal: {
-    id: 'vocal',
-    namePl: 'Głos na boisku',
-    nameEn: 'Vocal leader',
-    descPl: 'Dodaje drużynie energii swoją obecnością na boisku.',
-    descEn: 'Energizes the team with his presence on the field.',
     polarity: 'positive',
     tags: ['mental'],
   },
@@ -141,15 +140,6 @@ export const TRAIT_DEFS = {
     descEn: 'Puts safe, team-oriented play above his own stats.',
     polarity: 'positive',
     tags: ['mental'],
-  },
-  glory_hunter: {
-    id: 'glory_hunter',
-    namePl: 'Łowca chwały',
-    nameEn: 'Glory hunter',
-    descPl: 'Szuka okazji do zdobycia gola lub asysty, nawet kosztem ryzyka.',
-    descEn: 'Chases goals and assists, even at the cost of extra risk.',
-    polarity: 'mixed',
-    tags: ['mental', 'throw'],
   },
   workhorse: {
     id: 'workhorse',
@@ -259,24 +249,6 @@ export const TRAIT_DEFS = {
     polarity: 'negative',
     tags: ['cutter'],
   },
-  good_timing: {
-    id: 'good_timing',
-    namePl: 'Dobry timing',
-    nameEn: 'Good timing',
-    descPl: 'Świetnie wyczuwa właściwy moment na wycięcie.',
-    descEn: 'Has a great sense for when to cut.',
-    polarity: 'positive',
-    tags: ['cutter'],
-  },
-  big_man: {
-    id: 'big_man',
-    namePl: 'Big man',
-    nameEn: 'Big man',
-    descPl: 'Dominuje w pojedynkach powietrznych.',
-    descEn: 'Dominates aerial contests for the disc.',
-    polarity: 'positive',
-    tags: ['cutter', 'physical'],
-  },
   wants_the_disc: {
     id: 'wants_the_disc',
     namePl: 'Chce dysk',
@@ -340,69 +312,6 @@ export const TRAIT_DEFS = {
     polarity: 'positive',
     tags: ['defense', 'physical'],
   },
-  elite_huck: {
-    id: 'elite_huck',
-    namePl: 'Elitarny huck',
-    nameEn: 'Elite huck',
-    descPl: 'Wybitnie celny w długich rzutach na bramkę.',
-    descEn: 'Exceptionally accurate on long throws.',
-    polarity: 'positive',
-    tags: ['throw', 'skill'],
-  },
-  glue_hands: {
-    id: 'glue_hands',
-    namePl: 'Klejące ręce',
-    nameEn: 'Glue hands',
-    descPl: 'Rzadko gubi dysk przy chwycie.',
-    descEn: 'Rarely drops the disc once he gets a hand on it.',
-    polarity: 'positive',
-    tags: ['offense', 'skill'],
-  },
-  track_star: {
-    id: 'track_star',
-    namePl: 'Sprinter',
-    nameEn: 'Track star',
-    descPl: 'Wyjątkowo szybki na otwartym boisku.',
-    descEn: 'Exceptionally fast in open space.',
-    polarity: 'positive',
-    tags: ['physical', 'skill'],
-  },
-  vertical_threat: {
-    id: 'vertical_threat',
-    namePl: 'Vertical threat',
-    nameEn: 'Vertical threat',
-    descPl: 'Groźny w powietrzu — wysoko i pewnie skacze po dysk.',
-    descEn: 'A real threat in the air — jumps high and confidently for the disc.',
-    polarity: 'positive',
-    tags: ['physical', 'skill'],
-  },
-  field_general: {
-    id: 'field_general',
-    namePl: 'Generał pola',
-    nameEn: 'Field general',
-    descPl: 'Świetnie czyta grę i widzi opcje niedostępne innym.',
-    descEn: 'Reads the game superbly and sees options others miss.',
-    polarity: 'positive',
-    tags: ['mental', 'skill'],
-  },
-  smart: {
-    id: 'smart',
-    namePl: 'Smart',
-    nameEn: 'Smart',
-    descPl: 'Podejmuje przemyślane, trafne decyzje z dyskiem.',
-    descEn: 'Makes smart, well-judged decisions with the disc.',
-    polarity: 'positive',
-    tags: ['mental', 'skill'],
-  },
-  quick: {
-    id: 'quick',
-    namePl: 'Quick',
-    nameEn: 'Quick',
-    descPl: 'Błyskawicznie reaguje i zmienia kierunek biegu.',
-    descEn: 'Reacts fast and changes direction in a flash.',
-    polarity: 'positive',
-    tags: ['physical', 'skill'],
-  },
   adaptive: {
     id: 'adaptive',
     namePl: 'Adaptive',
@@ -411,33 +320,6 @@ export const TRAIT_DEFS = {
     descEn: 'Adjusts easily to changing situations and form.',
     polarity: 'positive',
     tags: ['mental', 'skill'],
-  },
-  lockdown: {
-    id: 'lockdown',
-    namePl: 'Lockdown',
-    nameEn: 'Lockdown',
-    descPl: 'Bardzo trudny do ograna w obronie jeden na jeden.',
-    descEn: 'Extremely tough to beat in one-on-one defense.',
-    polarity: 'positive',
-    tags: ['defense', 'skill'],
-  },
-  turnover_prone: {
-    id: 'turnover_prone',
-    namePl: 'Skłonny do błędów',
-    nameEn: 'Turnover-prone',
-    descPl: 'Częściej traci dysk przez nieprzemyślane decyzje.',
-    descEn: 'Loses the disc more often through careless decisions.',
-    polarity: 'negative',
-    tags: ['mental', 'throw'],
-  },
-  showboat: {
-    id: 'showboat',
-    namePl: 'Showboat',
-    nameEn: 'Showboat',
-    descPl: 'Lubi efektowne, ryzykowne zagrania kosztem skuteczności.',
-    descEn: 'Loves flashy, risky plays at the expense of reliability.',
-    polarity: 'negative',
-    tags: ['throw'],
   },
   quitter: {
     id: 'quitter',
@@ -730,24 +612,6 @@ export const TRAIT_DEFS = {
     polarity: 'mixed',
     tags: ['throw'],
   },
-  checkdown: {
-    id: 'checkdown',
-    namePl: 'Check-down',
-    nameEn: 'Check-down',
-    descPl: 'Zawsze ma pod ręką bezpieczną opcję zagrania.',
-    descEn: 'Always keeps a safe option close at hand.',
-    polarity: 'mixed',
-    tags: ['throw'],
-  },
-  sky_baller: {
-    id: 'sky_baller',
-    namePl: 'Sky baller',
-    nameEn: 'Sky baller',
-    descPl: 'Rzuca się w powietrze po dysk, ryzykując kontuzję.',
-    descEn: 'Throws himself into the air for the disc, risking injury.',
-    polarity: 'mixed',
-    tags: ['cutter', 'physical'],
-  },
   zone_breaker: {
     id: 'zone_breaker',
     namePl: 'Zone breaker',
@@ -756,15 +620,6 @@ export const TRAIT_DEFS = {
     descEn: 'Effective at breaking down zone defenses.',
     polarity: 'positive',
     tags: ['throw'],
-  },
-  man_d_specialist: {
-    id: 'man_d_specialist',
-    namePl: 'Man D',
-    nameEn: 'Man D',
-    descPl: 'Wyspecjalizowany w obronie jeden na jeden.',
-    descEn: 'Specialized in one-on-one defense.',
-    polarity: 'mixed',
-    tags: ['defense'],
   },
   foul_prone: {
     id: 'foul_prone',
@@ -778,9 +633,30 @@ export const TRAIT_DEFS = {
 }
 
 /** Pary wzajemnie wykluczające się. */
+// Attribute strengths are displayed separately and never grant hidden modifiers.
+for (const id of [...REMOVED_TRAIT_IDS, ...Object.keys(TRAIT_ID_ALIASES)]) delete TRAIT_DEFS[id]
+Object.assign(TRAIT_DEFS, NEW_STYLE_DEFS)
+for (const [id, [namePl, nameEn, descPl, descEn]] of Object.entries(TRAIT_COPY)) {
+  Object.assign(TRAIT_DEFS[id], { namePl, nameEn, descPl, descEn })
+}
+for (const [id, def] of Object.entries(TRAIT_DEFS)) {
+  def.kind = STYLE_TRAITS.has(id) ? 'style' : 'personality'
+  if (def.kind === 'style') def.polarity = 'mixed'
+}
+
+export function playerSkillBadges(player) {
+  const skills = normalizePlayerSkills(player?.skills ?? {})
+  const badges = Object.entries(ATTRIBUTE_BADGES).filter(([, [, , requirements]]) =>
+    requirements.every(([cat, key, min]) => getSubStat(skills, cat, key) >= min))
+    .map(([id, [namePl, nameEn]]) => ({ id, namePl, nameEn }))
+  if (player?.body?.heightCm >= 190) badges.push({ id: 'big_man', namePl: 'Wysoki zawodnik', nameEn: 'Tall player' })
+  return badges
+}
+
 const TRAIT_CONFLICTS = [
+  ['attack_turnover', 'settle_turnover'],
+  ['deny_deep', 'deny_under'],
   ['huck_lover', 'dump_guy'],
-  ['safe_hands', 'creative_thrower'],
   ['determined', 'quitter'],
   ['composed', 'hot_headed'],
   ['clutch', 'nervous'],
@@ -793,7 +669,6 @@ const TRAIT_CONFLICTS = [
   ['confident', 'fragile_ego'],
   ['deep_threat', 'under_cutter'],
   ['aggressive_cutter', 'hesitant_cutter'],
-  ['wants_the_disc', 'disciplined'],
   ['shutdown', 'poacher'],
   ['physical_mark', 'soft_mark'],
   ['smart', 'turnover_prone'],
@@ -805,19 +680,18 @@ const TRAIT_CONFLICTS = [
   ['homebody', 'restless'],
   ['showman', 'anxious'],
   ['charismatic', 'shy'],
-  ['content', 'ambitious'],
-  ['curious', 'impatient'],
   ['curious', 'uncoachable'],
   ['coachable', 'uncoachable'],
   ['adaptive', 'stubborn'],
   ['dump_guy', 'iso_ball'],
   ['checkdown', 'force_happy'],
   ['checkdown', 'huck_lover'],
-  ['relaxed', 'stoic'],
 ]
 
 function conflictsWith(id, selected) {
-  for (const [a, b] of TRAIT_CONFLICTS) {
+  for (const pair of TRAIT_CONFLICTS) {
+    const [a, b] = pair.map(normalizeTraitId)
+    if (!a || !b) continue
     if ((id === a && selected.has(b)) || (id === b && selected.has(a))) return true
   }
   return false
@@ -845,7 +719,7 @@ function mulberry32(seed) {
 
 export function getPlayerTraits(player) {
   if (!Array.isArray(player?.traits)) return []
-  return player.traits.map(normalizeTraitId).filter((id) => id && TRAIT_DEFS[id])
+  return [...new Set(player.traits.map(normalizeTraitId).filter((id) => id && TRAIT_DEFS[id]))]
 }
 
 export function playerHasTrait(player, traitId) {
@@ -885,257 +759,44 @@ function normalizeTraitId(id) {
   return next
 }
 
-function skillLinkedCandidates(player) {
-  const skills = normalizePlayerSkills(player.skills ?? {})
-  const out = []
-  if (getSubStat(skills, 'throwing', 'huck') >= 84 || getOverallRating(skills) >= 85) {
-    out.push('elite_huck')
-  }
-  if (getSubStat(skills, 'offensive', 'catching') >= 84) out.push('glue_hands')
-  if (getSubStat(skills, 'physical', 'speed') >= 84) out.push('track_star')
-  if (getSubStat(skills, 'physical', 'jump') >= 84) out.push('vertical_threat')
-  if (getSubStat(skills, 'physical', 'jump') >= 80) out.push('big_man')
-  if (
-    getSubStat(skills, 'mental', 'vision') >= 82 &&
-    getSubStat(skills, 'mental', 'decisionMaking') >= 80
-  ) {
-    out.push('field_general')
-  }
-  if (
-    getSubStat(skills, 'mental', 'decisionMaking') >= 78 ||
-    getSubStat(skills, 'mental', 'vision') >= 78
-  ) {
-    out.push('smart')
-  }
-  if (
-    getSubStat(skills, 'physical', 'speed') >= 78 ||
-    getSubStat(skills, 'physical', 'agility') >= 78
-  ) {
-    out.push('quick')
-  }
-  if (
-    getCategoryOverall(skills, 'throwing') >= 76 &&
-    getSubStat(skills, 'mental', 'decisionMaking') >= 74
-  ) {
-    out.push('safe_hands')
-  }
-  if (getCategoryOverall(skills, 'defensive') >= 84) out.push('lockdown')
-  if (getSubStat(skills, 'physical', 'jump') >= 78) out.push('sky_baller')
-  if (getCategoryOverall(skills, 'throwing') >= 78) out.push('zone_breaker')
-  if (getCategoryOverall(skills, 'defensive') >= 76) out.push('man_d_specialist')
-  return out
-}
-
-function poolForPlayer(player) {
-  const skills = normalizePlayerSkills(player.skills ?? {})
-  const ovr = getOverallRating(skills)
-  const pool = new Set()
-
-  // Uniwersalne (mental + ogólne + career)
-  ;[
-    'determined',
-    'leader',
-    'vocal',
-    'loner',
-    'confident',
-    'fragile_ego',
-    'professional',
-    'hot_headed',
-    'composed',
-    'clutch',
-    'nervous',
-    'team_first',
-    'glory_hunter',
-    'workhorse',
-    'lazy',
-    'smart',
-    'quick',
-    'adaptive',
-    'turnover_prone',
-    'quitter',
-    'showboat',
-    'loyal',
-    'mercenary',
-    'modest',
-    'greedy',
-    'homebody',
-    'restless',
-    'showman',
-    'anxious',
-    'charismatic',
-    'shy',
-    'content',
-    'ambitious',
-    'curious',
-    'impatient',
-    'relaxed',
-    'stoic',
-    'selfish',
-    'stubborn',
-    'perfectionist',
-    'overthinker',
-    'tunnel_vision',
-    'complacent',
-    'diva',
-    'chip_on_shoulder',
-    'competitor',
-    'coachable',
-    'uncoachable',
-    'film_junkie',
-    'party_animal',
-  ].forEach((id) => pool.add(id))
-
-  if (getCategoryOverall(skills, 'throwing') >= 72) {
-    ;[
-      'huck_lover',
-      'dump_guy',
-      'safe_hands',
-      'creative_thrower',
-      'hammer_happy',
-      'force_happy',
-      'iso_ball',
-      'checkdown',
-      'zone_breaker',
-    ].forEach((id) => pool.add(id))
-  }
-
-  if (getCategoryOverall(skills, 'offensive') >= 70) {
-    ;[
-      'deep_threat',
-      'under_cutter',
-      'layout_machine',
-      'aggressive_cutter',
-      'hesitant_cutter',
-      'good_timing',
-      'big_man',
-      'wants_the_disc',
-      'disciplined',
-      'sky_baller',
-    ].forEach((id) => pool.add(id))
-  }
-
-  ;[
-    'shutdown',
-    'poacher',
-    'physical_mark',
-    'soft_mark',
-    'relentless',
-    'man_d_specialist',
-    'foul_prone',
-  ].forEach((id) => pool.add(id))
-
-  for (const id of skillLinkedCandidates(player)) pool.add(id)
-
-  if (ovr < 70) {
-    pool.add('hesitant_cutter')
-    pool.add('turnover_prone')
-  }
-
-  return [...pool]
-}
-
-function targetTraitCount(ovr) {
-  if (ovr >= 91) return 5
-  if (ovr >= 83) return 4
-  if (ovr >= 72) return 3
-  return 2
-}
-
-/** Sufit negatywów — limit, nie quota. */
-function maxNegatives() {
-  return 2
-}
-
-function shuffleInPlace(arr, rng) {
-  for (let i = arr.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(rng() * (i + 1))
-    const tmp = arr[i]
-    arr[i] = arr[j]
-    arr[j] = tmp
-  }
-  return arr
-}
-
-/**
- * Deterministyczne losowanie cech dla zawodnika (seed = id).
- * Bez gwarancji polarności — skill-linked nie monopolizuje slotów.
- */
+/** Separate RNG streams keep personality identical across OVR and archetype changes. */
 export function rollTraitsForPlayer(player) {
-  const skills = normalizePlayerSkills(player?.skills ?? {})
-  const ovr = getOverallRating(skills)
-  const rng = mulberry32(hashSeed(player?.id))
-  const need = targetTraitCount(ovr)
-  const maxNeg = maxNegatives()
   const selected = []
-  const selectedSet = new Set()
-
-  const allSkillLinked = skillLinkedCandidates(player)
-  const skillLinkedSet = new Set(allSkillLinked)
-  const skillCands = shuffleInPlace(
-    allSkillLinked.filter((id) => rng() < 0.62),
-    rng,
-  )
-  const poolCands = shuffleInPlace(poolForPlayer(player), rng)
-  const skillCap = Math.max(1, Math.min(2, Math.ceil(need / 2)))
-  const skillPicked = skillCands.slice(0, skillCap)
-
-  const ordered = []
-  const maxLen = Math.max(skillPicked.length, poolCands.length)
-  for (let i = 0; i < maxLen; i += 1) {
-    if (i < skillPicked.length) ordered.push(skillPicked[i])
-    if (i < poolCands.length) ordered.push(poolCands[i])
-  }
-
-  let negCount = 0
-  let skillTaken = 0
-  for (const id of ordered) {
-    if (selected.length >= need) break
-    if (selectedSet.has(id)) continue
-    if (!TRAIT_DEFS[id]) continue
-    if (conflictsWith(id, selectedSet)) continue
-    if (skillLinkedSet.has(id) && skillTaken >= skillCap) continue
-    const pol = TRAIT_DEFS[id].polarity
-    if (pol === 'negative') {
-      if (negCount >= maxNeg) continue
-      negCount += 1
+  for (const kind of ['personality', 'style']) {
+    const rng = mulberry32(hashSeed(player?.id, 'traits-v4:' + kind))
+    const count = kind === 'personality' ? 2 : (rng() < 0.5 ? 1 : 2)
+    const preferred = ARCHETYPE_TRAIT_PREFERENCES[player?.archetype] ?? []
+    const pool = Object.keys(TRAIT_DEFS).filter(id => TRAIT_DEFS[id].kind === kind)
+    for (let slot = 0; slot < count; slot++) {
+      const eligible = pool.filter(id => !selected.includes(id) && !conflictsWith(id, new Set(selected)))
+      const weight = id => kind === 'style' && preferred.includes(id) ? 2 : 1
+      let roll = rng() * eligible.reduce((sum, id) => sum + weight(id), 0)
+      const chosen = eligible.find(id => { roll -= weight(id); return roll < 0 })
+      if (chosen) selected.push(chosen)
     }
-    selected.push(id)
-    selectedSet.add(id)
-    if (skillLinkedSet.has(id)) skillTaken += 1
   }
-
-  const fallback = shuffleInPlace(Object.keys(TRAIT_DEFS), rng)
-  for (const id of fallback) {
-    if (selected.length >= need) break
-    if (selectedSet.has(id)) continue
-    if (conflictsWith(id, selectedSet)) continue
-    if (TRAIT_DEFS[id].polarity === 'negative' && negCount >= maxNeg) continue
-    if (TRAIT_DEFS[id].polarity === 'negative') negCount += 1
-    selected.push(id)
-    selectedSet.add(id)
-  }
-
   return selected
 }
 
+/** Migrate existing IDs; a version change NEVER rerolls a player's personality.
+ * Empty migrated lists are valid. Only missing lists or an explicit force generate.
+ */
 export function ensurePlayerTraits(player, options = {}) {
   if (!player) return player
-  const force = options.force === true || player.traitsGen !== TRAITS_GEN_VERSION
-  if (force || !Array.isArray(player.traits) || player.traits.length === 0) {
-    player.traits = rollTraitsForPlayer(player)
-    player.traitsGen = TRAITS_GEN_VERSION
-    return player
-  }
-  const seen = new Set()
   const next = []
-  for (const raw of player.traits) {
+  const seen = new Set()
+  const source = options.force === true || !Array.isArray(player.traits)
+    ? rollTraitsForPlayer(player) : player.traits
+  for (const raw of source) {
     const id = normalizeTraitId(raw)
-    if (!TRAIT_DEFS[id] || seen.has(id)) continue
-    if (conflictsWith(id, seen)) continue
+    if (!id || !TRAIT_DEFS[id] || seen.has(id) || conflictsWith(id, seen)) continue
     seen.add(id)
     next.push(id)
   }
-  player.traits = next.length ? next : rollTraitsForPlayer(player)
+  if (JSON.stringify(next) !== JSON.stringify(player.traits)) {
+    player.traits = next
+    traitModsCache.delete(player)
+  }
   player.traitsGen = TRAITS_GEN_VERSION
   return player
 }
@@ -1164,6 +825,15 @@ export function getTraitMods(player) {
 
 function computeTraitMods(player) {
   const mods = {
+    pressureNoiseMult: 1,
+    clutchNoiseMult: 1,
+    layoutAttemptMult: 1,
+    giveAndGoBias: 0,
+    uplineBias: 0,
+    swingBias: 0,
+    transitionBias: 0,
+    denyUnderBias: 0,
+    helpDeepBias: 0,
     // morale / form
     lossMoraleMult: 1,
     turnoverMoraleExtra: 0,
@@ -1274,9 +944,6 @@ function computeTraitMods(player) {
         mods.lossMoraleMult *= 0.75
         mods.teamAuraEmit += 0.55
         break
-      case 'vocal':
-        mods.teamAuraEmit += 0.35
-        break
       case 'loner':
         mods.teamAuraRecvMult *= 0.15
         mods.teamAuraEmit *= 0.2
@@ -1284,8 +951,6 @@ function computeTraitMods(player) {
       case 'confident':
         mods.lossMoraleMult *= 0.7
         mods.turnoverMoraleExtra -= 0.25
-        mods.highStallAccuracy += 2
-        mods.acceptanceThresholdDelta += 3
         break
       case 'fragile_ego':
         mods.lossMoraleMult *= 1.45
@@ -1299,79 +964,40 @@ function computeTraitMods(player) {
         mods.decisionNoiseMult *= 0.9
         break
       case 'hot_headed':
-        mods.highStallAccuracy -= 6
         mods.decisionNoiseMult *= 1.25
         mods.huckWeightMult *= 1.25
         mods.ottWeightMult *= 1.25
-        mods.lowStallAccuracy -= 2
         break
       case 'composed':
-        mods.highStallAccuracy += 5
-        mods.stall8PlusAccuracy += 3
-        mods.badDecisionMult *= 0.7
-        mods.decisionNoiseMult *= 0.85
-        mods.lowStallAccuracy += 2
+        mods.pressureNoiseMult *= 0.7
         break
       case 'clutch':
-        mods.highStallAccuracy += 4
-        mods.stall8PlusAccuracy += 6
-        mods.badDecisionMult *= 0.75
-        mods.decisionNoiseMult *= 0.85
+        mods.clutchNoiseMult *= 0.8
         break
       case 'nervous':
-        mods.highStallAccuracy -= 5
-        mods.stall8PlusAccuracy -= 4
-        mods.badDecisionMult *= 1.3
-        mods.decisionNoiseMult *= 1.2
+        mods.pressureNoiseMult *= 1.3
         mods.turnoverMoraleExtra += 0.35
-        mods.lowStallAccuracy -= 2
         break
       case 'team_first':
-        mods.dumpWeightMult *= 1.35
-        mods.huckWeightMult *= 0.7
-        mods.ottWeightMult *= 0.85
-        mods.dumpEarlyBias += 0.35
-        mods.heroThrowWeightMult *= 0.85
-        mods.huckAcceptanceDelta -= 0.08
-        mods.scoringOptionBonus -= 0.12
         mods.goalAssistMoraleMult *= 0.85
-        mods.resetFirstStallBias += 1
-        break
-      case 'glory_hunter':
-        mods.huckWeightMult *= 1.4
-        mods.ottWeightMult *= 1.2
-        mods.dumpWeightMult *= 0.7
-        mods.heroThrowWeightMult *= 1.25
-        mods.huckAcceptanceDelta += 0.12
-        mods.scoringOptionBonus += 0.22
-        mods.goalAssistMoraleMult *= 1.45
-        mods.goalAssistFormMult *= 1.35
-        mods.huckAccuracy -= 2
+        mods.benchMoraleSensitivity *= 0.8
+        mods.promisePlayingTimeBias -= 0.15
         break
       case 'workhorse':
-        mods.benchRegenBonus += 2
-        mods.oLineCostMult *= 0.9
         mods.trainingFatigueMult *= 0.8
         break
       case 'lazy':
-        mods.benchRegenBonus -= 3
-        mods.oLineCostMult *= 1.15
-        mods.dLineCostMult *= 1.15
+        mods.developmentGainMult *= 0.85
         mods.trainingFatigueMult *= 1.2
-        mods.lowStaminaMovePenaltyMult *= 1.35
         mods.zeroPpFormDelta = Math.min(mods.zeroPpFormDelta, -1.8)
         break
       case 'huck_lover':
         mods.huckWeightMult *= 1.55
-        mods.huckAccuracy += 4
-        mods.huckSpreadMult *= 0.94
-        mods.huckBlockRisk += 3
         mods.dumpWeightMult *= 0.75
         break
       case 'dump_guy':
         mods.dumpWeightMult *= 1.55
         mods.dumpEarlyBias += 0.45
-        mods.dumpAccuracy += 4
         mods.huckWeightMult *= 0.55
         mods.huckAcceptanceDelta -= 0.1
         mods.scoringOptionBonus -= 0.08
@@ -1381,43 +1007,29 @@ function computeTraitMods(player) {
         mods.acceptanceThresholdDelta += 8
         mods.safeOptionBias += 0.55
         mods.dumpWeightMult *= 1.25
-        mods.dumpAccuracy += 3
         mods.huckWeightMult *= 0.7
         mods.ottWeightMult *= 0.65
         mods.heroThrowWeightMult *= 0.8
-        mods.badDecisionMult *= 0.75
-        mods.huckAccuracy -= 1
-        mods.highStallAccuracy += 2
         mods.standardWeightMult *= 1.15
         break
       case 'creative_thrower':
-        mods.acceptanceThresholdDelta -= 7
-        mods.creativeRiskBias += 0.55
         mods.ottWeightMult *= 1.45
         mods.breakSideOptionBonus += 0.12
         mods.heroThrowWeightMult *= 1.3
-        mods.ottAccuracy += 3
-        mods.ottBlockRisk += 5
-        mods.huckBlockRisk += 3
-        mods.decisionNoiseMult *= 1.1
-        mods.standardAccuracy -= 2
         mods.standardWeightMult *= 0.85
         break
       case 'hammer_happy':
         mods.ottWeightMult *= 1.6
-        mods.ottAccuracy += 4
-        mods.ottBlockRisk += 4
         break
       case 'deep_threat':
         mods.deepCutBias += 0.35
-        mods.deepSpeedMult *= 1.06
         break
       case 'under_cutter':
         mods.underCutBias += 0.35
         break
       case 'layout_machine':
-        mods.layoutAerialMult *= 1.35
-        mods.aerialRecvMult *= 1.1
+        mods.layoutAttemptMult *= 1.35
+        mods.injuryChanceMult *= 1.2
         break
       case 'aggressive_cutter':
         mods.cutRollMult *= 1.45
@@ -1427,16 +1039,6 @@ function computeTraitMods(player) {
       case 'hesitant_cutter':
         mods.cutRollMult *= 0.55
         mods.cutPriorityDelta += 8
-        break
-      case 'good_timing':
-        mods.timingCutBias += 0.55
-        mods.clogChanceMult *= 0.75
-        break
-      case 'big_man':
-        mods.aerialRecvMult *= 1.35
-        mods.aerialDefMult *= 1.15
-        mods.layoutAerialMult *= 1.2
-        mods.catchBonus += 3
         break
       case 'wants_the_disc':
         mods.cutRollMult *= 1.4
@@ -1452,17 +1054,13 @@ function computeTraitMods(player) {
         mods.clearLaneExtraM += 1
         break
       case 'shutdown':
-        mods.cushionDeltaM -= 0.45
-        mods.reactionDelayDeltaMs -= 40
+        mods.cushionDeltaM -= 0.35
         mods.poachChanceMult *= 0.55
-        mods.blockChanceMult *= 1.08
         break
       case 'poacher':
-        mods.blockChanceMult *= 1.2
         mods.poachMarkPressureMult *= 0.82
         mods.poachChanceMult *= 1.55
         mods.cushionDeltaM += 0.3
-        mods.reactionDelayDeltaMs += 30
         break
       case 'physical_mark':
         mods.markPressureBonus += 5
@@ -1479,68 +1077,8 @@ function computeTraitMods(player) {
         mods.lowStaminaMovePenaltyMult *= 0.5
         mods.benchRegenBonus += 1
         break
-      case 'elite_huck':
-        mods.huckAccuracy += 7
-        mods.huckSpreadMult *= 0.9
-        break
-      case 'glue_hands':
-        mods.catchBonus += 5
-        mods.aerialRecvMult *= 1.2
-        break
-      case 'track_star':
-        mods.speedMult *= 1.05
-        break
-      case 'vertical_threat':
-        mods.aerialRecvMult *= 1.2
-        mods.aerialDefMult *= 1.2
-        break
-      case 'field_general':
-        mods.scanRadiusBonusM += 3.5
-        mods.decisionNoiseMult *= 0.65
-        mods.perceivedOptionsBonus += 1
-        mods.acceptanceThresholdDelta += 2
-        mods.structureComplianceBonus += 0.04
-        break
-      case 'smart':
-        mods.decisionNoiseMult *= 0.78
-        mods.badDecisionMult *= 0.8
-        mods.scanRadiusBonusM += 2
-        mods.perceivedOptionsBonus += 1
-        mods.highStallAccuracy += 2
-        mods.lowStallAccuracy += 1
-        break
-      case 'quick':
-        mods.speedMult *= 1.04
-        mods.plantMsMult *= 0.82
-        mods.reactionDelayDeltaMs -= 28
-        mods.cutRollMult *= 1.1
-        break
       case 'adaptive':
-        mods.formDriftMult *= 1.5
-        mods.lossMoraleMult *= 0.85
-        mods.lossFormMult *= 0.85
-        mods.trainingFatigueMult *= 0.9
-        mods.decisionNoiseMult *= 0.92
-        mods.structureComplianceBonus += 0.05
-        break
-      case 'lockdown':
-        mods.cushionDeltaM -= 0.35
-        mods.reactionDelayDeltaMs -= 30
-        break
-      case 'turnover_prone':
-        mods.highStallAccuracy -= 5
-        mods.badDecisionMult *= 1.35
-        mods.decisionNoiseMult *= 1.15
-        mods.turnoverMoraleExtra += 0.2
-        mods.acceptanceThresholdDelta -= 4
-        mods.heroThrowWeightMult *= 1.1
-        break
-      case 'showboat':
-        mods.huckWeightMult *= 1.35
-        mods.ottWeightMult *= 1.35
-        mods.huckAccuracy -= 3
-        mods.ottAccuracy -= 3
-        mods.standardWeightMult *= 0.85
+        mods.structureComplianceBonus += 0.08
         break
       case 'quitter':
         mods.lossMoraleMult *= 1.55
@@ -1631,11 +1169,7 @@ function computeTraitMods(player) {
         mods.teamAuraRecvMult *= 0.7
         break
       case 'stubborn':
-        mods.dumpWeightMult *= 0.7
-        mods.dumpEarlyBias -= 0.25
-        mods.huckWeightMult *= 1.15
-        mods.acceptanceThresholdDelta -= 3
-        mods.structureComplianceBonus -= 0.06
+        mods.structureComplianceBonus -= 0.08
         break
       case 'perfectionist':
         mods.safeOptionBias += 0.35
@@ -1680,8 +1214,6 @@ function computeTraitMods(player) {
         mods.highStallAccuracy += 2
         break
       case 'competitor':
-        mods.stall8PlusAccuracy += 4
-        mods.highStallAccuracy += 3
         mods.lossMoraleMult *= 1.2
         mods.lossFormMult *= 1.15
         mods.goalAssistMoraleMult *= 1.1
@@ -1713,11 +1245,8 @@ function computeTraitMods(player) {
         break
       case 'force_happy':
         mods.breakSideOptionBonus += 0.18
-        mods.breakSideAccuracy += 2
         mods.heroThrowWeightMult *= 1.2
         mods.acceptanceThresholdDelta -= 5
-        mods.huckAccuracy -= 2
-        mods.ottAccuracy -= 1
         mods.badDecisionMult *= 1.12
         break
       case 'iso_ball':
@@ -1728,33 +1257,10 @@ function computeTraitMods(player) {
         mods.plantMsMult *= 1.12
         mods.structureComplianceBonus -= 0.05
         break
-      case 'checkdown':
-        mods.dumpWeightMult *= 1.4
-        mods.dumpEarlyBias += 0.4
-        mods.safeOptionBias += 0.4
-        mods.huckWeightMult *= 0.55
-        mods.deepCutBias -= 0.15
-        mods.underCutBias += 0.1
-        mods.huckAcceptanceDelta -= 0.12
-        mods.resetFirstStallBias += 1.5
-        mods.standardWeightMult *= 1.1
-        break
-      case 'sky_baller':
-        mods.aerialRecvMult *= 1.25
-        mods.aerialDefMult *= 1.15
-        mods.layoutAerialMult *= 1.2
-        mods.injuryChanceMult *= 1.25
-        break
       case 'zone_breaker':
         mods.zoneOffenseWeightMult *= 1.45
         mods.ottWeightMult *= 1.15
         mods.breakSideOptionBonus += 0.08
-        break
-      case 'man_d_specialist':
-        mods.personDefenseBlockMult *= 1.12
-        mods.cushionDeltaM -= 0.2
-        mods.zoneDefenseBlockMult *= 0.88
-        mods.poachChanceMult *= 0.85
         break
       case 'foul_prone':
         mods.markPressureBonus += 3
@@ -1763,6 +1269,13 @@ function computeTraitMods(player) {
         mods.injuryChanceMult *= 1.15
         mods.decisionNoiseMult *= 1.08
         break
+      case 'give_and_go': mods.giveAndGoBias += 1; break
+      case 'upline_seeker': mods.uplineBias += 1; break
+      case 'swing_first': mods.swingBias += 1; break
+      case 'attack_turnover': mods.transitionBias += 1; break
+      case 'settle_turnover': mods.transitionBias -= 1; break
+      case 'deny_deep': mods.denyUnderBias -= 0.25; mods.helpDeepBias += 0.2; break
+      case 'deny_under': mods.denyUnderBias += 0.3; break
       default:
         break
     }

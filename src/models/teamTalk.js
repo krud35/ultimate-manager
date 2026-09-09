@@ -43,14 +43,14 @@ export const TEAM_TALK_STATEMENTS = {
       textPl: 'Trzymajcie się planu, grajcie swój styl — bez pośpiechu.',
       textEn: 'Stick to the game plan, play your style — no need to rush.',
       favoredTraits: ['professional', 'composed', 'stoic', 'disciplined'],
-      disfavoredTraits: ['nervous', 'anxious', 'glory_hunter'],
+      disfavoredTraits: ['nervous', 'anxious', 'selfish'],
     },
     {
       id: 'pre_confident',
       tone: 'confident',
       textPl: 'Jesteśmy tu, żeby wygrać. Wierzę w każdego z was.',
       textEn: "We're here to win. I believe in every one of you.",
-      favoredTraits: ['confident', 'leader', 'competitor', 'vocal'],
+      favoredTraits: ['confident', 'leader', 'competitor'],
       disfavoredTraits: ['fragile_ego', 'nervous', 'shy'],
     },
     {

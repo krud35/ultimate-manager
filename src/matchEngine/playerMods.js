@@ -54,15 +54,16 @@ export function setPossessionPlayerMods(
   offenseTactics,
   defensePlayers,
   defenseTactics,
+  context = {},
 ) {
-  stampSide(offensePlayers, offenseTactics, 'offense')
-  stampSide(defensePlayers, defenseTactics, 'defense')
+  stampSide(offensePlayers, offenseTactics, 'offense', context)
+  stampSide(defensePlayers, defenseTactics, 'defense', context)
 }
 
-function stampSide(players, tactics, role) {
+function stampSide(players, tactics, role, context) {
   if (!Array.isArray(players)) return
   for (const player of players) {
     if (!player || typeof player !== 'object') continue
-    setPlayerMods(player, mergeTraitAndCoachMods(player, tactics, role, null))
+    setPlayerMods(player, { ...mergeTraitAndCoachMods(player, tactics, role, null), isClutchPoint: context.isClutchPoint === true })
   }
 }
