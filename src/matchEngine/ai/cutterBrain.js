@@ -1,5 +1,6 @@
 import { uplineSpaceBonus, giveAndGoOfferBonus, doubleMoveSetup } from './traitBehavior.js'
-import { clampAgentPosition, evaluatePlayerSituation } from './spatialEvaluator.js'
+import { playerTravelSec } from './discIntercept.js'
+import { clampAgentPosition } from './spatialEvaluator.js'
 import { attackDirectionX, clampFieldX, clampFieldY, fieldCenterY } from '../fieldDimensions.js'
 import { forceMarkLayoutSide, normalizeForceMark } from '../throwTechnique.js'
 import {
@@ -13,6 +14,8 @@ import {
   ATTACK_STYLES,
 } from './tacticsBehavior.js'
 import { maxSpeedMps, plantStopMs, subStat } from './statFormulas.js'
+import { routeConflict } from './routeAwareness.js'
+import { crowdAwareTarget } from './teamCoordination.js'
 import {
   buildSpaceMap,
   claimAwarenessFor,
@@ -20,6 +23,7 @@ import {
 } from './spaceMap.js'
 import { mergeTraitAndCoachMods } from '../coachDirectives.js'
 import { integrateAgentMotion, repositionSpeedMps, waitingHoldSpeedMps } from './playerMovement.js'
+import { bodyAwareTarget, BODY_TRAFFIC_CALIBRATION } from './bodyTraffic.js'
 import {
   subRoleForAgent,
   subRoleAllowsInitiateCut,
@@ -84,7 +88,7 @@ const SLOT_ERROR_MAX_M = 3.2
 
 function cutInitiationMs(player) {
   const skill =
-    subStat(player, 'mental', 'reactions') * 0.5 + subStat(player, 'mental', 'decisionMaking') * 0.5
+    subStat(player, 'mental', 'reactions') * 0.5 + subStat(player, 'mental', 'anticipation') * 0.5
   const t = Math.max(0, Math.min(1, (skill - 50) / 45))
   return Math.round(CUT_INITIATION_SLOW_MS + (CUT_INITIATION_FAST_MS - CUT_INITIATION_SLOW_MS) * t)
 }
@@ -108,6 +112,22 @@ function applySlotLaneBias(slot, disc, biasM) {
   const sign = dy >= 0 ? 1 : -1
   const shift = biasM >= 0 ? biasM : -Math.min(-biasM, Math.abs(dy))
   return { ...slot, y: clampFieldY(slot.y + sign * shift) }
+}
+
+/**
+ * Przesunięcie slotu formacji WZDŁUŻ osi ataku — założenie trenerskie „pozycjonowanie
+ * stacka" (coachDirectives.stackDepth).
+ *
+ * Dodatnie = stack dalej od dysku, ujemne = bliżej. Konsekwencje, które opisuje suwak,
+ * biorą się z samej geometrii i nie wymagają osobnych reguł: stack bliżej dysku zostawia
+ * wolną przestrzeń deep, ale skraca dystans do obrońców (łatwiejszy small ball); stack
+ * dalej robi miejsce na długie incuty i dla handlerów, za to zagęszcza deep.
+ *
+ * Zawodnik w roli resetu jest pomijany — jego miejsce wyznacza dysk, nie stack.
+ */
+function applySlotDepthBias(slot, disc, attackSign, biasM, isReset) {
+  if (!slot || !disc || !biasM || isReset) return slot
+  return { ...slot, x: clampFieldX(slot.x + attackSign * biasM) }
 }
 
 function slotWithError(slot, player, rng) {
@@ -370,8 +390,9 @@ function pickCutTarget(
     // 2. Ile metrów da zdobycie tej przestrzeni (ujemnie za dyskiem — patrz yardValue).
     score += yardValue(cell.ahead, selfAhead, isReset) * SPACE_BALANCE.yard
     // 3. Czy zdążę tam dobiec.
-    const runM = Math.hypot(cell.x - agent.x, cell.y - agent.y)
-    score -= (runM / speed) * SPACE_BALANCE.reach
+    score -= playerTravelSec(agent, cell, agent.player ?? agent, 'offense', speed) * SPACE_BALANCE.reach
+    score -= routeConflict(agent, cell, speed, teammates ?? []) * 12
+      * subStat(agent.player ?? agent, 'mental', 'spatialAwareness') / 100
     // 4. Osobista preferencja zawodnika.
     if (cell.depth === 'deep') score += deepBias * SPACE_BIAS_WEIGHT
     if (cell.depth === 'under') score += underBias * SPACE_BIAS_WEIGHT
@@ -529,7 +550,8 @@ function resetFitness(agent, resetSlot, preferBonus = 0) {
   const closeness = 1 / (1 + rel * rel)
   // Zawodnik w trakcie cutu nie jest kandydatem — jest zajęty czym innym.
   const busy = agent?.state === CUTTER_STATE.ACTIVE_CUT ? 0.35 : 1
-  return affinity * closeness * busy
+  const craft = subStat(agent.player ?? agent, 'offensive', 'resetMovement') / 100
+  return affinity * closeness * busy * (0.45 + craft * 0.75)
 }
 
 /**
@@ -596,7 +618,7 @@ const CUT_COVERAGE_WEIGHT = 4
 const CUT_COVERAGE_CLAMP = 8
 
 function cutPriority(player, situation, stackIndex) {
-  const cutterMovement = subStat(player, 'offensive', 'cutterMovement')
+  const cutterMovement = subStat(player, 'offensive', 'cutTiming')
   const systems = subStat(player, 'offensive', 'offensiveSystemsKnowledge')
   const catching = subStat(player, 'offensive', 'catching')
   const speed = subStat(player, 'physical', 'speed')
@@ -624,6 +646,8 @@ function cutPriority(player, situation, stackIndex) {
   return p
 }
 
+export const RESET_CUT_CALIBRATION = { stable: true }
+
 export function tickCutterBrain(agent, tickCtx) {
   const {
     dtSec,
@@ -636,7 +660,6 @@ export function tickCutterBrain(agent, tickCtx) {
     isThrower = false,
     isDump = false,
     postCatchReorg = false,
-    throwerId = null,
     throwerPos = null,
     postResetClearout = false,
     elapsedMs = 0,
@@ -661,21 +684,27 @@ export function tickCutterBrain(agent, tickCtx) {
   const attackSign = attackDirectionX(possessionTeam)
 
   const structuralTarget = () =>
-    applySlotLaneBias(
-      formationStructuralTarget({
-        attackStyle,
-        x: agent.x,
-        y: agent.y,
+    applySlotDepthBias(
+      applySlotLaneBias(
+        formationStructuralTarget({
+          attackStyle,
+          x: agent.x,
+          y: agent.y,
+          disc,
+          throwerPos,
+          forceSide,
+          possessionTeam,
+          stackIndex,
+          isDump,
+          rng,
+        }),
         disc,
-        throwerPos,
-        forceSide,
-        possessionTeam,
-        stackIndex,
-        isDump,
-        rng,
-      }),
+        coachMods.slotLaneBiasM ?? 0,
+      ),
       disc,
-      coachMods.slotLaneBiasM ?? 0,
+      attackSign,
+      coachMods.stackDepthBiasM ?? 0,
+      isDump,
     )
 
   const distToDisc = Math.hypot(
@@ -781,6 +810,9 @@ export function tickCutterBrain(agent, tickCtx) {
     }
   } else if (
     postResetClearout &&
+    // A reset may start a new offer; it must not restart an existing route every
+    // tick or prevent its normal review, under-cut and clearing transitions.
+    (!RESET_CUT_CALIBRATION.stable || (state === CUTTER_STATE.WAITING && canStartCut)) &&
     !isDump &&
     !coachMods.continuationOnlyCuts &&
     !coachMods.fillerCutsOnly &&
@@ -793,7 +825,7 @@ export function tickCutterBrain(agent, tickCtx) {
     // spełniony, czyli dla zawodnika bez instrukcji nic się nie zmienia.
     ((coachMods.cutRollMult ?? 1) >= 1 || rng.float() < (coachMods.cutRollMult ?? 1))
   ) {
-    state = CUTTER_STATE.ACTIVE_CUT
+    state = RESET_CUT_CALIBRATION.stable ? CUTTER_STATE.INITIATING_CUT : CUTTER_STATE.ACTIVE_CUT
     stateMs = 0
     const sideMult = situation?.isOpenSide ? 1 : -1
     const angleDeg = (22 + rng.float() * 38) * sideMult
@@ -805,6 +837,7 @@ export function tickCutterBrain(agent, tickCtx) {
     targetX = clampFieldX(throwerPos.x + (ax / d) * dist)
     targetY = clampFieldY(throwerPos.y + (ay / d) * dist)
     agent.cutKind = rng.float() < 0.45 ? 'in' : 'deep'
+    if (RESET_CUT_CALIBRATION.stable) agent.cutReviewMs = 0
     agent.continuationCut = true
     agent.forceClearout = true
   } else if (state === CUTTER_STATE.WAITING) {
@@ -996,17 +1029,14 @@ export function tickCutterBrain(agent, tickCtx) {
         : repositionSpeedMps(player, dist)
     } else {
       const stamina = player?.currentStamina ?? 100
-      let speedMult = stamina < 25 ? 0.8 : 1
+      let speedMult = 1
       if (stamina < 50) {
         speedMult = 1 - (1 - speedMult) * (coachMods.lowStaminaMovePenaltyMult ?? 1)
       }
       if (agent.cutKind === 'deep') speedMult *= coachMods.deepSpeedMult ?? 1
       // Reset handler rzadko cutuje; gdy już, krótszy / wolniejszy wysiłek.
       if (subRole === HANDLER_SUB_ROLES.RESET) speedMult *= 0.72
-      const movement = subStat(player, 'offensive', 'cutterMovement')
-      // Craft ~0.90–1.02 — nie pomnażaj Vmax ponad realistyczny sprint.
-      const craft = 0.9 + (movement / 100) * 0.12
-      speed = maxSpeedMps(player) * speedMult * craft
+      speed = maxSpeedMps(player) * speedMult
     }
     const setup = doubleMoveSetup(subStat(player, 'offensive', 'cutTiming'))
     const origin = agent.feintOrigin
@@ -1014,17 +1044,20 @@ export function tickCutterBrain(agent, tickCtx) {
     const distance = origin ? Math.max(0.1, Math.hypot(targetX - origin.x, targetY - origin.y)) : 1
     const moveX = feint ? clampFieldX(origin.x - (targetX - origin.x) / distance * setup.distanceM) : targetX
     const moveY = feint ? clampFieldY(origin.y - (targetY - origin.y) / distance * setup.distanceM) : targetY
-    const spaced = spacingAdjustedTarget(agent, moveX, moveY, teammates)
+    const spaced = crowdAwareTarget(agent, spacingAdjustedTarget(agent, moveX, moveY, teammates), [...(teammates ?? []), ...(defenders ?? [])])
+    const movement = BODY_TRAFFIC_CALIBRATION.offBall ? bodyAwareTarget({ ...agent, x, y, vx, vy }, spaced,
+      [...(teammates ?? []), ...(defenders ?? [])], speed) : { ...spaced, speed }
     const moved = integrateAgentMotion(
       { ...agent, x, y, vx, vy },
-      spaced.x,
-      spaced.y,
+      movement.x,
+      movement.y,
       speed,
       dtSec,
       true,
       // rola 'offense': zwinność + cutterMovement decydują, jak ostro cutter potrafi
       // zmienić kierunek — czyli ile separacji realnie urywa (patrz mobilityMultiplier).
       'offense',
+      movement.speed,
     )
     x = moved.x
     y = moved.y
@@ -1034,27 +1067,37 @@ export function tickCutterBrain(agent, tickCtx) {
     // Bez piłki zawodnik nie stoi bezczynnie: wraca truchtem / lekkim biegiem na slot
     // (nie sprint — sprint tylko na ACTIVE_CUT).
     const slot = slotWithError(structuralTarget(), agent.player ?? agent, rng)
-    const spaced = spacingAdjustedTarget(agent, slot.x, slot.y, teammates)
+    const spaced = crowdAwareTarget(agent, spacingAdjustedTarget(agent, slot.x, slot.y, teammates), [...(teammates ?? []), ...(defenders ?? [])])
     const drift = Math.hypot(spaced.x - agent.x, spaced.y - agent.y)
     if (drift > 1.5) {
+      const speed = waitingHoldSpeedMps(agent.player ?? agent, drift)
+      const movement = BODY_TRAFFIC_CALIBRATION.offBall ? bodyAwareTarget({ ...agent, x, y, vx, vy }, spaced,
+        [...(teammates ?? []), ...(defenders ?? [])], speed) : { ...spaced, speed }
       const moved = integrateAgentMotion(
         { ...agent, x, y, vx, vy },
-        spaced.x,
-        spaced.y,
-        waitingHoldSpeedMps(agent.player ?? agent, drift),
+        movement.x,
+        movement.y,
+        speed,
         dtSec,
         true,
         'offense',
+        movement.speed,
       )
       x = moved.x
       y = moved.y
       vx = moved.vx
       vy = moved.vy
     } else {
-      x += (rng.float() - 0.5) * 0.15
-      y += (rng.float() - 0.5) * 0.12
-      vx *= 0.5
-      vy *= 0.5
+      const jitter = { x: x + (rng.float() - 0.5) * 0.15, y: y + (rng.float() - 0.5) * 0.12 }
+      if (BODY_TRAFFIC_CALIBRATION.offBall && BODY_TRAFFIC_CALIBRATION.enabled) {
+        const movement = bodyAwareTarget({ ...agent, x, y, vx, vy }, jitter,
+          [...(teammates ?? []), ...(defenders ?? [])], 0.5)
+        const moved = integrateAgentMotion({ ...agent, x, y, vx, vy }, movement.x, movement.y,
+          maxSpeedMps(agent.player ?? agent), dtSec, true, 'offense', movement.speed)
+        ;({ x, y, vx, vy } = moved)
+      } else {
+        x = jitter.x; y = jitter.y; vx *= 0.5; vy *= 0.5
+      }
     }
   }
 
@@ -1088,4 +1131,3 @@ export function createCutterAgent(player, x, y) {
     vy: 0,
   }
 }
-

@@ -533,6 +533,18 @@ export function shouldAttemptPoach(defender, ctx) {
   const def = defenseMods(defenseStyle)
   const defMods = mergeTraitAndCoachMods(defender, defenseTactics, 'defense')
   const traitMult = defMods.poachChanceMult ?? 1
+  /**
+   * „Szukaj poachy: nigdy" zamyka decyzję o poachu. Próg jest −0.55, a nie −1, bo
+   * `poachSeekingMode` przechodzi przez compliance: przy typowym 0.67 dyrektywa −1
+   * dociera tu jako −0.67 i bramka na −1 byłaby martwa. W tym kształcie zawodnik, który
+   * trzyma się systemu, ma zakaz absolutny, a ten o słabej znajomości taktyki spada
+   * poniżej progu i nadal czasem odpuści — czyli dokładnie tak, jak działa reszta
+   * modelu compliance.
+   *
+   * Nie dotyka help deep: asekuracja przestrzeni to osobna oś (helpDeepMode) i ma
+   * działać nawet przy zakazie poachów.
+   */
+  if ((defMods.poachSeekingMode ?? 0) <= -0.55) return false
   // Zawodnik z cechą `poacher` albo instrukcją `poach` poachuje NIEZALEŻNIE od stylu:
   // w zwykłym person defence tendencja stylu to 0.09, więc cecha nie miała czego mnożyć.
   // Taki zawodnik reaguje też na cuty daleko od dysku (deep help, zamykanie open side),
