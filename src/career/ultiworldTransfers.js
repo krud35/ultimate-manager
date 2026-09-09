@@ -44,7 +44,7 @@ const RUMOR_BASE_CHANCE = 0.1
 const RUMOR_WINDOW_MULT = 2.2
 const RUMOR_PRE_WINDOW_MULT = 1.5
 /** Ten sam zawodnik nie wraca do plotek częściej niż raz na tyle dni. */
-const RUMOR_PLAYER_COOLDOWN_DAYS = 10
+const RUMOR_PLAYER_COOLDOWN_DAYS = 30
 const RUMORS_MAX = 14
 /** Po tylu dniach bez transferu nierozliczona plotka może dostać tekst „nie wypaliło”. */
 const RUMOR_STALE_DAYS = 30
@@ -458,7 +458,7 @@ function rumorChanceForDate(career, league, simDate) {
 function rumorCandidates(career, league, simDate, rumors) {
   const recent = new Set(
     rumors
-      .filter((r) => daysBetween(r.date, simDate) < RUMOR_PLAYER_COOLDOWN_DAYS)
+      .filter((r) => !r.resolved || daysBetween(r.date, simDate) < RUMOR_PLAYER_COOLDOWN_DAYS)
       .map((r) => String(r.playerId)),
   )
   const statsByPlayer = league?.playerStats ?? {}
@@ -672,7 +672,7 @@ function staleRumorSpec(career, rumors, ctx) {
   const team = worldTeamById(career.world, hit.teamId)
   const found = findWorldPlayerById(career.world, hit.playerId)
   // Zawodnik już zmienił klub inną drogą — nie ma czego prostować.
-  if (found.teamId != null && String(found.teamId) !== String(hit.teamId)) return null
+  if (!found.player || String(found.teamId) !== String(hit.teamId)) return null
 
   const clubPl = teamLabel(hit.teamId, team?.name, namesPl)
   const clubEn = teamLabel(hit.teamId, team?.name, namesEn)
@@ -803,7 +803,7 @@ export function transferNewsForTick({
     return finish()
   }
 
-  if (rng() < rumorChanceForDate(career, league, simDate)) {
+  if (!rumors.some(r => daysBetween(r.date, simDate) < 3) && rng() < rumorChanceForDate(career, league, simDate)) {
     const candidates = rumorCandidates(career, league, simDate, rumors)
     const subject = weightedPick(candidates, rng)
     if (subject) {

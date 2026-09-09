@@ -645,8 +645,9 @@ function computeCalendarDayStep(career, nextLeague, { weekTick = false, training
   inboxMessages.push(
     ...generateIncomingLoanOffers({ ...offerCareer, world, inbox: inboxBase }, { date: offerDate }),
   )
-  inboxMessages.push(...generateRandomEvents(offerCareer, { date: offerDate }))
-  const followUps = processPendingEventFollowUps(offerCareer, { date: offerDate })
+  const eventCareer = { ...offerCareer, world, transferLog, loanLog, inbox: inboxBase }
+  inboxMessages.push(...generateRandomEvents(eventCareer, { date: offerDate }))
+  const followUps = processPendingEventFollowUps(eventCareer, { date: offerDate })
   if (followUps.messages.length) inboxMessages.push(...followUps.messages)
   inboxMessages.push(
     ...messagesFromNewMatchInjuries(
@@ -1799,9 +1800,10 @@ export default function App() {
     (messageId, choiceId) => {
       if (!career || !messageId || !choiceId) return
       const result = resolveInboxDecision(career, messageId, choiceId)
-      if (!result.ok) return
+      if (!result.ok) return result
       const next = persistCareer(career, result.careerPatch)
       syncCareer(next)
+      return result
     },
     [career, syncCareer],
   )

@@ -34,6 +34,7 @@ export const SERIOUS_INJURY_LABELS = [
 ]
 
 const INJURY_LABEL_EN = {
+  'przeciążenie mięśniowe': 'muscle overload',
   naciągnięcie: 'strain',
   skręcenie: 'sprain',
   stłuczenie: 'bruise',

@@ -15,17 +15,18 @@ import { detectSeasonPhase } from '../league/dayEngine.js'
 import { worldTeamById, worldTeamsList } from './worldState.js'
 import { getTeamElo } from '../models/teamElo.js'
 import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/index.js'
+import { mergeMatchBoxScore } from '../league/leagueStats.js'
 import { UI_LANG } from '../ui/locale.js'
 import { ensureTransferNewsState, transferNewsForTick } from './ultiworldTransfers.js'
 
 const ARTICLES_MAX = 80
 const WORLD_EVENT_CHANCE = 0.24
 /** Dodatkowa szansa na czystą ciekawostkę / felieton (bez wpływu na gameplay). */
-const CURIOSITY_CHANCE = 0.3
+const CURIOSITY_CHANCE = 0.12
 /** Max relacji z pojedynczych meczów na tick (dzień / FF). */
 const MAX_MATCH_ARTICLES_PER_TICK = 1
 /** Ile dni dany szablon world-eventu musi „odpocząć”, zanim może wrócić — ogranicza spam tych samych nagłówków. */
-const WORLD_EVENT_COOLDOWN_DAYS = 6
+const WORLD_EVENT_COOLDOWN_DAYS = 21
 
 const MATCH_ANGLE_SCORE = {
   upset: 10,
@@ -496,250 +497,61 @@ function interestingMatchArticle(career, league, fixture, namesPl, namesEn, rng)
   }
 }
 
-function roundReviewArticles(career, league, round, namesPl, namesEn, rng) {
-  const fixtures = fixturesForRound(league, round).filter((f) => f.status === 'completed')
+export function roundReviewArticles(career, league, round, namesPl, namesEn) {
+  const fixtures = fixturesForRound(league, round).filter(f => f.status === 'completed')
   if (!fixtures.length) return []
-
-  const out = []
-  const roundStats = league.roundPlayerStats?.[String(round)] ?? {}
-  const top7 = topRoundPlayers(roundStats, 7)
-  const publishDate =
-    roundAwardsPublishDate(league, round) ?? career.league?.currentDate
-
-  // Match of the round
-  let best = null
-  let bestScore = -1
-  for (const f of fixtures) {
-    const total = (f.homeScore ?? 0) + (f.awayScore ?? 0)
-    const margin = Math.abs((f.homeScore ?? 0) - (f.awayScore ?? 0))
-    const score = total + (margin <= 2 ? 4 : 0)
-    if (score > bestScore) {
-      bestScore = score
-      best = f
-    }
-  }
-  if (best) {
-    const home = namesPl[best.homeTeamId]
-    const away = namesPl[best.awayTeamId]
-    const homeEn = namesEn[best.homeTeamId] ?? home
-    const awayEn = namesEn[best.awayTeamId] ?? away
-    out.push(
-      makeArticle({
-        category: 'round',
-        headline: `Kolejka ${round}: mecz wieczoru — ${home} ${best.homeScore}–${best.awayScore} ${away}`,
-        headlineEn: `Round ${round}: match of the night — ${homeEn} ${best.homeScore}–${best.awayScore} ${awayEn}`,
-        dek: 'Redakcja Ultiworld wybiera hit weekendu ligowego.',
-        dekEn: 'Ultiworld editors pick the league weekend’s highlight.',
-        body: `Spośród ${fixtures.length} spotkań kolejki ${round} to właśnie ten pojedynek najbardziej rozgrzał komentatorów. Tempo, emocje i wynik ${best.homeScore}–${best.awayScore} — przepis na materiał, który będzie krążył w feedach do środy.`,
-        bodyEn: `Among ${fixtures.length} fixtures in round ${round}, this was the one that lit up the desks. Pace, emotion and a ${best.homeScore}–${best.awayScore} scoreline — feed fuel through Wednesday.`,
-        date: best.date ?? publishDate,
-        career,
-        tags: ['kolejka', `runda-${round}`, 'mecz-wieczoru'],
-        relatedTeamIds: [best.homeTeamId, best.awayTeamId],
-      }),
-    )
-  }
-
+  const date = roundAwardsPublishDate(league, round) ?? league.currentDate
+  const goals = fixtures.reduce((sum, f) => sum + f.homeScore + f.awayScore, 0)
+  const close = fixtures.filter(f => Math.abs(f.homeScore - f.awayScore) === 1)
+  const draws = fixtures.filter(f => f.homeScore === f.awayScore)
+  const awayWins = fixtures.filter(f => f.awayScore > f.homeScore).length
+  const largest = [...fixtures].sort((a, b) => Math.abs(b.homeScore - b.awayScore) - Math.abs(a.homeScore - a.awayScore))[0]
+  const scoreLine = (f, names) => `${names[f.homeTeamId] ?? f.homeTeamId} ${f.homeScore}–${f.awayScore} ${names[f.awayTeamId] ?? f.awayTeamId}`
+  const top7 = topRoundPlayers(league.roundPlayerStats?.[String(round)], 7)
+  const out = [makeArticle({
+    category: 'round', career, date,
+    headline: `Kolejka ${round}: ${goals} punktów, ${close.length} spotkań z różnicą jednego punktu`,
+    headlineEn: `Round ${round}: ${goals} points, ${close.length} one-point games`,
+    dek: `${fixtures.length} meczów · wygrane gości: ${awayWins} · remisy: ${draws.length}`,
+    dekEn: `${fixtures.length} games · away wins: ${awayWins} · draws: ${draws.length}`,
+    body: [`W kolejce ${round} padło ${goals} punktów (średnio ${(goals / fixtures.length).toFixed(1)} na mecz). Goście wygrali ${awayWins} z ${fixtures.length} spotkań.`,
+      Math.abs(largest.homeScore - largest.awayScore) > 0 ? `Najwyższa różnica wyniku: ${scoreLine(largest, namesPl)} (${Math.abs(largest.homeScore - largest.awayScore)} pkt).` : 'Wszystkie spotkania zakończyły się remisem.',
+      close.length ? `Jeden punkt różnicy: ${close.map(f => scoreLine(f, namesPl)).join('; ')}.` : 'Żadne spotkanie nie zakończyło się różnicą jednego punktu.',
+      'Wyniki kolejki:\n' + fixtures.map(f => scoreLine(f, namesPl)).join('\n')].join('\n\n'),
+    bodyEn: [`Round ${round} produced ${goals} points (${(goals / fixtures.length).toFixed(1)} per game). Away teams won ${awayWins} of ${fixtures.length} games.`,
+      Math.abs(largest.homeScore - largest.awayScore) > 0 ? `Largest margin: ${scoreLine(largest, namesEn)} (${Math.abs(largest.homeScore - largest.awayScore)} points).` : 'All games ended in draws.',
+      close.length ? `One-point margins: ${close.map(f => scoreLine(f, namesEn)).join('; ')}.` : 'No game ended with a one-point margin.',
+      'Round results:\n' + fixtures.map(f => scoreLine(f, namesEn)).join('\n')].join('\n\n'),
+    tags: ['results', `round-${round}`], relatedTeamIds: [...new Set(fixtures.flatMap(f => [f.homeTeamId, f.awayTeamId]))],
+  })]
   if (top7.length >= 3) {
-    const lines = top7
-      .map((r, i) => {
-        const to = r.turnovers ?? 0
-        const toBit = to ? ` / ${to}TO` : ''
-        return `${i + 1}. ${playerDisplay(r, namesPl)} — ${r.goals ?? 0}G / ${r.assists ?? 0}A / ${r.blocks ?? 0}B${toBit}`
-      })
-      .join('\n')
-    const star = top7[0]
-    const starPl = playerDisplay(star, namesPl)
-    const starEn = playerDisplay(star, namesEn)
-    const starStats = `${star.goals ?? 0}G / ${star.assists ?? 0}A / ${star.blocks ?? 0}B`
-    const top7Variants = [
-      {
-        intro: `${starPl} rozdaje karty w kolejce ${round}: ${starStats}. Reszta siódemki depcze mu po piętach, ale ten weekend należy do jednego nazwiska.`,
-        introEn: `${starEn} calls the shots in round ${round}: ${starStats}. The rest of the seven are close behind, but this weekend belongs to one name.`,
-        outro: 'Lista nie jest rankingiem OVR — to zdjęcie z konkretnej kolejki, nic więcej.',
-        outroEn: 'Not an OVR ranking — just a snapshot of one round, nothing more.',
-      },
-      {
-        intro: `Gwiazdą kolejki ${round} został ${starPl} — ${starStats}. Ultiworld typuje: to nazwisko wróci w podsumowaniu sezonu.`,
-        introEn: `Round ${round}’s standout is ${starEn} — ${starStats}. Ultiworld’s bet: that name resurfaces in the season wrap-up.`,
-        outro: '„Liczby nie kłamią, ale turnovery potrafią zepsuć highlight” — żartuje nasz analityk.',
-        outroEn: '“Numbers don’t lie — turnovers just ruin the highlight,” jokes our analyst.',
-      },
-      {
-        intro: `Najgłośniejsze nazwisko kolejki ${round}? ${starPl}. ${starStats} — liczby, których nie da się przegapić.`,
-        introEn: `The loudest name in round ${round}? ${starEn}. ${starStats} — numbers you can’t miss.`,
-        outro: 'Reszta stawki niewiele ustępowała. Redakcja liczy do siedmiu, nie do jednego.',
-        outroEn: 'The rest of the pack wasn’t far behind. The desk counts to seven, not to one.',
-      },
-      {
-        intro: `${starPl} zamyka weekend kolejki ${round} z najlepszym bilansem: ${starStats}. Reszta siódemki walczy o resztę uwagi.`,
-        introEn: `${starEn} closes out round ${round} with the best line: ${starStats}. The rest of the seven fight for what attention is left.`,
-        outro: 'Migawka z jednej kolejki, nie wyrok na cały sezon — ale ładnie wygląda w nagłówku.',
-        outroEn: 'A snapshot from one round, not a season verdict — but it reads great in a headline.',
-      },
-      {
-        intro: `Kolejka ${round} miała jednego bohatera: ${starPl}, ${starStats}. Poniedziałkowa siódemka Ultiworld nie mogła zacząć się inaczej.`,
-        introEn: `Round ${round} had one hero: ${starEn}, ${starStats}. Ultiworld’s Monday seven couldn’t start any other way.`,
-        outro: 'Pełen skład poniżej — bez wagi OVR, tylko to, co wydarzyło się na boisku w ten weekend.',
-        outroEn: 'The full lineup below — no OVR weighting, just what happened on the field this weekend.',
-      },
-      {
-        intro: `${starPl} nie zostawił złudzeń w kolejce ${round}: ${starStats}. Reszta stawki patrzy w plecy.`,
-        introEn: `${starEn} left no doubt in round ${round}: ${starStats}. The rest of the pack is chasing shadows.`,
-        outro: 'Redakcja przypomina: to zdjęcie z jednej kolejki, nie sezonowy wyrok.',
-        outroEn: 'A reminder from the desk: this is a snapshot of one round, not a season verdict.',
-      },
-    ]
-    const chosenTop7 = pick(top7Variants, rng)
-    out.push(
-      makeArticle({
-        category: 'awards',
-        headline: `Siódemka kolejki ${round} według Ultiworld`,
-        headlineEn: `Round ${round} seven according to Ultiworld`,
-        dek: 'Poniedziałkowa siódemka — po domknięciu całego weekendu ligowego.',
-        dekEn: 'Monday seven — after the full league weekend is in the books.',
-        body: `${chosenTop7.intro}\n\n${lines}\n\n${chosenTop7.outro}`,
-        bodyEn: `${chosenTop7.introEn}\n\n${lines}\n\n${chosenTop7.outroEn}`,
-        date: publishDate,
-        career,
-        tags: ['top7', `runda-${round}`, 'liderzy', 'poniedziałek'],
-        relatedPlayerIds: top7.map((r) => r.playerId),
-        relatedTeamIds: [...new Set(top7.map((r) => r.teamId).filter(Boolean))],
-      }),
-    )
+    const lines = names => top7.map((r, i) => `${i + 1}. ${playerDisplay(r, names)} — ${r.goals ?? 0}G / ${r.assists ?? 0}A / ${r.blocks ?? 0}B / ${r.turnovers ?? 0}TO`).join('\n')
+    out.push(makeArticle({ category: 'awards', career, date,
+      headline: `Siódemka kolejki ${round}: ${playerDisplay(top7[0], namesPl)}`,
+      headlineEn: `Round ${round} team of the week: ${playerDisplay(top7[0], namesEn)}`,
+      dek: 'Wyłącznie statystyki tej kolejki: gole, asysty, bloki i straty.',
+      dekEn: 'This round only: goals, assists, blocks and turnovers.',
+      body: lines(namesPl), bodyEn: lines(namesEn), tags: ['top7', `round-${round}`],
+      relatedPlayerIds: top7.map(r => r.playerId), relatedTeamIds: [...new Set(top7.map(r => r.teamId))],
+    }))
   }
-
-  const leader = Object.values(league.standings ?? {}).sort((a, b) => {
-    if ((b.wins ?? 0) !== (a.wins ?? 0)) return (b.wins ?? 0) - (a.wins ?? 0)
-    return (
-      (b.pointsFor ?? 0) -
-      (b.pointsAgainst ?? 0) -
-      ((a.pointsFor ?? 0) - (a.pointsAgainst ?? 0))
-    )
-  })[0]
-  const leaderName = leader ? namesPl[leader.teamId] : null
-  const leaderNameEn = leader ? namesEn[leader.teamId] ?? leaderName : null
-  const reviewPool = [
-    {
-      headline: `Przegląd kolejki ${round}: co zostaje w pamięci`,
-      headlineEn: `Round ${round} review: what sticks`,
-      dek: 'Krótki felieton zamiast długiego box score.',
-      dekEn: 'A short column instead of a long box score.',
-      body: `Po ${round}. kolejce tabela zaczyna mówić ludzkim głosem. ${leaderName ? `Na czele ${leaderName}.` : ''} Ultiworld przypomina: w UFA sezon jest maratonem, nie sprintem po jednym weekendu.`,
-      bodyEn: `After round ${round} the table starts speaking in human. ${leaderNameEn ? `${leaderNameEn} sit on top.` : ''} Ultiworld reminder: in UFA the season is a marathon, not a one-weekend sprint.`,
-    },
-    {
-      headline: `Kolejka ${round} okiem Ultiworld`,
-      headlineEn: `Round ${round} through Ultiworld’s lens`,
-      dek: 'Trzy akapity, zero lania wody.',
-      dekEn: 'Three paragraphs, zero filler.',
-      body: `Kolejka ${round} w liczbach: ${fixtures.length} meczów, masa turnowerów i kilka historii, które jeszcze wrócą w playoffowych podsumowaniach.`,
-      bodyEn: `Round ${round} in numbers: ${fixtures.length} matches, a pile of turnovers, and a few stories that will resurface in playoff wrap-ups.`,
-    },
-    {
-      headline: `Po weekendzie #${round}: szybki debrief`,
-      headlineEn: `After weekend #${round}: quick debrief`,
-      dek: 'Dla tych, co nie obejrzeli wszystkich meczów.',
-      dekEn: 'For anyone who didn’t catch every game.',
-      body: `Z perspektywy szatni: ktoś złapał rytm, ktoś zgubił timing. ${leaderName ? `${leaderName} zbiera punkty systematycznie.` : ''} My zbieramy cytaty.`,
-      bodyEn: `From the locker rooms: someone found rhythm, someone lost timing. ${leaderNameEn ? `${leaderNameEn} keep stacking wins.` : ''} We keep stacking quotes.`,
-    },
-    {
-      headline: `Felieton po kolejce ${round}`,
-      headlineEn: `Column after round ${round}`,
-      dek: 'Krótki felieton zamiast długiego box score.',
-      dekEn: 'A short column instead of a long box score.',
-      body: `Weekend nr ${round} zostawił po sobie trzy smaki: euforię, niedosyt i „co jeśli”. Ultiworld tipuje, że najciekawsze historie dopiero się rozkręcają.`,
-      bodyEn: `Weekend #${round} left three flavors: euphoria, unfinished business, and “what if.” Ultiworld tips that the best stories are still warming up.`,
-    },
-    {
-      headline: `Kolejka ${round} okiem Ultiworld`,
-      headlineEn: `Round ${round} through Ultiworld’s lens`,
-      dek: 'Trzy akapity, zero lania wody.',
-      dekEn: 'Three paragraphs, zero filler.',
-      body: `Gdyby kolejka ${round} była playlistą: połowa tracków to bangers, reszta — deep cuty dla prawdziwych fanów. ${leaderName ? `Na topie charts: ${leaderName}.` : ''}`,
-      bodyEn: `If round ${round} were a playlist: half the tracks are bangers, the rest deep cuts for true fans. ${leaderNameEn ? `Top of the charts: ${leaderNameEn}.` : ''}`,
-    },
-    {
-      headline: `Po weekendzie #${round}: szybki debrief`,
-      headlineEn: `After weekend #${round}: quick debrief`,
-      dek: 'Dla tych, co nie obejrzeli wszystkich meczów.',
-      dekEn: 'For anyone who didn’t catch every game.',
-      body: `Analitycy mówią o „kontroli tempa”, zawodnicy o „flow”, trenerzy o „detalach”. My mówimy: kolejka ${round} dostarczyła materiału na tydzień felietonów.`,
-      bodyEn: `Analysts talk “tempo control,” players talk “flow,” coaches talk “details.” We say: round ${round} supplied a week of column fuel.`,
-    },
-    {
-      headline: `Przegląd kolejki ${round}: co zostaje w pamięci`,
-      headlineEn: `Round ${round} review: what sticks`,
-      dek: 'Krótki felieton zamiast długiego box score.',
-      dekEn: 'A short column instead of a long box score.',
-      body: `W ${fixtures.length} meczach zmieniło się więcej niż tylko kolumny W-L. Relacje w szatniach, pewność handlerów, spokój w strefe — to też wynik.`,
-      bodyEn: `Across ${fixtures.length} matches more changed than the W-L columns. Locker-room vibes, handler confidence, calm in the zone — that counts as result too.`,
-    },
-  ]
-  const review = pick(reviewPool, rng)
-  out.push(
-    makeArticle({
-      category: 'round',
-      headline: review.headline,
-      headlineEn: review.headlineEn,
-      dek: review.dek,
-      dekEn: review.dekEn,
-      body: review.body,
-      bodyEn: review.bodyEn,
-      date: publishDate,
-      career,
-      tags: ['przegląd', `runda-${round}`],
-    }),
-  )
-
-  if (rng() < 0.55 && fixtures.length >= 3) {
-    const blowouts = fixtures.filter(
-      (f) => Math.abs((f.homeScore ?? 0) - (f.awayScore ?? 0)) >= 7,
-    )
-    const nailbiters = fixtures.filter(
-      (f) => Math.abs((f.homeScore ?? 0) - (f.awayScore ?? 0)) <= 1,
-    )
-    if (blowouts.length && rng() < 0.5) {
-      const f = pick(blowouts, rng)
-      const h = namesPl[f.homeTeamId]
-      const a = namesPl[f.awayTeamId]
-      const hEn = namesEn[f.homeTeamId] ?? h
-      const aEn = namesEn[f.awayTeamId] ?? a
-      out.push(
-        makeArticle({
-          category: 'feature',
-          headline: `Statystyczny koszmar weekendu: ${h} ${f.homeScore}–${f.awayScore} ${a}`,
-          headlineEn: `Weekend’s statistical nightmare: ${hEn} ${f.homeScore}–${f.awayScore} ${aEn}`,
-          dek: 'Gdy różnica robi się dwucyfrowa, Twitter robi się bezlitosny.',
-          dekEn: 'When the margin goes double digits, social feeds get merciless.',
-          body: `Nie każdy mecz musi być thrillerem. Czasem liga serwuje lekcję pokory w formie wyniku ${f.homeScore}–${f.awayScore}. Ultiworld nie kopie leżących — tylko delikatnie przypomina o resetie w tygodniu.`,
-          bodyEn: `Not every match has to be a thriller. Sometimes the league serves a humility lesson as ${f.homeScore}–${f.awayScore}. Ultiworld doesn’t kick teams while they’re down — just gently mentions the midweek reset.`,
-          date: f.date ?? publishDate,
-          career,
-          tags: ['statystyka', `runda-${round}`],
-          relatedTeamIds: [f.homeTeamId, f.awayTeamId],
-        }),
-      )
-    } else if (nailbiters.length) {
-      out.push(
-        makeArticle({
-          category: 'feature',
-          headline: `Kolejka ${round} kochała nerwy: ${nailbiters.length} mecz(e/y) zdecydowane „o włos”`,
-          headlineEn: `Round ${round} loved the nerves: ${nailbiters.length} matches decided by a hair`,
-          dek: 'Małe marginesy, duże historie.',
-          dekEn: 'Tiny margins, huge stories.',
-          body: `Gdy wynik waży się do końca, ultimate pokazuje najlepszą twarz. W kolejce ${round} mieliśmy ${nailbiters.length} takich starć. Kibice dziękują. Fizjoterapeuci — mniej.`,
-          bodyEn: `When the score hangs until the end, ultimate shows its best face. Round ${round} gave us ${nailbiters.length} of those. Fans thank you. Physios — less so.`,
-          date: publishDate,
-          career,
-          tags: ['nerwy', `runda-${round}`],
-        }),
-      )
-    }
-  }
-
   return out
+}
+
+/** League matches only: cup dates are owned by the bracket. Keep at least 48h between games. */
+export function safePostponementDate(league, fixture, minimumDelay = 3) {
+  if (!fixture?.date || fixture.competition === 'cup' || fixture.postponed) return null
+  const teams = [fixture.homeTeamId, fixture.awayTeamId]
+  for (let delay = minimumDelay; delay <= 7; delay++) {
+    const date = formatISODate(addDays(parseISODate(fixture.date), delay))
+    const seasonYear = league.calendar?.seasonYear
+    if (seasonYear != null && date > `${seasonYear + 1}-07-31`) return null
+    const conflict = (league.fixtures ?? []).some(f => f.id !== fixture.id && f.date &&
+      f.status !== 'cancelled' && teams.some(id => id === f.homeTeamId || id === f.awayTeamId) &&
+      Math.abs(daysBetween(date, f.date)) < 2)
+    if (!conflict) return date
+  }
+  return null
 }
 
 /**
@@ -874,49 +686,29 @@ function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, n
   }
 }
 
-function playerOfMonthArticle(career, league, names, monthIso, rng) {
-  const stats = league?.playerStats ?? {}
-  const rows = Object.values(stats)
-  if (rows.length < 3) return null
-
-  // Przybliżenie POM: liderzy sezonu ważeni formą z rostera jeśli dostępna.
-  const scored = rows
-    .map((r) => {
-      const team = worldTeamById(career.world, r.teamId)
-      const player = team?.players?.find((p) => String(p.id) === String(r.playerId))
-      const form = player?.form ?? 72
-      const ovr = player ? getOverallRating(player.skills) : 70
-      const production =
-        (r.goals ?? 0) * 3 +
-        (r.assists ?? 0) * 2 +
-        (r.blocks ?? 0) * 2 -
-        (r.turnovers ?? 0) * 2 +
-        (r.games ?? 0) * 0.3
-      const score = production * (0.7 + form / 200) * (0.85 + ovr / 400)
-      return { r, score, form, ovr }
-    })
-    .sort((a, b) => b.score - a.score)
-
-  const top = scored.slice(0, 5)
-  if (!top.length) return null
-  // Lekka losowość wśród top 3, by nie zawsze brać sezonowego lidera.
-  const winner = pick(top.slice(0, Math.min(3, top.length)), rng)
-  const p = winner.r
+export function playerOfMonthArticle(career, league, names, monthIso) {
+  const stats = {}
+  const seen = new Set()
+  for (const match of league.matchHistory ?? []) {
+    const fixture = (league.fixtures ?? []).find(f => f.id === match.fixtureId)
+    const key = match.fixtureId ?? match.id
+    if (monthKey(match.date ?? fixture?.date) !== monthIso || (key && seen.has(key))) continue
+    if (key) seen.add(key)
+    mergeMatchBoxScore(stats, match.boxScore ?? [], match.homeTeamId ?? fixture?.homeTeamId, match.awayTeamId ?? fixture?.awayTeamId)
+  }
+  const rows = Object.values(stats).filter(r => scoreRow(r) > 0).sort((a,b) => scoreRow(b) - scoreRow(a) || (a.turnovers ?? 0) - (b.turnovers ?? 0) || String(a.playerId).localeCompare(String(b.playerId)))
+  if (!rows.length) return null
+  const p = rows[0]
   const name = playerDisplay(p, names)
-
-  return makeArticle({
-    category: 'awards',
+  const nameEn = playerDisplay(p, teamNameMap(league, UI_LANG.EN))
+  return makeArticle({ category: 'awards', career, date: league.currentDate,
     headline: `Zawodnik miesiąca (${monthLabelPl(monthIso)}): ${name}`,
-    headlineEn: `Player of the month (${monthLabelEn(monthIso)}): ${name}`,
-    dek: 'Ultiworld wręcza wirtualny dysk miesiąca.',
-    dekEn: 'Ultiworld hands out the virtual disc of the month.',
-    body: `${name} zbiera ${p.goals ?? 0} goli, ${p.assists ?? 0} asyst i ${p.blocks ?? 0} bloków w tym sezonie — a w ${monthLabelPl(monthIso)} jego wpływ był najbardziej widoczny. Formularz redakcji: produkcja + momenty „wow” + głosowanie redaktorów (tak, mamy dwóch). Gratulacje!`,
-    bodyEn: `${name} has ${p.goals ?? 0} goals, ${p.assists ?? 0} assists and ${p.blocks ?? 0} blocks this season — and in ${monthLabelEn(monthIso)} the impact was loudest. Editorial sheet: production + wow moments + editors’ vote (yes, we have two). Congrats!`,
-    date: career.league?.currentDate,
-    career,
-    tags: ['pom', 'nagroda', monthKey(monthIso)],
-    relatedPlayerIds: [p.playerId],
-    relatedTeamIds: p.teamId ? [p.teamId] : [],
+    headlineEn: `Player of the month (${monthLabelEn(monthIso)}): ${nameEn}`,
+    dek: 'Nagroda za wyniki wyłącznie z poprzedniego miesiąca.',
+    dekEn: 'Award based exclusively on last month’s performances.',
+    body: `${name}: ${p.goals} goli, ${p.assists} asyst, ${p.blocks} bloków i ${p.turnovers} strat w ${p.games} meczach w miesiącu ${monthLabelPl(monthIso)}. Wynik redakcyjny: ${scoreRow(p)} (3 za gol, 2 za asystę, 2,5 za blok, −2 za stratę).`,
+    bodyEn: `${nameEn}: ${p.goals} goals, ${p.assists} assists, ${p.blocks} blocks and ${p.turnovers} turnovers in ${p.games} games in ${monthLabelEn(monthIso)}. Editorial score: ${scoreRow(p)} (3 per goal, 2 per assist, 2.5 per block, −2 per turnover).`,
+    tags: ['pom', monthIso], relatedPlayerIds: [p.playerId], relatedTeamIds: [p.teamId],
   })
 }
 
@@ -996,7 +788,7 @@ const WORLD_EVENTS = [
           f.date &&
           f.date >= league.currentDate &&
           f.homeTeamId &&
-          f.awayTeamId,
+          f.awayTeamId && safePostponementDate(league, f),
       ),
     run(career, league, rng) {
       const upcoming = (league.fixtures ?? []).filter(
@@ -1005,14 +797,15 @@ const WORLD_EVENTS = [
           f.date &&
           f.date >= league.currentDate &&
           f.homeTeamId &&
-          f.awayTeamId,
+          f.awayTeamId && safePostponementDate(league, f),
       )
       const fixture = pick(upcoming.slice(0, 12), rng)
       if (!fixture) return null
       const names = teamNameMap(league)
-      const delay = 3 + Math.floor(rng() * 5)
       const oldDate = fixture.date
-      fixture.date = formatISODate(addDays(parseISODate(oldDate), delay))
+      fixture.date = safePostponementDate(league, fixture)
+      if (!fixture.date) { fixture.date = oldDate; return null }
+      const delay = daysBetween(oldDate, fixture.date)
       fixture.postponed = true
       const involvesPlayer =
         fixture.homeTeamId === career.playerTeamId ||
@@ -2711,6 +2504,10 @@ function pickWorldEvent(
 ) {
   const pool = WORLD_EVENTS.filter((e) => {
     if (flavorOnly && e.impact) return false
+    if (!e.impact) {
+      const latest = career.ultiworld?.articles?.find(a => a.worldEventId && !a.impact)
+      if (latest?.date && daysBetween(latest.date, simDate) < 4) return false
+    }
     if (excludeIds?.has?.(e.id)) return false
     if (isEventOnCooldown(cooldowns, e.id, simDate)) return false
     try {
@@ -2862,7 +2659,7 @@ export function processUltiworldTick(career, { date = null } = {}) {
     ultiworld.lastRoundCovered = Math.max(ultiworld.lastRoundCovered ?? 0, maxDone)
     ultiworld.lastPomMonth = ultiworld.lastPomMonth ?? monthKey(simDate)
     ultiworld.seeded = true
-    ultiworld.coveredFixtureIds = [...covered].slice(-400)
+    ultiworld.coveredFixtureIds = [...covered]
     // Kontynuuj tick tylko dla bieżącego dnia (światowe eventy / nowe mecze po seedzie).
   }
 
@@ -2877,12 +2674,11 @@ export function processUltiworldTick(career, { date = null } = {}) {
     if (hit?.article) matchCandidates.push(hit)
   }
   matchCandidates.sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-  const matchCap =
-    matchCandidates[0]?.score >= 9 ? Math.min(2, MAX_MATCH_ARTICLES_PER_TICK + 1) : MAX_MATCH_ARTICLES_PER_TICK
+  const matchCap = MAX_MATCH_ARTICLES_PER_TICK
   for (const hit of matchCandidates.slice(0, matchCap)) {
     newArticles.push(hit.article)
   }
-  ultiworld.coveredFixtureIds = [...covered].slice(-400)
+  ultiworld.coveredFixtureIds = [...covered]
 
   // 2) Zamknięte kolejki → przegląd + top 7 (dopiero w poniedziałek po ostatnim meczu)
   const maxRound = league.totalRounds ?? 30
@@ -2944,7 +2740,8 @@ export function processUltiworldTick(career, { date = null } = {}) {
   // 5) Losowe wydarzenie świata (+ osobna szansa na ciekawostkę)
   const usedEventIds = new Set()
   const cooldowns = { ...(ultiworld.worldEventCooldowns ?? {}) }
-  if (rng() < WORLD_EVENT_CHANCE) {
+  const newDay = ultiworld.lastWorldEventDate !== simDate
+  if (newDay && rng() < WORLD_EVENT_CHANCE) {
     const event = pickWorldEvent({ ...career, world, league }, league, rng, { cooldowns, simDate })
     if (event) {
       usedEventIds.add(event.id)
@@ -2955,7 +2752,8 @@ export function processUltiworldTick(career, { date = null } = {}) {
     league = ran.league
     if (ran.article) newArticles.push(ran.article)
   }
-  if (rng() < CURIOSITY_CHANCE) {
+  const lastFeature = ultiworld.articles.find(a => a.category === 'feature')
+  if (newDay && !newArticles.length && (!lastFeature || daysBetween(lastFeature.date, simDate) >= 4) && rng() < CURIOSITY_CHANCE) {
     const curiosity = pickWorldEvent({ ...career, world, league }, league, rng, {
       flavorOnly: true,
       excludeIds: usedEventIds,
@@ -2977,6 +2775,7 @@ export function processUltiworldTick(career, { date = null } = {}) {
     if (ran.article) newArticles.push(ran.article)
   }
   ultiworld.worldEventCooldowns = cooldowns
+  ultiworld.lastWorldEventDate = simDate
 
   // Cup champion flash
   if (league.cup?.championTeamId && !ultiworld.cupChampionCovered) {

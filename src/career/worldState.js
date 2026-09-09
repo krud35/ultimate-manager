@@ -377,6 +377,7 @@ export function rehydrateCareerWorld(career) {
                 ? career.ultiworld.powerRankingsSnapshot
                 : null,
             lastPowerRankingMonth: career.ultiworld.lastPowerRankingMonth ?? null,
+            lastWorldEventDate: career.ultiworld.lastWorldEventDate ?? null,
             // Newsy transferowe: kursory po transferLog/loanLog + pamięć plotek.
             coveredTransferKeys: Array.isArray(career.ultiworld.coveredTransferKeys)
               ? career.ultiworld.coveredTransferKeys
