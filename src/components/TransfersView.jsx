@@ -479,13 +479,13 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                           <span className="text-[10px] text-ufa-gold">★ #1</span>
                         )}
                         {row.listed && (
+                          <span className="rounded bg-ufa-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
+                            {t.transferListedBadge}
+                          </span>
+                        )}
                         {row.loanListed && (
                           <span className="rounded bg-sky-400/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300 ring-1 ring-sky-400/40">
                             {t.loanListedBadge}
-                          </span>
-                        )}
-                          <span className="rounded bg-ufa-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
-                            {t.transferListedBadge}
                           </span>
                         )}
                       </div>
