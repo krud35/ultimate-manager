@@ -823,6 +823,7 @@ export function simulatePoint({
         trajectory: profile.trajectory,
         stallCount: attemptStall,
         holdStartMs: sim.holdStartMs ?? 0,
+        releasePoint: { x: sim.discX, y: sim.discY },
         separationOutcome: separation.outcome,
         isOpenSide: commitIsOpenSide,
         throwTechnique: commitThrowTechnique ?? sim.throwTechnique ?? null,
@@ -1206,6 +1207,9 @@ export function simulatePointFast({
       homePointStartRole: homePointRole,
       awayPointStartRole: awayPointRole,
       fastMode: true,
+      // This version of fastMode uses fixed home/away geometry.
+      sidesSwapped: false,
+      spatialModel: 'simplified',
     }),
   )
   events.push(createEvent(EVENT.PULL, { team: pullTeam, teamName: teamById(pullTeam).name }))
@@ -1415,6 +1419,7 @@ export function simulatePointFast({
         stallCount,
         separationOutcome: separation.outcome,
         isOpenSide,
+        releasePoint: { x: discMetersFromState(discPositionBefore, possession), y: throwerY },
       }),
     )
 
@@ -1454,6 +1459,8 @@ export function simulatePointFast({
           receiverName: playerLabel(receiver),
           yardsGained,
           isHuck,
+          // Fast throws use throwDy = 0; preserve the position used by that model.
+          catchPoint: { x: discMetersFromState(discPosition, possession), y: throwerY },
           throwType: effectiveThrowType,
           throwScore: result.throwScore,
           defenseScore: result.defenseScore,
@@ -1505,6 +1512,7 @@ export function simulatePointFast({
           throwType: effectiveThrowType,
           isBlock: result.isBlock,
           isDrop: !!(result.isDrop || result.isWindDrop),
+          turnoverPoint: { x: discMetersFromState(discPositionBefore, possession), y: throwerY },
           throwScore: result.throwScore,
           defenseScore: result.defenseScore,
         }),

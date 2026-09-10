@@ -1,4 +1,5 @@
 import { recordMatchDevelopment } from '../career/matchDevelopment.js'
+import { saveScoutingAnalysis } from '../matchEngine/scoutingAnalysis.js'
 /**
  * Silnik dnia kalendarza: mecze AI, blokada na mecz gracza, faza sezonu.
  */
@@ -246,6 +247,8 @@ function ensureFixtureInLeague(league, fixture) {
 
 function applyCupMatchResult(league, fixture, record) {
   const target = findFixtureInLeague(league, fixture.id) ?? fixture
+  if (target.status === 'completed') return
+  saveScoutingAnalysis(league, record)
   target.status = 'completed'
   target.homeScore = record.homeScore
   target.awayScore = record.awayScore

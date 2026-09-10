@@ -47,6 +47,8 @@ import AutoSimOverlay from './match/AutoSimOverlay'
 import FieldView2D from './FieldView2D'
 import { resolveMatchColors } from '../data/teamColors.js'
 import MatchDashboard from './MatchDashboard'
+import ScoutingAnalysisPanel from './ScoutingAnalysisPanel'
+import { buildScoutingAnalysis } from '../matchEngine/scoutingAnalysis.js'
 import TeamNewsView from './match/TeamNewsView'
 import TacticsOverlay from './match/TacticsOverlay'
 import DressingRoomView from './match/DressingRoomView'
@@ -1030,6 +1032,7 @@ export default function MatchView({
   }, [result?.matchStats, result?.events])
 
   const wind = session?.wind ?? result?.wind ?? null
+  const scoutingReport = useMemo(() => result ? buildScoutingAnalysis(result) : null, [result])
 
   const reviewPointMeta = useMemo(() => {
     if (!reviewPointEvents.length) return {}
@@ -1524,6 +1527,8 @@ export default function MatchView({
               {isLeagueMatch ? t.resultSaved : t.matchOver}
             </p>
           </div>
+
+          {result && <ScoutingAnalysisPanel report={scoutingReport} side={playerSide} subtitle={`${homeTeam.name} ${finalHomeScore} : ${finalAwayScore} ${awayTeam.name}`} />}
 
           {reviewPointEvents.length > 0 && (
             <PointHistory

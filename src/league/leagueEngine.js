@@ -1,5 +1,6 @@
-import { recordMatchDevelopment } from '../career/matchDevelopment.js'
 import { recordPlayingStyleMatch } from '../career/playingStyleEvidence.js'
+import { buildScoutingAnalysis, saveScoutingAnalysis } from '../matchEngine/scoutingAnalysis.js'
+import { recordMatchDevelopment } from '../career/matchDevelopment.js'
 import { teamForMatchEngine } from '../data/ufaLeagueTeams.js'
 import { simulateMatch } from '../matchEngine/index.js'
 import {
@@ -138,13 +139,16 @@ export function simulateFixtureMatch(league, fixture) {
     fastMode: true,
   })
 
-  return leagueRecordFromEngineResult(fixture, engineResult, false)
+  return leagueRecordFromEngineResult(fixture, engineResult, false,
+    fixture.homeTeamId === league.playerTeamId || fixture.awayTeamId === league.playerTeamId)
 }
 
 /** Zapis wyniku meczu gracza lub AI do stanu ligi (mutuje league). */
 export function applyMatchResultToLeague(league, matchRecord) {
   const fixture = findFixture(league, matchRecord.fixtureId)
   if (!fixture || fixture.status === 'completed') return league
+
+  saveScoutingAnalysis(league, matchRecord)
 
   fixture.status = 'completed'
   fixture.homeScore = matchRecord.homeScore
@@ -352,7 +356,7 @@ export function finishRound(league) {
 }
 
 /** Buduje rekord wyniku z wyniku silnika (mecz gracza). */
-export function leagueRecordFromEngineResult(fixture, engineResult, playedByPlayer = true) {
+export function leagueRecordFromEngineResult(fixture, engineResult, playedByPlayer = true, collectAnalysis = true) {
   const winner =
     engineResult.homeScore > engineResult.awayScore
       ? fixture.homeTeamId
@@ -387,6 +391,7 @@ export function leagueRecordFromEngineResult(fixture, engineResult, playedByPlay
     awayScore: engineResult.awayScore,
     winner,
     boxScore: engineResult.boxScore,
+    ...(collectAnalysis ? { scoutingAnalysis: buildScoutingAnalysis(engineResult) } : {}),
     matchStats: compactMatchStats(rawMatchStats),
     linePoints: summarizeLineStartPoints(engineResult.events),
     playedByPlayer,

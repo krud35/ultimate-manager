@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ScoutingAnalysisPanel from './ScoutingAnalysisPanel'
 import { useUiLang } from '../ui/UiLangContext'
 import { resolveTeamName } from '../ui/locale'
 import { scoutingStrings } from '../ui/strings/scouting'
@@ -220,6 +221,10 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-ufa-text">{ts.centerTitle}</h2>
 
+      <ScoutingAnalysisPanel report={buyer?.scoutingAnalysis?.last?.report} side={buyer?.scoutingAnalysis?.last?.side}
+        subtitle={buyer?.scoutingAnalysis?.last ? `${buyer.scoutingAnalysis.last.homeName} ${buyer.scoutingAnalysis.last.homeScore} : ${buyer.scoutingAnalysis.last.awayScore} ${buyer.scoutingAnalysis.last.awayName} · ${buyer.scoutingAnalysis.last.date ?? ''}` : null} />
+      <ScoutingAnalysisPanel total={buyer?.scoutingAnalysis?.total ?? { games: 0 }} title={lang === 'pl' ? 'Analiza drużyny' : 'Team analysis'} />
+
       <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
         <h3 className="font-semibold text-ufa-text mb-3">{ts.shortlistTitle}</h3>
         {shortlistRows.length === 0 ? (
@@ -293,8 +298,8 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
         )}
       </section>
 
-      <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
-        <h3 className="font-semibold text-ufa-text mb-1">{ts.playerSearchTitle}</h3>
+      <details className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+        <summary className="cursor-pointer font-semibold text-ufa-text mb-1">{ts.playerSearchTitle}</summary>
         <p className="mb-3 text-xs text-ufa-muted">{ts.playerSearchHint}</p>
 
         <p className="mb-1.5 text-sm text-ufa-muted">{ts.attributesLabel}</p>
@@ -492,10 +497,10 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
             })}
           </div>
         )}
-      </section>
+      </details>
 
-      <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
-        <h3 className="font-semibold text-ufa-text mb-3">{ts.leagueTeamsTitle}</h3>
+      <details className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+        <summary className="cursor-pointer font-semibold text-ufa-text mb-3">{ts.leagueTeamsTitle}</summary>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-ufa-muted">
@@ -545,7 +550,7 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
             </tbody>
           </table>
         </div>
-      </section>
+      </details>
 
       <PlayerProfileModal
         player={profilePlayer}
