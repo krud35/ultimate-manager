@@ -3,6 +3,71 @@ import { processAiContractCycle, releasePlayerToFreeAgency } from './freeAgency.
 import { returnLoanedPlayer } from './loans.js'
 import { getPlayerFullName } from '../../data/mockPlayers.js'
 
+/**
+ * Progi przypomnień o wygasającym kontrakcie: rok / pół roku / 3 miesiące /
+ * miesiąc / tydzień przed końcem — w tygodniach `weeksRemaining` (przybliżenie,
+ * spójne niezależnie od tego, czy kontrakt ma już zapisaną `endDate`).
+ */
+const CONTRACT_EXPIRY_REMINDER_THRESHOLDS = [
+  { key: 'oneYear', weeks: 52, labelPl: 'roku', labelEn: 'one year' },
+  { key: 'sixMonths', weeks: 26, labelPl: 'pół roku', labelEn: 'six months' },
+  { key: 'threeMonths', weeks: 13, labelPl: '3 miesięcy', labelEn: 'three months' },
+  { key: 'oneMonth', weeks: 4, labelPl: 'miesiąca', labelEn: 'one month' },
+  { key: 'oneWeek', weeks: 1, labelPl: 'tygodnia', labelEn: 'one week' },
+]
+
+/**
+ * Przegląda kontrakty zawodników gracza (własnych i wypożyczonych) i wysyła do
+ * skrzynki jednorazowe przypomnienie po przekroczeniu każdego progu z
+ * `CONTRACT_EXPIRY_REMINDER_THRESHOLDS`. Stan "już wysłane" trzyma się na
+ * `contract.remindersSent` — nowy kontrakt (odnowienie/transfer) zaczyna z
+ * czystym stanem, bo `buildContract` zawsze tworzy świeży obiekt.
+ */
+export function processContractExpiryReminders(career) {
+  const world = career?.world
+  const inboxMessages = []
+  if (!world || !career.playerTeamId) return { inboxMessages }
+  const date = career.league?.currentDate ?? null
+
+  for (const team of worldTeamsList(world)) {
+    for (const player of team.players ?? []) {
+      const contract = player.contract
+      if (!contract || !(contract.weeksRemaining > 0)) continue
+      const isMine = team.id === career.playerTeamId || player.loan?.parentTeamId === career.playerTeamId
+      if (!isMine) continue
+
+      if (!contract.remindersSent || typeof contract.remindersSent !== 'object') {
+        contract.remindersSent = {}
+      }
+      for (const threshold of CONTRACT_EXPIRY_REMINDER_THRESHOLDS) {
+        if (contract.remindersSent[threshold.key]) continue
+        if (contract.weeksRemaining > threshold.weeks) continue
+        contract.remindersSent[threshold.key] = true
+        const name = getPlayerFullName(player)
+        inboxMessages.push({
+          id: `contract-reminder-${threshold.key}-${player.id}-${date}`,
+          type: 'club_news',
+          read: false,
+          date,
+          seasonYear: career.seasonYear,
+          seasonIndex: career.seasonIndex,
+          title: `Wygasający kontrakt · ${name}`,
+          titleEn: `Expiring contract · ${name}`,
+          body: `Kontrakt zawodnika ${name} wygaśnie za mniej niż ${threshold.labelPl} (pozostało ${contract.weeksRemaining} tyg.).`,
+          bodyEn: `${name}'s contract expires in less than ${threshold.labelEn} (${contract.weeksRemaining} wks left).`,
+          payload: {
+            kind: 'contract_expiring_soon',
+            playerId: player.id,
+            threshold: threshold.key,
+            weeksRemaining: contract.weeksRemaining,
+          },
+        })
+      }
+    }
+  }
+  return { inboxMessages }
+}
+
 /** Expired contracts cannot silently remain active (including legacy saves). */
 export function processContractExpirations(career, { renewAhead = false } = {}) {
   const world = career?.world

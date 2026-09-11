@@ -307,7 +307,8 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
               clearPlayerContractOnExit(team, row.p)
               const signed = signPlayerContract(team, row.p, {
                 ...auto.terms,
-                signedDate: null,
+                signedDate: league?.currentDate ?? null,
+                seasonYear: league?.calendar?.seasonYear ?? league?.seasonYear ?? null,
               })
               if (signed.ok) renewed += 1
               else row.p.contract = previousContract
@@ -341,7 +342,11 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
           if (canAffordAiRenewal(team, row.p, auto.terms.weeklyWage)) {
             const previousContract = row.p.contract
             clearPlayerContractOnExit(team, row.p)
-            const signed = signPlayerContract(team, row.p, auto.terms)
+            const signed = signPlayerContract(team, row.p, {
+              ...auto.terms,
+              signedDate: league?.currentDate ?? null,
+              seasonYear: league?.calendar?.seasonYear ?? league?.seasonYear ?? null,
+            })
             if (signed.ok) renewed += 1
             else row.p.contract = previousContract
           } else if (rosterOk && desperate && roll < 0.4) {

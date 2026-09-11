@@ -32,6 +32,37 @@ export function displaySeasonLabel(label, lang = UI_LANG.PL) {
   return String(label).replace(/\bUFA\b/g, word)
 }
 
+function pluralPl(n, one, few, many) {
+  if (n === 1) return one
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) return few
+  return many
+}
+
+/**
+ * Pozostały czas kontraktu w zaokrągleniu do miesięcy; powyżej roku jako
+ * „rok/lata/lat i X miesięcy” zamiast surowych tygodni.
+ */
+export function formatContractRemaining(weeksRemaining, lang = UI_LANG.PL) {
+  const weeks = Math.max(0, Math.round(Number(weeksRemaining) || 0))
+  const totalMonths = weeks > 0 ? Math.max(1, Math.round((weeks * 12) / 52)) : 0
+  const years = Math.floor(totalMonths / 12)
+  const months = totalMonths % 12
+
+  if (lang === UI_LANG.EN) {
+    const monthsPart = (n) => (n === 1 ? '1 mo' : `${n} mo`)
+    if (years <= 0) return monthsPart(totalMonths)
+    const yearsPart = years === 1 ? '1 yr' : `${years} yrs`
+    return months > 0 ? `${yearsPart} ${monthsPart(months)}` : yearsPart
+  }
+
+  const monthsPl = (n) => `${n} ${pluralPl(n, 'miesiąc', 'miesiące', 'miesięcy')}`
+  if (years <= 0) return monthsPl(totalMonths)
+  const yearsPl = years === 1 ? 'rok' : `${years} ${pluralPl(years, 'rok', 'lata', 'lat')}`
+  return months > 0 ? `${yearsPl} i ${monthsPl(months)}` : yearsPl
+}
+
 export function formatUiDate(iso, lang = UI_LANG.PL) {
   if (!iso) return '—'
   try {

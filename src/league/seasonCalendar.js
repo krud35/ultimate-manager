@@ -307,6 +307,13 @@ export function buildSeasonCalendar({ seasonYear, teamIds = [] }) {
   }
 }
 
+/** Rok sezonu obejmującego datę (sezon trwa 1 sierpnia – 31 lipca). */
+export function seasonYearForDate(dateStr) {
+  const d = typeof dateStr === 'string' ? parseISODate(dateStr) : dateStr
+  if (!d || Number.isNaN(d.getTime())) return null
+  return d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1
+}
+
 /** 31 lipca roku kończącego sezon (seasonYear → year+1). */
 export function officialSeasonEndDate(calendarOrYear) {
   if (calendarOrYear && typeof calendarOrYear === 'object') {

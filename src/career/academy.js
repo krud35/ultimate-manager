@@ -434,7 +434,11 @@ export function promoteAcademyPlayer(team, playerId, { league = null } = {}) {
   // (rookie jeszcze nic nie udowodnił w seniorach, nie ma siły przetargowej gwiazdy).
   const rookieOvr = getOverallRating(player.skills)
   const terms = { ...auto.terms, years: 1, weeklyWage: Math.round(weeklyWageFromOvr(rookieOvr) * 0.85) }
-  const signed = signPlayerContract(team, player, { ...terms, signedDate: null })
+  const signed = signPlayerContract(team, player, {
+    ...terms,
+    signedDate: league?.currentDate ?? null,
+    seasonYear: league?.calendar?.seasonYear ?? league?.seasonYear ?? null,
+  })
   if (!signed.ok) return { ok: false, error: signed.error ?? 'contract_failed' }
 
   pool.splice(idx, 1)

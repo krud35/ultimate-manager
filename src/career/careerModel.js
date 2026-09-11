@@ -825,7 +825,7 @@ function startNextSeasonEucs(career) {
 
   ensureAiCoachProfiles(world, base.playerTeamId)
   ensureWorldFinances(world, { seed, force: false })
-  ensureWorldContracts(world, { seed, force: false, syncBudgets: true })
+  ensureWorldContracts(world, { seed, force: false, syncBudgets: true, seasonYear: nextYear })
   ensureWorldReputation(world)
   ensureWorldFans(world, { seed, force: false })
   ensureWorldFacilities(world, { seed, force: false })

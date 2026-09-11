@@ -31,6 +31,7 @@ import {
   rollContractYears,
   weeklyWageFromOvr,
   WEEKS_PER_CONTRACT_YEAR,
+  contractSpanForTerms,
 } from './playerContracts.js'
 
 function mixSeed(seed) {
@@ -267,7 +268,11 @@ export function evaluatePlayerContractOffer({
 
   const offerWage = roundWage(weeklyWage)
   const offerYears = Math.max(1, Math.min(5, Math.round(Number(years) || 1)))
-  const weeks = offerYears * WEEKS_PER_CONTRACT_YEAR
+  const weeks = contractSpanForTerms({
+    signedDate: league?.currentDate ?? null,
+    years: offerYears,
+    seasonYear: league?.calendar?.seasonYear ?? league?.seasonYear ?? null,
+  }).weeksTotal
   const relief = promiseWageRelief(promises)
   const bonusEq = bonusWageEquivalent(bonuses, weeks)
   const effectiveDemand = roundWage(demands.minWeeklyWage * (1 - relief) - bonusEq)
@@ -364,7 +369,11 @@ export function evaluatePlayerContractOffer({
         : offerYears
     const counterTotal = contractTotalCost(
       counterWage,
-      counterYears * WEEKS_PER_CONTRACT_YEAR,
+      contractSpanForTerms({
+        signedDate: league?.currentDate ?? null,
+        years: counterYears,
+        seasonYear: league?.calendar?.seasonYear ?? league?.seasonYear ?? null,
+      }).weeksTotal,
     )
     return {
       status: 'counter',

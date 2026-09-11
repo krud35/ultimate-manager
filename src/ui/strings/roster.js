@@ -25,6 +25,10 @@ const pl = {
   hand: 'Ręka',
   transferListedBadge: 'Na liście',
   loanedInBadge: (club) => `Wypożyczony od ${club}`,
+  salary: 'Pensja',
+  contractRemaining: 'Kontrakt',
+  salaryWeeklyShort: (amount) => `${amount}/tydz.`,
+  noContract: '—',
 }
 
 const en = {
@@ -52,6 +56,10 @@ const en = {
   hand: 'Hand',
   transferListedBadge: 'Listed',
   loanedInBadge: (club) => `On loan from ${club}`,
+  salary: 'Salary',
+  contractRemaining: 'Contract',
+  salaryWeeklyShort: (amount) => `${amount}/wk`,
+  noContract: '—',
 }
 
 export function rosterStrings(lang = UI_LANG.PL) {

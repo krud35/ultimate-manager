@@ -15,8 +15,35 @@ import { getPlayerFullName } from '../../data/mockPlayers.js'
 import { standingsTable } from '../../league/standings.js'
 import { adjustTransferBudget } from './clubFinances.js'
 import { formatUsd } from './moneyFormat.js'
+import { officialSeasonEndDate, parseISODate, formatISODate, seasonYearForDate } from '../../league/seasonCalendar.js'
 
 export const WEEKS_PER_CONTRACT_YEAR = 52
+
+const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
+
+/**
+ * Data końca kontraktu wyrównana do końca sezonu (31 lipca) — kontrakty nie
+ * powinny wygasać w trakcie sezonu, tylko wraz z jego zakończeniem. `years`
+ * liczone jest tak, że sezon w trakcie którego podpisano umowę to rok 1.
+ */
+function seasonAlignedContractEndDate({ signedDate, years, seasonYear }) {
+  const baseSeasonYear = signedDate != null ? seasonYearForDate(signedDate) : null
+  const anchorSeasonYear = baseSeasonYear ?? (Number.isFinite(seasonYear) ? Math.round(seasonYear) : null)
+  if (anchorSeasonYear == null) return null
+  return officialSeasonEndDate(anchorSeasonYear + Math.max(1, Math.round(years)) - 1)
+}
+
+function seasonStartDate(seasonYear) {
+  return formatISODate(new Date(seasonYear, 7, 1))
+}
+
+function weeksBetweenDates(fromDate, toDate) {
+  if (!fromDate || !toDate) return null
+  const from = parseISODate(fromDate).getTime()
+  const to = parseISODate(toDate).getTime()
+  if (!Number.isFinite(from) || !Number.isFinite(to)) return null
+  return Math.max(1, Math.round((to - from) / MS_PER_WEEK))
+}
 
 /** @typedef {'goals_season'|'assists_season'|'championship'|'cup_win'|'appearances'} ContractBonusType */
 /** @typedef {'playing_time'|'key_role'|'title_challenge'|'development'|'no_bench'} ContractPromiseType */
@@ -193,6 +220,27 @@ export function rollWeeklyWage(player, rng) {
 }
 
 /**
+ * Długość kontraktu (w tygodniach) wyrównana do końca sezonu (31 lipca), dla
+ * danej daty podpisania/roku sezonu i liczby lat. Współdzielone przez tworzenie
+ * kontraktu (`buildContract`) i podgląd oferty w negocjacjach.
+ * @param {{ signedDate?: string|null, years: number, seasonYear?: number|null }} params
+ * @returns {{ weeksTotal: number, endDate: string|null }}
+ */
+export function contractSpanForTerms({ signedDate = null, years, seasonYear = null }) {
+  const y = clamp(Math.round(Number(years) || 1), 1, 5)
+  const anchorSeasonYear =
+    signedDate != null
+      ? seasonYearForDate(signedDate)
+      : Number.isFinite(seasonYear)
+        ? Math.round(seasonYear)
+        : null
+  const endDate = seasonAlignedContractEndDate({ signedDate, years: y, seasonYear: anchorSeasonYear })
+  const anchorDate = signedDate ?? (anchorSeasonYear != null ? seasonStartDate(anchorSeasonYear) : null)
+  const weeksTotal = weeksBetweenDates(anchorDate, endDate) ?? y * WEEKS_PER_CONTRACT_YEAR
+  return { weeksTotal, endDate }
+}
+
+/**
  * @param {object} player
  * @param {{
  *   weeklyWage: number,
@@ -200,14 +248,14 @@ export function rollWeeklyWage(player, rng) {
  *   bonuses?: object[],
  *   promises?: object[],
  *   signedDate?: string|null,
- *   weeksElapsed?: number,
+ *   seasonYear?: number|null,
  * }} terms
  */
 export function buildContract(player, terms) {
   const years = clamp(Math.round(Number(terms.years) || 1), 1, 5)
-  const weeksTotal = years * WEEKS_PER_CONTRACT_YEAR
-  const elapsed = Math.max(0, Math.round(Number(terms.weeksElapsed) || 0))
-  const weeksRemaining = Math.max(1, weeksTotal - elapsed)
+  const signedDate = terms.signedDate ?? null
+  const { weeksTotal, endDate } = contractSpanForTerms({ signedDate, years, seasonYear: terms.seasonYear })
+  const weeksRemaining = weeksTotal
   const weeklyWage = roundWage(terms.weeklyWage)
 
   return {
@@ -215,7 +263,9 @@ export function buildContract(player, terms) {
     years,
     weeksTotal,
     weeksRemaining,
-    signedDate: terms.signedDate ?? null,
+    signedDate,
+    // Data końca kontraktu (31 lipca danego sezonu) — kontrakty nie kończą się w trakcie sezonu.
+    endDate,
     bonuses: Array.isArray(terms.bonuses) ? terms.bonuses.map(normalizeBonus) : [],
     promises: Array.isArray(terms.promises) ? terms.promises.map(normalizePromise) : [],
     // Baza do obietnicy „development” — porównywana z aktualnym OVR na koniec sezonu.
@@ -226,6 +276,9 @@ export function buildContract(player, terms) {
       terms.bonusesPaidSeasons && typeof terms.bonusesPaidSeasons === 'object'
         ? { ...terms.bonusesPaidSeasons }
         : {},
+    // Progi przypomnień o wygasającym kontrakcie już wysłane graczowi (patrz contractLifecycle.js).
+    remindersSent:
+      terms.remindersSent && typeof terms.remindersSent === 'object' ? { ...terms.remindersSent } : {},
   }
 }
 
@@ -251,19 +304,21 @@ function normalizePromise(p) {
 
 /**
  * Losuje kontrakt startowy (przy tworzeniu świata).
- * Część kontraktu już „zużyta” (0–40% długości), żeby składy nie startowały z pełnymi rezerwami.
+ * Część kontraktu już „zużyta” (0–40% długości), żeby składy nie startowały z pełnymi
+ * rezerwami — symulowane przez skrócenie liczby POZOSTAŁYCH lat, a nie przez odjęcie
+ * tygodni od sezonowo wyrównanego `weeksTotal` (to przesunęłoby faktyczny koniec
+ * kontraktu z powrotem w środek sezonu).
  */
-export function rollPlayerContract(player, seedBase = 0) {
+export function rollPlayerContract(player, seedBase = 0, seasonYear = null) {
   const rng = createRng(hashString(`${seedBase}|contract|${player?.id ?? '?'}`))
-  const years = rollContractYears(player, rng)
+  const originalYears = rollContractYears(player, rng)
   const weeklyWage = rollWeeklyWage(player, rng)
-  const weeksTotal = years * WEEKS_PER_CONTRACT_YEAR
   const consumedFrac = rng.float() * 0.4
-  const weeksElapsed = Math.floor(weeksTotal * consumedFrac)
+  const remainingYears = Math.max(1, Math.round(originalYears * (1 - consumedFrac)))
   return buildContract(player, {
     weeklyWage,
-    years,
-    weeksElapsed,
+    years: remainingYears,
+    seasonYear,
     bonuses: [],
     promises: [],
   })
@@ -288,6 +343,7 @@ export function ensurePlayerContract(player, options = {}) {
       ),
       weeksRemaining: Math.max(0, Math.round(c.weeksRemaining)),
       signedDate: c.signedDate ?? null,
+      endDate: c.endDate ?? null,
       bonuses: Array.isArray(c.bonuses) ? c.bonuses.map(normalizeBonus).filter(Boolean) : [],
       promises: Array.isArray(c.promises) ? c.promises.map(normalizePromise).filter(Boolean) : [],
       ovrCheckpoint: Number.isFinite(c.ovrCheckpoint)
@@ -297,10 +353,12 @@ export function ensurePlayerContract(player, options = {}) {
         c.bonusesPaidSeasons && typeof c.bonusesPaidSeasons === 'object'
           ? { ...c.bonusesPaidSeasons }
           : {},
+      remindersSent:
+        c.remindersSent && typeof c.remindersSent === 'object' ? { ...c.remindersSent } : {},
     }
     return player
   }
-  player.contract = rollPlayerContract(player, options.seed ?? 0)
+  player.contract = rollPlayerContract(player, options.seed ?? 0, options.seasonYear ?? null)
   return player
 }
 
@@ -327,16 +385,17 @@ export function teamWeeklyWageBill(team) {
 /**
  * Inicjuje kontrakty w świecie + synchronizuje budżet pensji z odpowiedzialnością.
  * @param {import('../worldState.js').WorldState} world
- * @param {{ seed?: number, force?: boolean, syncBudgets?: boolean }} [options]
+ * @param {{ seed?: number, force?: boolean, syncBudgets?: boolean, seasonYear?: number }} [options]
  */
 export function ensureWorldContracts(world, options = {}) {
   if (!world?.teamsById) return world
   const seed = options.seed ?? 0
   const syncBudgets = options.syncBudgets !== false
+  const seasonYear = options.seasonYear ?? world.templateSeasonYear ?? null
 
   for (const team of worldTeamsList(world)) {
     for (const player of team.players ?? []) {
-      ensurePlayerContract(player, { seed, force: !!options.force })
+      ensurePlayerContract(player, { seed, force: !!options.force, seasonYear })
     }
     if (syncBudgets) {
       syncTeamSalaryBudget(team, { seed, forceInit: !!options.force })

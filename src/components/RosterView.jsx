@@ -1,5 +1,5 @@
 import { useUiLang } from '../ui/UiLangContext'
-import { pickLabel } from '../ui/locale'
+import { pickLabel, formatContractRemaining } from '../ui/locale'
 import { rosterStrings } from '../ui/strings/roster'
 import { useMemo, useState } from 'react'
 import { UFA_LEAGUE_TEAMS } from '../data/ufaLeagueTeams.js'
@@ -30,7 +30,7 @@ import {
   injuryStatusLabel,
   isPlayerInjured,
 } from '../models/playerInjury.js'
-import { formatUsdCompact, getPlayerMarketValue } from '../career'
+import { formatUsd, formatUsdCompact, getPlayerMarketValue } from '../career'
 import PlayerTraitChips from './PlayerTraitChips'
 import { fatigueBandLabel, fatigueBandToneClass } from '../ui/fogOfWar'
 import { currentMatchStamina } from '../matchEngine/stamina.js'
@@ -51,6 +51,8 @@ const SORT_OPTIONS = [
   { id: 'form', labelPl: 'Forma', labelEn: 'Form' },
   { id: 'morale', label: 'Morale' },
   { id: 'stamina', label: 'Stamina' },
+  { id: 'salary', labelPl: 'Pensja', labelEn: 'Salary' },
+  { id: 'contractRemaining', labelPl: 'Kontrakt', labelEn: 'Contract' },
 ]
 
 const MAIN_COLUMNS = [
@@ -266,7 +268,7 @@ export default function RosterView({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1120px] text-left text-sm">
+          <table className="w-full min-w-[1280px] text-left text-sm">
             <thead>
               <tr className="border-b border-ufa-border bg-ufa-bg/80 text-xs uppercase tracking-wider text-ufa-muted">
                 <th className="px-4 py-3 font-medium">{t.player}</th>
@@ -277,6 +279,8 @@ export default function RosterView({
                 <th className="px-3 py-3 font-medium">{t.hand}</th>
                 <th className="px-3 py-3 font-medium">OVR</th>
                 <th className="px-3 py-3 font-medium">{t.value}</th>
+                <th className="px-3 py-3 font-medium">{t.salary}</th>
+                <th className="px-3 py-3 font-medium">{t.contractRemaining}</th>
                 <th className="px-3 py-3 font-medium">{t.form}</th>
                 <th className="px-3 py-3 font-medium">{t.morale}</th>
                 <th className="px-3 py-3 font-medium">{t.matchFreshnessCol}</th>
@@ -365,6 +369,16 @@ export default function RosterView({
                     </td>
                     <td className="px-3 py-3 tabular-nums text-ufa-gold font-medium">
                       {formatUsdCompact(getPlayerMarketValue(player))}
+                    </td>
+                    <td className="px-3 py-3 tabular-nums text-ufa-muted">
+                      {player.contract?.weeklyWage
+                        ? t.salaryWeeklyShort(formatUsd(player.contract.weeklyWage))
+                        : t.noContract}
+                    </td>
+                    <td className="px-3 py-3 tabular-nums text-ufa-muted">
+                      {player.contract?.weeksRemaining != null
+                        ? formatContractRemaining(player.contract.weeksRemaining, lang)
+                        : t.noContract}
                     </td>
                     <td className={`px-3 py-3 font-semibold ${formToneClass(form)}`}>
                       {formLabel(form, lang)}

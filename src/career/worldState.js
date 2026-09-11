@@ -321,7 +321,12 @@ export function rehydrateCareerWorld(career) {
     (career.slotIndex ?? 0) * 17 +
     (career.seasonIndex ?? 1) * 31
   ensureWorldFinances(world, { seed: financeSeed, force: false })
-  ensureWorldContracts(world, { seed: financeSeed, force: false, syncBudgets: true })
+  ensureWorldContracts(world, {
+    seed: financeSeed,
+    force: false,
+    syncBudgets: true,
+    seasonYear: career.seasonYear ?? world.templateSeasonYear,
+  })
   for (const team of worldTeamsList(world)) {
     team.managementDate = career.league?.currentDate ?? team.managementDate
     ensureClubManagement(team, career.seasonYear)

@@ -130,6 +130,14 @@ function sortPlayers(players, sortKey, sortDir, getStamina) {
         va = getPlayerForm(a)
         vb = getPlayerForm(b)
         break
+      case 'salary':
+        va = a.contract?.weeklyWage ?? 0
+        vb = b.contract?.weeklyWage ?? 0
+        break
+      case 'contractRemaining':
+        va = a.contract?.weeksRemaining ?? 0
+        vb = b.contract?.weeksRemaining ?? 0
+        break
       default:
         va = readCategorySkill(a.skills, sortKey)
         vb = readCategorySkill(b.skills, sortKey)

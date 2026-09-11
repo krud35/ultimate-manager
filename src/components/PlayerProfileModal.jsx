@@ -47,7 +47,7 @@ import { SkillBar, ThrowingHandBadge } from './TeamRosterPanel'
 import StaminaBar from './StaminaBar'
 import PlayerTraitChips from './PlayerTraitChips'
 import { useUiLang } from '../ui/UiLangContext'
-import { UI_LANG } from '../ui/locale'
+import { UI_LANG, formatContractRemaining } from '../ui/locale'
 import { playerProfileStrings } from '../ui/strings/playerProfile'
 import { scoutingStrings } from '../ui/strings/scouting'
 import { resolveTeamName } from '../ui/locale'
@@ -390,7 +390,7 @@ export default function PlayerProfileModal({
                       ? t.contractTitle(
                           formatUsd(contract.weeklyWage),
                           contract.years,
-                          contract.weeksRemaining,
+                          formatContractRemaining(contract.weeksRemaining, lang),
                         )
                       : undefined
                   }
@@ -488,7 +488,7 @@ export default function PlayerProfileModal({
               <div>
                 <p className="text-xs text-ufa-muted">{t.remaining}</p>
                 <p className="text-lg font-semibold tabular-nums">
-                  {t.weeks(contract.weeksRemaining)}
+                  {formatContractRemaining(contract.weeksRemaining, lang)}
                 </p>
               </div>
               {isOwnPlayer && (

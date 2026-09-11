@@ -44,7 +44,7 @@ import {
 import { advanceNationalTeamsForDate } from './nationalTeamSeason.js'
 import { processTeamTrainingsForDate, weeklyTeamTrainingMaintenance } from './teamTraining.js'
 import { advanceCalendarDay, getPlayerFixtureOnDate, areCompetitionsComplete } from '../league/dayEngine.js'
-import { processContractExpirations } from './transfers/contractLifecycle.js'
+import { processContractExpirations, processContractExpiryReminders } from './transfers/contractLifecycle.js'
 import { recordMatchKnowledgeGainForNewMatches } from './scouting.js'
 import { messagesFromNewPlayerMatches } from './inbox.js'
 
@@ -116,6 +116,9 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
       })
       inboxMessages.push(
         ...messagesFromForcedTransferListDemands(forcedListDemands, { ...career, league: nextLeague }),
+      )
+      inboxMessages.push(
+        ...processContractExpiryReminders({ ...career, league: nextLeague }).inboxMessages,
       )
     }
   }

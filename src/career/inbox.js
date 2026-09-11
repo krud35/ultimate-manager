@@ -88,6 +88,7 @@ const SILENT_CLUB_NEWS_KINDS = new Set([
   'sponsor_payout',
   'sponsor_expired',
   'sponsor_expiring_soon',
+  'contract_expiring_soon',
   'contract_bonus_paid',
   'fan_shop',
   'tv_payout',
