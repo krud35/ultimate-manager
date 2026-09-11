@@ -129,6 +129,8 @@ function typeBadgeClass(type) {
       return 'border-sky-400/40 bg-sky-400/10 text-sky-300'
     case INBOX_TYPES.SCOUT_REPORT:
       return 'border-teal-400/40 bg-teal-400/10 text-teal-300'
+    case INBOX_TYPES.WATCHABLE_FINAL:
+      return 'border-ufa-gold/40 bg-ufa-gold/10 text-ufa-gold'
     default:
       return 'border-ufa-border bg-ufa-bg text-ufa-muted'
   }
@@ -880,6 +882,8 @@ function MessageDetail({
   offerBusy,
   onResolveDecision,
   onSponsorSign = null,
+  onWatchFinal = null,
+  onIgnoreFinal = null,
 }) {
   const { lang } = useUiLang()
   const [decisionError, setDecisionError] = useState(null)
@@ -1135,6 +1139,37 @@ function MessageDetail({
         </div>
       )}
 
+      {message.type === INBOX_TYPES.WATCHABLE_FINAL && p.status === 'pending' && (
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            disabled={!onWatchFinal}
+            onClick={() => onWatchFinal?.(message.id)}
+            className="rounded-lg border border-ufa-accent/50 bg-ufa-accent/10 px-4 py-3 text-left transition-colors hover:border-ufa-accent hover:bg-ufa-accent/20 disabled:opacity-40"
+          >
+            <span className="block text-sm font-medium text-ufa-text">
+              {lang === UI_LANG.EN ? 'Watch live' : 'Oglądaj na żywo'}
+            </span>
+          </button>
+          <button
+            type="button"
+            disabled={!onIgnoreFinal}
+            onClick={() => onIgnoreFinal?.(message.id)}
+            className="rounded-lg border border-ufa-border bg-ufa-bg/60 px-4 py-3 text-left transition-colors hover:border-ufa-border/80 hover:bg-ufa-bg disabled:opacity-40"
+          >
+            <span className="block text-sm font-medium text-ufa-text">
+              {lang === UI_LANG.EN ? 'Ignore (resolve automatically)' : 'Zignoruj (rozstrzygnie się automatycznie)'}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {message.type === INBOX_TYPES.WATCHABLE_FINAL && p.status === 'resolved' && (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-ufa-muted">
+          {lang === UI_LANG.EN ? 'Resolved.' : 'Rozstrzygnięte.'}
+        </div>
+      )}
+
       {message.type === INBOX_TYPES.RANDOM_EVENT &&
         !pendingDecision &&
         !resolvedDecision && (
@@ -1271,6 +1306,8 @@ export default function InboxView({
   onTransferOfferAction = null,
   onResolveDecision = null,
   onSponsorSign = null,
+  onWatchFinal = null,
+  onIgnoreFinal = null,
   initialSelectedId = null,
   onConsumeFocus = null,
 }) {
@@ -1530,6 +1567,8 @@ export default function InboxView({
                   offerBusy={offerBusy}
                   onResolveDecision={onResolveDecision}
                   onSponsorSign={handleSponsorSign}
+                  onWatchFinal={onWatchFinal}
+                  onIgnoreFinal={onIgnoreFinal}
                 />
                 <div className="mt-6 flex flex-wrap gap-2 border-t border-ufa-border pt-4">
                   <button

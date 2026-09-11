@@ -183,6 +183,10 @@ export default function MatchView({
   leaguePlayerStats = null,
   league = null,
   onMatchLockChange = null,
+  /** Widz: finał Pucharu Stycznia / ME-MŚ, oba boki AI, bez dostępu do taktyk — patrz
+   *  career/watchableFinals.js + App.jsx. Pomija prep/team-news/szatnię, startuje od razu
+   *  w "live" i auto-gra kolejne punkty pełnym silnikiem, z pełną wizualizacją boiska. */
+  spectatorMode = false,
 }) {
   const { lang } = useUiLang()
   const t = matchStrings(lang)
@@ -300,8 +304,9 @@ export default function MatchView({
     [homeTeam, awayTeam],
   )
 
-  const playerSide =
-    playerTeamId && homeTeam.id === playerTeamId
+  const playerSide = spectatorMode
+    ? null
+    : playerTeamId && homeTeam.id === playerTeamId
       ? 'home'
       : playerTeamId && awayTeam.id === playerTeamId
         ? 'away'
@@ -353,8 +358,10 @@ export default function MatchView({
   const matchOptions = () => ({
     homeTeam,
     awayTeam,
-    homeTactics: playerSide === 'home' ? matchTactics : aiTacticsRef.current,
-    awayTactics: playerSide === 'away' ? matchTactics : aiTacticsRef.current,
+    // spectatorMode: żadna strona nie jest "gracza" — zostaw obie strony bez
+    // narzuconej taktyki, initMatchSession sam dobierze `tacticsForTeam` per drużyna.
+    homeTactics: spectatorMode ? null : playerSide === 'home' ? matchTactics : aiTacticsRef.current,
+    awayTactics: spectatorMode ? null : playerSide === 'away' ? matchTactics : aiTacticsRef.current,
     seed: isLeagueMatch ? leagueFixture.id.length * 9973 : parseSeed(seedInput),
   })
 
@@ -406,6 +413,8 @@ export default function MatchView({
   }
 
   function validatePlayerLineup() {
+    // Widz: obie strony AI, nikt nie wybiera składu — nic tu nie blokuje kolejnego punktu.
+    if (spectatorMode) return { ok: true }
     if (!session || !matchTactics) return { ok: false, reason: 'empty' }
     const roster = playerRosterForValidation()
     const role = pointStartRoleForTeam(playerSide, session.pullTeam)
@@ -768,8 +777,9 @@ export default function MatchView({
     tacticsAutoOpenedForRef.current = null
     setPointByPointMode(false)
     setTacticsModalOpen(false)
-    setShowFullStats(false)
-    setStage('prep')
+    setShowFullStats(spectatorMode)
+    // Widz pomija prep/team-news/szatnię — startuje wprost w "live" (patrz efekt auto-advance niżej).
+    setStage(spectatorMode ? 'live' : 'prep')
     if (!isLeagueMatch || leagueFixture.status === 'completed') return
     setInstantResult(null)
     setReviewPointIndex(null)
@@ -1122,14 +1132,17 @@ export default function MatchView({
     playerSide === 'home' ? playbackStaminaMaps?.home : playbackStaminaMaps?.away
 
   const showLineupPanel =
+    !spectatorMode &&
     matchLive &&
     canPlayPoint &&
     pointPlaybackComplete &&
     !fieldPlaying &&
     !pointByPointMode
 
-  /** Po zdobyciu punktu — od razu otwórz wybór składu/taktyki na kolejny punkt. */
+  /** Po zdobyciu punktu — od razu otwórz wybór składu/taktyki na kolejny punkt.
+   *  Widz (spectatorMode) nie wybiera nic — patrz efekt auto-advance niżej. */
   useEffect(() => {
+    if (spectatorMode) return
     if (stage !== 'live') return
     if (!matchLive || !canPlayPoint || !pointPlaybackComplete || fieldPlaying) return
     // W trakcie auto-symulacji gracz nic nie wybiera — okno taktyk by tylko migało.
@@ -1138,6 +1151,7 @@ export default function MatchView({
     tacticsAutoOpenedForRef.current = activeReviewPoint
     setTacticsModalOpen(true)
   }, [
+    spectatorMode,
     stage,
     matchLive,
     canPlayPoint,
@@ -1146,6 +1160,19 @@ export default function MatchView({
     activeReviewPoint,
     autoSimProgress,
   ])
+
+  /** Widz: zamiast otwierać okno taktyk, po krótkiej pauzie (żeby wynik/punkt było widać)
+   *  sam gra kolejny punkt — obie strony AI, pełny silnik, pełna wizualizacja na boisku. */
+  const spectatorAdvancedForRef = useRef({})
+  const SPECTATOR_POINT_DELAY_MS = 1100
+  useEffect(() => {
+    if (!spectatorMode || stage !== 'live') return undefined
+    if (!matchLive || !canPlayPoint || !pointPlaybackComplete || fieldPlaying) return undefined
+    if (spectatorAdvancedForRef.current === activeReviewPoint) return undefined
+    spectatorAdvancedForRef.current = activeReviewPoint
+    const timer = window.setTimeout(() => handlePlayNextPoint(), SPECTATOR_POINT_DELAY_MS)
+    return () => window.clearTimeout(timer)
+  }, [spectatorMode, stage, matchLive, canPlayPoint, pointPlaybackComplete, fieldPlaying, activeReviewPoint])
 
   const homeNextPointRole = session
     ? pointStartRoleForTeam(playerSide, session.pullTeam)
@@ -1240,9 +1267,16 @@ export default function MatchView({
           labels={autoSimLabels}
         />
       )}
-      {isLeagueMatch && (
+      {isLeagueMatch && !spectatorMode && (
         <div className="rounded-lg border border-ufa-gold/40 bg-ufa-panel/80 px-4 py-2 text-sm text-ufa-muted">
           {t.leagueMatch} ·  {leagueFixture.round} ·{' '}
+          <span className="text-ufa-text">{homeTeam.name}</span> vs{' '}
+          <span className="text-ufa-text">{awayTeam.name}</span>
+        </div>
+      )}
+      {spectatorMode && (
+        <div className="rounded-lg border border-ufa-gold/40 bg-ufa-panel/80 px-4 py-2 text-sm text-ufa-muted">
+          {t.spectatorMatch} ·{' '}
           <span className="text-ufa-text">{homeTeam.name}</span> vs{' '}
           <span className="text-ufa-text">{awayTeam.name}</span>
         </div>
@@ -1518,7 +1552,7 @@ export default function MatchView({
           <div className="flex flex-col items-center gap-3">
             <button
               type="button"
-              onClick={() => setStage('dressingRoomPost')}
+              onClick={() => (spectatorMode ? handleReturnToLeague() : setStage('dressingRoomPost'))}
               className="rounded-md bg-ufa-accent px-6 py-2.5 text-sm font-semibold text-ufa-bg shadow-md hover:opacity-90"
             >
               {t.postMatchContinue}

@@ -40,6 +40,7 @@ export const INBOX_TYPES = {
   INJURY: 'injury',
   CLUB_NEWS: 'club_news',
   SCOUT_REPORT: 'scout_report',
+  WATCHABLE_FINAL: 'watchable_final',
 }
 
 export const INBOX_TYPE_META = {
@@ -77,6 +78,11 @@ export const INBOX_TYPE_META = {
     labelPl: 'Scouting',
     labelEn: 'Scouting',
     navigateTo: 'team-profile',
+  },
+  [INBOX_TYPES.WATCHABLE_FINAL]: {
+    labelPl: 'Finał',
+    labelEn: 'Final',
+    navigateTo: null,
   },
 }
 
@@ -156,7 +162,18 @@ export function isImportantInboxMessage(message) {
     const kind = message.payload?.kind
     return !SILENT_CLUB_NEWS_KINDS.has(kind)
   }
+  if (message.type === INBOX_TYPES.WATCHABLE_FINAL) {
+    return message.payload?.status === 'pending'
+  }
   return true
+}
+
+/** Oznacza wiadomość jako rozstrzygniętą (przeczytana + payload.status='resolved') —
+ * ogólny helper dla typów bez efektów losowych (patrz applyRandomEventChoice dla decision). */
+export function markInboxMessageResolved(inbox, messageId) {
+  return (inbox ?? []).map((m) =>
+    m.id === messageId ? { ...m, read: true, payload: { ...m.payload, status: 'resolved' } } : m,
+  )
 }
 
 export function hasImportantInboxMessage(messages) {

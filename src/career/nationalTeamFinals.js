@@ -327,45 +327,44 @@ function finalsKnockoutFixturesOnDate(knockout, dateIso) {
   )
 }
 
+/** Rozstrzyga mecz drabinki silnikiem szybkim (Faza 2) — zwraca rekord + zespoły użyte
+ * do symulacji (potrzebne `applyKnockoutMatchResult` do przypisania box score do stron). */
+function simulateKnockoutMatchRecord(finals, world, career, match) {
+  const homeCountryId = countryIdFromPseudoTeamId(match.homeTeamId)
+  const awayCountryId = countryIdFromPseudoTeamId(match.awayTeamId)
+  const homeSquad = selectNationalSquad(world, career, homeCountryId, { seasonYear: finals.year })
+  const awaySquad = selectNationalSquad(world, career, awayCountryId, { seasonYear: finals.year })
+  const teamA = nationalTeamPseudoTeam(homeSquad)
+  const teamB = nationalTeamPseudoTeam(awaySquad)
+  const record = simulateNationalTeamMatch(teamA, teamB, hashSeed(match.id))
+  return { record, teamA, teamB }
+}
+
 /**
- * Rozstrzyga zaległe mecze drabinki <= `dateIso`: nasz silnik (Faza 2) rozstrzyga mecz,
- * `advanceCupAfterMatch` (reużyte 1:1 z cupBracket.js) propaguje zwycięzcę do kolejnej
- * rundy i — po finale — ustawia `knockout.championTeamId`/`status: 'complete'`.
- *
- * Świadomie NIE wołamy tu `resolveOneFixture` — `advanceCupAfterMatch` samo ustawia
- * `match.status`/`homeScore`/`awayScore`/`winnerTeamId` PO znalezieniu meczu po id w
- * `cup.matches` (i na starcie ignoruje mecze już `status === 'completed'`), więc
- * pre-mutowanie tych pól przed jego wywołaniem uciszyłoby propagację do kolejnej rundy.
+ * Wpisuje wynik meczu drabinki — z DOWOLNEGO źródła rekordu (silnik szybki z naturalnego
+ * postępu dnia, albo sesja NA ŻYWO z widza "Obejrzyj finał", patrz watchableFinals.js).
+ * `advanceCupAfterMatch` (reużyte 1:1 z cupBracket.js) propaguje zwycięzcę do kolejnej rundy;
+ * brąz idzie osobną ścieżką (patrz komentarz niżej). Po finale od razu zamyka turniej —
+ * reszta zamknięcia cyklu (coefficient/wiadomość/historia/rotacja, nationalTeamSeason.js)
+ * dzieje się przy NASTĘPNYM dziennym tyknięciu, bo ono i tak sprawdza `finals.phase`.
  */
-export function advanceFinalsKnockout(finals, world, career, dateIso) {
-  if (!finals?.knockout) return finals
+export function applyKnockoutMatchResult(finals, match, record, teamA, teamB) {
   const knockout = finals.knockout
-  const day = String(dateIso).slice(0, 10)
+  // Staty zawodników owszem (playerStats globalne dla całego turnieju); tabela — nie,
+  // drabinka knockout nie ma "grupy" do policzenia (throwaway obiekt, jak w barażach
+  // kwalifikacyjnych z Fazy 3 — applyGameToStandings cicho pomija nieznane klucze).
+  recordNationalTeamMatch({}, finals.playerStats, record, teamA, teamB)
 
-  const resolveMatch = (match) => {
-    const homeCountryId = countryIdFromPseudoTeamId(match.homeTeamId)
-    const awayCountryId = countryIdFromPseudoTeamId(match.awayTeamId)
-    const homeSquad = selectNationalSquad(world, career, homeCountryId, { seasonYear: finals.year })
-    const awaySquad = selectNationalSquad(world, career, awayCountryId, { seasonYear: finals.year })
-    const teamA = nationalTeamPseudoTeam(homeSquad)
-    const teamB = nationalTeamPseudoTeam(awaySquad)
-    const record = simulateNationalTeamMatch(teamA, teamB, hashSeed(match.id))
-    // Staty zawodników owszem (playerStats globalne dla całego turnieju); tabela — nie,
-    // drabinka knockout nie ma "grupy" do policzenia (throwaway obiekt, jak w barażach
-    // kwalifikacyjnych z Fazy 3 — applyGameToStandings cicho pomija nieznane klucze).
-    recordNationalTeamMatch({}, finals.playerStats, record, teamA, teamB)
-
-    if (match.round === 'bronze') {
-      // Brąz NIE idzie przez advanceCupAfterMatch: nie ma `nextMatchId`, a ta funkcja każdy
-      // taki mecz uznaje za finał (ustawia championTeamId + status 'complete'). Ponieważ
-      // brąz gra się DZIEŃ PRZED finałem, ukoronowałaby brązowego medalistę mistrzem i
-      // zamknęła turniej przed czasem.
-      match.status = 'completed'
-      match.homeScore = record.homeScore
-      match.awayScore = record.awayScore
-      match.winnerTeamId = record.winner
-      return
-    }
+  if (match.round === 'bronze') {
+    // Brąz NIE idzie przez advanceCupAfterMatch: nie ma `nextMatchId`, a ta funkcja każdy
+    // taki mecz uznaje za finał (ustawia championTeamId + status 'complete'). Ponieważ
+    // brąz gra się DZIEŃ PRZED finałem, ukoronowałaby brązowego medalistę mistrzem i
+    // zamknęła turniej przed czasem.
+    match.status = 'completed'
+    match.homeScore = record.homeScore
+    match.awayScore = record.awayScore
+    match.winnerTeamId = record.winner
+  } else {
     advanceCupAfterMatch(knockout, {
       fixtureId: match.id,
       winner: record.winner,
@@ -374,24 +373,67 @@ export function advanceFinalsKnockout(finals, world, career, dateIso) {
     })
   }
 
-  fillBronzeFromSemifinals(knockout)
-  const dueNow = () =>
-    knockout.matches
-      .filter((m) => m.status !== 'completed' && m.date && m.date <= day && m.homeTeamId && m.awayTeamId)
-      .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-
-  for (const match of dueNow()) resolveMatch(match)
-  // Jeśli półfinały wypadły w tym samym wywołaniu (szerszy przeskok dni), brąz dopiero
-  // teraz dostał obsadę — domknij go, o ile jego termin też już minął.
-  fillBronzeFromSemifinals(knockout)
-  for (const match of dueNow()) resolveMatch(match)
-
   if (knockout.status === 'complete') {
     finals.phase = 'complete'
     finals.championCountryId = countryIdFromPseudoTeamId(knockout.championTeamId)
     const bronze = knockout.matches.find((m) => m.round === 'bronze' && m.status === 'completed')
     finals.bronzeCountryId = bronze ? countryIdFromPseudoTeamId(bronze.winnerTeamId) : null
   }
+}
+
+/** Rozstrzyga TERAZ jeden mecz drabinki silnikiem szybkim — naturalny dzienny postęp
+ * ORAZ "Zignoruj" dla oglądalnego finału (ten sam efekt, bez czekania na kolejny dzień). */
+export function resolveKnockoutMatchNow(finals, world, career, match) {
+  const { record, teamA, teamB } = simulateKnockoutMatchRecord(finals, world, career, match)
+  applyKnockoutMatchResult(finals, match, record, teamA, teamB)
+  return record
+}
+
+/**
+ * Rozstrzyga zaległe mecze drabinki <= `dateIso`. Finał "oglądalny" (patrz
+ * watchableFinals.js) z `watchDecision === 'pending'` jest świadomie pomijany — czeka na
+ * decyzję gracza (Obejrzyj / Zignoruj) zamiast rozstrzygać się po cichu jak każdy inny mecz.
+ */
+export function advanceFinalsKnockout(finals, world, career, dateIso) {
+  if (!finals?.knockout) return finals
+  const knockout = finals.knockout
+  const day = String(dateIso).slice(0, 10)
+
+  fillBronzeFromSemifinals(knockout)
+  const dueNow = () =>
+    knockout.matches
+      .filter(
+        (m) =>
+          m.status !== 'completed' &&
+          m.date &&
+          m.date <= day &&
+          m.homeTeamId &&
+          m.awayTeamId &&
+          m.watchDecision !== 'pending',
+      )
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+
+  for (const match of dueNow()) resolveKnockoutMatchNow(finals, world, career, match)
+  // Jeśli półfinały wypadły w tym samym wywołaniu (szerszy przeskok dni), brąz dopiero
+  // teraz dostał obsadę — domknij go, o ile jego termin też już minął.
+  fillBronzeFromSemifinals(knockout)
+  for (const match of dueNow()) resolveKnockoutMatchNow(finals, world, career, match)
+
+  // Finał osiągalny dziś, bez podjętej jeszcze decyzji — oznacz jako oczekujący, żeby
+  // watchableFinals.js mogło zbudować wiadomość w skrzynce (patrz nationalTeamSeason.js).
+  const finalMatch = knockout.matches.find((m) => m.round === 'final')
+  if (
+    finalMatch &&
+    finalMatch.status !== 'completed' &&
+    finalMatch.date &&
+    finalMatch.date <= day &&
+    finalMatch.homeTeamId &&
+    finalMatch.awayTeamId &&
+    !finalMatch.watchDecision
+  ) {
+    finalMatch.watchDecision = 'pending'
+  }
+
   return finals
 }
 

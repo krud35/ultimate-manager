@@ -24,6 +24,7 @@ const pl = {
     power_rankings: 'Power Rankings',
     breaking: 'Breaking',
     feature: 'Feature',
+    international: 'Reprezentacje',
   },
   categories: {
     transfer: 'Transfer',
@@ -35,6 +36,7 @@ const pl = {
     power_rankings: 'Power Rankings',
     feature: 'Feature',
     breaking: 'Breaking',
+    international: 'Reprezentacje',
   },
 }
 
@@ -62,6 +64,7 @@ const en = {
     power_rankings: 'Power Rankings',
     breaking: 'Breaking',
     feature: 'Feature',
+    international: 'International',
   },
   categories: {
     transfer: 'Transfer',
@@ -73,6 +76,7 @@ const en = {
     power_rankings: 'Power Rankings',
     feature: 'Feature',
     breaking: 'Breaking',
+    international: 'International',
   },
 }
 

@@ -61,6 +61,10 @@ import {
   isClubBankrupt,
   recordMatchKnowledgeGain,
   respondToIncomingLoanRequest,
+  markInboxMessageResolved,
+  resolveWatchableFinalIgnore,
+  beginWatchingFinal,
+  completeWatchedFinal,
 } from './career'
 
 import {
@@ -99,6 +103,7 @@ import SimulationProgressOverlay, { yieldToUi } from './components/SimulationPro
 import CalendarSimOverlay from './components/CalendarSimOverlay'
 import WelcomeModal from './components/WelcomeModal'
 import RandomEventModal from './components/RandomEventModal.jsx'
+import WatchFinalModal from './components/WatchFinalModal.jsx'
 import TutorialGuide from './components/TutorialGuide'
 import { buildSeasonStateFromLeague } from './seasonEngine/seasonStateFromLeague.js'
 import {
@@ -503,6 +508,10 @@ export default function App() {
   const [calendarSim, setCalendarSim] = useState(null)
   const [actionRequiredMessageId, setActionRequiredMessageId] = useState(null)
   const [pendingRandomEventId, setPendingRandomEventId] = useState(null)
+  const [pendingWatchableFinalId, setPendingWatchableFinalId] = useState(null)
+  /** Finał "oglądany" na żywo (pełny silnik, widz) — patrz career/watchableFinals.js.
+   *  { competition, leagueFixture, homeTeam, awayTeam, messageId } | null. */
+  const [watchingFinal, setWatchingFinal] = useState(null)
   const [inboxFocusId, setInboxFocusId] = useState(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [pendingWelcome, setPendingWelcome] = useState(false)
@@ -717,6 +726,8 @@ export default function App() {
         const blockerMsg = next.inbox?.find((m) => m.id === blockingMessageId)
         if (blockerMsg?.type === INBOX_TYPES.RANDOM_EVENT && blockerMsg.payload?.kind === 'decision') {
           setPendingRandomEventId(blockingMessageId)
+        } else if (blockerMsg?.type === INBOX_TYPES.WATCHABLE_FINAL && blockerMsg.payload?.status === 'pending') {
+          setPendingWatchableFinalId(blockingMessageId)
         }
       }
     } catch (err) {
@@ -1111,6 +1122,102 @@ export default function App() {
     [career, syncCareer],
   )
 
+  // "Zignoruj" na wiadomości watchable_final (finał Pucharu Stycznia / ME-MŚ): rozstrzyga
+  // NATYCHMIAST silnikiem szybkim — ten sam efekt, jaki dałby kolejny dzień symulacji.
+  const handleIgnoreFinal = useCallback(
+    (messageId) => {
+      if (!career || !messageId) return
+      const message = career.inbox?.find((m) => m.id === messageId)
+      if (!message) return
+      const league = cloneLeague(career.league)
+      const nationalTeams = structuredClone(career.nationalTeams ?? null)
+      const patch = resolveWatchableFinalIgnore({ ...career, league, nationalTeams }, message)
+      if (!patch) return
+      const nextInbox = markInboxMessageResolved(career.inbox, messageId)
+      const next = persistCareer(career, { league, nationalTeams, inbox: nextInbox })
+      syncCareer(next, { save: true })
+      setPendingWatchableFinalId((id) => (id === messageId ? null : id))
+      setActionRequiredMessageId((id) => (id === messageId ? null : id))
+    },
+    [career, syncCareer],
+  )
+
+  // "Oglądaj": przechodzi do MatchView w trybie widza (spectatorMode) — pełny silnik,
+  // oba boki AI, bez dostępu do taktyk. Wynik zapisuje się dopiero po zakończeniu meczu
+  // (patrz handleWatchFinalMatchComplete).
+  const handleWatchFinal = useCallback(
+    (messageId) => {
+      if (!career || !messageId) return
+      const message = career.inbox?.find((m) => m.id === messageId)
+      if (!message) return
+      const league = cloneLeague(career.league)
+      const nationalTeams = structuredClone(career.nationalTeams ?? null)
+      const started = beginWatchingFinal({ ...career, league, nationalTeams }, message)
+      if (!started) return
+      const next = persistCareer(career, { league, nationalTeams })
+      syncCareer(next)
+      setPendingWatchableFinalId(null)
+      const payload = message.payload ?? {}
+      if (payload.competition === 'januaryCup') {
+        // Nie polegaj na wewnętrznym fallbacku MatchView (statyczne dane demo z
+        // ufaLeagueTeams.js) — rozwiąż PRAWDZIWE, aktualne składy klubowe, tak samo
+        // jak `matchTeams` dla meczu gracza.
+        const homeTeamObj = teamFromLeague(league, started.fixture.homeTeamId)
+        const awayTeamObj = teamFromLeague(league, started.fixture.awayTeamId)
+        setWatchingFinal({
+          messageId,
+          competition: 'januaryCup',
+          leagueFixture: started.fixture,
+          homeTeam: homeTeamObj ? teamForMatchEngine(homeTeamObj) : null,
+          awayTeam: awayTeamObj ? teamForMatchEngine(awayTeamObj) : null,
+        })
+      } else {
+        setWatchingFinal({
+          messageId,
+          competition: 'international',
+          leagueFixture: {
+            id: started.match.id,
+            homeTeamId: started.match.homeTeamId,
+            awayTeamId: started.match.awayTeamId,
+            date: started.match.date,
+            status: 'scheduled',
+          },
+          homeTeam: started.homeTeam,
+          awayTeam: started.awayTeam,
+        })
+      }
+      setActiveTab('match')
+    },
+    [career, syncCareer],
+  )
+
+  // Widz kończy mecz (pełny silnik, na żywo) — wpisuje wynik dokładnie tak samo,
+  // jak zrobiłby to silnik szybki w tle (patrz career/watchableFinals.js).
+  const handleWatchFinalMatchComplete = useCallback(
+    (result) => {
+      if (!career || !watchingFinal) return
+      const message = career.inbox?.find((m) => m.id === watchingFinal.messageId)
+      if (!message) return
+      const league = cloneLeague(career.league)
+      const nationalTeams = structuredClone(career.nationalTeams ?? null)
+      const patch = completeWatchedFinal({ ...career, league, nationalTeams }, message, result, {
+        homeTeam: watchingFinal.homeTeam,
+        awayTeam: watchingFinal.awayTeam,
+      })
+      if (!patch) return
+      const nextInbox = markInboxMessageResolved(career.inbox, watchingFinal.messageId)
+      const next = persistCareer(career, { league, nationalTeams, inbox: nextInbox })
+      syncCareer(next, { save: true })
+    },
+    [career, syncCareer, watchingFinal],
+  )
+
+  const handleReturnFromWatchFinal = useCallback(() => {
+    const competition = watchingFinal?.competition
+    setWatchingFinal(null)
+    setActiveTab(competition === 'januaryCup' ? 'cup' : 'international')
+  }, [watchingFinal])
+
   const handleSponsorSign = useCallback(
     (messageId, offerId) => {
       if (!career || !messageId || !offerId) return { ok: false, error: 'missing' }
@@ -1198,6 +1305,15 @@ export default function App() {
       setPendingRandomEventId(null)
     }
   }, [career?.inbox, pendingRandomEventId])
+
+  // Same auto-clear for the watchable-final popup.
+  useEffect(() => {
+    if (!pendingWatchableFinalId || !career?.inbox) return
+    const msg = career.inbox.find((m) => m.id === pendingWatchableFinalId)
+    if (!msg || !isImportantInboxMessage(msg)) {
+      setPendingWatchableFinalId(null)
+    }
+  }, [career?.inbox, pendingWatchableFinalId])
 
   const handleLeagueMatchComplete = useCallback(
     (result, fixture) => {
@@ -1688,6 +1804,8 @@ export default function App() {
             onTransferOfferAction={handleTransferOfferAction}
             onResolveDecision={handleResolveDecision}
             onSponsorSign={handleSponsorSign}
+            onWatchFinal={handleWatchFinal}
+            onIgnoreFinal={handleIgnoreFinal}
             initialSelectedId={inboxFocusId}
             onConsumeFocus={() => setInboxFocusId(null)}
           />
@@ -1796,7 +1914,17 @@ export default function App() {
         )}
 
         {activeTab === 'match' &&
-          (leagueFixture ? (
+          (watchingFinal ? (
+            <MatchView
+              spectatorMode
+              leagueFixture={watchingFinal.leagueFixture}
+              homeTeam={watchingFinal.homeTeam}
+              awayTeam={watchingFinal.awayTeam}
+              onLeagueMatchComplete={handleWatchFinalMatchComplete}
+              onReturnToLeague={handleReturnFromWatchFinal}
+              onMatchLockChange={setMatchInProgress}
+            />
+          ) : leagueFixture ? (
             isFixtureMatchDay(leagueFixture, league) || leagueFixture.status === 'completed' ? (
               <MatchView
                 homeTactics={homeTactics}
@@ -1979,6 +2107,15 @@ export default function App() {
           message={career.inbox?.find((m) => m.id === pendingRandomEventId) ?? null}
           lang={uiLang}
           onChoose={handleResolveDecision}
+        />
+      )}
+
+      {pendingWatchableFinalId && (
+        <WatchFinalModal
+          message={career.inbox?.find((m) => m.id === pendingWatchableFinalId) ?? null}
+          lang={uiLang}
+          onWatch={handleWatchFinal}
+          onIgnore={handleIgnoreFinal}
         />
       )}
 

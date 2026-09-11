@@ -18,6 +18,8 @@ import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/
 import { mergeMatchBoxScore } from '../league/leagueStats.js'
 import { UI_LANG } from '../ui/locale.js'
 import { ensureTransferNewsState, transferNewsForTick } from './ultiworldTransfers.js'
+import { academyCountryLabel } from '../data/academyScoutGeography.js'
+import { countryIdFromPseudoTeamId } from './nationalTeamQualifying.js'
 
 const ARTICLES_MAX = 80
 const WORLD_EVENT_CHANCE = 0.15
@@ -2603,6 +2605,149 @@ function articleFromSpec(spec, career, simDate, inboxMessages) {
   return art
 }
 
+function internationalTournamentLabel(kind, lang) {
+  if (kind === 'world') return lang === 'en' ? 'World Championship' : 'Mistrzostwa Świata'
+  return lang === 'en' ? 'European Championship' : 'Mistrzostwa Europy'
+}
+
+const INTERNATIONAL_ROUND_LABEL_PL = {
+  roundOf16: '1/8 finału',
+  quarterfinal: 'Ćwierćfinał',
+  semifinal: 'Półfinał',
+  final: 'Finał',
+}
+const INTERNATIONAL_ROUND_LABEL_EN = {
+  roundOf16: 'Round of 16',
+  quarterfinal: 'Quarterfinal',
+  semifinal: 'Semifinal',
+  final: 'Final',
+}
+
+/**
+ * Newsy Ultiworld o kadrach narodowych (Faza "International"): zamknięcie kwalifikacji,
+ * start drabinki pucharowej, wynik każdej rundy knockout i koronacja mistrza. Zdarzenia
+ * jednorazowe (jak "Cup champion flash" niżej) — dedup przez `internationalCoveredKeys`
+ * zamiast osobnego `coveredFixtureIds`, bo id meczów reprezentacji (`nt-<kraj>`/turniejowe
+ * prefiksy) nigdy nie kolidują z id meczów ligowych, ale i tak trzymamy je osobno dla
+ * czytelności. Nie przerywa "Dalej" (tak jak przegląd kolejki) — to czyste tło.
+ */
+function internationalArticles(career, ultiworld, simDate) {
+  const nt = career?.nationalTeams
+  if (!nt) return []
+  const covered = new Set(ultiworld.internationalCoveredKeys ?? [])
+  const articles = []
+
+  const qualifying = nt.qualifying
+  if (qualifying?.phase === 'complete') {
+    const key = `qualifying-${qualifying.kind}-${qualifying.year}`
+    if (!covered.has(key)) {
+      covered.add(key)
+      const count = qualifying.qualifiedCountryIds?.length ?? 0
+      const namesPl = (qualifying.qualifiedCountryIds ?? []).map((id) => academyCountryLabel(id, 'pl')).join(', ')
+      const namesEn = (qualifying.qualifiedCountryIds ?? []).map((id) => academyCountryLabel(id, 'en')).join(', ')
+      articles.push(
+        makeArticle({
+          category: 'international',
+          headline: `Kwalifikacje zamknięte: kto jedzie na ${internationalTournamentLabel(qualifying.kind, 'pl')} ${qualifying.year}`,
+          headlineEn: `Qualifying wrapped: who's heading to the ${internationalTournamentLabel(qualifying.kind, 'en')} ${qualifying.year}`,
+          dek: `${count} reprezentacji powalczy o tytuł.`,
+          dekEn: `${count} national teams will fight for the title.`,
+          body: `Kwalifikacje dobiegły końca. Awans wywalczyli: ${namesPl || '—'}. Ultiworld już szykuje podglądy grup.`,
+          bodyEn: `Qualifying is done. Teams through: ${namesEn || '—'}. Ultiworld is already prepping group previews.`,
+          date: simDate,
+          career,
+          tags: ['reprezentacje', 'kwalifikacje'],
+        }),
+      )
+    }
+  }
+
+  const finals = nt.finals
+  if (finals?.knockout) {
+    const groupKey = `finalsGroup-${finals.kind}-${finals.year}`
+    if (!covered.has(groupKey)) {
+      covered.add(groupKey)
+      articles.push(
+        makeArticle({
+          category: 'international',
+          headline: `Drabinka gotowa: ${internationalTournamentLabel(finals.kind, 'pl')} ${finals.year} wchodzi w fazę pucharową`,
+          headlineEn: `Bracket is set: ${internationalTournamentLabel(finals.kind, 'en')} ${finals.year} enters the knockout stage`,
+          dek: 'Faza grupowa rozdała karty.',
+          dekEn: 'The group stage has dealt its hand.',
+          body: 'Faza grupowa zakończona, znamy komplet par w drabince pucharowej. Ultiworld typuje faworytów przed pierwszym gwizdkiem.',
+          bodyEn: 'The group stage is over and the bracket pairings are set. Ultiworld is picking favorites ahead of kickoff.',
+          date: simDate,
+          career,
+          tags: ['reprezentacje', 'drabinka'],
+        }),
+      )
+    }
+
+    for (const match of finals.knockout.matches) {
+      if (match.status !== 'completed' || match.round === 'bronze') continue
+      const key = `finalsRound-${match.id}`
+      if (covered.has(key)) continue
+      covered.add(key)
+      const homeName = academyCountryLabel(countryIdFromPseudoTeamId(match.homeTeamId), 'pl')
+      const awayName = academyCountryLabel(countryIdFromPseudoTeamId(match.awayTeamId), 'pl')
+      const homeNameEn = academyCountryLabel(countryIdFromPseudoTeamId(match.homeTeamId), 'en')
+      const awayNameEn = academyCountryLabel(countryIdFromPseudoTeamId(match.awayTeamId), 'en')
+      const winnerName = academyCountryLabel(countryIdFromPseudoTeamId(match.winnerTeamId), 'pl')
+      const winnerNameEn = academyCountryLabel(countryIdFromPseudoTeamId(match.winnerTeamId), 'en')
+      const roundPl = INTERNATIONAL_ROUND_LABEL_PL[match.round] ?? match.round
+      const roundEn = INTERNATIONAL_ROUND_LABEL_EN[match.round] ?? match.round
+      articles.push(
+        makeArticle({
+          category: 'international',
+          headline: `${roundPl}: ${winnerName} idzie dalej (${homeName} ${match.homeScore}:${match.awayScore} ${awayName})`,
+          headlineEn: `${roundEn}: ${winnerNameEn} move on (${homeNameEn} ${match.homeScore}-${match.awayScore} ${awayNameEn})`,
+          dek: match.round === 'final' ? 'Turniej ma mistrza.' : 'Drabinka robi się coraz cieńsza.',
+          dekEn: match.round === 'final' ? 'The tournament has its champion.' : 'The bracket keeps thinning out.',
+          body: `${winnerName} kończy mecz wynikiem ${match.homeScore}:${match.awayScore}. Ultiworld: kolejny krok w stronę tytułu ${internationalTournamentLabel(finals.kind, 'pl')} ${finals.year}.`,
+          bodyEn: `${winnerNameEn} closes it out ${match.homeScore}-${match.awayScore}. Ultiworld: another step toward the ${internationalTournamentLabel(finals.kind, 'en')} ${finals.year} title.`,
+          date: simDate,
+          career,
+          tags: ['reprezentacje', match.round],
+        }),
+      )
+    }
+  }
+
+  const latestHistory = nt.history?.[nt.history.length - 1]
+  if (latestHistory) {
+    const key = `champion-${latestHistory.kind}-${latestHistory.year}`
+    if (!covered.has(key)) {
+      covered.add(key)
+      const champ = academyCountryLabel(latestHistory.championCountryId, 'pl')
+      const champEn = academyCountryLabel(latestHistory.championCountryId, 'en')
+      const runnerUp = latestHistory.runnerUpCountryId
+        ? academyCountryLabel(latestHistory.runnerUpCountryId, 'pl')
+        : '—'
+      const runnerUpEn = latestHistory.runnerUpCountryId
+        ? academyCountryLabel(latestHistory.runnerUpCountryId, 'en')
+        : '—'
+      articles.push(
+        makeArticle({
+          category: 'international',
+          headline: `${champ} mistrzem: ${internationalTournamentLabel(latestHistory.kind, 'pl')} ${latestHistory.year} rozstrzygnięte`,
+          headlineEn: `${champEn} crowned: ${internationalTournamentLabel(latestHistory.kind, 'en')} ${latestHistory.year} is decided`,
+          dek: `Pokonany w finale: ${runnerUp}.`,
+          dekEn: `Beaten in the final: ${runnerUpEn}.`,
+          body: `${champ} kończy turniej na szczycie. Ultiworld: reprezentacyjny rozdział zamknięty, ligowy kalendarz wraca do gry.`,
+          bodyEn: `${champEn} finishes the tournament on top. Ultiworld: the international chapter closes, league play resumes.`,
+          date: simDate,
+          career,
+          tags: ['reprezentacje', 'mistrz'],
+          impact: true,
+        }),
+      )
+    }
+  }
+
+  ultiworld.internationalCoveredKeys = [...covered]
+  return articles
+}
+
 /**
  * Generuje artykuły Ultiworld po dniu / FF.
  * Może mutować world + league (efekty wydarzeń).
@@ -2660,6 +2805,25 @@ export function processUltiworldTick(career, { date = null } = {}) {
     ultiworld.lastPomMonth = ultiworld.lastPomMonth ?? monthKey(simDate)
     ultiworld.seeded = true
     ultiworld.coveredFixtureIds = [...covered]
+
+    // Ten sam powód: nie zalewaj historii artykułami o kadrach na starym save'ie —
+    // oznacz to, co już się wydarzyło, jako pokryte, zanim internationalArticles
+    // w ogóle spojrzy na career.nationalTeams.
+    const nt = career.nationalTeams
+    const intlCovered = new Set(ultiworld.internationalCoveredKeys ?? [])
+    if (nt?.qualifying?.phase === 'complete') {
+      intlCovered.add(`qualifying-${nt.qualifying.kind}-${nt.qualifying.year}`)
+    }
+    if (nt?.finals?.knockout) {
+      intlCovered.add(`finalsGroup-${nt.finals.kind}-${nt.finals.year}`)
+      for (const m of nt.finals.knockout.matches) {
+        if (m.status === 'completed' && m.round !== 'bronze') intlCovered.add(`finalsRound-${m.id}`)
+      }
+    }
+    for (const entry of nt?.history ?? []) {
+      intlCovered.add(`champion-${entry.kind}-${entry.year}`)
+    }
+    ultiworld.internationalCoveredKeys = [...intlCovered]
     // Kontynuuj tick tylko dla bieżącego dnia (światowe eventy / nowe mecze po seedzie).
   }
 
@@ -2798,6 +2962,8 @@ export function processUltiworldTick(career, { date = null } = {}) {
     )
     ultiworld.cupChampionCovered = true
   }
+
+  newArticles.push(...internationalArticles(career, ultiworld, simDate))
 
   ultiworld = prependArticles(ultiworld, newArticles)
   return { ultiworld, world, league, inboxMessages, newArticles }

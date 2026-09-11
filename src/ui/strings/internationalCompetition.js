@@ -6,6 +6,7 @@ const pl = {
     'Mistrzostwa Europy i Świata reprezentacji narodowych — kwalifikacje w przerwach na kadrę, faza finałowa w lipcu, na przemian co 2 lata.',
   tabs: {
     current: 'Aktualne rozgrywki',
+    schedule: 'Terminarz',
     results: 'Wyniki',
     countries: 'Kraje',
     leaders: 'Klasyfikacja wszech czasów',
@@ -83,6 +84,15 @@ const pl = {
   blocks: 'Bloki',
   turnovers: 'Straty',
   noData: '—',
+  // -- Schedule --
+  scheduleEmpty: 'Brak aktywnych kwalifikacji ani fazy finałowej — nie ma czego pokazać w terminarzu.',
+  scheduleQualifyingHeader: 'Kwalifikacje',
+  scheduleFinalsGroupHeader: 'Faza grupowa',
+  scheduleKnockoutHeader: 'Faza pucharowa',
+  schedulePlayoffHeader: 'Baraże',
+  scheduleStatusScheduled: 'Zaplanowany',
+  scheduleStatusPending: 'Oczekuje na drabinkę',
+  scheduleDateTbd: 'Termin TBD',
 }
 
 const en = {
@@ -91,6 +101,7 @@ const en = {
     'Euro and World Championships for national teams — qualifying during international breaks, finals every July, alternating every 2 years.',
   tabs: {
     current: 'Current competition',
+    schedule: 'Schedule',
     results: 'Results',
     countries: 'Countries',
     leaders: 'All-time leaders',
@@ -163,6 +174,15 @@ const en = {
   blocks: 'Blocks',
   turnovers: 'Turnovers',
   noData: '—',
+  // -- Schedule --
+  scheduleEmpty: 'No active qualifying or finals — nothing to show in the schedule.',
+  scheduleQualifyingHeader: 'Qualifying',
+  scheduleFinalsGroupHeader: 'Group stage',
+  scheduleKnockoutHeader: 'Knockout stage',
+  schedulePlayoffHeader: 'Playoff',
+  scheduleStatusScheduled: 'Scheduled',
+  scheduleStatusPending: 'Awaiting bracket',
+  scheduleDateTbd: 'Date TBD',
 }
 
 export function internationalCompetitionStrings(lang = UI_LANG.PL) {

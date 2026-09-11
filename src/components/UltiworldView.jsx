@@ -19,6 +19,7 @@ const CATEGORY_STYLE = {
   rumor: 'border-fuchsia-400/40 bg-fuchsia-500/10 text-fuchsia-300',
   feature: 'border-ufa-border bg-ufa-bg text-ufa-muted',
   breaking: 'border-red-400/40 bg-red-500/10 text-red-300',
+  international: 'border-teal-400/40 bg-teal-500/10 text-teal-300',
 }
 
 const FILTER_IDS = [
@@ -29,6 +30,7 @@ const FILTER_IDS = [
   'match',
   'round',
   'cup',
+  'international',
   'awards',
   'power_rankings',
   'breaking',

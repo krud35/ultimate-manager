@@ -44,6 +44,7 @@ import {
 } from './nationalTeamCoefficient.js'
 import { messageFromQualifyingResult, messageFromTournamentResult } from './nationalTeamMessages.js'
 import { countryIdFromPseudoTeamId } from './nationalTeamQualifying.js'
+import { internationalFinalWatchableMessage } from './watchableFinals.js'
 
 const EURO_TOTAL_SLOTS = 16
 const WORLD_TOTAL_SLOTS = 32
@@ -291,6 +292,11 @@ function advanceTournamentFinalsCycle(career, world, dateIso) {
 
   if (finals.phase === 'knockout') {
     advanceFinalsKnockout(finals, world, career, dateIso)
+    // Finał gotowy, ale czekający na decyzję gracza (Obejrzyj / Zignoruj) — patrz
+    // watchableFinals.js. `finals.phase` zostaje 'knockout' aż do decyzji, więc trzeba
+    // złapać wiadomość TU, przed wczesnym wyjściem niżej.
+    const watchMsg = internationalFinalWatchableMessage(finals, career)
+    if (watchMsg) return [watchMsg]
   }
 
   if (finals.phase !== 'complete') return []

@@ -179,6 +179,7 @@ export {
   appendInboxMessages,
   markInboxRead,
   markAllInboxRead,
+  markInboxMessageResolved,
   deleteInboxMessage,
   updateInboxMessage,
   expireStaleTransferOffers,
@@ -210,6 +211,13 @@ export {
   hasImportantInboxMessage,
   firstImportantInboxMessage,
 } from './inbox.js'
+export {
+  cupFinalWatchableMessage,
+  internationalFinalWatchableMessage,
+  resolveWatchableFinalIgnore,
+  beginWatchingFinal,
+  completeWatchedFinal,
+} from './watchableFinals.js'
 export {
   RANDOM_EVENT_TEMPLATES,
   RANDOM_EVENT_FOLLOWUP_TEMPLATES,

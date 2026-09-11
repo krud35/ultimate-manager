@@ -2,6 +2,7 @@ import { pickDict, UI_LANG } from '../locale'
 
 const pl = {
   leagueMatch: 'Mecz ligowy',
+  spectatorMatch: 'Oglądasz na żywo',
   simMatch: 'Symulacja meczu',
   playPoint1: 'Rozegraj punkt 1',
   goToMatch: 'Przejdź do meczu',
@@ -140,6 +141,7 @@ const pl = {
 
 const en = {
   leagueMatch: 'League match',
+  spectatorMatch: 'Watching live',
   simMatch: 'Match simulation',
   playPoint1: 'Play point 1',
   goToMatch: 'Go to match',

@@ -209,6 +209,16 @@ export function getLeagueChampionTeamId(league) {
  * Symuluje zaplanowane mecze danego dnia.
  * @param {{ includePlayer?: boolean }} options — domyślnie pomija mecz gracza.
  */
+/** Finał Pucharu Stycznia "oglądalny" (patrz career/watchableFinals.js) i jeszcze
+ * nierozstrzygnięty czeka na decyzję gracza (Obejrzyj / Zignoruj) zamiast rozstrzygać się
+ * po cichu jak każdy inny mecz AI. Pierwsze napotkanie oznacza go jako `'pending'`. */
+function isWatchablePendingFinal(fixture) {
+  if (fixture.competition !== 'cup' || fixture.round !== 'final') return false
+  if (fixture.watchDecision === 'ignored') return false
+  fixture.watchDecision = fixture.watchDecision ?? 'pending'
+  return true
+}
+
 export function simulateFixturesOnDate(league, date, options = {}) {
   const includePlayer = !!options.includePlayer
   const fixtures = getFixturesOnDate(league, date).filter(
@@ -216,7 +226,8 @@ export function simulateFixturesOnDate(league, date, options = {}) {
       isPending(f) &&
       (includePlayer || !isPlayerInFixture(league, f)) &&
       f.homeTeamId &&
-      f.awayTeamId,
+      f.awayTeamId &&
+      !isWatchablePendingFinal(f),
   )
 
   for (const fixture of fixtures) {
@@ -245,7 +256,7 @@ function ensureFixtureInLeague(league, fixture) {
   }
 }
 
-function applyCupMatchResult(league, fixture, record) {
+export function applyCupMatchResult(league, fixture, record) {
   const target = findFixtureInLeague(league, fixture.id) ?? fixture
   if (target.status === 'completed') return
   saveScoutingAnalysis(league, record)

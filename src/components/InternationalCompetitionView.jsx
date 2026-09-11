@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useUiLang } from '../ui/UiLangContext'
 import { internationalCompetitionStrings } from '../ui/strings/internationalCompetition.js'
 import CurrentCompetitionPanel from './international/CurrentCompetitionPanel.jsx'
+import SchedulePanel from './international/SchedulePanel.jsx'
 import ResultsPanel from './international/ResultsPanel.jsx'
 import CountriesPanel from './international/CountriesPanel.jsx'
 import LeadersPanel from './international/LeadersPanel.jsx'
@@ -19,6 +20,7 @@ export default function InternationalCompetitionView({ career, onCareerUpdate })
 
   const tabs = [
     { id: 'current', label: t.tabs.current },
+    { id: 'schedule', label: t.tabs.schedule },
     { id: 'results', label: t.tabs.results },
     { id: 'countries', label: t.tabs.countries },
     { id: 'leaders', label: t.tabs.leaders },
@@ -54,6 +56,7 @@ export default function InternationalCompetitionView({ career, onCareerUpdate })
       {subTab === 'current' && (
         <CurrentCompetitionPanel career={career} onCareerUpdate={onCareerUpdate} t={t} lang={lang} />
       )}
+      {subTab === 'schedule' && <SchedulePanel career={career} t={t} lang={lang} />}
       {subTab === 'results' && <ResultsPanel career={career} t={t} lang={lang} />}
       {subTab === 'countries' && (
         <CountriesPanel career={career} onCareerUpdate={onCareerUpdate} t={t} lang={lang} />

@@ -47,6 +47,7 @@ import { advanceCalendarDay, getPlayerFixtureOnDate, areCompetitionsComplete } f
 import { processContractExpirations, processContractExpiryReminders } from './transfers/contractLifecycle.js'
 import { recordMatchKnowledgeGainForNewMatches } from './scouting.js'
 import { messagesFromNewPlayerMatches } from './inbox.js'
+import { cupFinalWatchableMessage } from './watchableFinals.js'
 
 export function computeCalendarDayStep(career, nextLeague, { weekTick = false, trainingDate = null, allowRandomEvents = true } = {}) {
   const inboxMessages = []
@@ -54,6 +55,11 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
   const management = processClubManagement({ ...career, league: nextLeague }, trainingDate ?? nextLeague.currentDate, { weekTick })
   career = { ...career, transferLog: management.transferLog }
   inboxMessages.push(...management.inboxMessages)
+  // Finał Pucharu Stycznia zostawiony nierozstrzygnięty przez dayEngine.js (patrz
+  // simulateFixturesOnDate: isWatchablePendingFinal) czeka na decyzję gracza — dokładnie
+  // ten sam wzorzec co finał ME/MŚ niżej (advanceNationalTeamsForDate).
+  const cupFinalMsg = cupFinalWatchableMessage(nextLeague, career)
+  if (cupFinalMsg) inboxMessages.push(cupFinalMsg)
   if (trainingDate) {
     const training = processTeamTrainingsForDate(nextLeague, trainingDate, {
       playerTeamId: career.playerTeamId,
