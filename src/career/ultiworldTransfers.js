@@ -32,17 +32,17 @@ import {
 } from './transfers/index.js'
 
 /** Ile osobnych artykułów o dealach może wyjść w jednym ticku (reszta → zbiorczy). */
-const MAX_DEAL_ARTICLES_PER_TICK = 2
+const MAX_DEAL_ARTICLES_PER_TICK = 1
 /** Od ilu niepokrytych ruchów opłaca się artykuł zbiorczy. */
-const ROUNDUP_MIN_DEALS = 3
+const ROUNDUP_MIN_DEALS = 4
 /** Ile ruchów wymieniamy w zbiorczym. */
 const ROUNDUP_MAX_LINES = 6
 const COVERED_TRANSFER_KEYS_MAX = 400
 const COVERED_LOAN_KEYS_MAX = 200
 
-const RUMOR_BASE_CHANCE = 0.1
-const RUMOR_WINDOW_MULT = 2.2
-const RUMOR_PRE_WINDOW_MULT = 1.5
+const RUMOR_BASE_CHANCE = 0.05
+const RUMOR_WINDOW_MULT = 1.6
+const RUMOR_PRE_WINDOW_MULT = 1.1
 /** Ten sam zawodnik nie wraca do plotek częściej niż raz na tyle dni. */
 const RUMOR_PLAYER_COOLDOWN_DAYS = 30
 const RUMORS_MAX = 14
@@ -470,7 +470,7 @@ function rumorCandidates(career, league, simDate, rumors) {
       if (recent.has(String(player.id))) continue
       const target = classifyTransferTarget(player)
       const ovr = target.ovr
-      if (ovr < 68 && !target.strongProspect) continue
+      if (ovr < 70 && !target.strongProspect) continue
 
       let w = Math.max(0.05, (ovr - 66) / 20)
       const form = getPlayerForm(player)
@@ -493,7 +493,10 @@ function rumorCandidates(career, league, simDate, rumors) {
       out.push({ player, team, weight: w, target, weeksLeft, form, morale })
     }
   }
-  return out
+  // Keep only the strongest-signal ~60% of candidates — fewer, more plausible
+  // rumors instead of speculating about every marginally-eligible player.
+  out.sort((a, b) => b.weight - a.weight)
+  return out.slice(0, Math.ceil(out.length * 0.6))
 }
 
 function weightedPick(rows, rng) {

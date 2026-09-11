@@ -105,9 +105,9 @@ const SILENT_CLUB_NEWS_KINDS = new Set([
 ])
 
 // Pure info/report inbox types — never worth interrupting the loop.
+// Scouting reports DO interrupt — see isImportantInboxMessage.
 const SILENT_REPORT_TYPES = new Set([
   INBOX_TYPES.TRAINING_REPORT,
-  INBOX_TYPES.SCOUT_REPORT,
   INBOX_TYPES.INJURY,
   INBOX_TYPES.MATCH_ANALYSIS,
 ])
@@ -126,27 +126,27 @@ function isActionableTransferOffer(payload) {
   if (kind === 'loan_out_offer' || kind === 'loan_in_request') return status === 'counter'
   if (kind === 'loan_in_request_from_ai') return status === 'pending'
   if (kind === 'loan_buy_clause_decision') return status === 'pending_decision'
+  // sale_player_decision / loan_player_decision auto-resolve on their replyDate
+  // (see delayedNegotiation.js / loans.js) — nothing for the manager to click,
+  // so they never need to be "actionable" here.
   return false
 }
 
 /**
  * Czy ta wiadomość powinna przerwać ciągłą symulację kalendarza ("Dalej")?
- * Raporty (treningowe, scouting), kontuzje i rutynowe/informacyjne newsy klubowe
+ * Raporty treningowe/meczowe, kontuzje i rutynowe/informacyjne newsy klubowe
  * (wypłaty, wygaśnięcia, dotacja zarządu, ostrzeżenie finansowe, kadra narodowa)
  * są ciche — kariera leci dalej, bo nie ma w nich żadnej decyzji do podjęcia z
- * poziomu skrzynki. Zdarzenia losowe, które oferują opcję "zignoruj", też nie
- * blokują — gracz świadomie może je pominąć. Aktywne oferty/odpowiedzi
- * transferowe i decyzje bez opcji zignorowania zatrzymują symulację — tam
- * naprawdę trzeba coś kliknąć, żeby iść dalej.
+ * poziomu skrzynki. Zdarzenia losowe typu "decyzja" ZAWSZE blokują (nawet gdy
+ * oferują opcję do zignorowania w treści) — mają zbyt duży wpływ na kadrę/klub,
+ * żeby przelatywały bez świadomej reakcji gracza. Aktywne oferty/odpowiedzi
+ * transferowe też zatrzymują symulację — tam naprawdę trzeba coś kliknąć.
  */
 export function isImportantInboxMessage(message) {
   if (!message) return false
   if (SILENT_REPORT_TYPES.has(message.type)) return false
   if (message.type === INBOX_TYPES.RANDOM_EVENT) {
-    if (message.payload?.kind !== 'decision' || message.payload?.status !== 'pending') return false
-    const choices = message.payload?.choices
-    const canIgnore = Array.isArray(choices) && choices.some((c) => c?.id === 'ignore')
-    return !canIgnore
+    return message.payload?.kind === 'decision' && message.payload?.status === 'pending'
   }
   if (message.type === INBOX_TYPES.TRANSFER_OFFER) {
     return isActionableTransferOffer(message.payload)
@@ -237,6 +237,33 @@ export function createInboxMessage({
     ...(titleEn ? { titleEn } : {}),
     ...(bodyEn ? { bodyEn } : {}),
     payload: payload ?? {},
+  }
+}
+
+/**
+ * Closes out an original delayed-offer/decision message (kept, marked read,
+ * flagged `superseded`) and returns a FRESH, unread message carrying whatever
+ * changed — so a delayed reply (AI counter, player decision, ...) always shows
+ * up as a new inbox item (and, via isImportantInboxMessage, a fresh blocker
+ * when actionable) instead of silently rewriting a message the manager may
+ * have already read and moved past. `payload.threadId` links the new message
+ * back to the original. Shared by delayedNegotiation.js and loans.js.
+ */
+export function replyToInboxMessage(original, { title, titleEn, body, bodyEn, date, payload }) {
+  return {
+    message: { ...original, read: true, payload: { ...original.payload, superseded: true } },
+    followUpMessage: createInboxMessage({
+      type: original.type,
+      title,
+      titleEn,
+      body,
+      bodyEn,
+      date: date ?? original.date,
+      seasonIndex: original.seasonIndex,
+      seasonYear: original.seasonYear,
+      payload: { ...payload, threadId: original.id },
+      read: false,
+    }),
   }
 }
 
@@ -932,6 +959,8 @@ export function generateIncomingTransferOffers(career, { date = null } = {}) {
   }
   const minFeeRatio = chosenTarget.veteran ? 0.65 : 0.72
   if (fee < value * minFeeRatio) return []
+  // A protected player only attracts bids meeting the higher asking price.
+  if (chosen.notForSale && fee < ask) return []
 
   const name = getPlayerFullName(chosen)
   const expires = formatISODate(addDays(parseISODate(simDate), 2 + Math.floor(rng() * 3)))
@@ -997,7 +1026,7 @@ export function generateIncomingLoanOffers(career, { date = null } = {}) {
   )
   const rng = mulberry32(seed)
 
-  if (rng() > 0.05) return []
+  if (rng() > (playerTeam.players.some(p => p.loanListed && !p.loan) ? 0.15 : 0.05)) return []
 
   const aiTeams = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
   if (!aiTeams.length) return []
@@ -1012,10 +1041,11 @@ export function generateIncomingLoanOffers(career, { date = null } = {}) {
   const weighted = []
   for (const player of roster) {
     const rank = rankedByOvr.findIndex((p) => String(p.id) === String(player.id))
-    if (rank <= 2) continue // nie proś o gwiazdy/kluczowych graczy
+    if (rank <= 2 && !player.loanListed) continue // listed stars are explicitly offered by the manager
     const form = getPlayerForm(player)
-    if (form < 45) continue
+    if (form < 45 && !player.loanListed) continue
     let w = Math.max(0.05, 1 - rank / roster.length)
+    if (player.loanListed) w *= 6
     weighted.push({ player, w })
   }
   if (!weighted.length) return []
@@ -1032,7 +1062,8 @@ export function generateIncomingLoanOffers(career, { date = null } = {}) {
   }
   const chosen = chosenRow.player
 
-  const buyer = aiTeams[Math.floor(rng() * aiTeams.length)]
+  const destinations = aiTeams.filter(team => (team.players ?? []).filter(p => getOverallRating(p.skills) > getOverallRating(chosen.skills)).length < 21)
+  const buyer = destinations[Math.floor(rng() * destinations.length)]
   if (!buyer) return []
 
   refreshPlayerMarketValue(chosen)

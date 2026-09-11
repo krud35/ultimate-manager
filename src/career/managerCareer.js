@@ -102,6 +102,9 @@ export function processManagerCareer(c){
    c.inbox.unshift(message(c,`board-warning-${t.id}-${date}`,m.warnings.length===2?'Ostateczne ostrzeżenie zarządu':'Ostrzeżenie zarządu',m.warnings.length===2?'Final board warning':'Board warning',`Zaufanie zarządu: ${g.confidence}/100. Popraw realizację priorytetowych celów. Utrzymanie bardzo niskiego zaufania może skutkować zwolnieniem po okresie na poprawę.`,`Board confidence: ${g.confidence}/100. Improve priority objectives. Persistently very low confidence may lead to dismissal after time to improve.`))
   }
  }
- if(m.lastOfferMonth!==month){m.lastOfferMonth=month;m.offers=managerJobOffers(c);for(const o of m.offers)c.inbox.unshift(message(c,o.id,`Oferta pracy: ${o.name}`,`Job offer: ${o.name}`,`${o.name} szuka trenera. Oferta jest ważna w tym miesiącu, o ile klub nadal szuka trenera. Przejdź do panelu kariery trenera, aby ją przyjąć.`,`${o.name} is recruiting a manager. The offer lasts this month while the vacancy remains available. Accept it in the manager career panel.`))}
+ // Job offers are surfaced in the manager career panel (managerJobOffers(c)
+ // is read directly there) — no inbox notification, so they don't interrupt
+ // the calendar/sim loop while the manager is happily employed.
+ if(m.lastOfferMonth!==month){m.lastOfferMonth=month;m.offers=managerJobOffers(c)}
  return c
 }

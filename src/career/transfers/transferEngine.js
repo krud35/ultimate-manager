@@ -69,8 +69,11 @@ export const TRANSFER_LIST_MORALE_HIT = -4
 export function setPlayerTransferListed(team, playerId, listed) {
   const player = (team?.players ?? []).find((p) => String(p.id) === String(playerId))
   if (!player) return { ok: false, error: 'not_on_roster' }
+  if (player.loan) return { ok: false, error: 'on_loan' }
   const wasListed = !!player.transferListed
   player.transferListed = !!listed
+  if (listed) { player.loanListed = false; player.notForSale = false }
+  player.developmentListing = null
   if (listed && !wasListed) {
     // Jednorazowy, niewielki spadek morale/lojalności — zawodnik wie, że klub go nie
     // chce. Nie odwracamy przy zdjęciu z listy (unika farmienia morale przez toggle).
@@ -80,6 +83,26 @@ export function setPlayerTransferListed(team, playerId, listed) {
     noteLoyaltyFromTreatment(player, player.morale - before)
   }
   return { ok: true, player, listed: player.transferListed }
+}
+
+export function setPlayerLoanListed(team, playerId, listed) {
+  const player = team?.players?.find(p => String(p.id) === String(playerId))
+  if (!player) return { ok: false, error: 'not_on_roster' }
+  if (player.loan) return { ok: false, error: 'on_loan' }
+  player.loanListed = !!listed
+  if (listed) { player.transferListed = false; player.notForSale = false }
+  player.developmentListing = null
+  return { ok: true, player, listed: player.loanListed }
+}
+
+export function setPlayerNotForSale(team, playerId, enabled) {
+  const player = team?.players?.find(p => String(p.id) === String(playerId))
+  if (!player) return { ok: false, error: 'not_on_roster' }
+  if (player.loan) return { ok: false, error: 'on_loan' }
+  player.notForSale = !!enabled
+  if (enabled) { player.transferListed = false; player.loanListed = false }
+  player.developmentListing = null
+  return { ok: true, player, notForSale: player.notForSale }
 }
 
 /** Progi „wymuszenia" wpisu na listę transferową przez niezadowolonego zawodnika. */
@@ -220,8 +243,8 @@ export function listTransferMarketWithFreeAgents(world, buyerTeamId) {
       contractYears: null,
       contractRemaining: 0,
       freeAgent: true,
-      loanListed: false,
       listed: false,
+      loanListed: false,
     })
   }
   return [...faRows, ...clubRows].sort(
@@ -266,9 +289,9 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
       sellerBudget: getTransferBudget(team),
       weeklyWage: player.contract?.weeklyWage ?? 0,
       contractYears: player.contract?.years ?? null,
-      loanListed: !!player.loanListed,
       contractRemaining: getContractRemainingCost(player.contract),
       listed: !!player.transferListed,
+      loanListed: !!player.loanListed,
     }
   }
   const freeAgent = (world?.freeAgents ?? []).find((p) => String(p.id) === String(playerId))
@@ -291,10 +314,10 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
     sellerBudget: 0,
     weeklyWage: null,
     contractYears: null,
-    loanListed: false,
     contractRemaining: 0,
     freeAgent: true,
     listed: false,
+    loanListed: false,
   }
 }
 
@@ -422,6 +445,11 @@ export function completeTransferBetweenClubs(career, opts) {
   }
 
   moved.lastTransferDate = career.league?.currentDate ?? null
+  moved.loanListed = false
+  moved.transferListed = false
+  moved.notForSale = false
+  moved.developmentListing = null
+  moved.recentPlayingTime = []
   const window = getTransferWindowState(career)
   const involvesPlayer =
     buyerId === career.playerTeamId || found.team.id === career.playerTeamId
@@ -755,22 +783,21 @@ export function acceptIncomingBid(career, opts) {
     return { ok: false, error: 'Kupujący nie ma już wystarczającego budżetu' }
   }
 
-  const done = completeTransferBetweenClubs(career, {
-    playerId: opts.playerId,
-    fee,
-    buyerTeamId: opts.buyerTeamId,
-    sellerTeamId: career.playerTeamId,
-  })
-  if (!done.ok) return done
-
+  // Club terms are agreed here, but the PLAYER still gets a say — his decision
+  // is queued and resolved a few days later (queueSalePlayerDecision /
+  // resolveSalePlayerDecision in delayedNegotiation.js), not rolled instantly
+  // with unseeded RNG that a manager could just re-trigger by clicking Accept
+  // again on failure.
   return {
     ok: true,
-    completed: true,
-    entry: done.entry,
-    transferLog: done.transferLog,
-    world: done.world,
-    message: `${buyer.name} finalizuje zakup ${done.entry.playerName} za ${formatUsd(fee)}.`,
-    messageEn: `${buyer.name} completes the purchase of ${done.entry.playerName} for ${formatUsd(fee)}.`,
+    completed: false,
+    pending: 'player_decision',
+    playerId: found.player.id,
+    playerName: getPlayerFullName(found.player),
+    buyerTeamId: buyer.id,
+    fee,
+    message: `${buyer.name} finalizuje warunki klubowe za ${formatUsd(fee)} — ${getPlayerFullName(found.player)} rozważa ofertę.`,
+    messageEn: `${buyer.name} finalizes club terms for ${formatUsd(fee)} — ${getPlayerFullName(found.player)} is considering the offer.`,
   }
 }
 

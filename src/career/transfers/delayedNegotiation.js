@@ -7,10 +7,12 @@ import { getPlayerFullName } from '../../data/mockPlayers.js'
 import { getOverallRating } from '../../models/playerStats.js'
 import { addDays, formatISODate, parseISODate } from '../../league/seasonCalendar.js'
 import { worldTeamById } from '../worldState.js'
+import { createRng } from '../../matchEngine/rng.js'
 import {
   createInboxMessage,
   ensureInbox,
   updateInboxMessage,
+  replyToInboxMessage,
   INBOX_TYPES,
 } from '../inbox.js'
 import { formatUsd } from './playerValue.js'
@@ -23,10 +25,12 @@ import {
 import { isTransferWindowOpen } from './transferWindow.js'
 import {
   completeTransfer,
+  completeTransferBetweenClubs,
   acceptIncomingBid,
 } from './transferEngine.js'
 import { signFreeAgent } from './freeAgency.js'
 import {
+  aiAutoPlayerContractTerms,
   computePlayerContractDemands,
   evaluatePlayerContractOffer,
   previewContractOffer,
@@ -59,6 +63,8 @@ export function rollNegotiationReplyDate(fromDate, seedKey = '') {
   return formatISODate(addDays(parseISODate(fromDate), days))
 }
 
+const reply = replyToInboxMessage
+
 function findPlayer(world, playerId) {
   for (const id of world?.teamIds ?? Object.keys(world?.teamsById ?? {})) {
     const team = world.teamsById[id]
@@ -66,6 +72,124 @@ function findPlayer(world, playerId) {
     if (idx >= 0) return { team, player: team.players[idx], index: idx }
   }
   return null
+}
+
+/**
+ * Message announcing that club terms for selling a player are agreed, but the
+ * PLAYER still has to decide (a few days, not instantly — see
+ * resolveSalePlayerDecision). `threadId` links it back to whatever message
+ * (incoming_bid or pending_registration) triggered it.
+ */
+function buildSalePlayerDecisionMessage(career, { playerId, playerName, buyerTeamId, buyerTeamName, fee, threadId = null }) {
+  const today = career.league?.currentDate
+  const replyDate = rollNegotiationReplyDate(today, `sale-decision|${threadId ?? playerId}|${today}`)
+  const buyer = buyerTeamName ?? worldTeamById(career.world, buyerTeamId)?.name ?? 'Kupujący klub'
+  return createInboxMessage({
+    type: INBOX_TYPES.TRANSFER_OFFER,
+    title: `Klub akceptuje · ${playerName}`,
+    titleEn: `Club accepts · ${playerName}`,
+    body: `${buyer} zaakceptował warunki (${formatUsd(fee)}). ${playerName} rozważa ofertę — odpowiedź w skrzynce za kilka dni (do ${replyDate}).`,
+    bodyEn: `${buyer} accepted the terms (${formatUsd(fee)}). ${playerName} is considering the offer — a reply in the inbox in a few days (by ${replyDate}).`,
+    date: today,
+    seasonIndex: career.seasonIndex,
+    seasonYear: career.seasonYear,
+    payload: {
+      kind: 'sale_player_decision',
+      status: 'awaiting_reply',
+      replyDate,
+      playerId,
+      playerName,
+      buyerTeamId,
+      fee,
+      threadId,
+    },
+  })
+}
+
+/**
+ * Manager-initiated instant accept of an incoming bid (respondToIncomingBid)
+ * lands here once the club side is agreed — closes the original message and
+ * queues the player's own (delayed) decision instead of finalizing on the spot.
+ */
+export function queueSalePlayerDecision(career, { messageId, playerId, playerName, buyerTeamId, fee }) {
+  if (!career?.league?.currentDate) return { ok: false, error: 'Brak daty w lidze' }
+  const message = buildSalePlayerDecisionMessage(career, { playerId, playerName, buyerTeamId, fee, threadId: messageId ?? null })
+  const inboxBase = messageId
+    ? updateInboxMessage(career.inbox, messageId, { read: true, payload: { status: 'club_agreed_awaiting_player' } })
+    : (career.inbox ?? [])
+  return { ok: true, queued: true, message, inboxBase, replyDate: message.payload.replyDate }
+}
+
+/**
+ * Resolves a queued `sale_player_decision` on its reply date — seeded (not
+ * re-rollable by re-clicking), mirrors the willingness check the buy-side
+ * (outgoing_player_contract) already applies. Rejection is terminal: the deal
+ * does NOT stay clickable, a fresh message explains the player said no.
+ */
+function resolveSalePlayerDecision(career, message) {
+  const p = message.payload
+  const found = findPlayer(career.world, p.playerId)
+  const buyer = worldTeamById(career.world, p.buyerTeamId)
+
+  if (!found || !buyer || found.team.id !== career.playerTeamId) {
+    return reply(message, {
+      title: `Transfer wygasł · ${p.playerName}`,
+      titleEn: `Deal expired · ${p.playerName}`,
+      body: `${message.body}\n\nZawodnik nie jest już dostępny do tego transferu.`,
+      bodyEn: `${message.bodyEn ?? message.body}\n\nThe player is no longer available for this deal.`,
+      payload: { ...p, status: 'withdrawn' },
+    })
+  }
+
+  const auto = aiAutoPlayerContractTerms({
+    player: found.player,
+    sellerTeam: found.team,
+    buyerTeam: buyer,
+    league: career.league ?? null,
+    rng: createRng(hashSeed(`${message.id}|${p.replyDate}|sale-decision`)),
+  })
+
+  if (!auto.ok) {
+    return reply(message, {
+      date: p.replyDate,
+      title: `Zawodnik odmawia przenosin · ${p.playerName}`,
+      titleEn: `Player refuses the move · ${p.playerName}`,
+      body: `${p.playerName} odrzucił warunki nowego klubu i zostaje. Oferta wygasła.`,
+      bodyEn: `${p.playerName} turned down the new club's terms and is staying. The offer has expired.`,
+      payload: { ...p, status: 'rejected' },
+    })
+  }
+
+  const done = completeTransferBetweenClubs(career, {
+    playerId: p.playerId,
+    buyerTeamId: p.buyerTeamId,
+    sellerTeamId: career.playerTeamId,
+    fee: p.fee,
+    contract: auto.terms,
+  })
+  if (!done.ok) {
+    return reply(message, {
+      date: p.replyDate,
+      title: `Transfer nieudany · ${p.playerName}`,
+      titleEn: `Transfer failed · ${p.playerName}`,
+      body: done.error ?? 'Nie udało się sfinalizować transferu.',
+      bodyEn: done.error ?? 'Could not complete the transfer.',
+      payload: { ...p, status: 'rejected' },
+    })
+  }
+
+  return {
+    ...reply(message, {
+      date: p.replyDate,
+      title: `Sprzedano · ${p.playerName}`,
+      titleEn: `Sold · ${p.playerName}`,
+      body: `${p.playerName} zgodził się na przenosiny. Transfer do ${buyer.name} za ${formatUsd(p.fee)} sfinalizowany.`,
+      bodyEn: `${p.playerName} agreed to the move. Transfer to ${buyer.name} for ${formatUsd(p.fee)} completed.`,
+      payload: { ...p, status: 'accepted', fee: done.entry?.fee ?? p.fee },
+    }),
+    world: done.world,
+    transferLog: done.transferLog,
+  }
 }
 
 function hasAwaitingOfferForPlayer(inbox, playerId, kinds) {
@@ -417,6 +541,9 @@ export function processDelayedTransferReplies(career, { date = null } = {}) {
   let transferLog = career.transferLog ?? []
   let loanLog = career.loanLog ?? []
   let resolved = 0
+  // Collected separately and prepended AFTER the loop — unshifting into `inbox`
+  // mid-iteration would shift indices and cause an item to be reprocessed.
+  const newFollowUps = []
   const liveCareer = () => ({ ...career, world, transferLog, loanLog, inbox, league: career.league })
 
   for (let i = 0; i < inbox.length; i += 1) {
@@ -429,6 +556,7 @@ export function processDelayedTransferReplies(career, { date = null } = {}) {
     if (p.kind === 'outgoing_club_offer') {
       const result = resolveOutgoingClubOffer(liveCareer(), m)
       inbox[i] = result.message
+      if (result.followUpMessage) newFollowUps.push(result.followUpMessage)
       resolved += 1
       continue
     }
@@ -436,6 +564,7 @@ export function processDelayedTransferReplies(career, { date = null } = {}) {
     if (p.kind === 'outgoing_player_contract') {
       const result = resolveOutgoingPlayerContract(liveCareer(), m)
       inbox[i] = result.message
+      if (result.followUpMessage) newFollowUps.push(result.followUpMessage)
       if (result.world) world = result.world
       if (result.transferLog) transferLog = result.transferLog
       if (result.parentPatch && result.parentId) {
@@ -448,6 +577,17 @@ export function processDelayedTransferReplies(career, { date = null } = {}) {
     if (p.kind === 'incoming_bid') {
       const result = resolveIncomingBidCounter(liveCareer(), m)
       inbox[i] = result.message
+      if (result.followUpMessage) newFollowUps.push(result.followUpMessage)
+      if (result.world) world = result.world
+      if (result.transferLog) transferLog = result.transferLog
+      resolved += 1
+      continue
+    }
+
+    if (p.kind === 'sale_player_decision') {
+      const result = resolveSalePlayerDecision(liveCareer(), m)
+      inbox[i] = result.message
+      if (result.followUpMessage) newFollowUps.push(result.followUpMessage)
       if (result.world) world = result.world
       if (result.transferLog) transferLog = result.transferLog
       resolved += 1
@@ -457,6 +597,7 @@ export function processDelayedTransferReplies(career, { date = null } = {}) {
     if (p.kind === 'loan_out_offer') {
       const result = resolveOutgoingLoanOffer(liveCareer(), m)
       inbox[i] = result.message
+      if (result.followUpMessage) newFollowUps.push(result.followUpMessage)
       if (result.world) world = result.world
       if (result.loanLogEntry) loanLog = [...loanLog, result.loanLogEntry]
       resolved += 1
@@ -466,11 +607,14 @@ export function processDelayedTransferReplies(career, { date = null } = {}) {
     if (p.kind === 'loan_in_request') {
       const result = resolveIncomingLoanRequestReply(liveCareer(), m)
       inbox[i] = result.message
+      if (result.followUpMessage) newFollowUps.push(result.followUpMessage)
       if (result.world) world = result.world
       if (result.loanLogEntry) loanLog = [...loanLog, result.loanLogEntry]
       resolved += 1
     }
   }
+
+  if (newFollowUps.length) inbox = [...newFollowUps, ...inbox]
 
   return { inbox, world, transferLog, loanLog, resolved }
 }
@@ -517,17 +661,13 @@ function resolveOutgoingClubOffer(career, message) {
   const found = findPlayer(career.world, p.playerId)
 
   if (!found || found.team.id !== p.sellerTeamId) {
-    return {
-      message: {
-        ...message,
-        read: false,
-        title: `Oferta nieważna · ${p.playerName}`,
-        titleEn: `Offer void · ${p.playerName}`,
-        body: `${message.body}\n\nZawodnik nie jest już dostępny w ${p.sellerTeamName}.`,
-        bodyEn: `${message.bodyEn ?? message.body}\n\nThe player is no longer available at ${p.sellerTeamName}.`,
-        payload: { ...p, status: 'withdrawn' },
-      },
-    }
+    return reply(message, {
+      title: `Oferta nieważna · ${p.playerName}`,
+      titleEn: `Offer void · ${p.playerName}`,
+      body: `${message.body}\n\nZawodnik nie jest już dostępny w ${p.sellerTeamName}.`,
+      bodyEn: `${message.bodyEn ?? message.body}\n\nThe player is no longer available at ${p.sellerTeamName}.`,
+      payload: { ...p, status: 'withdrawn' },
+    })
   }
 
   const evaluation = evaluateBuyOffer({
@@ -545,62 +685,50 @@ function resolveOutgoingClubOffer(career, message) {
       buyerTeam: buyer,
       league: career.league ?? null,
     })
-    return {
-      message: {
-        ...message,
-        read: false,
-        date: p.replyDate,
-        title: `Klub akceptuje · ${p.playerName}`,
-        titleEn: `Club accepts · ${p.playerName}`,
-        body: `${evaluation.message}\n\nUzgodnij teraz kontrakt z zawodnikiem (tygodniówka + lata + bonusy/obietnice).`,
-        bodyEn: `${evaluation.messageEn ?? evaluation.message}\n\nNegotiate the player contract now (wage + years + bonuses/promises).`,
-        payload: {
-          ...p,
-          status: 'club_agreed',
-          agreedFee: evaluation.offerAmount,
-          evaluation,
-          playerDemands: demands,
-        },
+    return reply(message, {
+      date: p.replyDate,
+      title: `Klub akceptuje · ${p.playerName}`,
+      titleEn: `Club accepts · ${p.playerName}`,
+      body: `${evaluation.message}\n\nUzgodnij teraz kontrakt z zawodnikiem (tygodniówka + lata + bonusy/obietnice).`,
+      bodyEn: `${evaluation.messageEn ?? evaluation.message}\n\nNegotiate the player contract now (wage + years + bonuses/promises).`,
+      payload: {
+        ...p,
+        status: 'club_agreed',
+        agreedFee: evaluation.offerAmount,
+        evaluation,
+        playerDemands: demands,
       },
-    }
+    })
   }
 
   if (evaluation.status === 'counter') {
-    return {
-      message: {
-        ...message,
-        read: false,
-        date: p.replyDate,
-        title: `Kontrpropozycja klubu · ${p.playerName}`,
-        titleEn: `Club counter · ${p.playerName}`,
-        body: evaluation.message,
-        bodyEn: evaluation.messageEn ?? evaluation.message,
-        payload: {
-          ...p,
-          status: 'counter',
-          counterAmount: evaluation.counterAmount,
-          evaluation,
-        },
-      },
-    }
-  }
-
-  return {
-    message: {
-      ...message,
-      read: false,
+    return reply(message, {
       date: p.replyDate,
-      title: `Klub odrzuca · ${p.playerName}`,
-      titleEn: `Club rejects · ${p.playerName}`,
+      title: `Kontrpropozycja klubu · ${p.playerName}`,
+      titleEn: `Club counter · ${p.playerName}`,
       body: evaluation.message,
       bodyEn: evaluation.messageEn ?? evaluation.message,
       payload: {
         ...p,
-        status: 'rejected',
+        status: 'counter',
+        counterAmount: evaluation.counterAmount,
         evaluation,
       },
-    },
+    })
   }
+
+  return reply(message, {
+    date: p.replyDate,
+    title: `Klub odrzuca · ${p.playerName}`,
+    titleEn: `Club rejects · ${p.playerName}`,
+    body: evaluation.message,
+    bodyEn: evaluation.messageEn ?? evaluation.message,
+    payload: {
+      ...p,
+      status: 'rejected',
+      evaluation,
+    },
+  })
 }
 
 function stagePreAgreedBuyMessage(message, p, contractTerms, evaluation = null) {
@@ -608,9 +736,7 @@ function stagePreAgreedBuyMessage(message, p, contractTerms, evaluation = null) 
   const wage = contractTerms.weeklyWage
   const years = contractTerms.years
   return {
-    message: {
-      ...message,
-      read: false,
+    ...reply(message, {
       date: p.replyDate ?? message.date,
       title: `Umowa wstępna · ${p.playerName}`,
       titleEn: `Pre-agreement · ${p.playerName}`,
@@ -624,7 +750,7 @@ function stagePreAgreedBuyMessage(message, p, contractTerms, evaluation = null) 
         playerEvaluation: evaluation ?? p.playerEvaluation ?? null,
         registrationNotified: false,
       },
-    },
+    }),
     parentId: p.parentMessageId,
     parentPatch: p.parentMessageId
       ? {
@@ -647,22 +773,18 @@ function finalizeOrStageBuy(career, message, p, contractTerms, evaluation = null
   })
   if (!done.ok) {
     return {
-      message: {
-        ...message,
-        read: false,
+      ...reply(message, {
         title: `Transfer nieudany · ${p.playerName}`,
         titleEn: `Transfer failed · ${p.playerName}`,
         body: done.error ?? 'Nie udało się sfinalizować transferu.',
         bodyEn: done.errorEn ?? done.error ?? 'Could not complete the transfer.',
         payload: { ...p, status: 'rejected', playerEvaluation: evaluation },
-      },
+      }),
       error: done.error,
     }
   }
   return {
-    message: {
-      ...message,
-      read: false,
+    ...reply(message, {
       date: p.replyDate ?? message.date,
       title: `Kontrakt podpisany · ${p.playerName}`,
       titleEn: `Contract signed · ${p.playerName}`,
@@ -675,7 +797,7 @@ function finalizeOrStageBuy(career, message, p, contractTerms, evaluation = null
         entryId: done.entry?.id,
         contractTerms,
       },
-    },
+    }),
     world: done.world,
     transferLog: done.transferLog,
     parentId: p.parentMessageId,
@@ -696,17 +818,13 @@ function resolveOutgoingPlayerContract(career, message) {
   const buyer = worldTeamById(career.world, career.playerTeamId)
 
   if (!found || !buyer || found.team.id === career.playerTeamId) {
-    return {
-      message: {
-        ...message,
-        read: false,
-        title: `Kontrakt nieważny · ${p.playerName}`,
-        titleEn: `Contract void · ${p.playerName}`,
-        body: `${message.body}\n\nZawodnik nie jest już dostępny do transferu.`,
-        bodyEn: `${message.bodyEn ?? message.body}\n\nThe player is no longer available for transfer.`,
-        payload: { ...p, status: 'withdrawn' },
-      },
-    }
+    return reply(message, {
+      title: `Kontrakt nieważny · ${p.playerName}`,
+      titleEn: `Contract void · ${p.playerName}`,
+      body: `${message.body}\n\nZawodnik nie jest już dostępny do transferu.`,
+      bodyEn: `${message.bodyEn ?? message.body}\n\nThe player is no longer available for transfer.`,
+      payload: { ...p, status: 'withdrawn' },
+    })
   }
 
   const evaluation = evaluatePlayerContractOffer({
@@ -726,42 +844,34 @@ function resolveOutgoingPlayerContract(career, message) {
   }
 
   if (evaluation.status === 'counter') {
-    return {
-      message: {
-        ...message,
-        read: false,
-        date: p.replyDate,
-        title: `Kontrpropozycja zawodnika · ${p.playerName}`,
-        titleEn: `Player counter · ${p.playerName}`,
-        body: evaluation.message,
-        bodyEn: evaluation.messageEn ?? evaluation.message,
-        payload: {
-          ...p,
-          status: 'counter',
-          playerEvaluation: evaluation,
-          counterWeeklyWage: evaluation.counterWeeklyWage,
-          counterYears: evaluation.counterYears,
-        },
-      },
-    }
-  }
-
-  return {
-    message: {
-      ...message,
-      read: false,
+    return reply(message, {
       date: p.replyDate,
-      title: `Zawodnik odrzuca · ${p.playerName}`,
-      titleEn: `Player rejects · ${p.playerName}`,
+      title: `Kontrpropozycja zawodnika · ${p.playerName}`,
+      titleEn: `Player counter · ${p.playerName}`,
       body: evaluation.message,
       bodyEn: evaluation.messageEn ?? evaluation.message,
       payload: {
         ...p,
-        status: 'rejected',
+        status: 'counter',
         playerEvaluation: evaluation,
+        counterWeeklyWage: evaluation.counterWeeklyWage,
+        counterYears: evaluation.counterYears,
       },
-    },
+    })
   }
+
+  return reply(message, {
+    date: p.replyDate,
+    title: `Zawodnik odrzuca · ${p.playerName}`,
+    titleEn: `Player rejects · ${p.playerName}`,
+    body: evaluation.message,
+    bodyEn: evaluation.messageEn ?? evaluation.message,
+    payload: {
+      ...p,
+      status: 'rejected',
+      playerEvaluation: evaluation,
+    },
+  })
 }
 
 function resolveIncomingBidCounter(career, message) {
@@ -772,15 +882,11 @@ function resolveIncomingBidCounter(career, message) {
   const found = findPlayer(career.world, p.playerId)
 
   if (!seller || !buyer || !found || found.team.id !== career.playerTeamId) {
-    return {
-      message: {
-        ...message,
-        read: false,
-        body: `${message.body}\n\nNegocjacje wygasły — zawodnik niedostępny.`,
-        bodyEn: `${message.bodyEn ?? message.body}\n\nNegotiations expired — player unavailable.`,
-        payload: { ...p, status: 'withdrawn', pendingCounterAmount: null },
-      },
-    }
+    return reply(message, {
+      body: `${message.body}\n\nNegocjacje wygasły — zawodnik niedostępny.`,
+      bodyEn: `${message.bodyEn ?? message.body}\n\nNegotiations expired — player unavailable.`,
+      payload: { ...p, status: 'withdrawn', pendingCounterAmount: null },
+    })
   }
 
   const prevLog = Array.isArray(p.negotiationLog) ? p.negotiationLog : []
@@ -804,115 +910,81 @@ function resolveIncomingBidCounter(career, message) {
 
   if (evaluation.status === 'accepted') {
     if (!isTransferWindowOpen(career)) {
-      return {
-        message: {
-          ...message,
-          read: false,
-          date: p.replyDate,
-          title: `Umowa wstępna · ${p.playerName}`,
-          titleEn: `Pre-agreement · ${p.playerName}`,
-          body: `${evaluation.message}\n\nOkno jest zamknięte — sprzedaż ${p.playerName} za ${formatUsd(evaluation.fee ?? counter)} zostanie zarejestrowana po otwarciu okna (potwierdzenie w skrzynce).`,
-          bodyEn: `${evaluation.messageEn ?? evaluation.message}\n\nThe window is closed — sale of ${p.playerName} for ${formatUsd(evaluation.fee ?? counter)} will be registered when it opens (confirm in inbox).`,
-          payload: {
-            ...p,
-            status: 'pre_agreed',
-            direction: 'sell',
-            fee: evaluation.fee ?? counter,
-            lastNegotiationMessage: evaluation.message,
-            lastNegotiationMessageEn: evaluation.messageEn ?? evaluation.message,
-            negotiationLog: [...prevLog, logEntry],
-            pendingCounterAmount: null,
-            registrationNotified: false,
-          },
-        },
-      }
-    }
-
-    const done = acceptIncomingBid(career, {
-      playerId: p.playerId,
-      buyerTeamId: p.fromTeamId,
-      fee: evaluation.fee ?? counter,
-    })
-    if (!done.ok) {
-      return {
-        message: {
-          ...message,
-          read: false,
-          body: `${message.body}\n\n${done.error}`,
-          payload: {
-            ...p,
-            status: 'rejected',
-            lastNegotiationMessage: done.error,
-            negotiationLog: [...prevLog, logEntry],
-            pendingCounterAmount: null,
-          },
-        },
-      }
-    }
-    return {
-      message: {
-        ...message,
-        read: false,
+      return reply(message, {
         date: p.replyDate,
-        title: `Sprzedano · ${p.playerName}`,
-        titleEn: `Sold · ${p.playerName}`,
-        body: evaluation.message,
-        bodyEn: evaluation.messageEn ?? evaluation.message,
+        title: `Umowa wstępna · ${p.playerName}`,
+        titleEn: `Pre-agreement · ${p.playerName}`,
+        body: `${evaluation.message}\n\nOkno jest zamknięte — sprzedaż ${p.playerName} za ${formatUsd(evaluation.fee ?? counter)} zostanie zarejestrowana po otwarciu okna (potwierdzenie w skrzynce).`,
+        bodyEn: `${evaluation.messageEn ?? evaluation.message}\n\nThe window is closed — sale of ${p.playerName} for ${formatUsd(evaluation.fee ?? counter)} will be registered when it opens (confirm in inbox).`,
         payload: {
           ...p,
-          status: 'accepted',
-          fee: done.entry?.fee ?? evaluation.fee ?? counter,
+          status: 'pre_agreed',
+          direction: 'sell',
+          fee: evaluation.fee ?? counter,
           lastNegotiationMessage: evaluation.message,
           lastNegotiationMessageEn: evaluation.messageEn ?? evaluation.message,
           negotiationLog: [...prevLog, logEntry],
           pendingCounterAmount: null,
+          registrationNotified: false,
         },
-      },
-      world: done.world,
-      transferLog: done.transferLog,
+      })
     }
+
+    // Club side is agreed — the PLAYER still needs a few days to decide (see
+    // resolveSalePlayerDecision), instead of finalizing on the spot.
+    return reply(message, {
+      date: p.replyDate,
+      title: `Klub akceptuje · ${p.playerName}`,
+      titleEn: `Club accepts · ${p.playerName}`,
+      body: `${evaluation.message}\n\n${p.playerName} rozważa ofertę — odpowiedź w skrzynce za kilka dni.`,
+      bodyEn: `${evaluation.messageEn ?? evaluation.message}\n\n${p.playerName} is considering the offer — a reply in the inbox in a few days.`,
+      payload: {
+        ...p,
+        kind: 'sale_player_decision',
+        status: 'awaiting_reply',
+        replyDate: rollNegotiationReplyDate(p.replyDate, `sale-decision|${message.id}`),
+        buyerTeamId: p.fromTeamId,
+        fee: evaluation.fee ?? counter,
+        lastNegotiationMessage: evaluation.message,
+        lastNegotiationMessageEn: evaluation.messageEn ?? evaluation.message,
+        negotiationLog: [...prevLog, logEntry],
+        pendingCounterAmount: null,
+      },
+    })
   }
 
   if (evaluation.status === 'counter') {
-    return {
-      message: {
-        ...message,
-        read: false,
-        date: p.replyDate,
-        body: `${message.body}\n\n${evaluation.message}`,
-        bodyEn: `${message.bodyEn ?? message.body}\n\n${evaluation.messageEn ?? evaluation.message}`,
-        payload: {
-          ...p,
-          status: 'counter',
-          fee: evaluation.counterAmount,
-          lastNegotiationMessage: evaluation.message,
-          lastNegotiationMessageEn: evaluation.messageEn ?? evaluation.message,
-          negotiationLog: [...prevLog, logEntry],
-          pendingCounterAmount: null,
-          replyDate: null,
-        },
-      },
-    }
-  }
-
-  return {
-    message: {
-      ...message,
-      read: false,
+    return reply(message, {
       date: p.replyDate,
       body: `${message.body}\n\n${evaluation.message}`,
       bodyEn: `${message.bodyEn ?? message.body}\n\n${evaluation.messageEn ?? evaluation.message}`,
       payload: {
         ...p,
-        status: 'rejected',
+        status: 'counter',
+        fee: evaluation.counterAmount,
         lastNegotiationMessage: evaluation.message,
         lastNegotiationMessageEn: evaluation.messageEn ?? evaluation.message,
         negotiationLog: [...prevLog, logEntry],
         pendingCounterAmount: null,
         replyDate: null,
       },
-    },
+    })
   }
+
+  return reply(message, {
+    date: p.replyDate,
+    body: `${message.body}\n\n${evaluation.message}`,
+    bodyEn: `${message.bodyEn ?? message.body}\n\n${evaluation.messageEn ?? evaluation.message}`,
+    payload: {
+      ...p,
+      status: 'rejected',
+      lastNegotiationMessage: evaluation.message,
+      lastNegotiationMessageEn: evaluation.messageEn ?? evaluation.message,
+      negotiationLog: [...prevLog, logEntry],
+      pendingCounterAmount: null,
+      replyDate: null,
+    },
+  })
 }
 
 /**
@@ -1111,27 +1183,37 @@ export function confirmPendingRegistration(career, { messageId }) {
     })
     if (!done.ok) return done
 
+    // Club terms confirmed — the player still needs a few days to decide
+    // (same delayed flow as an instant-accepted incoming_bid).
+    const decisionMessage = buildSalePlayerDecisionMessage(career, {
+      playerId: p.playerId,
+      playerName: p.playerName,
+      buyerTeamId: p.buyerTeamId,
+      buyerTeamName: p.buyerTeamName,
+      fee: p.fee,
+      threadId: messageId,
+    })
     let inbox = updateInboxMessage(career.inbox, messageId, {
       read: true,
-      title: `Zarejestrowano sprzedaż · ${p.playerName}`,
-      titleEn: `Sale registered · ${p.playerName}`,
-      body: `Potwierdziłeś rejestrację. Sprzedano ${p.playerName} do ${p.buyerTeamName} za ${formatUsd(p.fee)}.`,
-      bodyEn: `You confirmed registration. Sold ${p.playerName} to ${p.buyerTeamName} for ${formatUsd(p.fee)}.`,
-      payload: { status: 'accepted', entryId: done.entry?.id },
+      title: `Rejestracja potwierdzona · ${p.playerName}`,
+      titleEn: `Registration confirmed · ${p.playerName}`,
+      body: `Potwierdziłeś rejestrację. ${p.playerName} rozważa ofertę ${p.buyerTeamName} — odpowiedź za kilka dni.`,
+      bodyEn: `You confirmed registration. ${p.playerName} is considering ${p.buyerTeamName}'s offer — a reply in a few days.`,
+      payload: { status: 'club_agreed_awaiting_player' },
     })
+    inbox = [decisionMessage, ...inbox]
     if (p.sourceMessageId) {
       inbox = updateInboxMessage(inbox, p.sourceMessageId, {
-        payload: { status: 'accepted', entryId: done.entry?.id },
+        payload: { status: 'club_agreed_awaiting_player' },
         read: true,
       })
     }
     return {
       ok: true,
-      completed: true,
+      completed: false,
       inbox,
-      world: done.world,
-      transferLog: done.transferLog,
-      entry: done.entry,
+      world: career.world,
+      transferLog: career.transferLog ?? [],
     }
   }
 

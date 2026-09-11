@@ -102,6 +102,7 @@ export {
   acceptIncomingBid,
   respondToIncomingBid,
   setPlayerTransferListed,
+  setPlayerLoanListed,
   checkForcedTransferListDemands,
   negotiatePlayerContract,
   renewPlayerContract,
@@ -149,6 +150,7 @@ export {
   evaluateLoanOffer,
   evaluateLoanRequestFromParentSide,
   evaluateLoanBuyClauseAiDecision,
+  computeLoanWillingness,
   resolveOutgoingLoanOffer,
   resolveIncomingLoanRequestReply,
 } from './transfers/index.js'
@@ -156,6 +158,7 @@ export {
   queueOutgoingClubOffer,
   queueOutgoingPlayerContract,
   queueIncomingBidCounter,
+  queueSalePlayerDecision,
   acceptOutgoingClubCounter,
   acceptPlayerContractCounter,
   processDelayedTransferReplies,

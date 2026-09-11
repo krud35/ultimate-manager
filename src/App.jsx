@@ -1,3 +1,4 @@
+import { setPlayerLoanListed, setPlayerNotForSale } from './career/transfers/transferEngine.js'
 import ManagerCareerPanel from './components/ManagerCareerPanel.jsx'
 import { addManagerWelcome, processManagerCareer } from './career/managerCareer.js'
 import { syncInjuriesFromMatchPlayers } from './models/playerInjury.js'
@@ -36,6 +37,7 @@ import {
   pickPostMatchEventMessage,
   messagesFromNewTransferLogEntries,
   mergeInbox,
+  INBOX_TYPES,
   unreadInboxCount,
   respondToIncomingBid,
   updateInboxMessage,
@@ -47,6 +49,7 @@ import {
   firstImportantInboxMessage,
   isImportantInboxMessage,
   queueIncomingBidCounter,
+  queueSalePlayerDecision,
   queueOutgoingPlayerContract,
   acceptOutgoingClubCounter,
   acceptPlayerContractCounter,
@@ -57,7 +60,6 @@ import {
   setPlayerTransferListed,
   isClubBankrupt,
   recordMatchKnowledgeGain,
-  queueLoanOutOffer,
   respondToIncomingLoanRequest,
 } from './career'
 
@@ -96,6 +98,7 @@ import PreMatchView, { isFixtureMatchDay } from './components/PreMatchView'
 import SimulationProgressOverlay, { yieldToUi } from './components/SimulationProgressOverlay'
 import CalendarSimOverlay from './components/CalendarSimOverlay'
 import WelcomeModal from './components/WelcomeModal'
+import RandomEventModal from './components/RandomEventModal.jsx'
 import TutorialGuide from './components/TutorialGuide'
 import { buildSeasonStateFromLeague } from './seasonEngine/seasonStateFromLeague.js'
 import {
@@ -482,6 +485,14 @@ export default function App() {
   const [careerCreateError, setCareerCreateError] = useState('')
   const [appError, setAppError] = useState('')
 
+  // Zapis do localStorage idzie teraz w tle (Worker, patrz saveStore.js) — błędy
+  // (np. brak miejsca) nie wracają już przez `throw` do wywołującego, tylko tędy.
+  useEffect(() => {
+    const onSaveError = (event) => setAppError(friendlySaveErrorMessage(event.detail, uiLang))
+    window.addEventListener('career-save-error', onSaveError)
+    return () => window.removeEventListener('career-save-error', onSaveError)
+  }, [uiLang])
+
   const [activeTab, setActiveTab] = useState('hub')
   const [leagueFixture, setLeagueFixture] = useState(null)
   const [matchStamina, setMatchStamina] = useState(null)
@@ -491,6 +502,7 @@ export default function App() {
   const [simProgress, setSimProgress] = useState(null)
   const [calendarSim, setCalendarSim] = useState(null)
   const [actionRequiredMessageId, setActionRequiredMessageId] = useState(null)
+  const [pendingRandomEventId, setPendingRandomEventId] = useState(null)
   const [inboxFocusId, setInboxFocusId] = useState(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [pendingWelcome, setPendingWelcome] = useState(false)
@@ -700,6 +712,12 @@ export default function App() {
         setActiveTab('match')
       } else {
         setActionRequiredMessageId(blockingMessageId)
+        // A pending "decision" random_event gets its own popup right away instead
+        // of waiting for the manager to notice the inbox banner (see item 6c).
+        const blockerMsg = next.inbox?.find((m) => m.id === blockingMessageId)
+        if (blockerMsg?.type === INBOX_TYPES.RANDOM_EVENT && blockerMsg.payload?.kind === 'decision') {
+          setPendingRandomEventId(blockingMessageId)
+        }
       }
     } catch (err) {
       console.error('[calendar sim]', err)
@@ -985,6 +1003,23 @@ export default function App() {
 
       if (!result.ok) return result
 
+      // Club terms agreed — the player still has to decide, a few days out
+      // (see queueSalePlayerDecision), not finalized on the spot.
+      if (result.pending === 'player_decision') {
+        const queued = queueSalePlayerDecision(career, {
+          messageId,
+          playerId: result.playerId,
+          playerName: result.playerName ?? p.playerName,
+          buyerTeamId: result.buyerTeamId,
+          fee: result.fee,
+        })
+        if (!queued.ok) return queued
+        const inbox = mergeInbox({ ...career, inbox: queued.inboxBase }, [queued.message])
+        const next = persistCareer(career, { inbox })
+        syncCareer(next)
+        return queued
+      }
+
       const logEntry = {
         at: new Date().toISOString(),
         action,
@@ -1069,6 +1104,8 @@ export default function App() {
       if (!result.ok) return result
       const next = persistCareer(career, result.careerPatch)
       syncCareer(next)
+      setPendingRandomEventId((id) => (id === messageId ? null : id))
+      setActionRequiredMessageId((id) => (id === messageId ? null : id))
       return result
     },
     [career, syncCareer],
@@ -1152,6 +1189,16 @@ export default function App() {
     }
   }, [career?.inbox, actionRequiredMessageId])
 
+  // Same auto-clear for the random-event popup — also covers switching careers
+  // (a fresh inbox won't contain the old id).
+  useEffect(() => {
+    if (!pendingRandomEventId || !career?.inbox) return
+    const msg = career.inbox.find((m) => m.id === pendingRandomEventId)
+    if (!msg || !isImportantInboxMessage(msg)) {
+      setPendingRandomEventId(null)
+    }
+  }, [career?.inbox, pendingRandomEventId])
+
   const handleLeagueMatchComplete = useCallback(
     (result, fixture) => {
       if (!career) return
@@ -1179,6 +1226,9 @@ export default function App() {
         recordMatchKnowledgeGain(prev.world, prev.playerTeamId, scoutOpponentId)
         const analysis = messageFromMatchAnalysis(prev, { fixture, record })
         const postMatchEvent = pickPostMatchEventMessage(prev, { fixture, record })
+        if (postMatchEvent?.type === INBOX_TYPES.RANDOM_EVENT && postMatchEvent.payload?.kind === 'decision') {
+          setPendingRandomEventId(postMatchEvent.id)
+        }
         const playerInjuries = (record.injuries ?? []).filter((inj) => {
           if (inj.teamId) return inj.teamId === prev.playerTeamId
           const team = worldTeamById(prev.world, prev.playerTeamId)
@@ -1265,25 +1315,23 @@ export default function App() {
     [career, syncCareer],
   )
 
-  const handleProposeLoanOut = useCallback(
-    (playerId, terms) => {
-      if (!career?.world) return { ok: false }
-      const result = queueLoanOutOffer(career, {
-        playerId,
-        destinationTeamId: terms.destinationTeamId,
-        fee: terms.fee,
-        durationPreset: terms.durationPreset,
-        wageSplitPct: terms.wageSplitPct,
-        buyClause: terms.buyClause,
-      })
-      if (!result.ok) return result
-      const nextInbox = mergeInbox(career, [result.message])
-      const next = persistCareer(career, { inbox: nextInbox })
-      syncCareer(next)
-      return { ok: true, flash: 'Propozycja wypożyczenia wysłana.' }
-    },
-    [career, syncCareer],
-  )
+  const handleToggleLoanList = useCallback((playerId) => {
+    if (!career?.world) return { ok: false }
+    const team = worldTeamById(career.world, career.playerTeamId)
+    const player = team?.players?.find(p => String(p.id) === String(playerId))
+    const result = setPlayerLoanListed(team, playerId, !player?.loanListed)
+    if (result.ok) syncCareer(persistCareer(career, { world: career.world }))
+    return result
+  }, [career, syncCareer])
+
+  const handleToggleNotForSale = useCallback((playerId) => {
+    if (!career?.world) return { ok: false }
+    const team = worldTeamById(career.world, career.playerTeamId)
+    const player = team?.players?.find(p => String(p.id) === String(playerId))
+    const result = setPlayerNotForSale(team, playerId, !player?.notForSale)
+    if (result.ok) syncCareer(persistCareer(career, { world: career.world }))
+    return result
+  }, [career, syncCareer])
 
   const handleReturnToLeague = useCallback(() => {
     setLeagueFixture(null)
@@ -1708,7 +1756,8 @@ export default function App() {
             clubOnly
             onExtendContract={handleExtendContract}
             onToggleTransferList={handleToggleTransferList}
-            onProposeLoanOut={handleProposeLoanOut}
+            onToggleLoanList={handleToggleLoanList}
+            onToggleNotForSale={handleToggleNotForSale}
           />
         )}
 
@@ -1923,6 +1972,14 @@ export default function App() {
             </button>
           </div>
         </div>
+      )}
+
+      {pendingRandomEventId && (
+        <RandomEventModal
+          message={career.inbox?.find((m) => m.id === pendingRandomEventId) ?? null}
+          lang={uiLang}
+          onChoose={handleResolveDecision}
+        />
       )}
 
       {pendingWelcome && (

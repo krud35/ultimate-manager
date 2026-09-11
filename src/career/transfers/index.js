@@ -100,6 +100,8 @@ export {
   respondToIncomingBid,
   negotiatePlayerContract,
   setPlayerTransferListed,
+  setPlayerLoanListed,
+  setPlayerNotForSale,
   checkForcedTransferListDemands,
 } from './transferEngine.js'
 
@@ -139,6 +141,7 @@ export {
   evaluateLoanOffer,
   evaluateLoanRequestFromParentSide,
   evaluateLoanBuyClauseAiDecision,
+  computeLoanWillingness,
   resolveOutgoingLoanOffer,
   resolveIncomingLoanRequestReply,
 } from './loans.js'

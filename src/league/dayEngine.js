@@ -1,3 +1,5 @@
+import { recordMatchDevelopment } from '../career/matchDevelopment.js'
+import { saveScoutingAnalysis } from '../matchEngine/scoutingAnalysis.js'
 /**
  * Silnik dnia kalendarza: mecze AI, blokada na mecz gracza, faza sezonu.
  */
@@ -245,11 +247,14 @@ function ensureFixtureInLeague(league, fixture) {
 
 function applyCupMatchResult(league, fixture, record) {
   const target = findFixtureInLeague(league, fixture.id) ?? fixture
+  if (target.status === 'completed') return
+  saveScoutingAnalysis(league, record)
   target.status = 'completed'
   target.homeScore = record.homeScore
   target.awayScore = record.awayScore
   target.winnerTeamId = record.winner
   target.playedByPlayer = !!record.playedByPlayer
+  recordMatchDevelopment(league, record)
 
   if (record.boxScore?.length) {
     if (!league.cupPlayerStats) league.cupPlayerStats = createLeaguePlayerStats()
@@ -283,12 +288,16 @@ function applyCupMatchResult(league, fixture, record) {
   if (!league.matchHistory) league.matchHistory = []
   league.matchHistory.push({
     fixtureId: record.fixtureId,
+    date: record.date ?? league.currentDate,
     homeTeamId: record.homeTeamId,
     awayTeamId: record.awayTeamId,
     homeScore: record.homeScore,
     awayScore: record.awayScore,
     winner: record.winner,
     competition: 'cup',
+    // playerOfMonthArticle (ultiworld.js) scores performances from this field —
+    // without it the monthly award can never find any stats (always returns null).
+    boxScore: record.boxScore ?? [],
     playedByPlayer: !!record.playedByPlayer,
     completedAt: Date.now(),
     injuries: record.injuries ?? [],

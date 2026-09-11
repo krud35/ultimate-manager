@@ -69,7 +69,33 @@ function fillSubRolesFromOffenseLine(tactics) {
   return map
 }
 
+/**
+ * Cache po TOŻSAMOŚCI obiektu tactics — ten sam wzorzec co
+ * `normalizeLinePlayerInstructions` w playerInstructions.js. `normalizeTactics`
+ * jest wołane wielokrotnie w obrębie JEDNEGO punktu (start punktu, każda zmiana
+ * posiadania/strata, dwa razy na iterację rzutu — patrz point.js), a obiekt
+ * tactics przez cały punkt jest ten sam (`stampLine`/`preparePointTeams`
+ * podmieniają go w całości dopiero MIĘDZY punktami — auto-zmiany ze zmęczenia,
+ * adaptacja AI, ręczna zmiana taktyki w UI, kontuzja — nigdy nie mutują w
+ * miejscu). Cache po tożsamości jest więc równoważny liczeniu na nowo, ale
+ * przelicza raz na punkt (albo rzadziej, gdy taktyka gracza się nie zmienia)
+ * zamiast za każdym wywołaniem. WeakMap: wpisy znikają razem z obiektem
+ * tactics, brak wycieku.
+ */
+const normalizedTacticsCache = new WeakMap()
+
 export function normalizeTactics(tactics) {
+  if (tactics && typeof tactics === 'object') {
+    const cached = normalizedTacticsCache.get(tactics)
+    if (cached) return cached
+    const computed = computeNormalizedTactics(tactics)
+    normalizedTacticsCache.set(tactics, computed)
+    return computed
+  }
+  return computeNormalizedTactics(tactics)
+}
+
+function computeNormalizedTactics(tactics) {
   const offenseStart =
     tactics?.lineupWhenOffenseStartPlayerIds ??
     tactics?.oLinePlayerIds ??

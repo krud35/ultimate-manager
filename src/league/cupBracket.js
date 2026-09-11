@@ -32,8 +32,6 @@ export function createCupFromFallStandings(standingsTableOrderedTeamIds, january
   const w3Sat = week3.saturday ?? formatISODate(addDays(w3Fri, 1))
   const w3Sun = week3.sunday ?? formatISODate(addDays(w3Fri, 2))
 
-  const seedOf = (teamId) => seeds.indexOf(teamId) + 1
-
   /** Prequarters: 1v16, 2v15, … 8v9 — wyższy seed po lewej (neutralnie). */
   const pqPairings = []
   for (let s = 1; s <= 8; s += 1) {
@@ -156,7 +154,6 @@ export function createCupFromFallStandings(standingsTableOrderedTeamIds, january
   return {
     status: 'active',
     seeds,
-    seedOf,
     matches,
     championTeamId: null,
     januaryDates: {

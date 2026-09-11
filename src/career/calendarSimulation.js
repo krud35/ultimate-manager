@@ -48,7 +48,7 @@ import { processContractExpirations } from './transfers/contractLifecycle.js'
 import { recordMatchKnowledgeGainForNewMatches } from './scouting.js'
 import { messagesFromNewPlayerMatches } from './inbox.js'
 
-export function computeCalendarDayStep(career, nextLeague, { weekTick = false, trainingDate = null } = {}) {
+export function computeCalendarDayStep(career, nextLeague, { weekTick = false, trainingDate = null, allowRandomEvents = true } = {}) {
   const inboxMessages = []
   processMonthlyOwnerFunding(career.world, trainingDate ?? nextLeague.currentDate)
   const management = processClubManagement({ ...career, league: nextLeague }, trainingDate ?? nextLeague.currentDate, { weekTick })
@@ -206,9 +206,15 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
   inboxMessages.push(
     ...generateIncomingLoanOffers({ ...offerCareer, world, inbox: inboxBase }, { date: offerDate }),
   )
+  // Random events assume a manager reacting in real time (moods, one-off choices
+  // with a short shelf life) — they don't make sense fired blindly while fast-
+  // forwarding through days nobody is actually watching, so `allowRandomEvents`
+  // (false during "sim to date/match") skips generating and resolving them.
   const eventCareer = { ...offerCareer, world, transferLog, loanLog, inbox: inboxBase }
-  inboxMessages.push(...generateRandomEvents(eventCareer, { date: offerDate }))
-  const followUps = processPendingEventFollowUps(eventCareer, { date: offerDate })
+  const followUps = allowRandomEvents
+    ? processPendingEventFollowUps(eventCareer, { date: offerDate })
+    : { messages: [], pendingEventFollowUps: career.pendingEventFollowUps ?? [] }
+  if (allowRandomEvents) inboxMessages.push(...generateRandomEvents(eventCareer, { date: offerDate }))
   if (followUps.messages.length) inboxMessages.push(...followUps.messages)
   inboxMessages.push(
     ...messagesFromNewMatchInjuries(
@@ -262,7 +268,7 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
 }
 
 /** One chronological step for every UI mode. A blocked player match does not tick the day. */
-export function advanceCareerDay(career, { autoSimulatePlayer = false } = {}) {
+export function advanceCareerDay(career, { autoSimulatePlayer = false, allowRandomEvents = true } = {}) {
   const league = career.league
   const date = league.currentDate
   const previousLeague = { ...league, matchHistory: [...(league.matchHistory ?? [])] }
@@ -278,7 +284,7 @@ export function advanceCareerDay(career, { autoSimulatePlayer = false } = {}) {
   league.currentDate = date
   let step
   try {
-    step = computeCalendarDayStep(readyCareer, league, { weekTick: result.weekTick, trainingDate: date })
+    step = computeCalendarDayStep(readyCareer, league, { weekTick: result.weekTick, trainingDate: date, allowRandomEvents })
   } finally {
     league.currentDate = advancedDate
   }
@@ -297,7 +303,7 @@ export async function simulateCareerUntil(career, { targetDate = null, untilMatc
     const date = current.league.currentDate
     if (targetDate && date >= targetDate) break
     if (untilMatch && (getPlayerFixtureOnDate(current.league, date) || areCompetitionsComplete(current.league))) break
-    const result = advanceCareerDay(current, { autoSimulatePlayer: !untilMatch })
+    const result = advanceCareerDay(current, { autoSimulatePlayer: !untilMatch, allowRandomEvents: false })
     current = result.career
     if (result.blocked || current.managerCareer?.status === 'unemployed') break
     daysAdvanced++

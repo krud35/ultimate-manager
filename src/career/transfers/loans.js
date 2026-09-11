@@ -14,6 +14,7 @@ import { syncLoanFinancialCommitments, contractualWeeklyBill, ensureClubEconomy 
 
 import { createRng } from '../../matchEngine/rng.js'
 import { getOverallRating } from '../../models/playerStats.js'
+import { getPlayerMorale, ensurePlayerMorale } from '../../models/playerMorale.js'
 import { getPlayerFullName } from '../../data/mockPlayers.js'
 import { worldTeamById, worldTeamsList } from '../worldState.js'
 import { addDays, formatISODate, parseISODate, officialSeasonEndDate } from '../../league/seasonCalendar.js'
@@ -29,8 +30,11 @@ import {
   createInboxMessage,
   ensureInbox,
   updateInboxMessage,
+  replyToInboxMessage,
   INBOX_TYPES,
 } from '../inbox.js'
+
+const reply = replyToInboxMessage
 
 function hashSeed(str) {
   let h = 2166136261
@@ -39,6 +43,49 @@ function hashSeed(str) {
     h = Math.imul(h, 16777619)
   }
   return h >>> 0
+}
+
+function rosterRank(players, playerId) {
+  const list = [...(players ?? [])].sort((a, b) => getOverallRating(b.skills) - getOverallRating(a.skills))
+  const idx = list.findIndex((p) => String(p.id) === String(playerId))
+  return idx < 0 ? list.length : idx
+}
+
+/**
+ * Does the PLAYER actually want this loan? Unlike a permanent move, playing
+ * time and development potential are the whole point of a loan, so they
+ * carry most of the weight here — morale/reputation (borrowed from
+ * `computePlayerContractDemands`'s general shape) fill in the rest.
+ * First-pass formula, easy to retune later.
+ */
+export function computeLoanWillingness({ player, parentTeam, destinationTeam, buyClause = null }) {
+  ensurePlayerMorale(player)
+  const ovr = getOverallRating(player.skills)
+  const potential = Number.isFinite(player?.potential) ? player.potential : ovr
+  const age = player.age ?? 25
+  const morale = getPlayerMorale(player)
+
+  let willingness = 0.5
+
+  // Ranga w składzie (0 = najlepszy) macierzystego klubu vs klub docelowy —
+  // wypożyczenie ma sens, jeśli obiecuje więcej gry, nie mniej.
+  const rankAtParent = rosterRank(parentTeam?.players, player.id)
+  const rankAtDestination = rosterRank(
+    [...(destinationTeam?.players ?? []), player],
+    player.id,
+  )
+  willingness += Math.max(-0.25, Math.min(0.3, (rankAtParent - rankAtDestination) * 0.04))
+
+  // Młody zawodnik z wyraźnym zapasem potencjału mocno reaguje na szansę gry.
+  if (age <= 24 && potential - ovr >= 5) willingness += 0.15
+
+  // Niskie morale = gotowość na świeży start; wysokie = mniejsza potrzeba zmiany.
+  willingness += ((50 - morale) / 100) * 0.2
+
+  // Obowiązkowa klauzula wykupu = mniej kontroli nad przyszłością, mniej chętnie.
+  if (buyClause?.type === 'obligation') willingness -= 0.1
+
+  return Math.max(0.05, Math.min(0.95, willingness))
 }
 
 /** Podłoga rostera klubu macierzystego przy wystawianiu na wypożyczenie. */
@@ -167,6 +214,10 @@ export function startLoan(career, {
     createdAt: new Date().toISOString(),
   }
   moved.loan = loan
+  moved.loanListed = false
+  moved.transferListed = false
+  moved.developmentListing = null
+  moved.recentPlayingTime = []
 
   postTransferCash(destinationTeam, -feeAmount)
   postTransferCash(parentTeam, +feeAmount)
@@ -534,6 +585,24 @@ export function evaluateLoanBuyClauseAiDecision({ player, destinationTeam, buyCl
  * Klub docelowy (AI) ocenia propozycję wzięcia zawodnika na wypożyczenie.
  */
 export function evaluateLoanOffer({ player, destinationTeam, fee, wageSplitPct, buyClause, seed = null, buyerAvg = null }) {
+  const name = getPlayerFullName(player)
+  const club = destinationTeam?.name ?? 'Klub'
+
+  // Mirrors startLoan's own affordability checks (loans.js) — without this, the
+  // AI could "accept" an offer it can't actually pay for, and startLoan would
+  // then fail right after with a budget error that reads as if the manager's
+  // OWN club were short on funds, even when they're only loaning a player OUT.
+  const feeAmount = Math.max(0, Math.round(Number(fee) || 0))
+  const f = ensureClubEconomy(destinationTeam)
+  const loanWage = Math.round((player.contract?.weeklyWage ?? 0) * Math.max(0, Math.min(100, Number(wageSplitPct) || 0)) / 100)
+  if (feeAmount > getTransferBudget(destinationTeam) || contractualWeeklyBill(destinationTeam) + loanWage > f.weeklyWageLimit) {
+    return {
+      status: 'rejected',
+      message: `${club} nie ma budżetu, żeby wziąć ${name} na wypożyczenie na tych warunkach.`,
+      messageEn: `${club} can't afford to take ${name} on loan under these terms.`,
+    }
+  }
+
   const target = classifyTransferTarget(player, destinationTeam, buyerAvg)
   const value = getPlayerMarketValue(player)
   const policy = getTransferPolicy(destinationTeam)
@@ -551,9 +620,6 @@ export function evaluateLoanOffer({ player, destinationTeam, fee, wageSplitPct, 
   if (buyClause?.type === 'obligation') desire -= 0.08
   if (policy.id === 'buy') desire += 0.05
   desire = Math.max(0, Math.min(0.9, desire))
-
-  const name = getPlayerFullName(player)
-  const club = destinationTeam?.name ?? 'Klub'
 
   if (rng.float() < desire) {
     return {
@@ -891,15 +957,11 @@ export function resolveOutgoingLoanOffer(career, message) {
   const found = parentTeam ? findPlayerInTeam(parentTeam, p.playerId) : null
 
   if (!destinationTeam || !parentTeam || !found || found.player.loan) {
-    return {
-      message: {
-        ...message,
-        read: false,
-        payload: { ...p, status: 'withdrawn' },
-        body: `${message.body}\n\nPropozycja wygasła — zawodnik niedostępny.`,
-        bodyEn: `${message.bodyEn ?? message.body}\n\nThe proposal expired — player unavailable.`,
-      },
-    }
+    return reply(message, {
+      payload: { ...p, status: 'withdrawn' },
+      body: `${message.body}\n\nPropozycja wygasła — zawodnik niedostępny.`,
+      bodyEn: `${message.bodyEn ?? message.body}\n\nThe proposal expired — player unavailable.`,
+    })
   }
 
   const evaluation = evaluateLoanOffer({
@@ -913,6 +975,26 @@ export function resolveOutgoingLoanOffer(career, message) {
   })
 
   if (evaluation.status === 'accepted') {
+    // Club side agreed — but the PLAYER has a say too (playing time,
+    // development). Seeded so it's not re-rollable, unlike the club check.
+    const willingness = computeLoanWillingness({
+      player: found.player,
+      parentTeam,
+      destinationTeam,
+      buyClause: p.buyClause,
+    })
+    const playerRng = createRng(hashSeed(`${message.id}|${p.replyDate}|loan-out-player`))
+    if (playerRng.float() >= willingness) {
+      return reply(message, {
+        date: p.replyDate,
+        title: `Zawodnik odmawia wypożyczenia · ${p.playerName}`,
+        titleEn: `Player refuses the loan · ${p.playerName}`,
+        body: `${destinationTeam.name} zgodził się na warunki, ale ${p.playerName} nie widzi tam dla siebie roli i odmawia wypożyczenia.`,
+        bodyEn: `${destinationTeam.name} agreed to the terms, but ${p.playerName} doesn't see a role for himself there and refuses the loan.`,
+        payload: { ...p, status: 'rejected' },
+      })
+    }
+
     const done = startLoan(career, {
       playerId: p.playerId,
       parentTeamId: parentTeam.id,
@@ -923,44 +1005,34 @@ export function resolveOutgoingLoanOffer(career, message) {
       buyClause: p.buyClause,
     })
     if (!done.ok) {
-      return {
-        message: {
-          ...message,
-          read: false,
-          payload: { ...p, status: 'rejected' },
-          body: `${message.body}\n\n${done.error}`,
-          bodyEn: `${message.bodyEn ?? message.body}\n\n${done.error}`,
-        },
-      }
+      return reply(message, {
+        payload: { ...p, status: 'rejected' },
+        body: `${message.body}\n\n${done.error}`,
+        bodyEn: `${message.bodyEn ?? message.body}\n\n${done.error}`,
+      })
     }
     return {
-      message: {
-        ...message,
-        read: false,
+      ...reply(message, {
         date: p.replyDate,
         title: `Wypożyczenie rozpoczęte · ${p.playerName}`,
         titleEn: `Loan started · ${p.playerName}`,
         body: evaluation.message,
         bodyEn: evaluation.messageEn,
         payload: { ...p, status: 'accepted', loanId: done.loan.id },
-      },
+      }),
       world: done.world,
       loanLogEntry: done.loanLogEntry,
     }
   }
 
-  return {
-    message: {
-      ...message,
-      read: false,
-      date: p.replyDate,
-      title: `Odrzucono wypożyczenie · ${p.playerName}`,
-      titleEn: `Loan declined · ${p.playerName}`,
-      body: evaluation.message,
-      bodyEn: evaluation.messageEn,
-      payload: { ...p, status: 'rejected' },
-    },
-  }
+  return reply(message, {
+    date: p.replyDate,
+    title: `Odrzucono wypożyczenie · ${p.playerName}`,
+    titleEn: `Loan declined · ${p.playerName}`,
+    body: evaluation.message,
+    bodyEn: evaluation.messageEn,
+    payload: { ...p, status: 'rejected' },
+  })
 }
 
 /** Rozwiązuje `loan_in_request` po upływie `replyDate`. */
@@ -972,15 +1044,11 @@ export function resolveIncomingLoanRequestReply(career, message) {
   const found = parentTeam ? findPlayerInTeam(parentTeam, p.playerId) : null
 
   if (!parentTeam || !destinationTeam || !found || found.player.loan) {
-    return {
-      message: {
-        ...message,
-        read: false,
-        payload: { ...p, status: 'withdrawn' },
-        body: `${message.body}\n\nProśba wygasła — zawodnik niedostępny.`,
-        bodyEn: `${message.bodyEn ?? message.body}\n\nThe request expired — player unavailable.`,
-      },
-    }
+    return reply(message, {
+      payload: { ...p, status: 'withdrawn' },
+      body: `${message.body}\n\nProśba wygasła — zawodnik niedostępny.`,
+      bodyEn: `${message.bodyEn ?? message.body}\n\nThe request expired — player unavailable.`,
+    })
   }
 
   const evaluation = evaluateLoanRequestFromParentSide({
@@ -994,6 +1062,25 @@ export function resolveIncomingLoanRequestReply(career, message) {
   })
 
   if (evaluation.status === 'accepted') {
+    // Club side agreed — the AI player being borrowed also gets a say.
+    const willingness = computeLoanWillingness({
+      player: found.player,
+      parentTeam,
+      destinationTeam,
+      buyClause: p.buyClause,
+    })
+    const playerRng = createRng(hashSeed(`${message.id}|${p.replyDate}|loan-in-player`))
+    if (playerRng.float() >= willingness) {
+      return reply(message, {
+        date: p.replyDate,
+        title: `Zawodnik odmawia wypożyczenia · ${p.playerName}`,
+        titleEn: `Player refuses the loan · ${p.playerName}`,
+        body: `${parentTeam.name} zgodził się na warunki, ale ${p.playerName} nie widzi u nas dla siebie roli i odmawia wypożyczenia.`,
+        bodyEn: `${parentTeam.name} agreed to the terms, but ${p.playerName} doesn't see a role for himself here and refuses the loan.`,
+        payload: { ...p, status: 'rejected' },
+      })
+    }
+
     const done = startLoan(career, {
       playerId: p.playerId,
       parentTeamId: parentTeam.id,
@@ -1004,44 +1091,34 @@ export function resolveIncomingLoanRequestReply(career, message) {
       buyClause: p.buyClause,
     })
     if (!done.ok) {
-      return {
-        message: {
-          ...message,
-          read: false,
-          payload: { ...p, status: 'rejected' },
-          body: `${message.body}\n\n${done.error}`,
-          bodyEn: `${message.bodyEn ?? message.body}\n\n${done.error}`,
-        },
-      }
+      return reply(message, {
+        payload: { ...p, status: 'rejected' },
+        body: `${message.body}\n\n${done.error}`,
+        bodyEn: `${message.bodyEn ?? message.body}\n\n${done.error}`,
+      })
     }
     return {
-      message: {
-        ...message,
-        read: false,
+      ...reply(message, {
         date: p.replyDate,
         title: `Wypożyczenie rozpoczęte · ${p.playerName}`,
         titleEn: `Loan started · ${p.playerName}`,
         body: evaluation.message,
         bodyEn: evaluation.messageEn,
         payload: { ...p, status: 'accepted', loanId: done.loan.id },
-      },
+      }),
       world: done.world,
       loanLogEntry: done.loanLogEntry,
     }
   }
 
-  return {
-    message: {
-      ...message,
-      read: false,
-      date: p.replyDate,
-      title: `Odrzucono prośbę · ${p.playerName}`,
-      titleEn: `Request declined · ${p.playerName}`,
-      body: evaluation.message,
-      bodyEn: evaluation.messageEn,
-      payload: { ...p, status: 'rejected' },
-    },
-  }
+  return reply(message, {
+    date: p.replyDate,
+    title: `Odrzucono prośbę · ${p.playerName}`,
+    titleEn: `Request declined · ${p.playerName}`,
+    body: evaluation.message,
+    bodyEn: evaluation.messageEn,
+    payload: { ...p, status: 'rejected' },
+  })
 }
 
 /**
@@ -1065,6 +1142,29 @@ export function respondToIncomingLoanRequest(career, { messageId, action }) {
   }
 
   if (action === 'accept') {
+    const parentTeam = worldTeamById(career.world, career.playerTeamId)
+    const destinationTeam = worldTeamById(career.world, p.destinationTeamId)
+    const found = parentTeam ? findPlayerInTeam(parentTeam, p.playerId) : null
+    if (found && destinationTeam) {
+      const willingness = computeLoanWillingness({
+        player: found.player,
+        parentTeam,
+        destinationTeam,
+        buyClause: p.buyClause,
+      })
+      const playerRng = createRng(hashSeed(`${messageId}|${career.league?.currentDate}|loan-accept-player`))
+      if (playerRng.float() >= willingness) {
+        const inbox = updateInboxMessage(career.inbox, messageId, {
+          read: true,
+          title: `Zawodnik odmawia wypożyczenia · ${p.playerName}`,
+          titleEn: `Player refuses the loan · ${p.playerName}`,
+          body: `${p.playerName} nie widzi dla siebie roli w ${destinationTeam.name} i odmawia wypożyczenia.`,
+          bodyEn: `${p.playerName} doesn't see a role for himself at ${destinationTeam.name} and refuses the loan.`,
+          payload: { status: 'rejected' },
+        })
+        return { ok: true, completed: false, playerRefused: true, inbox }
+      }
+    }
     const done = startLoan(career, {
       playerId: p.playerId,
       parentTeamId: career.playerTeamId,

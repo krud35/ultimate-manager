@@ -20,9 +20,9 @@ import { UI_LANG } from '../ui/locale.js'
 import { ensureTransferNewsState, transferNewsForTick } from './ultiworldTransfers.js'
 
 const ARTICLES_MAX = 80
-const WORLD_EVENT_CHANCE = 0.24
+const WORLD_EVENT_CHANCE = 0.15
 /** Dodatkowa szansa na czystą ciekawostkę / felieton (bez wpływu na gameplay). */
-const CURIOSITY_CHANCE = 0.12
+const CURIOSITY_CHANCE = 0.08
 /** Max relacji z pojedynczych meczów na tick (dzień / FF). */
 const MAX_MATCH_ARTICLES_PER_TICK = 1
 /** Ile dni dany szablon world-eventu musi „odpocząć”, zanim może wrócić — ogranicza spam tych samych nagłówków. */

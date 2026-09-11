@@ -1,4 +1,6 @@
 import { recordPlayingStyleMatch } from '../career/playingStyleEvidence.js'
+import { buildScoutingAnalysis, saveScoutingAnalysis } from '../matchEngine/scoutingAnalysis.js'
+import { recordMatchDevelopment } from '../career/matchDevelopment.js'
 import { teamForMatchEngine } from '../data/ufaLeagueTeams.js'
 import { simulateMatch } from '../matchEngine/index.js'
 import {
@@ -137,13 +139,16 @@ export function simulateFixtureMatch(league, fixture) {
     fastMode: true,
   })
 
-  return leagueRecordFromEngineResult(fixture, engineResult, false)
+  return leagueRecordFromEngineResult(fixture, engineResult, false,
+    fixture.homeTeamId === league.playerTeamId || fixture.awayTeamId === league.playerTeamId)
 }
 
 /** Zapis wyniku meczu gracza lub AI do stanu ligi (mutuje league). */
 export function applyMatchResultToLeague(league, matchRecord) {
   const fixture = findFixture(league, matchRecord.fixtureId)
   if (!fixture || fixture.status === 'completed') return league
+
+  saveScoutingAnalysis(league, matchRecord)
 
   fixture.status = 'completed'
   fixture.homeScore = matchRecord.homeScore
@@ -152,6 +157,7 @@ export function applyMatchResultToLeague(league, matchRecord) {
   fixture.playedByPlayer = !!matchRecord.playedByPlayer
 
   const isCup = (matchRecord.competition ?? fixture.competition) === 'cup'
+  recordMatchDevelopment(league, matchRecord)
   recordPlayingStyleMatch(league, matchRecord)
 
   if (!isCup) {
@@ -176,8 +182,12 @@ export function applyMatchResultToLeague(league, matchRecord) {
     matchRecord.awayScore,
   )
 
+  // Scoped outside the `if` below so it also reaches the matchHistory.push()
+  // further down — playerOfMonthArticle (ultiworld.js) reads match.boxScore
+  // from matchHistory entries to score performances for the monthly award.
+  let boxWithTeams = []
   if (matchRecord.boxScore?.length) {
-    const boxWithTeams = matchRecord.boxScore.map((row) => ({
+    boxWithTeams = matchRecord.boxScore.map((row) => ({
       ...row,
       teamId: row.teamId ?? inferTeamSide(league, row, matchRecord),
     }))
@@ -229,12 +239,14 @@ export function applyMatchResultToLeague(league, matchRecord) {
   league.matchHistory.push({
     fixtureId: matchRecord.fixtureId,
     round: matchRecord.round,
+    date: matchRecord.date ?? league.currentDate,
     homeTeamId: matchRecord.homeTeamId,
     awayTeamId: matchRecord.awayTeamId,
     homeScore: matchRecord.homeScore,
     awayScore: matchRecord.awayScore,
     winner: matchRecord.winner,
     competition: isCup ? 'cup' : 'league',
+    boxScore: boxWithTeams,
     playedByPlayer: !!matchRecord.playedByPlayer,
     completedAt: Date.now(),
     injuries: matchRecord.injuries ?? [],
@@ -350,7 +362,7 @@ export function finishRound(league) {
 }
 
 /** Buduje rekord wyniku z wyniku silnika (mecz gracza). */
-export function leagueRecordFromEngineResult(fixture, engineResult, playedByPlayer = true) {
+export function leagueRecordFromEngineResult(fixture, engineResult, playedByPlayer = true, collectAnalysis = true) {
   const winner =
     engineResult.homeScore > engineResult.awayScore
       ? fixture.homeTeamId
@@ -385,6 +397,7 @@ export function leagueRecordFromEngineResult(fixture, engineResult, playedByPlay
     awayScore: engineResult.awayScore,
     winner,
     boxScore: engineResult.boxScore,
+    ...(collectAnalysis ? { scoutingAnalysis: buildScoutingAnalysis(engineResult) } : {}),
     matchStats: compactMatchStats(rawMatchStats),
     linePoints: summarizeLineStartPoints(engineResult.events),
     playedByPlayer,

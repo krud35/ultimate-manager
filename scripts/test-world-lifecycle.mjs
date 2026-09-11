@@ -218,8 +218,11 @@ await test('fast-forward and daily steps yield identical world and inbox across 
   team.finances.cash = 10_000_000 // Fund season payroll before the calendar/parity setup purchase.
   assert(queueScoutMission(team, { kind: 'academyProspect', countryId: 'us', durationMonths: 1, date: '2025-07-31' }).ok)
   resetRandom(731)
+  // simulateCareerUntil always runs with allowRandomEvents: false (random events assume a
+  // manager reacting live, not a fast-forwarded day nobody watched) — match that here so
+  // both paths are compared on equal footing instead of diverging on rolled events.
   let daily = structuredClone(initial)
-  while (daily.league.currentDate < '2025-09-04') daily = advanceCareerDay(daily).career
+  while (daily.league.currentDate < '2025-09-04') daily = advanceCareerDay(daily, { allowRandomEvents: false }).career
   resetRandom(731)
   const fast = await simulateCareerUntil(structuredClone(initial), { targetDate: '2025-09-04' })
   assert.equal(fast.daysAdvanced, 7)
