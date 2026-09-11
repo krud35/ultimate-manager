@@ -56,6 +56,7 @@ export {
   togglePlayerInstruction,
   toggleInstructionInTactics,
   instructionCompliance,
+  instructionOverrides,
   instructionModsForPlayer,
   instructionBadges,
 } from './playerInstructions.js'

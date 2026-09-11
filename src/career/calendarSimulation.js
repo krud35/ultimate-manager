@@ -247,6 +247,7 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
   recordMatchKnowledgeGainForNewMatches(world, career.playerTeamId, career.league?.matchHistory, leagueOut.matchHistory)
   inboxMessages.push(...messagesFromNewPlayerMatches(
     { ...career, league: leagueOut }, career.league?.matchHistory ?? [], leagueOut.matchHistory ?? [], leagueOut,
+    { allowRandomEvents },
   ))
   const inbox = mergeInbox({ ...career, inbox: inboxBase }, inboxMessages)
 

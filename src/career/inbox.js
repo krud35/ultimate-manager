@@ -730,8 +730,12 @@ export function messageFromMatchAnalysis(career, { fixture, record, autoSimulate
   })
 }
 
-/** Uzupełnia analizy z nowych wpisów matchHistory (np. po auto-symulacji). */
-export function messagesFromNewPlayerMatches(career, prevHistory, nextHistory, league) {
+/** Uzupełnia analizy z nowych wpisów matchHistory (np. po auto-symulacji).
+ *  `allowRandomEvents` (domyślnie true) gasi tylko `pickPostMatchEventMessage` —
+ *  raport meczowy leci zawsze, ale post-mecz zdarzenie losowe zakłada żywą reakcję
+ *  managera, więc jest wyłączane przy fast-forward, tak jak reszta random_event
+ *  (patrz allowRandomEvents w calendarSimulation.js). */
+export function messagesFromNewPlayerMatches(career, prevHistory, nextHistory, league, { allowRandomEvents = true } = {}) {
   const prevIds = new Set((prevHistory ?? []).map((e) => e.fixtureId))
   const playerTeamId = career?.playerTeamId
   if (!playerTeamId) return []
@@ -752,7 +756,7 @@ export function messagesFromNewPlayerMatches(career, prevHistory, nextHistory, l
         autoSimulated: true,
       }),
     )
-    out.push(pickPostMatchEventMessage(career, { fixture, record: entry }))
+    if (allowRandomEvents) out.push(pickPostMatchEventMessage(career, { fixture, record: entry }))
   }
   return out.filter(Boolean)
 }
