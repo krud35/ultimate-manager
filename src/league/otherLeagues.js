@@ -26,8 +26,12 @@ import { simulateFixtureMatch, applyMatchResultToLeague } from './leagueEngine.j
  */
 export function createOtherLeague({ id, label, teamIds, calendar, simSeedBase }) {
   // Losowy terminarz per-kariera — patrz notatka w schedule.js (bez tasowania metoda
-  // koła daje identyczny terminarz za każdym razem).
-  const scheduleRounds = generateDoubleRoundRobinSchedule(shuffledTeamOrder(teamIds, simSeedBase))
+  // koła daje identyczny terminarz za każdym razem). Druga połowa sezonu losowana
+  // osobnym seedem, żeby mieć inną kolejność przeciwników niż pierwsza połowa.
+  const scheduleRounds = generateDoubleRoundRobinSchedule(
+    shuffledTeamOrder(teamIds, simSeedBase),
+    shuffledTeamOrder(teamIds, simSeedBase + 1),
+  )
   const fixtures = assignDatesToLeagueFixtures(flattenSchedule(scheduleRounds), calendar)
   return {
     id,

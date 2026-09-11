@@ -43,7 +43,12 @@ export function createLeagueSeason(options = {}) {
   // Terminarz losowany per-kariera (seed = simSeedBase, inny za każdym razem gdy gracz
   // zaczyna nową karierę) — metoda koła sama w sobie jest deterministyczna względem
   // kolejności drużyn, więc bez tasowania każda kariera miałaby identyczny terminarz.
-  const scheduleRounds = generateDoubleRoundRobinSchedule(shuffledTeamOrder(teamIds, simSeedBase))
+  // Druga połowa sezonu losowana OSOBNYM seedem, żeby mieć inną kolejność przeciwników
+  // niż w pierwszej połowie (nie tylko odwrócony dom/wyjazd tych samych par).
+  const scheduleRounds = generateDoubleRoundRobinSchedule(
+    shuffledTeamOrder(teamIds, simSeedBase),
+    shuffledTeamOrder(teamIds, simSeedBase + 1),
+  )
   const fixtures = assignDatesToLeagueFixtures(flattenSchedule(scheduleRounds), calendar)
 
   const league = {

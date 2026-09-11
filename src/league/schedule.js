@@ -75,30 +75,32 @@ export function generateRoundRobinSchedule(teamIds) {
 }
 
 /**
- * Podwójny round-robin: pierwsza połowa (n-1 kolejek), druga połowa z odwróconym
- * gospodarzem/gościem. Dla 16 drużyn → 30 kolejek.
+ * Podwójny round-robin: pierwsza połowa (n-1 kolejek) losowana z `firstHalfTeamIds`,
+ * druga połowa (kolejne n-1 kolejek) losowana NIEZALEŻNIE z `secondHalfTeamIds` — inna
+ * kolejność wejściowa drużyn daje inne pary przeciwników w każdej kolejce, więc druga
+ * połowa sezonu nie jest już zwykłym lustrzanym odbiciem pierwszej (dom/wyjazd odwrócone
+ * przy tych samych parach), tylko osobno wylosowanym terminarzem. Każda drużyna nadal
+ * gra z każdą inną dokładnie raz w każdej połowie (czyli dwa razy w sezonie) — metoda
+ * koła gwarantuje to niezależnie od kolejności wejściowej.
+ *
+ * Gdy `secondHalfTeamIds` nie zostanie podane, druga połowa używa tej samej kolejności
+ * co pierwsza (kompatybilność wsteczna dla wywołań z jednym argumentem).
  */
-export function generateDoubleRoundRobinSchedule(teamIds) {
-  if (teamIds.length % 2 !== 0) {
+export function generateDoubleRoundRobinSchedule(firstHalfTeamIds, secondHalfTeamIds = firstHalfTeamIds) {
+  if (firstHalfTeamIds.length % 2 !== 0) {
     throw new Error('Liczba drużyn musi być parzysta')
   }
 
-  const firstHalf = generateRoundRobinSchedule(teamIds)
+  const firstHalf = generateRoundRobinSchedule(firstHalfTeamIds)
   const halfRounds = firstHalf.length
-  const secondHalf = firstHalf.map((pairings, index) => {
+  const secondHalfRounds = generateRoundRobinSchedule(secondHalfTeamIds)
+  const secondHalf = secondHalfRounds.map((pairings, index) => {
     const roundNumber = halfRounds + index + 1
-    return pairings.map((fixture) => {
-      const homeTeamId = fixture.awayTeamId
-      const awayTeamId = fixture.homeTeamId
-      return {
-        id: `r${roundNumber}-${homeTeamId}-vs-${awayTeamId}`,
-        round: roundNumber,
-        homeTeamId,
-        awayTeamId,
-        status: 'scheduled',
-        competition: 'league',
-      }
-    })
+    return pairings.map((fixture) => ({
+      ...fixture,
+      id: `r${roundNumber}-${fixture.homeTeamId}-vs-${fixture.awayTeamId}`,
+      round: roundNumber,
+    }))
   })
 
   return [...firstHalf, ...secondHalf]
