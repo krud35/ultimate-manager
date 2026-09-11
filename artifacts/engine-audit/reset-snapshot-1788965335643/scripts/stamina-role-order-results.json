@@ -1,0 +1,604 @@
+{
+  "meta": {
+    "seeds": 4,
+    "crossSeeds": 3,
+    "pointsPerSeed": 8,
+    "enduranceNormalized": 70,
+    "attackStyle": "vertical_stack",
+    "defenseStyle": "person",
+    "metric": "stamina spent during point (before residual), refill 100 each point",
+    "note": "Home O/D line fixed; AI rotation off. Residual reported separately for roles."
+  },
+  "byRole": [
+    {
+      "role": "primary_handler",
+      "spent": {
+        "n": 32,
+        "mean": 2.82,
+        "p25": 0,
+        "p50": 1.62,
+        "p75": 3.66,
+        "max": 13.43
+      },
+      "residual": {
+        "n": 32,
+        "mean": 0.59,
+        "p25": 0,
+        "p50": 0,
+        "p75": 1,
+        "max": 3
+      },
+      "total": {
+        "n": 32,
+        "mean": 3.41,
+        "p25": 0,
+        "p50": 1.62,
+        "p75": 4.66,
+        "max": 16.43
+      }
+    },
+    {
+      "role": "reset_handler",
+      "spent": {
+        "n": 32,
+        "mean": 5.72,
+        "p25": 0.89,
+        "p50": 5.14,
+        "p75": 9.43,
+        "max": 17.17
+      },
+      "residual": {
+        "n": 32,
+        "mean": 1.31,
+        "p25": 0,
+        "p50": 1,
+        "p75": 2,
+        "max": 4
+      },
+      "total": {
+        "n": 32,
+        "mean": 7.03,
+        "p25": 0.89,
+        "p50": 6.14,
+        "p75": 11.43,
+        "max": 21.17
+      }
+    },
+    {
+      "role": "primary_cutter",
+      "spent": {
+        "n": 32,
+        "mean": 2.42,
+        "p25": 0,
+        "p50": 0.43,
+        "p75": 3.57,
+        "max": 11.51
+      },
+      "residual": {
+        "n": 32,
+        "mean": 0.63,
+        "p25": 0,
+        "p50": 0,
+        "p75": 1,
+        "max": 3
+      },
+      "total": {
+        "n": 32,
+        "mean": 3.04,
+        "p25": 0,
+        "p50": 0.43,
+        "p75": 4.57,
+        "max": 14.51
+      }
+    },
+    {
+      "role": "secondary_cutter",
+      "spent": {
+        "n": 32,
+        "mean": 1.53,
+        "p25": 0,
+        "p50": 0,
+        "p75": 1.34,
+        "max": 10.93
+      },
+      "residual": {
+        "n": 32,
+        "mean": 0.31,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0,
+        "max": 2
+      },
+      "total": {
+        "n": 32,
+        "mean": 1.84,
+        "p25": 0,
+        "p50": 0,
+        "p75": 1.34,
+        "max": 12.93
+      }
+    },
+    {
+      "role": "continuation_cutter",
+      "spent": {
+        "n": 32,
+        "mean": 1.13,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.82,
+        "max": 20.12
+      },
+      "residual": {
+        "n": 32,
+        "mean": 0.22,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0,
+        "max": 4
+      },
+      "total": {
+        "n": 32,
+        "mean": 1.35,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.82,
+        "max": 24.12
+      }
+    },
+    {
+      "role": "filler_cutter",
+      "spent": {
+        "n": 64,
+        "mean": 0.94,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.42,
+        "max": 22.02
+      },
+      "residual": {
+        "n": 64,
+        "mean": 0.2,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0,
+        "max": 5
+      },
+      "total": {
+        "n": 64,
+        "mean": 1.14,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.42,
+        "max": 27.02
+      }
+    }
+  ],
+  "byOOrderOnPrimaryCutter": {
+    "none": {
+      "label": "Bez rozkazu",
+      "target": "primary_cutter",
+      "spent": {
+        "n": 24,
+        "mean": 2.03,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.87,
+        "max": 16.32
+      }
+    },
+    "cut_under": {
+      "label": "Biegaj under",
+      "target": "primary_cutter",
+      "spent": {
+        "n": 24,
+        "mean": 1.73,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0,
+        "max": 16.59
+      }
+    },
+    "cut_deep": {
+      "label": "Biegaj deep",
+      "target": "primary_cutter",
+      "spent": {
+        "n": 24,
+        "mean": 3.12,
+        "p25": 0,
+        "p50": 0.29,
+        "p75": 4.35,
+        "max": 15.23
+      }
+    },
+    "give_space": {
+      "label": "Nie zabieraj przestrzeni",
+      "target": "primary_cutter",
+      "spent": {
+        "n": 24,
+        "mean": 2.9,
+        "p25": 0,
+        "p50": 0.73,
+        "p75": 4.09,
+        "max": 12.5
+      }
+    }
+  },
+  "cutterOrderCross": [
+    {
+      "role": "primary_cutter",
+      "order": "none",
+      "orderLabel": "Bez rozkazu",
+      "spent": {
+        "n": 24,
+        "mean": 2.03,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.87,
+        "max": 16.32
+      }
+    },
+    {
+      "role": "primary_cutter",
+      "order": "cut_under",
+      "orderLabel": "Biegaj under",
+      "spent": {
+        "n": 24,
+        "mean": 1.73,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0,
+        "max": 16.59
+      }
+    },
+    {
+      "role": "primary_cutter",
+      "order": "cut_deep",
+      "orderLabel": "Biegaj deep",
+      "spent": {
+        "n": 24,
+        "mean": 3.12,
+        "p25": 0,
+        "p50": 0.29,
+        "p75": 4.35,
+        "max": 15.23
+      }
+    },
+    {
+      "role": "primary_cutter",
+      "order": "give_space",
+      "orderLabel": "Nie zabieraj przestrzeni",
+      "spent": {
+        "n": 24,
+        "mean": 2.9,
+        "p25": 0,
+        "p50": 0.73,
+        "p75": 4.09,
+        "max": 12.5
+      }
+    },
+    {
+      "role": "secondary_cutter",
+      "order": "none",
+      "orderLabel": "Bez rozkazu",
+      "spent": {
+        "n": 24,
+        "mean": 0.39,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.71,
+        "max": 2
+      }
+    },
+    {
+      "role": "secondary_cutter",
+      "order": "cut_under",
+      "orderLabel": "Biegaj under",
+      "spent": {
+        "n": 24,
+        "mean": 0.57,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.91,
+        "max": 3.39
+      }
+    },
+    {
+      "role": "secondary_cutter",
+      "order": "cut_deep",
+      "orderLabel": "Biegaj deep",
+      "spent": {
+        "n": 24,
+        "mean": 2.3,
+        "p25": 0,
+        "p50": 0.33,
+        "p75": 3.26,
+        "max": 11.98
+      }
+    },
+    {
+      "role": "secondary_cutter",
+      "order": "give_space",
+      "orderLabel": "Nie zabieraj przestrzeni",
+      "spent": {
+        "n": 24,
+        "mean": 1.19,
+        "p25": 0,
+        "p50": 0,
+        "p75": 1.6,
+        "max": 7.84
+      }
+    },
+    {
+      "role": "continuation_cutter",
+      "order": "none",
+      "orderLabel": "Bez rozkazu",
+      "spent": {
+        "n": 24,
+        "mean": 0.35,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0,
+        "max": 2.81
+      }
+    },
+    {
+      "role": "continuation_cutter",
+      "order": "cut_under",
+      "orderLabel": "Biegaj under",
+      "spent": {
+        "n": 24,
+        "mean": 1.68,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.86,
+        "max": 12.75
+      }
+    },
+    {
+      "role": "continuation_cutter",
+      "order": "cut_deep",
+      "orderLabel": "Biegaj deep",
+      "spent": {
+        "n": 24,
+        "mean": 1.09,
+        "p25": 0,
+        "p50": 0,
+        "p75": 1.05,
+        "max": 7.12
+      }
+    },
+    {
+      "role": "continuation_cutter",
+      "order": "give_space",
+      "orderLabel": "Nie zabieraj przestrzeni",
+      "spent": {
+        "n": 24,
+        "mean": 1.76,
+        "p25": 0,
+        "p50": 0,
+        "p75": 2.42,
+        "max": 9.4
+      }
+    },
+    {
+      "role": "filler_cutter",
+      "order": "none",
+      "orderLabel": "Bez rozkazu",
+      "spent": {
+        "n": 48,
+        "mean": 0.59,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0,
+        "max": 5.4
+      }
+    },
+    {
+      "role": "filler_cutter",
+      "order": "cut_under",
+      "orderLabel": "Biegaj under",
+      "spent": {
+        "n": 24,
+        "mean": 0.79,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0,
+        "max": 9.14
+      }
+    },
+    {
+      "role": "filler_cutter",
+      "order": "cut_deep",
+      "orderLabel": "Biegaj deep",
+      "spent": {
+        "n": 24,
+        "mean": 0.93,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0,
+        "max": 7.01
+      }
+    },
+    {
+      "role": "filler_cutter",
+      "order": "give_space",
+      "orderLabel": "Nie zabieraj przestrzeni",
+      "spent": {
+        "n": 24,
+        "mean": 1.55,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0,
+        "max": 16.24
+      }
+    }
+  ],
+  "handlerOrderCross": [
+    {
+      "role": "primary_handler",
+      "order": "none",
+      "orderLabel": "Bez rozkazu",
+      "spent": {
+        "n": 24,
+        "mean": 2.02,
+        "p25": 0.07,
+        "p50": 1.38,
+        "p75": 2.21,
+        "max": 8.26
+      }
+    },
+    {
+      "role": "primary_handler",
+      "order": "cut_under",
+      "orderLabel": "Biegaj under",
+      "spent": {
+        "n": 24,
+        "mean": 1.5,
+        "p25": 0,
+        "p50": 1.13,
+        "p75": 3.33,
+        "max": 4.12
+      }
+    },
+    {
+      "role": "primary_handler",
+      "order": "cut_deep",
+      "orderLabel": "Biegaj deep",
+      "spent": {
+        "n": 24,
+        "mean": 2.27,
+        "p25": 0,
+        "p50": 1.55,
+        "p75": 2.93,
+        "max": 7.76
+      }
+    },
+    {
+      "role": "primary_handler",
+      "order": "give_space",
+      "orderLabel": "Nie zabieraj przestrzeni",
+      "spent": {
+        "n": 24,
+        "mean": 2.45,
+        "p25": 0,
+        "p50": 0.72,
+        "p75": 4.12,
+        "max": 8.51
+      }
+    },
+    {
+      "role": "reset_handler",
+      "order": "none",
+      "orderLabel": "Bez rozkazu",
+      "spent": {
+        "n": 24,
+        "mean": 4.78,
+        "p25": 0,
+        "p50": 4.65,
+        "p75": 8.05,
+        "max": 14.12
+      }
+    },
+    {
+      "role": "reset_handler",
+      "order": "cut_under",
+      "orderLabel": "Biegaj under",
+      "spent": {
+        "n": 24,
+        "mean": 7.59,
+        "p25": 2.05,
+        "p50": 7.32,
+        "p75": 11.8,
+        "max": 17.33
+      }
+    },
+    {
+      "role": "reset_handler",
+      "order": "cut_deep",
+      "orderLabel": "Biegaj deep",
+      "spent": {
+        "n": 24,
+        "mean": 3.67,
+        "p25": 0,
+        "p50": 2.51,
+        "p75": 4.46,
+        "max": 21.56
+      }
+    },
+    {
+      "role": "reset_handler",
+      "order": "give_space",
+      "orderLabel": "Nie zabieraj przestrzeni",
+      "spent": {
+        "n": 24,
+        "mean": 1.97,
+        "p25": 0,
+        "p50": 0,
+        "p75": 4.01,
+        "max": 9.86
+      }
+    }
+  ],
+  "byDOrder": {
+    "none": {
+      "label": "Bez rozkazu",
+      "targetRole": "primary_handler",
+      "spent": {
+        "n": 32,
+        "mean": 1.07,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.95,
+        "max": 6.38
+      },
+      "total": {
+        "n": 32,
+        "mean": 1.41,
+        "p25": 0,
+        "p50": 0,
+        "p75": 0.95,
+        "max": 8.38
+      }
+    },
+    "shutdown": {
+      "label": "Shutdown D",
+      "targetRole": "primary_handler",
+      "spent": {
+        "n": 32,
+        "mean": 1.46,
+        "p25": 0,
+        "p50": 0,
+        "p75": 1.88,
+        "max": 7.41
+      },
+      "total": {
+        "n": 32,
+        "mean": 1.83,
+        "p25": 0,
+        "p50": 0,
+        "p75": 2.88,
+        "max": 9.41
+      }
+    },
+    "tight_mark": {
+      "label": "Bliskie krycie",
+      "targetRole": "primary_handler",
+      "spent": {
+        "n": 32,
+        "mean": 1.29,
+        "p25": 0,
+        "p50": 0,
+        "p75": 1.56,
+        "max": 9.36
+      },
+      "total": {
+        "n": 32,
+        "mean": 1.63,
+        "p25": 0,
+        "p50": 0,
+        "p75": 1.56,
+        "max": 12.36
+      }
+    }
+  }
+}

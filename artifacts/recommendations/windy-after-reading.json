@@ -1,0 +1,488 @@
+{
+  "options": {
+    "fastCount": 4,
+    "fullCount": 4,
+    "offset": 19300,
+    "frozen": false,
+    "fixedTactics": true,
+    "windSpeed": "20",
+    "direction": 0,
+    "attribute": null,
+    "delta": 5,
+    "swap": false
+  },
+  "modes": {
+    "fast": {
+      "summary": {
+        "matches": 4,
+        "msPerMatch": 97.9093,
+        "homeMargin": -3.75,
+        "meanInitialWindMph": 20,
+        "completionPct": 82.96122209165688,
+        "holdPct": 53.333333333333336,
+        "cleanHoldPct": 34.285714285714285,
+        "throwsPerPoint": 8.104761904761904,
+        "turnoversPerPoint": 1.380952380952381,
+        "blocksPerMatch": 16.75,
+        "dropsPerMatch": 1,
+        "throwawaysPerMatch": 18.5,
+        "stallOutsPerMatch": 0,
+        "framesPerMatch": 0,
+        "playerSnapshotsPerMatch": 0,
+        "throwLimits": 0,
+        "completedDistanceM": {
+          "n": 706,
+          "p10": 3.360059523282288,
+          "p50": 10.104079068265573,
+          "p90": 16.866606607599305,
+          "p99": 67.52577279865757,
+          "shortPct": 27.053824362606232,
+          "longPct": 9.06515580736544
+        },
+        "holdMs": {
+          "n": 851,
+          "p10": 1174,
+          "p50": 1854,
+          "p90": 4701,
+          "p99": 6578
+        },
+        "representedPointMs": {
+          "n": 0,
+          "p10": null,
+          "p50": null,
+          "p90": null,
+          "p99": null
+        },
+        "possessionThrows": {
+          "n": 250,
+          "p10": 1,
+          "p50": 3,
+          "p90": 7,
+          "p99": 11
+        },
+        "attemptedDistanceM": {
+          "n": 851,
+          "p10": 3.360059523282288,
+          "p50": 10.128040919109809,
+          "p90": 35.59754501290735,
+          "p99": 71.28295212278186
+        },
+        "possessionMs": {
+          "n": 250,
+          "p10": 2596.371143185538,
+          "p50": 9279.841731629283,
+          "p90": 22615.76016787752,
+          "p99": 39254.28897615744
+        },
+        "firstThrowAfterTurnoverMs": {
+          "n": 145,
+          "p10": 1192,
+          "p50": 1903,
+          "p90": 4666,
+          "p99": 5900
+        },
+        "estimatedPointMs": {
+          "n": 105,
+          "p10": 8101.95296341771,
+          "p50": 21346.455397841164,
+          "p90": 56248.95532777847,
+          "p99": 77382.02658090094
+        },
+        "pressuredThrows": 132,
+        "pressuredResetPct": 68.18181818181819,
+        "types": {
+          "standard": {
+            "attempts": 536,
+            "completions": 461
+          },
+          "huck": {
+            "attempts": 118,
+            "completions": 73
+          },
+          "dump_swing": {
+            "attempts": 171,
+            "completions": 153
+          },
+          "over_the_top": {
+            "attempts": 26,
+            "completions": 19
+          }
+        },
+        "stallHistogram": {
+          "2": 496,
+          "3": 125,
+          "4": 98,
+          "5": 64,
+          "6": 47,
+          "7": 20,
+          "8": 1
+        },
+        "turnoverLocations": {
+          "ownThird": 49,
+          "middleThird": 45,
+          "attackingThird": 51,
+          "missing": 0
+        },
+        "diagnoses": {},
+        "segments": {
+          "15+mph|skill80+|mid": {
+            "attempts": 298,
+            "completions": 258
+          },
+          "15+mph|skill<80|long": {
+            "attempts": 56,
+            "completions": 29
+          },
+          "15+mph|skill<80|mid": {
+            "attempts": 233,
+            "completions": 193
+          },
+          "15+mph|skill80+|short": {
+            "attempts": 112,
+            "completions": 101
+          },
+          "15+mph|skill80+|long": {
+            "attempts": 48,
+            "completions": 35
+          },
+          "15+mph|skill<80|short": {
+            "attempts": 104,
+            "completions": 90
+          }
+        },
+        "recoveredTouches": 0,
+        "multiTouchThrows": 0
+      },
+      "matches": [
+        {
+          "seed": 30300,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 0
+          },
+          "ms": 153.2468,
+          "points": 29,
+          "attempts": 268,
+          "completions": 222,
+          "holds": 15,
+          "cleanHolds": 8,
+          "blocks": 22,
+          "drops": 2,
+          "throwaways": 22,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 0,
+          "playerSnapshots": 0,
+          "homeScore": 14,
+          "awayScore": 15
+        },
+        {
+          "seed": 42300,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 0
+          },
+          "ms": 89.7706,
+          "points": 25,
+          "attempts": 209,
+          "completions": 173,
+          "holds": 15,
+          "cleanHolds": 9,
+          "blocks": 12,
+          "drops": 0,
+          "throwaways": 24,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 0,
+          "playerSnapshots": 0,
+          "homeScore": 10,
+          "awayScore": 15
+        },
+        {
+          "seed": 50300,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 0
+          },
+          "ms": 82.03479999999996,
+          "points": 29,
+          "attempts": 184,
+          "completions": 154,
+          "holds": 15,
+          "cleanHolds": 12,
+          "blocks": 15,
+          "drops": 2,
+          "throwaways": 13,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 0,
+          "playerSnapshots": 0,
+          "homeScore": 14,
+          "awayScore": 15
+        },
+        {
+          "seed": 63300,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 0
+          },
+          "ms": 66.58500000000004,
+          "points": 22,
+          "attempts": 190,
+          "completions": 157,
+          "holds": 11,
+          "cleanHolds": 7,
+          "blocks": 18,
+          "drops": 0,
+          "throwaways": 15,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 0,
+          "playerSnapshots": 0,
+          "homeScore": 7,
+          "awayScore": 15
+        }
+      ]
+    },
+    "full": {
+      "summary": {
+        "matches": 4,
+        "msPerMatch": 18285.538525000004,
+        "homeMargin": -3.5,
+        "meanInitialWindMph": 20,
+        "completionPct": 83.61581920903954,
+        "holdPct": 30.208333333333332,
+        "cleanHoldPct": 14.583333333333334,
+        "throwsPerPoint": 12.90625,
+        "turnoversPerPoint": 2.1145833333333335,
+        "blocksPerMatch": 6.75,
+        "dropsPerMatch": 1,
+        "throwawaysPerMatch": 43,
+        "stallOutsPerMatch": 0,
+        "framesPerMatch": 60467.5,
+        "playerSnapshotsPerMatch": 846545,
+        "throwLimits": 0,
+        "completedDistanceM": {
+          "n": 1036,
+          "p10": 2.4667971983237673,
+          "p50": 10.781446414927338,
+          "p90": 25.33496856425687,
+          "p99": 40.642968838299254,
+          "shortPct": 45.84942084942085,
+          "longPct": 10.424710424710424
+        },
+        "holdMs": {
+          "n": 1239,
+          "p10": 1260,
+          "p50": 1800,
+          "p90": 2920,
+          "p99": 3660
+        },
+        "representedPointMs": {
+          "n": 96,
+          "p10": 11560,
+          "p50": 37220,
+          "p90": 96660,
+          "p99": 240660
+        },
+        "possessionThrows": {
+          "n": 299,
+          "p10": 1,
+          "p50": 3,
+          "p90": 8,
+          "p99": 13
+        },
+        "attemptedDistanceM": {
+          "n": 1239,
+          "p10": 6.622360557692787,
+          "p50": 13.436667702117617,
+          "p90": 27.034819891671017,
+          "p99": 43.28276904259651
+        },
+        "possessionMs": {
+          "n": 299,
+          "p10": 4880,
+          "p50": 13940,
+          "p90": 30980,
+          "p99": 46040
+        },
+        "firstThrowAfterTurnoverMs": {
+          "n": 203,
+          "p10": 1560,
+          "p50": 2460,
+          "p90": 4060,
+          "p99": 5260
+        },
+        "estimatedPointMs": {
+          "n": 0,
+          "p10": null,
+          "p50": null,
+          "p90": null,
+          "p99": null
+        },
+        "pressuredThrows": 2,
+        "pressuredResetPct": 50,
+        "types": {
+          "dump_swing": {
+            "attempts": 184,
+            "completions": 155
+          },
+          "standard": {
+            "attempts": 998,
+            "completions": 832
+          },
+          "huck": {
+            "attempts": 48,
+            "completions": 43
+          },
+          "over_the_top": {
+            "attempts": 9,
+            "completions": 6
+          }
+        },
+        "stallHistogram": {
+          "0": 130,
+          "1": 171,
+          "2": 599,
+          "3": 266,
+          "4": 71,
+          "5": 1,
+          "6": 1
+        },
+        "turnoverLocations": {
+          "ownThird": 36,
+          "middleThird": 102,
+          "attackingThird": 65,
+          "missing": 0
+        },
+        "diagnoses": {
+          "completed": 1036,
+          "execution_error": 30,
+          "receiver_late": 78,
+          "block": 27,
+          "boundary": 63,
+          "drop": 4,
+          "unreachable_choice": 1
+        },
+        "segments": {
+          "15+mph|skill80+|short": {
+            "attempts": 89,
+            "completions": 76
+          },
+          "15+mph|skill80+|mid": {
+            "attempts": 229,
+            "completions": 197
+          },
+          "15+mph|skill<80|short": {
+            "attempts": 256,
+            "completions": 217
+          },
+          "15+mph|skill<80|mid": {
+            "attempts": 502,
+            "completions": 422
+          },
+          "15+mph|skill<80|long": {
+            "attempts": 108,
+            "completions": 82
+          },
+          "15+mph|skill80+|long": {
+            "attempts": 55,
+            "completions": 42
+          }
+        },
+        "recoveredTouches": 101,
+        "multiTouchThrows": 116
+      },
+      "matches": [
+        {
+          "seed": 30300,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 0
+          },
+          "ms": 19564.842,
+          "points": 27,
+          "attempts": 354,
+          "completions": 290,
+          "holds": 9,
+          "cleanHolds": 4,
+          "blocks": 6,
+          "drops": 2,
+          "throwaways": 56,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 71336,
+          "playerSnapshots": 998704,
+          "homeScore": 12,
+          "awayScore": 15
+        },
+        {
+          "seed": 42300,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 0
+          },
+          "ms": 21047.074800000002,
+          "points": 25,
+          "attempts": 343,
+          "completions": 290,
+          "holds": 10,
+          "cleanHolds": 5,
+          "blocks": 5,
+          "drops": 0,
+          "throwaways": 48,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 65009,
+          "playerSnapshots": 910126,
+          "homeScore": 15,
+          "awayScore": 10
+        },
+        {
+          "seed": 50300,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 0
+          },
+          "ms": 12172.985,
+          "points": 21,
+          "attempts": 225,
+          "completions": 191,
+          "holds": 5,
+          "cleanHolds": 3,
+          "blocks": 7,
+          "drops": 1,
+          "throwaways": 26,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 43033,
+          "playerSnapshots": 602462,
+          "homeScore": 6,
+          "awayScore": 15
+        },
+        {
+          "seed": 63300,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 0
+          },
+          "ms": 20357.2523,
+          "points": 23,
+          "attempts": 317,
+          "completions": 265,
+          "holds": 5,
+          "cleanHolds": 2,
+          "blocks": 9,
+          "drops": 1,
+          "throwaways": 42,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 62492,
+          "playerSnapshots": 874888,
+          "homeScore": 8,
+          "awayScore": 15
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "tactics-00159",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190931709,
+  "observe": true,
+  "pair": "defense-full-0",
+  "treatment": "zone_cup",
+  "adaptive": false,
+  "homePatch": {
+    "defense": "zone_cup"
+  },
+  "awayPatch": {
+    "attack": "horizontal_stack"
+  },
+  "budgetMs": 150000
+}

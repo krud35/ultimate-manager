@@ -1,0 +1,199 @@
+{
+  "meta": {
+    "seeds": 5,
+    "points": 10,
+    "endurance": 70,
+    "note": "After waitingHoldSpeedMps — no sprint in WAITING",
+    "comparedTo": "pre-change role means from stamina-role-order canvas"
+  },
+  "byRole": [
+    {
+      "role": "primary_handler",
+      "spent": {
+        "n": 50,
+        "mean": 1.82,
+        "p50": 0.91,
+        "p75": 2.5,
+        "max": 10.57
+      },
+      "total": {
+        "n": 50,
+        "mean": 2.16,
+        "p50": 0.91,
+        "p75": 3.5,
+        "max": 12.57
+      },
+      "prevMean": 8.36,
+      "delta": -6.54
+    },
+    {
+      "role": "reset_handler",
+      "spent": {
+        "n": 50,
+        "mean": 5.35,
+        "p50": 4.2,
+        "p75": 7.92,
+        "max": 20.57
+      },
+      "total": {
+        "n": 50,
+        "mean": 6.55,
+        "p50": 5.2,
+        "p75": 9.92,
+        "max": 25.57
+      },
+      "prevMean": 8.47,
+      "delta": -3.12
+    },
+    {
+      "role": "primary_cutter",
+      "spent": {
+        "n": 50,
+        "mean": 2.65,
+        "p50": 0,
+        "p75": 2.96,
+        "max": 26.59
+      },
+      "total": {
+        "n": 50,
+        "mean": 3.23,
+        "p50": 0,
+        "p75": 3.96,
+        "max": 32.59
+      },
+      "prevMean": 14.31,
+      "delta": -11.66
+    },
+    {
+      "role": "secondary_cutter",
+      "spent": {
+        "n": 50,
+        "mean": 1.78,
+        "p50": 0,
+        "p75": 1.94,
+        "max": 19.91
+      },
+      "total": {
+        "n": 50,
+        "mean": 2.16,
+        "p50": 0,
+        "p75": 1.94,
+        "max": 23.91
+      },
+      "prevMean": 13.81,
+      "delta": -12.03
+    },
+    {
+      "role": "continuation_cutter",
+      "spent": {
+        "n": 50,
+        "mean": 0.6,
+        "p50": 0,
+        "p75": 0,
+        "max": 10.34
+      },
+      "total": {
+        "n": 50,
+        "mean": 0.74,
+        "p50": 0,
+        "p75": 0,
+        "max": 12.34
+      },
+      "prevMean": 11.84,
+      "delta": -11.24
+    },
+    {
+      "role": "filler_cutter",
+      "spent": {
+        "n": 100,
+        "mean": 1.07,
+        "p50": 0,
+        "p75": 0.57,
+        "max": 23.26
+      },
+      "total": {
+        "n": 100,
+        "mean": 1.27,
+        "p50": 0,
+        "p75": 0.57,
+        "max": 28.26
+      },
+      "prevMean": 13.56,
+      "delta": -12.49
+    }
+  ],
+  "pcOrders": {
+    "none": {
+      "label": "Bez rozkazu",
+      "spent": {
+        "n": 50,
+        "mean": 2.65,
+        "p50": 0,
+        "p75": 2.96,
+        "max": 26.59
+      }
+    },
+    "cut_under": {
+      "label": "Biegaj under",
+      "spent": {
+        "n": 50,
+        "mean": 1.58,
+        "p50": 0.16,
+        "p75": 2.12,
+        "max": 10.5
+      }
+    },
+    "cut_deep": {
+      "label": "Biegaj deep",
+      "spent": {
+        "n": 50,
+        "mean": 2.65,
+        "p50": 1.38,
+        "p75": 3.32,
+        "max": 15.41
+      }
+    },
+    "give_space": {
+      "label": "Nie zabieraj przestrzeni",
+      "spent": {
+        "n": 50,
+        "mean": 2.2,
+        "p50": 0.09,
+        "p75": 2.58,
+        "max": 18.63
+      }
+    }
+  },
+  "dOrders": {
+    "none": {
+      "label": "Bez rozkazu",
+      "spent": {
+        "n": 50,
+        "mean": 1.04,
+        "p50": 0,
+        "p75": 0,
+        "max": 10.79
+      }
+    },
+    "shutdown": {
+      "label": "Shutdown D",
+      "spent": {
+        "n": 50,
+        "mean": 1.11,
+        "p50": 0,
+        "p75": 1.11,
+        "max": 14.4
+      }
+    },
+    "tight_mark": {
+      "label": "Bliskie krycie",
+      "spent": {
+        "n": 50,
+        "mean": 1.21,
+        "p50": 0,
+        "p75": 0.17,
+        "max": 22.77
+      }
+    }
+  }
+}

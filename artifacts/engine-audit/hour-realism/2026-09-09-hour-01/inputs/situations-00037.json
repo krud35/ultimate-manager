@@ -1,0 +1,682 @@
+{
+  "id": "situations-00037",
+  "phase": "situations",
+  "kind": "setups",
+  "seed": 191024712,
+  "observe": true,
+  "cases": [
+    {
+      "id": "reset_stationary-easy",
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "reset_stationary-easy",
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "reset_stationary-easy",
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "reset_stationary-easy",
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "reset_stationary-hard",
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "reset_stationary-hard",
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "reset_stationary-hard",
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "reset_stationary-hard",
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "reset_moving-easy",
+      "moving": true,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "reset_moving-easy",
+      "moving": true,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "reset_moving-easy",
+      "moving": true,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "reset_moving-easy",
+      "moving": true,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "reset_moving-hard",
+      "moving": true,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "reset_moving-hard",
+      "moving": true,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "reset_moving-hard",
+      "moving": true,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "reset_moving-hard",
+      "moving": true,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "reset_upline-easy",
+      "x": 28,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "reset_upline-easy",
+      "x": 28,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "reset_upline-easy",
+      "x": 28,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "reset_upline-easy",
+      "x": 28,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "reset_upline-hard",
+      "x": 28,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "reset_upline-hard",
+      "x": 28,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "reset_upline-hard",
+      "x": 28,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "reset_upline-hard",
+      "x": 28,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "incut-easy",
+      "moving": true,
+      "x": 50,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "incut-easy",
+      "moving": true,
+      "x": 50,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "incut-easy",
+      "moving": true,
+      "x": 50,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "incut-easy",
+      "moving": true,
+      "x": 50,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "incut-hard",
+      "moving": true,
+      "x": 50,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "incut-hard",
+      "moving": true,
+      "x": 50,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "incut-hard",
+      "moving": true,
+      "x": 50,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "incut-hard",
+      "moving": true,
+      "x": 50,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "crowded-easy",
+      "x": 65,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "crowded-easy",
+      "x": 65,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "crowded-easy",
+      "x": 65,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "crowded-easy",
+      "x": 65,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "crowded-hard",
+      "x": 65,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "crowded-hard",
+      "x": 65,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "crowded-hard",
+      "x": 65,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "crowded-hard",
+      "x": 65,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "deep-easy",
+      "x": 25,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "deep-easy",
+      "x": 25,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "deep-easy",
+      "x": 25,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "deep-easy",
+      "x": 25,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "deep-hard",
+      "x": 25,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "deep-hard",
+      "x": 25,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "deep-hard",
+      "x": 25,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "deep-hard",
+      "x": 25,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "mark_break-easy",
+      "y": 6,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "mark_break-easy",
+      "y": 6,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "mark_break-easy",
+      "y": 6,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "mark_break-easy",
+      "y": 6,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "mark_break-hard",
+      "y": 6,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "mark_break-hard",
+      "y": 6,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "mark_break-hard",
+      "y": 6,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "mark_break-hard",
+      "y": 6,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "zone_structure-easy",
+      "layout": true,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "zone_structure-easy",
+      "layout": true,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "zone_structure-easy",
+      "layout": true,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "zone_structure-easy",
+      "layout": true,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "zone_structure-hard",
+      "layout": true,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "zone_structure-hard",
+      "layout": true,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "zone_structure-hard",
+      "layout": true,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "zone_structure-hard",
+      "layout": true,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "sideline-easy",
+      "y": 0.5,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "sideline-easy",
+      "y": 0.5,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "sideline-easy",
+      "y": 0.5,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "sideline-easy",
+      "y": 0.5,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "sideline-hard",
+      "y": 0.5,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "sideline-hard",
+      "y": 0.5,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "sideline-hard",
+      "y": 0.5,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "sideline-hard",
+      "y": 0.5,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "endzone-easy",
+      "x": 78,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "endzone-easy",
+      "x": 78,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "endzone-easy",
+      "x": 78,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "endzone-easy",
+      "x": 78,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "endzone-hard",
+      "x": 78,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "endzone-hard",
+      "x": 78,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "endzone-hard",
+      "x": 78,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "endzone-hard",
+      "x": 78,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "turnover_pickup-easy",
+      "pickup": true,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "turnover_pickup-easy",
+      "pickup": true,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "turnover_pickup-easy",
+      "pickup": true,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "turnover_pickup-easy",
+      "pickup": true,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "turnover_pickup-hard",
+      "pickup": true,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "turnover_pickup-hard",
+      "pickup": true,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "turnover_pickup-hard",
+      "pickup": true,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "turnover_pickup-hard",
+      "pickup": true,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "stall_2-easy",
+      "stall": 2,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "stall_2-easy",
+      "stall": 2,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "stall_2-easy",
+      "stall": 2,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "stall_2-easy",
+      "stall": 2,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "stall_2-hard",
+      "stall": 2,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "stall_2-hard",
+      "stall": 2,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "stall_2-hard",
+      "stall": 2,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "stall_2-hard",
+      "stall": 2,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "stall_5-easy",
+      "stall": 5,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "stall_5-easy",
+      "stall": 5,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "stall_5-easy",
+      "stall": 5,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "stall_5-easy",
+      "stall": 5,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "stall_5-hard",
+      "stall": 5,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "stall_5-hard",
+      "stall": 5,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "stall_5-hard",
+      "stall": 5,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "stall_5-hard",
+      "stall": 5,
+      "hard": true,
+      "seed": 190781836
+    },
+    {
+      "id": "stall_8-easy",
+      "stall": 8,
+      "hard": false,
+      "seed": 190781833
+    },
+    {
+      "id": "stall_8-easy",
+      "stall": 8,
+      "hard": false,
+      "seed": 190781834
+    },
+    {
+      "id": "stall_8-easy",
+      "stall": 8,
+      "hard": false,
+      "seed": 190781835
+    },
+    {
+      "id": "stall_8-easy",
+      "stall": 8,
+      "hard": false,
+      "seed": 190781836
+    },
+    {
+      "id": "stall_8-hard",
+      "stall": 8,
+      "hard": true,
+      "seed": 190781833
+    },
+    {
+      "id": "stall_8-hard",
+      "stall": 8,
+      "hard": true,
+      "seed": 190781834
+    },
+    {
+      "id": "stall_8-hard",
+      "stall": 8,
+      "hard": true,
+      "seed": 190781835
+    },
+    {
+      "id": "stall_8-hard",
+      "stall": 8,
+      "hard": true,
+      "seed": 190781836
+    }
+  ],
+  "budgetMs": 14624.421500000055
+}

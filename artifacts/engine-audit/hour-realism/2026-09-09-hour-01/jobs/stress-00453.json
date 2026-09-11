@@ -1,0 +1,17 @@
+{
+  "job": {
+    "id": "stress-00453",
+    "phase": "stress",
+    "kind": "check",
+    "seed": 194319016,
+    "observe": true,
+    "script": "check-reset-cuts.mjs",
+    "budgetMs": 60000
+  },
+  "status": "complete_external_check",
+  "code": 0,
+  "log": "logs/stress-00453.log",
+  "timings": {
+    "wallMs": 442.02429999999003
+  }
+}

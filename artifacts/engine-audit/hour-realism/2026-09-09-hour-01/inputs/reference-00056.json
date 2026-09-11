@@ -1,0 +1,28 @@
+{
+  "id": "reference-00056",
+  "phase": "reference",
+  "kind": "match",
+  "seed": 190831828,
+  "observe": true,
+  "home": "austin-sol",
+  "away": "carolina-flyers",
+  "group": 1,
+  "tactical": 1,
+  "swap": false,
+  "round": 0,
+  "seedIndex": 1,
+  "pair": "reference-0-1-1-1",
+  "wind": {
+    "speedMph": 0,
+    "directionDeg": 180
+  },
+  "homePatch": {
+    "attack": "zone_offense",
+    "defense": "zone_cup"
+  },
+  "awayPatch": {
+    "attack": "zone_offense",
+    "defense": "zone_wall"
+  },
+  "budgetMs": 150000
+}

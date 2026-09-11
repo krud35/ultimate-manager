@@ -1,0 +1,10 @@
+{
+  "id": "integrity-00002",
+  "phase": "integrity",
+  "kind": "match",
+  "seed": 190731709,
+  "observe": true,
+  "pair": "neutrality",
+  "adaptive": false,
+  "budgetMs": 150000
+}

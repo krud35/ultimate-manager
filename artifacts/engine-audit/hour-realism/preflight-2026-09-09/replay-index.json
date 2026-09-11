@@ -1,0 +1,44 @@
+[
+  {
+    "category": "success",
+    "rank": "008053e861c027944dcdda36314935fe81a755761dfaa1a4bd6e0f8b5ac7ef61",
+    "path": "replays/preflight-full-success.json",
+    "jobId": "preflight-full",
+    "pointIndex": 12
+  },
+  {
+    "category": "success",
+    "rank": "05caf3cc277eaee3ad574ab1eb6fdc1d54975be94867ca24038e3696d9eb2c33",
+    "path": "replays/preflight-point-success.json",
+    "jobId": "preflight-point",
+    "pointIndex": 1
+  },
+  {
+    "category": "failure",
+    "rank": "01b29ae4bbfd2d849deaf04c85dd48192cbfc2ef5229415a13266be507bdc1ef",
+    "path": "replays/preflight-full-failure.json",
+    "jobId": "preflight-full",
+    "pointIndex": 22
+  },
+  {
+    "category": "long_setup",
+    "rank": "5fd2273efc2b9c3296da2cb941b6980c6b7d58d419b49de38171ab8f8a603a83",
+    "path": "replays/preflight-full-long_setup.json",
+    "jobId": "preflight-full",
+    "pointIndex": 5
+  },
+  {
+    "category": "defense_transition",
+    "rank": "0743fa4a99cc6b6d56badbe5fcc64e05f020d6885c609130957f2418256b706d",
+    "path": "replays/preflight-full-defense_transition.json",
+    "jobId": "preflight-full",
+    "pointIndex": 1
+  },
+  {
+    "category": "defense_transition",
+    "rank": "0743fa4a99cc6b6d56badbe5fcc64e05f020d6885c609130957f2418256b706d",
+    "path": "replays/preflight-point-defense_transition.json",
+    "jobId": "preflight-point",
+    "pointIndex": 1
+  }
+]

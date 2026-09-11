@@ -1,0 +1,19 @@
+{
+  "id": "tactics-00168",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190941709,
+  "observe": true,
+  "points": 1,
+  "rotate": false,
+  "adaptive": false,
+  "cell": "side_stack|person",
+  "pair": "system-0",
+  "homePatch": {
+    "attack": "side_stack"
+  },
+  "awayPatch": {
+    "defense": "person"
+  },
+  "budgetMs": 60000
+}

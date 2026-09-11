@@ -1,0 +1,17 @@
+{
+  "id": "tactics-00158",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190931709,
+  "observe": true,
+  "pair": "defense-full-0",
+  "treatment": "person",
+  "adaptive": false,
+  "homePatch": {
+    "defense": "person"
+  },
+  "awayPatch": {
+    "attack": "horizontal_stack"
+  },
+  "budgetMs": 150000
+}

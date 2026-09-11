@@ -1,0 +1,30 @@
+{
+  "id": "fast-reference-00047",
+  "phase": "fast",
+  "kind": "match",
+  "seed": 190831743,
+  "observe": false,
+  "home": "salt-lake-shred",
+  "away": "houston-havoc",
+  "group": 2,
+  "tactical": 0,
+  "swap": true,
+  "round": 0,
+  "seedIndex": 0,
+  "pair": "reference-0-0-2-0",
+  "wind": {
+    "speedMph": 14,
+    "directionDeg": 0
+  },
+  "homePatch": {
+    "attack": "horizontal_stack",
+    "defense": "person"
+  },
+  "awayPatch": {
+    "attack": "vertical_stack",
+    "defense": "person"
+  },
+  "fast": true,
+  "referenceId": "reference-00047",
+  "budgetMs": 150000
+}

@@ -1,0 +1,89 @@
+{
+  "id": "effects-00363",
+  "phase": "effects",
+  "kind": "effects",
+  "seed": 193606306,
+  "observe": true,
+  "attribute": "defensive.marking",
+  "repeat": 1,
+  "variants": [
+    {
+      "category": "defensive",
+      "key": "marking",
+      "delta": 0
+    },
+    {
+      "category": "defensive",
+      "key": "marking",
+      "delta": -10
+    },
+    {
+      "category": "defensive",
+      "key": "marking",
+      "delta": 10
+    }
+  ],
+  "cases": [
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031713
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041713
+    },
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031714
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041714
+    },
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031715
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041715
+    },
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031716
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041716
+    }
+  ],
+  "budgetMs": 60000
+}

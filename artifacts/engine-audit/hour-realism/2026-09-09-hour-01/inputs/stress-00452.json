@@ -1,0 +1,9 @@
+{
+  "id": "stress-00452",
+  "phase": "stress",
+  "kind": "check",
+  "seed": 194311097,
+  "observe": true,
+  "script": "check-route-planning.mjs",
+  "budgetMs": 60000
+}

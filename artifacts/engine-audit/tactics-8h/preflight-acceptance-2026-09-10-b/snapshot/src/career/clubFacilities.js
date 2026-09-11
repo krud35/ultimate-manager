@@ -1,0 +1,737 @@
+import { matchCommercials } from './economyBalance.js'
+import { eucsTeamCountry } from '../data/eucsLeagueTeams.js'
+import { addDays, formatISODate } from '../league/seasonCalendar.js'
+/**
+ * Struktury klubu (poziomy 1–10) — lekkie modyfikatory + ulepszenia za budżet.
+ * Poziomy 1–4: negatywny wpływ (poza sklepikiem), 5 = baseline, 6–10: rosnący plus.
+ */
+
+import { createRng } from '../matchEngine/rng.js'
+import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/clubFinances.js'
+import { ensureTeamReputation } from '../models/teamReputation.js'
+import {
+  ensureTeamFans,
+} from '../models/teamFans.js'
+import { eucsTeamTier } from '../data/eucsLeagueTeams.js'
+
+export const FACILITY_LEVEL_MIN = 1
+export const FACILITY_LEVEL_MAX = 10
+export const FACILITY_BASELINE_LEVEL = 5
+export const FACILITIES_GEN_VERSION = 1
+
+/**
+ * Piramida Ligi Europejskiej: Liga 1 wyraźnie lepsze obiekty niż Liga 2, Liga 2 lepsze
+ * niż Liga 3. Dodawane do wylosowanego poziomu (1–10) przed clampem — brak wpływu na
+ * drużyny spoza Ligi Europejskiej (`eucsTeamTier` → null → bias 0).
+ */
+const EUCS_TIER_FACILITY_BIAS = { 1: 1.8, 2: 0, 3: -1.8 }
+
+/** @typedef {'stadium'|'trainingCenter'|'medicalCenter'|'chillRoom'|'fanShop'|'scoutingDept'|'academy'} FacilityId */
+
+/**
+ * @typedef {object} FacilityDef
+ * @property {FacilityId} id
+ * @property {string} namePl
+ * @property {string} nameEn
+ * @property {string} effectPl
+ * @property {string} effectEn
+ * @property {boolean} alwaysPositive — sklepik: zawsze ≥0
+ * @property {Record<number, { pl: string, en: string }>} levelBlurbs
+ */
+
+/** @type {Record<FacilityId, FacilityDef>} */
+export const FACILITY_DEFS = {
+  stadium: {
+    id: 'stadium',
+    namePl: 'Stadion',
+    nameEn: 'Stadium',
+    effectPl: 'Przewaga własnego boiska',
+    effectEn: 'Home-field advantage',
+    alwaysPositive: false,
+    levelBlurbs: {
+      1: {
+        pl: 'Dziurawa murawa z pachołkami zamiast linii. Kibice siedzą na składanych krzesełkach z Ikei.',
+        en: 'Pothole turf with traffic cones for lines. Fans sit on folding Ikea chairs.',
+      },
+      2: {
+        pl: 'Jedna trybuna, dwie latarnie i boisko, które po deszczu zamienia się w kałużę olimpijską.',
+        en: 'One stand, two floodlights, and a pitch that becomes an Olympic puddle after rain.',
+      },
+      3: {
+        pl: 'Linie są już farbą, ale sędzia nadal czasem myli end zone z parkingiem.',
+        en: 'Lines are paint now, but the ref still mistakes the end zone for the parking lot.',
+      },
+      4: {
+        pl: 'Prawie normalny obiekt — tylko wiatr wieje prosto w twarz gospodarzom. Zawsze.',
+        en: 'Almost a real venue — except the wind always blows straight into the hosts’ faces.',
+      },
+      5: {
+        pl: 'Solidny stadion ligowy. Ani wstyd, ani wow — dokładnie tak, jak lubi liga.',
+        en: 'A solid league stadium. Neither shame nor wow — exactly how the league likes it.',
+      },
+      6: {
+        pl: 'Nowe ławki, równa trawa i kibice, którzy faktycznie słychać z drugiej strony pola.',
+        en: 'New benches, even grass, and fans you can actually hear from the far sideline.',
+      },
+      7: {
+        pl: 'Nagłośnienie działa, linie świecą, a przeciwnik pyta „czy to na pewno nasze wyjazdowe?”.',
+        en: 'PA works, lines glow, and opponents ask “are we sure this is our away day?”.',
+      },
+      8: {
+        pl: 'Trybuny mają klimat, boisko trzyma piłkę… dysk… no, trzyma dysk. Atmosfera rośnie.',
+        en: 'The stands have vibe, the field holds the disc. Atmosphere is climbing.',
+      },
+      9: {
+        pl: 'Prawie arena: strefa VIP z kawą, która smakuje jak kawa, nie jak herbata z torby treningowej.',
+        en: 'Nearly an arena: VIP coffee that tastes like coffee, not training-bag tea.',
+      },
+      10: {
+        pl: 'Katedra ultimate. Nawet wiatr wydaje się kibicować gospodarzom (lub przynajmniej nie przeszkadza).',
+        en: 'An ultimate cathedral. Even the wind seems to cheer for the hosts (or at least stays out of the way).',
+      },
+    },
+  },
+  trainingCenter: {
+    id: 'trainingCenter',
+    namePl: 'Centrum treningowe',
+    nameEn: 'Training center',
+    effectPl: 'Jakość treningów',
+    effectEn: 'Training quality',
+    alwaysPositive: false,
+    levelBlurbs: {
+      1: {
+        pl: 'Parking, dwa pachołki i siatka na dyski zszyta taśmą klejącą. „Metoda naturalna”.',
+        en: 'A parking lot, two cones, and a disc net held together with duct tape. “Natural method.”',
+      },
+      2: {
+        pl: 'Sala jest, ale lustra pokazują tylko, jak bardzo wszyscy są zmęczeni.',
+        en: 'There’s a room, but the mirrors mostly show how tired everyone is.',
+      },
+      3: {
+        pl: 'Jedna ścianka do rzutów i rower stacjonarny, który skrzypi jak horror z lat 90.',
+        en: 'One throwing wall and a stationary bike that squeaks like a ’90s horror flick.',
+      },
+      4: {
+        pl: 'Prawie OK — tylko szatnia pachnie jak wieczny wilgotny ręcznik.',
+        en: 'Almost fine — except the locker room smells like a permanently damp towel.',
+      },
+      5: {
+        pl: 'Standardowy obiekt: boisko, siłownia, tablica taktyczna z trzema kolorami markerów.',
+        en: 'Standard facility: field, gym, whiteboard with three marker colors.',
+      },
+      6: {
+        pl: 'Nowe maty, kamera do analizy i trenerzy, którzy nie muszą krzyczeć przez wiatr.',
+        en: 'New mats, an analysis camera, and coaches who don’t have to yell through the wind.',
+      },
+      7: {
+        pl: 'Strefa recovery + rzutnia indoor. Sesje zaczynają wyglądać jak plan, nie jak improwizacja.',
+        en: 'Recovery zone + indoor throwing lane. Sessions look like a plan, not improv.',
+      },
+      8: {
+        pl: 'Laboratorium ruchu: GPS, wideo, i kawałek boiska, na którym trawa nie jest „opcjonalna”.',
+        en: 'A movement lab: GPS, video, and a patch of field where grass isn’t “optional.”',
+      },
+      9: {
+        pl: 'Prawie akademia. Juniorzy zaglądają przez płot z zazdrością godną Ultiworlda.',
+        en: 'Almost an academy. Juniors peek through the fence with Ultiworld-worthy envy.',
+      },
+      10: {
+        pl: 'Centrum, w którym nawet „lekki trening” wygląda profesjonalnie. Skille rosną ciszej, ale pewniej.',
+        en: 'A center where even a “light session” looks pro. Skills grow quieter — and surer.',
+      },
+    },
+  },
+  medicalCenter: {
+    id: 'medicalCenter',
+    namePl: 'Centrum medyczne',
+    nameEn: 'Medical center',
+    effectPl: 'Ryzyko kontuzji',
+    effectEn: 'Injury risk',
+    alwaysPositive: false,
+    levelBlurbs: {
+      1: {
+        pl: 'Apteczka z plasterkami z 2012 i lód z zamrażarki na kiełbasę. „Chodź, przejdzie”.',
+        en: 'A first-aid kit with 2012 band-aids and sausage-freezer ice. “Walk it off.”',
+      },
+      2: {
+        pl: 'Fizjo przychodzi „jak zdąży”. Masaż to zwykle klepnięcie po plecach i życzenia zdrowia.',
+        en: 'Physio shows up “if free.” Massage is usually a back pat and best wishes.',
+      },
+      3: {
+        pl: 'Jest stół do masażu, ale jedna noga jest podparta książką taktyczną.',
+        en: 'There’s a massage table — one leg propped up by a tactics book.',
+      },
+      4: {
+        pl: 'Podstawowy sprzęt recovery. Kontuzje nadal lubią ten klub, ale już nie aż tak.',
+        en: 'Basic recovery gear. Injuries still like this club — just a little less.',
+      },
+      5: {
+        pl: 'Standard ligowy: diagnostyka, taśmy, i ktoś, kto wie, gdzie jest ibuprofen.',
+        en: 'League standard: diagnostics, tape, and someone who knows where the ibuprofen is.',
+      },
+      6: {
+        pl: 'Prawdziwy fizjo na etacie. Zawodnicy wracają szybciej niż plotki o transferach.',
+        en: 'A real full-time physio. Players return faster than transfer rumors.',
+      },
+      7: {
+        pl: 'Cryo, USG i plan prehab. Nawet „naciągnięcie” dostaje nazwę naukową.',
+        en: 'Cryo, ultrasound, and a prehab plan. Even a “strain” gets a scientific name.',
+      },
+      8: {
+        pl: 'Zespół medyczny, który przewiduje urazy zanim zawodnik zdąży powiedzieć „chyba coś czuję”.',
+        en: 'A medical team that spots injuries before a player can say “I think I feel something.”',
+      },
+      9: {
+        pl: 'Klinika klubowa. Rywale żartują, że u was kontuzja to wybór stylu życia.',
+        en: 'A club clinic. Rivals joke that injuries here are a lifestyle choice.',
+      },
+      10: {
+        pl: 'Medyczna forteca. Szansa na uraz spada, a powroty wyglądają jak z folderu sponsorskiego.',
+        en: 'A medical fortress. Injury odds drop, and returns look like a sponsor brochure.',
+      },
+    },
+  },
+  chillRoom: {
+    id: 'chillRoom',
+    namePl: 'Chill room',
+    nameEn: 'Chill room',
+    effectPl: 'Morale szatni',
+    effectEn: 'Squad morale',
+    alwaysPositive: false,
+    levelBlurbs: {
+      1: {
+        pl: 'Kanapa z dziurą i konsola, która ładuje się tylko gdy ktoś trzyma kabel pod odpowiednim kątem.',
+        en: 'A sofa with a hole and a console that charges only if someone holds the cable at the right angle.',
+      },
+      2: {
+        pl: 'Herbata w papierowych kubkach i playlista, której nikt nie lubi, ale wszyscy znają na pamięć.',
+        en: 'Tea in paper cups and a playlist nobody likes but everyone knows by heart.',
+      },
+      3: {
+        pl: 'Jest foosball, ale jedna figurka nie ma głowy. Atmosfera: „trudne czasy, trzymajmy się”.',
+        en: 'There’s foosball, but one figure is headless. Vibe: “tough times, stick together.”',
+      },
+      4: {
+        pl: 'Prawie przytulnie — tylko klimatyzacja wieje albo za mocno, albo wcale.',
+        en: 'Almost cozy — except the AC either blasts or does nothing.',
+      },
+      5: {
+        pl: 'Neutralna strefa chillu: sofa, TV, przekąski. Nikogo nie irytuje i nikogo nie zachwyca.',
+        en: 'A neutral chill zone: sofa, TV, snacks. Annoys no one, thrills no one.',
+      },
+      6: {
+        pl: 'Wygodne fotele, dobra kawa i zakaz rozmów o tabeli przed 10:00. Morale idzie w górę.',
+        en: 'Comfy chairs, decent coffee, and a ban on standings talk before 10 a.m. Morale ticks up.',
+      },
+      7: {
+        pl: 'Karaoke po przegranej (opcjonalne) i ściana z memami z sezonu. Szatnia oddycha.',
+        en: 'Optional post-loss karaoke and a wall of season memes. The locker room can breathe.',
+      },
+      8: {
+        pl: 'Strefa snu + gry kooperacyjne. Nawet kapitan czasem się uśmiecha bez powodu.',
+        en: 'A nap zone + co-op games. Even the captain sometimes smiles for no reason.',
+      },
+      9: {
+        pl: 'Prawie spa dla ultimate. Po sesji wszyscy wyglądają jak ludzie, nie jak checklista zmęczenia.',
+        en: 'Almost an ultimate spa. After sessions everyone looks like people, not a fatigue checklist.',
+      },
+      10: {
+        pl: 'Legendarny chill room. Plotka mówi, że sam fakt wejścia podnosi morale o pół uśmiechu.',
+        en: 'A legendary chill room. Rumor says just walking in raises morale by half a smile.',
+      },
+    },
+  },
+  fanShop: {
+    id: 'fanShop',
+    namePl: 'Sklep dla kibiców',
+    nameEn: 'Fan shop',
+    effectPl: 'Sprzedaż merchu po meczach',
+    effectEn: 'Post-match merch sales',
+    alwaysPositive: true,
+    levelBlurbs: {
+      1: {
+        pl: 'Stolik campingowy i trzy koszulki w rozmiarze XL. Kasjer to woźny z drugim etatem.',
+        en: 'A camping table and three XL shirts. The cashier is the groundskeeper on a side hustle.',
+      },
+      2: {
+        pl: 'Budka z napisem „MERCH?”. Czasem jest czapka. Czasem tylko entuzjazm.',
+        en: 'A booth labeled “MERCH?”. Sometimes there’s a cap. Sometimes just enthusiasm.',
+      },
+      3: {
+        pl: 'Półka, kod QR i nadzieja. Sprzedaż rośnie, gdy ktoś wygra i kupi szalik „dla żony”.',
+        en: 'A shelf, a QR code, and hope. Sales rise when someone wins and buys a scarf “for their partner.”',
+      },
+      4: {
+        pl: 'Mały sklepik z prawdziwymi godzinami otwarcia. Kibice wiedzą, gdzie szukać gadżetów.',
+        en: 'A small shop with real opening hours. Fans know where to find the gear.',
+      },
+      5: {
+        pl: 'Porządny club shop: koszulki, czapki, breloczki w kształcie dysku.',
+        en: 'A proper club shop: shirts, caps, disc-shaped keychains.',
+      },
+      6: {
+        pl: 'Nowa witryna i limitowane dropy po derbach. Kasa dzwoni ciszej niż stadion, ale dzwoni.',
+        en: 'A new storefront and limited derby drops. The till rings quieter than the stadium — but it rings.',
+      },
+      7: {
+        pl: 'Online + stacjonarnie. Fani z innych miast zamawiają bluzy „bo klimat”.',
+        en: 'Online + in-store. Out-of-town fans order hoodies “for the vibe.”',
+      },
+      8: {
+        pl: 'Strefa autografów i półka „retro fail” z historycznymi kitami. Merch ma osobowość.',
+        en: 'An autograph corner and a “retro fail” shelf of historic kits. Merch has personality.',
+      },
+      9: {
+        pl: 'Prawie boutique. Nawet festywale klubowe kończą się pustymi półkami (w dobrym sensie).',
+        en: 'Almost a boutique. Even club festivals end with empty shelves (in a good way).',
+      },
+      10: {
+        pl: 'Flagowy sklep. Po meczu kolejka po koszulki wygląda jak kolejka po bilety — tylko krótsza i szczęśliwsza.',
+        en: 'A flagship shop. Post-match jersey lines look like ticket lines — just shorter and happier.',
+      },
+    },
+  },
+  scoutingDept: {
+    id: 'scoutingDept',
+    namePl: 'Dział skautingu',
+    nameEn: 'Scouting department',
+    effectPl: 'Limit równoległych misji i koszt wysłania skauta',
+    effectEn: 'Concurrent mission limit and scout mission cost',
+    alwaysPositive: false,
+    levelBlurbs: {
+      1: {
+        pl: 'Jeden wolontariusz z zeszytem i dobrym okiem, ale bez biletu na wyjazdowy sektor.',
+        en: 'One volunteer with a notebook and a good eye, but no ticket for the away section.',
+      },
+      2: {
+        pl: 'Skaut ogląda mecze z transmisji o fatalnej jakości i zgaduje resztę.',
+        en: 'The scout watches a low-quality stream and guesses the rest.',
+      },
+      3: {
+        pl: 'Arkusz Excela z kolumnami "chyba dobry" i "raczej nie". Metodologia: intuicja.',
+        en: 'A spreadsheet with columns "probably good" and "probably not." Methodology: gut feeling.',
+      },
+      4: {
+        pl: 'Prawie system — tylko notatki giną między kubkami po kawie.',
+        en: 'Almost a system — except notes keep vanishing between coffee cups.',
+      },
+      5: {
+        pl: 'Standardowy dział: dwóch skautów, kalendarz wyjazdów, raporty po każdym meczu.',
+        en: 'A standard setup: two scouts, a travel calendar, reports after every match.',
+      },
+      6: {
+        pl: 'Nowy laptop i baza danych, która faktycznie się nie crashuje w trakcie meczu.',
+        en: 'A new laptop and a database that doesn’t crash mid-match.',
+      },
+      7: {
+        pl: 'Skauci mają kontakty w innych klubach. Plotki docierają szybciej niż oficjalne komunikaty.',
+        en: 'Scouts have contacts around the league. Gossip travels faster than press releases.',
+      },
+      8: {
+        pl: 'Analiza wideo klatka po klatce i raporty, które trener faktycznie czyta do końca.',
+        en: 'Frame-by-frame video analysis and reports the coach actually reads to the end.',
+      },
+      9: {
+        pl: 'Prawie wywiad. Zna się skład rywala lepiej niż jego własny trener przed sezonem.',
+        en: 'Nearly an intelligence unit. Knows the rival roster better than their own coach does preseason.',
+      },
+      10: {
+        pl: 'Legendarny dział skautingu. Raporty przychodzą przed meczem, nie po nim — plotka głosi, że wiedzą, zanim rywal sam się zdecyduje.',
+        en: 'A legendary scouting department. Reports arrive before the match, not after — rumor says they know before the rival even decides.',
+      },
+    },
+  },
+  academy: {
+    id: 'academy',
+    namePl: 'Akademia',
+    nameEn: 'Academy',
+    effectPl: 'Jakość naboru młodzieżowego',
+    effectEn: 'Youth intake quality',
+    alwaysPositive: false,
+    levelBlurbs: {
+      1: {
+        pl: 'Nabór to jeden telefon do rodzica: "wasz syn/córka ma dobrą rękę, niech przyjdzie w sobotę".',
+        en: 'Intake is one phone call to a parent: "your kid has a good arm, send them Saturday."',
+      },
+      2: {
+        pl: 'Trening młodzieżowy na tym samym boisku co seniorzy, dwadzieścia minut przed ich rozgrzewką.',
+        en: 'Youth training shares the senior pitch — twenty minutes before the first team warms up.',
+      },
+      3: {
+        pl: 'Jeden trener na trzy roczniki. Program: "biegajcie, rzucajcie, uczcie się od starszych".',
+        en: 'One coach covering three age groups. The program: "run, throw, learn from the older kids."',
+      },
+      4: {
+        pl: 'Prawie struktura — tylko rodzice wciąż sami dowożą dzieciaki na turnieje.',
+        en: 'Almost a real structure — parents still drive the kids to tournaments themselves.',
+      },
+      5: {
+        pl: 'Standardowa akademia: regularne treningi, jeden turniej rozwojowy na sezon.',
+        en: 'A standard academy: regular sessions, one development tournament a season.',
+      },
+      6: {
+        pl: 'Własny trener młodzieżowy i plan treningowy dopasowany do wieku, nie tylko "mniejsze boisko".',
+        en: 'A dedicated youth coach and an age-appropriate plan, not just "smaller field, same drills."',
+      },
+      7: {
+        pl: 'Współpraca ze szkołami w mieście — najlepsi z lokalnych lig trafiają prosto do akademii.',
+        en: 'Partnerships with local schools — the best local-league talent funnels straight into the academy.',
+      },
+      8: {
+        pl: 'Analiza wideo dla nastolatków i indywidualny plan rozwoju dla każdego prospekta.',
+        en: 'Video analysis for teenagers and an individual development plan for every prospect.',
+      },
+      9: {
+        pl: 'Regionalna marka — rodziny przeprowadzają się bliżej klubu, żeby dziecko trenowało właśnie tu.',
+        en: 'A regional name — families relocate closer to the club just so their kid can train here.',
+      },
+      10: {
+        pl: 'Fabryka talentów. Absolwenci akademii grają w całej lidze i wspominają to miejsce jak drugi dom.',
+        en: 'A talent factory. Academy graduates play across the whole league and talk about the place like a second home.',
+      },
+    },
+  },
+}
+
+export const FACILITY_IDS = /** @type {FacilityId[]} */ (Object.keys(FACILITY_DEFS))
+
+function hashString(str) {
+  let h = 2166136261
+  const s = String(str)
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
+}
+
+function clampLevel(n) {
+  const v = Math.round(Number(n))
+  if (!Number.isFinite(v)) return FACILITY_BASELINE_LEVEL
+  return Math.max(FACILITY_LEVEL_MIN, Math.min(FACILITY_LEVEL_MAX, v))
+}
+
+/** Odchylenie od baseline: −4…+5 */
+export function facilityLevelDelta(level) {
+  return clampLevel(level) - FACILITY_BASELINE_LEVEL
+}
+
+/**
+ * Koszt ulepszenia z `level` → `level+1` (USD).
+ * Lekko drożej na wyższych poziomach.
+ */
+export function facilityUpgradeCost(facilityId, level) {
+  const lv = clampLevel(level)
+  if (lv >= FACILITY_LEVEL_MAX) return null
+  const tier = {
+    stadium: 1.15,
+    trainingCenter: 1.05,
+    medicalCenter: 1.1,
+    chillRoom: 0.85,
+    fanShop: 0.95,
+    scoutingDept: 1.0,
+    academy: 1.05,
+  }[facilityId] ?? 1
+  const raw = 24_000 * tier * 1.46 ** (lv - 1)
+  return Math.round(raw / 1000) * 1000
+}
+
+export function rollFacilityLevel(rng, { bias = 0 } = {}) {
+  // Lekki skew w stronę 3–5; rzadko 8+.
+  const roll = rng.float()
+  let base
+  if (roll < 0.12) base = 1 + Math.floor(rng.float() * 2) // 1–2
+  else if (roll < 0.55) base = 3 + Math.floor(rng.float() * 2) // 3–4
+  else if (roll < 0.82) base = 5
+  else if (roll < 0.95) base = 6 + Math.floor(rng.float() * 2) // 6–7
+  else base = 8 + Math.floor(rng.float() * 2) // 8–9
+  return clampLevel(base + bias)
+}
+
+/**
+ * @param {object} team
+ * @param {{ seed?: number|string, force?: boolean }} [options]
+ */
+export function seedTeamFacilities(team, options = {}) {
+  if (!team) return team
+  const force = !!options.force
+  if (
+    !force &&
+    team.facilities &&
+    typeof team.facilities === 'object' &&
+    team.facilities.facilitiesGen === FACILITIES_GEN_VERSION &&
+    FACILITY_IDS.every((id) => typeof team.facilities[id] === 'number')
+  ) {
+    for (const id of FACILITY_IDS) {
+      team.facilities[id] = clampLevel(team.facilities[id])
+    }
+    return team
+  }
+
+  const rng = createRng(hashString(`facilities|${options.seed ?? 0}|${team.id ?? team.name}`))
+  const bias = EUCS_TIER_FACILITY_BIAS[eucsTeamTier(team.id)] ?? 0
+  const levels = {}
+  for (const id of FACILITY_IDS) {
+    levels[id] = rollFacilityLevel(rng, { bias })
+  }
+  team.facilities = {
+    facilitiesGen: FACILITIES_GEN_VERSION,
+    ...levels,
+  }
+  return team
+}
+
+export function ensureTeamFacilities(team, options = {}) {
+  if (!team) return team
+  if (
+    !team.facilities ||
+    typeof team.facilities !== 'object' ||
+    team.facilities.facilitiesGen !== FACILITIES_GEN_VERSION
+  ) {
+    return seedTeamFacilities(team, options)
+  }
+  for (const id of FACILITY_IDS) {
+    if (typeof team.facilities[id] !== 'number') {
+      team.facilities[id] = FACILITY_BASELINE_LEVEL
+    } else {
+      team.facilities[id] = clampLevel(team.facilities[id])
+    }
+  }
+  team.facilities.facilitiesGen = FACILITIES_GEN_VERSION
+  return team
+}
+
+export function ensureWorldFacilities(world, options = {}) {
+  if (!world?.teamsById) return world
+  const ids = world.teamIds ?? Object.keys(world.teamsById)
+  const seed = options.seed ?? world.templateSeasonYear ?? 2025
+  for (const id of ids) {
+    const team = world.teamsById[id]
+    if (team) ensureTeamFacilities(team, { seed, force: !!options.force })
+  }
+  return world
+}
+
+export function getFacilityLevel(team, facilityId) {
+  ensureTeamFacilities(team)
+  return clampLevel(team?.facilities?.[facilityId] ?? FACILITY_BASELINE_LEVEL)
+}
+
+export function facilityName(facilityId, lang = 'pl') {
+  const def = FACILITY_DEFS[facilityId]
+  if (!def) return facilityId
+  return lang === 'en' ? def.nameEn : def.namePl
+}
+
+export function facilityEffectLabel(facilityId, lang = 'pl') {
+  const def = FACILITY_DEFS[facilityId]
+  if (!def) return ''
+  return lang === 'en' ? def.effectEn : def.effectPl
+}
+
+export function facilityLevelBlurb(facilityId, level, lang = 'pl') {
+  const def = FACILITY_DEFS[facilityId]
+  const blurb = def?.levelBlurbs?.[clampLevel(level)]
+  if (!blurb) return ''
+  return lang === 'en' ? blurb.en : blurb.pl
+}
+
+export function facilityToneClass(facilityId, level) {
+  const def = FACILITY_DEFS[facilityId]
+  const lv = clampLevel(level)
+  if (def?.alwaysPositive) {
+    if (lv >= 8) return 'text-emerald-400'
+    if (lv >= 5) return 'text-ufa-gold'
+    return 'text-ufa-muted'
+  }
+  if (lv >= 8) return 'text-emerald-400'
+  if (lv >= 6) return 'text-ufa-accent'
+  if (lv === 5) return 'text-ufa-gold'
+  if (lv >= 3) return 'text-amber-400'
+  return 'text-red-400'
+}
+
+/** Mnożnik ratingów gospodarza (lekki). Baseline ~1.04. */
+export function stadiumHomeRatingMult(team) {
+  const delta = facilityLevelDelta(getFacilityLevel(team, 'stadium'))
+  return 1.04 + delta * 0.005
+}
+
+/** Mnożnik jakości sesji treningowej. */
+export function trainingCenterQualityMult(team) {
+  const delta = facilityLevelDelta(getFacilityLevel(team, 'trainingCenter'))
+  return (1 + delta * 0.028) * (1 + ((team.staff?.sportingDirector ?? 1) - 1) * 0.015)
+}
+
+/** Mnożnik szansy kontuzji (1 = baseline; wyższy poziom → mniejsza szansa). */
+export function medicalInjuryChanceMult(team) {
+  const delta = facilityLevelDelta(getFacilityLevel(team, 'medicalCenter'))
+  return Math.max(0.72, Math.min(1.28, 1 - delta * 0.045 - ((team.staff?.physio ?? 1) - 1) * 0.025))
+}
+
+/** Mnożnik dziennej regeneracji staminy meczowej (1 = baseline; wyższy poziom → szybszy powrót do formy). */
+export function medicalRecoveryMult(team) {
+  const delta = facilityLevelDelta(getFacilityLevel(team, 'medicalCenter'))
+  return Math.max(0.75, Math.min(1.35, 1 + delta * 0.06 + ((team.staff?.physio ?? 1) - 1) * 0.04))
+}
+
+/** Lekka zmiana morale po treningu (dla obecnych). */
+export function chillRoomMoraleDelta(team) {
+  const delta = facilityLevelDelta(getFacilityLevel(team, 'chillRoom'))
+  if (delta === 0) return 0
+  // −0.6 … +0.75 za sesję (zaokrąglane przy aplikacji)
+  return delta * 0.15
+}
+
+/**
+ * Mnożnik naboru młodzieżowego (1 = baseline poziom 5).
+ * Steruje zarówno liczbą prospektów co sezon, jak i skew jakości — patrz academy.js.
+ */
+export function academyIntakeMult(team) {
+  const delta = facilityLevelDelta(getFacilityLevel(team, 'academy'))
+  return Math.max(0.3, 1 + delta * 0.16)
+}
+
+/**
+ * Szacowany / rzeczywisty zysk ze sklepiku po meczu (USD). Nie kosmiczne kwoty.
+ * @returns {{ amount: number, breakdown: object }}
+ */
+export function computeFanShopMatchRevenue(team, options = {}) {
+  ensureTeamFacilities(team); ensureTeamFans(team); ensureTeamReputation(team)
+  const sale = matchCommercials(team, options)
+  return { amount: sale.shirts + sale.merch - sale.shirtCosts - sale.merchCosts, breakdown: sale }
+}
+
+export function applyFanShopAfterMatch(team, options = {}) {
+  if (!team) return null
+  const { amount, breakdown: sale } = computeFanShopMatchRevenue(team, options)
+  adjustTransferBudget(team, sale.shirts, 'shirt_sales')
+  adjustTransferBudget(team, -sale.shirtCosts, 'shirt_production')
+  adjustTransferBudget(team, sale.merch, 'merch_sales')
+  adjustTransferBudget(team, -sale.merchCosts, 'merch_production')
+  team.facilities.lastMerchAmount = amount
+  team.facilities.lastMerchAt = Date.now()
+  return { amount }
+}
+
+export function computeTravelCost(team, { opponent = null, neutral = false, rng = Math.random } = {}) {
+  const squad = Math.min(24, Math.max(7, (team.players ?? []).length)) + 4
+  const homeCountry = eucsTeamCountry(team.id), destination = opponent && eucsTeamCountry(opponent.id)
+  const international = homeCountry && destination && homeCountry !== destination
+  const base = international ? 420 : homeCountry ? 200 : 360
+  const perPerson = Math.round(base * (0.9 + rng() * 0.2) * (neutral ? 1.15 : 1))
+  return { amount: 700 + squad * perPerson, delegation: squad, perPerson, international: !!international }
+}
+
+export function applyTravelCostAfterMatch(team, options = {}) {
+  if (!team) return null
+  const travel = computeTravelCost(team, options)
+  adjustTransferBudget(team, -travel.amount, 'match_travel')
+  ensureTeamFacilities(team)
+  team.facilities.lastTravelCost = travel.amount
+  team.facilities.lastTravelAt = Date.now()
+  return travel
+}
+
+export function applyPostMatchFinances(homeTeam, awayTeam, { isCup = false, homeWon = false, awayWon = false, rng = Math.random, matchId = null, date = null, forfeited = false } = {}) {
+  if (forfeited) return
+  for (const [team, opponent, isHome, won] of [[homeTeam, awayTeam, true, homeWon], [awayTeam, homeTeam, false, awayWon]]) {
+    if (!team) continue
+    ensureTeamFacilities(team)
+    const playedDate = date ?? team.managementDate
+    const season = playedDate ? Number(playedDate.slice(0, 4)) - (Number(playedDate.slice(5, 7)) < 8 ? 1 : 0) : ''
+    const key = matchId == null ? null : `${season}|${matchId}`
+    if (key && team.facilities.settledMatches?.includes(key)) continue
+    if (date) team.managementDate = date
+    applyFanShopAfterMatch(team, { won, isHome, neutral: isCup })
+    const sale = matchCommercials(team, { won, isHome, neutral: isCup })
+    if (isHome) {
+      adjustTransferBudget(team, sale.tickets, 'match_tickets')
+      adjustTransferBudget(team, -sale.matchCosts, 'match_operations')
+    }
+    const travel = !isHome || isCup ? applyTravelCostAfterMatch(team, { opponent, neutral: isCup, rng }).amount : 0
+    team.facilities.lastMatchFinance = { ...sale, travel, date, net: sale.net - travel }
+    if (key) team.facilities.settledMatches = [...(team.facilities.settledMatches ?? []), key].slice(-160)
+  }
+}
+
+/**
+ * Ulepsza strukturę o 1 poziom za pieniądze.
+ * @returns {{ ok: boolean, error?: string, level?: number, cost?: number, remainingBudget?: number }}
+ */
+export function upgradeFacility(team, facilityId, { date = team?.managementDate ?? null } = {}) {
+  if (!team || !FACILITY_DEFS[facilityId]) {
+    return { ok: false, error: 'unknown_facility' }
+  }
+  if (team.facilityProject) return { ok: false, error: 'construction_in_progress' }
+  if (!date) return { ok: false, error: 'missing_date' }
+  ensureTeamFacilities(team)
+  const level = getFacilityLevel(team, facilityId)
+  if (level >= FACILITY_LEVEL_MAX) {
+    return { ok: false, error: 'max_level', level }
+  }
+  const cost = facilityUpgradeCost(facilityId, level)
+  const budget = getTransferBudget(team)
+  if (cost == null || budget < cost) {
+    return { ok: false, error: 'insufficient_funds', cost, level, remainingBudget: budget }
+  }
+  adjustTransferBudget(team, -cost, 'facility_construction', date)
+  team.facilityProject = { facilityId, targetLevel: level + 1, cost, startsOn: date,
+    completesOn: formatISODate(addDays(date, 21 + level * 7)) }
+  return {
+    ok: true,
+    level: level + 1,
+    completesOn: team.facilityProject.completesOn,
+    cost,
+    remainingBudget: getTransferBudget(team),
+  }
+}
+
+/** Krótki opis efektu liczbowego do UI. */
+export function facilityEffectSummary(facilityId, level, lang = 'pl') {
+  const lv = clampLevel(level)
+  const delta = facilityLevelDelta(lv)
+  const def = FACILITY_DEFS[facilityId]
+  if (!def) return ''
+
+  if (facilityId === 'stadium') {
+    const mult = (1.04 + delta * 0.005).toFixed(3)
+    return lang === 'en'
+      ? `Home rating ×${mult}`
+      : `Rating gospodarza ×${mult}`
+  }
+  if (facilityId === 'trainingCenter') {
+    const pct = Math.round(delta * 2.8)
+    const sign = pct > 0 ? '+' : ''
+    return lang === 'en'
+      ? `Training quality ${sign}${pct}%`
+      : `Jakość treningu ${sign}${pct}%`
+  }
+  if (facilityId === 'medicalCenter') {
+    const pct = Math.round(-delta * 4.5)
+    const sign = pct > 0 ? '+' : ''
+    return lang === 'en'
+      ? `Injury risk ${sign}${pct}%`
+      : `Ryzyko kontuzji ${sign}${pct}%`
+  }
+  if (facilityId === 'chillRoom') {
+    if (delta === 0) {
+      return lang === 'en' ? 'Morale: neutral' : 'Morale: neutralne'
+    }
+    const sign = delta > 0 ? '+' : ''
+    return lang === 'en'
+      ? `Morale after training ${sign}${(delta * 0.15).toFixed(1)}`
+      : `Morale po treningu ${sign}${(delta * 0.15).toFixed(1)}`
+  }
+  if (facilityId === 'fanShop') {
+    return lang === 'en'
+      ? `Shirt demand +${lv * 9}%; merchandise sales depend on attendance`
+      : `Popyt na koszulki +${lv * 9}%; sprzedaż gadżetów zależy od frekwencji`
+  }
+  return ''
+}
+
+export function formatFacilityUpgradeCost(cost, lang = 'pl') {
+  if (cost == null) return lang === 'en' ? 'Max level' : 'Maks. poziom'
+  return formatUsd(cost)
+}

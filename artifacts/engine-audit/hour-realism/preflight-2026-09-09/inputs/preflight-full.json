@@ -1,0 +1,9 @@
+{
+  "phase": "preflight",
+  "id": "preflight-full",
+  "observe": true,
+  "seed": 190731709,
+  "kind": "match",
+  "budgetMs": 150000,
+  "adaptive": false
+}

@@ -1,0 +1,10 @@
+{"at":"2026-09-10T00:18:36.514Z","event":"start","resume":false,"pid":21804,"remainingMs":1800000}
+{"at":"2026-09-10T00:18:36.535Z","event":"job-start","id":"integrity-000001","pid":21516,"budgetMs":90000}
+{"at":"2026-09-10T00:18:37.320Z","event":"job-end","id":"integrity-000001","status":"error","code":1,"wallMs":799.5239}
+{"at":"2026-09-10T00:18:37.353Z","event":"job-start","id":"integrity-000002","pid":10084,"budgetMs":90000}
+{"at":"2026-09-10T00:18:39.979Z","event":"job-end","id":"integrity-000002","status":"complete_point_sample","code":0,"wallMs":2637.7095000000004}
+{"at":"2026-09-10T00:18:40.013Z","event":"job-start","id":"integrity-000003","pid":1656,"budgetMs":90000}
+{"at":"2026-09-10T00:18:42.552Z","event":"job-end","id":"integrity-000003","status":"complete_point_sample","code":0,"wallMs":2551.9397}
+{"at":"2026-09-10T00:18:42.567Z","event":"job-start","id":"integrity-000004","pid":4448,"budgetMs":90000}
+{"at":"2026-09-10T00:18:46.410Z","event":"job-end","id":"integrity-000004","status":"complete_point_sample","code":0,"wallMs":3854.3751999999995}
+{"at":"2026-09-10T00:18:46.555Z","event":"failure","error":"Error: Native/adapter/observer equivalence failed\n    at file:///C:/Users/marod/ultimate-manager-ufa/scripts/tactics-audit.mjs:169:61\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"}

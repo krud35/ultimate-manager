@@ -1,0 +1,3896 @@
+{
+  "options": {
+    "fastCount": 0,
+    "fullCount": 4,
+    "offset": 731459,
+    "frozen": false,
+    "fixedTactics": false,
+    "windSpeed": null,
+    "direction": 0,
+    "attribute": null,
+    "delta": 5,
+    "swap": false
+  },
+  "modes": {
+    "full": {
+      "summary": {
+        "matches": 4,
+        "msPerMatch": 38529.831000000006,
+        "homeMargin": 1.5,
+        "meanInitialWindMph": 17,
+        "completionPct": 94.70954356846472,
+        "holdPct": 79.0909090909091,
+        "cleanHoldPct": 68.18181818181819,
+        "throwsPerPoint": 8.763636363636364,
+        "turnoversPerPoint": 0.4636363636363636,
+        "blocksPerMatch": 5.5,
+        "dropsPerMatch": 0.5,
+        "throwawaysPerMatch": 6.75,
+        "stallOutsPerMatch": 0,
+        "framesPerMatch": 53284.25,
+        "playerSnapshotsPerMatch": 745979.5,
+        "throwLimits": 0,
+        "completedDistanceM": {
+          "n": 913,
+          "p10": 3.9163334612987577,
+          "p50": 11.193598896966238,
+          "p90": 33.83333021865774,
+          "p99": 46.712238115129395,
+          "shortPct": 43.15443592552026,
+          "longPct": 16.319824753559693
+        },
+        "holdMs": {
+          "n": 964,
+          "p10": 1560,
+          "p50": 2340,
+          "p90": 3640,
+          "p99": 4940
+        },
+        "representedPointMs": {
+          "n": 110,
+          "p10": 22320,
+          "p50": 34560,
+          "p90": 53640,
+          "p99": 105600
+        },
+        "possessionThrows": {
+          "n": 161,
+          "p10": 2,
+          "p50": 6,
+          "p90": 10,
+          "p99": 13
+        },
+        "attemptedDistanceM": {
+          "n": 964,
+          "p10": 5.9872135522657635,
+          "p50": 14.119438126331756,
+          "p90": 35.37927568140026,
+          "p99": 47.68348676861715
+        },
+        "possessionMs": {
+          "n": 161,
+          "p10": 7680,
+          "p50": 27280,
+          "p90": 41320,
+          "p99": 53640
+        },
+        "firstThrowAfterTurnoverMs": {
+          "n": 50,
+          "p10": 1820,
+          "p50": 3200,
+          "p90": 4820,
+          "p99": 6140
+        },
+        "estimatedPointMs": {
+          "n": 0,
+          "p10": null,
+          "p50": null,
+          "p90": null,
+          "p99": null
+        },
+        "pressuredThrows": 18,
+        "pressuredResetPct": 83.33333333333333,
+        "types": {
+          "huck": {
+            "attempts": 99,
+            "completions": 90
+          },
+          "standard": {
+            "attempts": 637,
+            "completions": 600
+          },
+          "dump_swing": {
+            "attempts": 218,
+            "completions": 215
+          },
+          "over_the_top": {
+            "attempts": 10,
+            "completions": 8
+          }
+        },
+        "stallHistogram": {
+          "0": 34,
+          "1": 140,
+          "2": 294,
+          "3": 348,
+          "4": 130,
+          "5": 18
+        },
+        "turnoverLocations": {
+          "ownThird": 9,
+          "middleThird": 19,
+          "attackingThird": 23,
+          "missing": 0
+        },
+        "diagnoses": {
+          "completed": 913,
+          "block": 22,
+          "unknown_no_contact": 11,
+          "drop": 2,
+          "boundary": 16
+        },
+        "resetDiagnoses": {
+          "completed": 215,
+          "unknown_no_contact": 2,
+          "block": 1
+        },
+        "segments": {
+          "15+mph|skill<80|long": {
+            "attempts": 54,
+            "completions": 48
+          },
+          "15+mph|skill80+|mid": {
+            "attempts": 177,
+            "completions": 169
+          },
+          "15+mph|skill80+|short": {
+            "attempts": 94,
+            "completions": 94
+          },
+          "15+mph|skill<80|short": {
+            "attempts": 113,
+            "completions": 109
+          },
+          "15+mph|skill80+|long": {
+            "attempts": 88,
+            "completions": 79
+          },
+          "15+mph|skill<80|mid": {
+            "attempts": 180,
+            "completions": 169
+          },
+          "7-15mph|skill<80|long": {
+            "attempts": 21,
+            "completions": 18
+          },
+          "7-15mph|skill80+|mid": {
+            "attempts": 49,
+            "completions": 49
+          },
+          "7-15mph|skill80+|long": {
+            "attempts": 36,
+            "completions": 35
+          },
+          "7-15mph|skill<80|short": {
+            "attempts": 56,
+            "completions": 54
+          },
+          "7-15mph|skill80+|short": {
+            "attempts": 26,
+            "completions": 25
+          },
+          "7-15mph|skill<80|mid": {
+            "attempts": 70,
+            "completions": 64
+          }
+        },
+        "recoveredTouches": 34,
+        "multiTouchThrows": 38
+      },
+      "matches": [
+        {
+          "seed": 742459,
+          "initialWind": {
+            "speedMph": 21,
+            "directionDeg": 38,
+            "speedMps": 9.38784,
+            "label": "Ekstremalny",
+            "labelEn": "Extreme",
+            "band": "extreme",
+            "baseSpeedMph": 21,
+            "baseDirectionDeg": 38
+          },
+          "ms": 36885.1593,
+          "points": 28,
+          "attempts": 232,
+          "completions": 218,
+          "holds": 20,
+          "cleanHolds": 17,
+          "blocks": 5,
+          "drops": 1,
+          "throwaways": 8,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 54561,
+          "playerSnapshots": 763854,
+          "homeScore": 15,
+          "awayScore": 13,
+          "bodyExposure": {
+            "flightFrames": 24502,
+            "overlapFrames": 2274,
+            "overlappingPairs": 2460
+          }
+        },
+        {
+          "seed": 754459,
+          "initialWind": {
+            "speedMph": 14,
+            "directionDeg": 198,
+            "speedMps": 6.25856,
+            "label": "Silny",
+            "labelEn": "Strong",
+            "band": "normal",
+            "baseSpeedMph": 14,
+            "baseDirectionDeg": 198
+          },
+          "ms": 39836.4432,
+          "points": 28,
+          "attempts": 258,
+          "completions": 245,
+          "holds": 23,
+          "cleanHolds": 19,
+          "blocks": 6,
+          "drops": 0,
+          "throwaways": 7,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 55238,
+          "playerSnapshots": 773332,
+          "homeScore": 13,
+          "awayScore": 15,
+          "bodyExposure": {
+            "flightFrames": 19939,
+            "overlapFrames": 1269,
+            "overlappingPairs": 1330
+          }
+        },
+        {
+          "seed": 762459,
+          "initialWind": {
+            "speedMph": 16,
+            "directionDeg": 65,
+            "speedMps": 7.15264,
+            "label": "Silny",
+            "labelEn": "Strong",
+            "band": "strong",
+            "baseSpeedMph": 16,
+            "baseDirectionDeg": 65
+          },
+          "ms": 42030.47320000001,
+          "points": 27,
+          "attempts": 232,
+          "completions": 219,
+          "holds": 24,
+          "cleanHolds": 21,
+          "blocks": 4,
+          "drops": 1,
+          "throwaways": 8,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 52433,
+          "playerSnapshots": 734062,
+          "homeScore": 15,
+          "awayScore": 12,
+          "bodyExposure": {
+            "flightFrames": 20615,
+            "overlapFrames": 1574,
+            "overlappingPairs": 1686
+          }
+        },
+        {
+          "seed": 775459,
+          "initialWind": {
+            "speedMph": 17,
+            "directionDeg": 119,
+            "speedMps": 7.59968,
+            "label": "Silny",
+            "labelEn": "Strong",
+            "band": "strong",
+            "baseSpeedMph": 17,
+            "baseDirectionDeg": 119
+          },
+          "ms": 35367.24829999999,
+          "points": 27,
+          "attempts": 242,
+          "completions": 231,
+          "holds": 20,
+          "cleanHolds": 18,
+          "blocks": 7,
+          "drops": 0,
+          "throwaways": 4,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 50905,
+          "playerSnapshots": 712670,
+          "homeScore": 15,
+          "awayScore": 12,
+          "bodyExposure": {
+            "flightFrames": 17687,
+            "overlapFrames": 1179,
+            "overlappingPairs": 1266
+          }
+        }
+      ],
+      "resetLosses": [
+        {
+          "seed": 742459,
+          "distanceM": 12.147932346580145,
+          "stallCount": 3,
+          "releasePoint": {
+            "x": 33.336383717175636,
+            "y": 21.43493863629103
+          },
+          "diagnosis": {
+            "primary": "unknown_no_contact",
+            "outcome": "no_contact",
+            "cause": "unknown_no_contact",
+            "causeConfirmed": false,
+            "inference": true,
+            "contributors": [
+              "arc_error",
+              "curve_error",
+              "marker_pressure",
+              "wind_execution",
+              "fatigue"
+            ],
+            "missM": 0,
+            "validationStatus": "reachable",
+            "decisionAtMs": 4000,
+            "releaseAtMs": 4000,
+            "observationAtMs": 4000,
+            "receiverObservation": {
+              "x": 46.851677019927024,
+              "y": 23.36931321866219,
+              "vx": -2.9187155328842933,
+              "vy": -2.400280616351268
+            },
+            "plannedLateness": -0.08120363744234693,
+            "plannedSupport": {
+              "x": 45.00944274982044,
+              "y": 24.25381912403102,
+              "legal": true,
+              "reachRemaining": 0.6678396339491135,
+              "toeInContact": null
+            },
+            "plannedDetourSec": 0,
+            "plannedAvoidedId": null,
+            "markerPressure": 3.103333333333331,
+            "windPenalty": 0.5594479492116604,
+            "fatiguePenalty": 1.1265548859798171,
+            "fatigueComponents": {
+              "execution": 1.1265548859798171
+            },
+            "arcExecutionError": 0.03687781828761101,
+            "curveExecutionError": -0.01450438608668279,
+            "judgementLoss": 0,
+            "contacts": [],
+            "receiverReads": [
+              {
+                "elapsedMs": 0,
+                "playerId": 1018,
+                "observedAtMs": 0,
+                "actualReceiver": {
+                  "x": 46.851677019927024,
+                  "y": 23.36931321866219,
+                  "z": 0,
+                  "vx": -2.9187155328842933,
+                  "vy": -2.400280616351268
+                },
+                "actualDisc": {
+                  "x": 33.336383717175636,
+                  "y": 21.43493863629103,
+                  "z": 1.1
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 44.96079690462357,
+                "targetY": 24.225944847943627,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 820,
+                "lateness": -0.0890568034024648
+              },
+              {
+                "elapsedMs": 80,
+                "playerId": 1018,
+                "observedAtMs": 80,
+                "actualReceiver": {
+                  "x": 46.628028945244886,
+                  "y": 23.19102961070115,
+                  "z": 0,
+                  "vx": -2.724310338692863,
+                  "vy": -2.1236980313779186
+                },
+                "actualDisc": {
+                  "x": 34.775841128188155,
+                  "y": 22.030903452305957,
+                  "z": 1.3213762600602903
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 44.55717300277542,
+                "targetY": 24.002207828194376,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 780,
+                "lateness": 0.007353516670129623
+              },
+              {
+                "elapsedMs": 160,
+                "playerId": 1018,
+                "observedAtMs": 160,
+                "actualReceiver": {
+                  "x": 46.393359235416646,
+                  "y": 23.018717277295504,
+                  "z": 0,
+                  "vx": -3.0594987863944687,
+                  "vy": -2.166586067646264
+                },
+                "actualDisc": {
+                  "x": 36.124821686281564,
+                  "y": 22.520959696839512,
+                  "z": 1.487671042562353
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.830987587717956,
+                "targetY": 25.324666298706166,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1700,
+                "lateness": -0.03844738428061545
+              },
+              {
+                "elapsedMs": 240,
+                "playerId": 1018,
+                "observedAtMs": 240,
+                "actualReceiver": {
+                  "x": 46.198271894794466,
+                  "y": 22.880566049373527,
+                  "z": 0,
+                  "vx": -2.0660413092335963,
+                  "vy": -1.4630685051005674
+                },
+                "actualDisc": {
+                  "x": 37.411700767605815,
+                  "y": 22.857185587873587,
+                  "z": 1.5992871006275782
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.83099011495272,
+                "targetY": 25.324938856525115,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1620,
+                "lateness": -0.0006791484967345607
+              },
+              {
+                "elapsedMs": 320,
+                "playerId": 1018,
+                "observedAtMs": 320,
+                "actualReceiver": {
+                  "x": 46.082667383718565,
+                  "y": 22.79870063920637,
+                  "z": 0,
+                  "vx": -1.0724384333598196,
+                  "vy": -0.7594479783611827
+                },
+                "actualDisc": {
+                  "x": 38.65063529784416,
+                  "y": 23.036175417795658,
+                  "z": 1.656606269966472
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.8286191022223,
+                "targetY": 25.335052573191227,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1660,
+                "lateness": -0.018229451655085382
+              },
+              {
+                "elapsedMs": 400,
+                "playerId": 1018,
+                "observedAtMs": 400,
+                "actualReceiver": {
+                  "x": 46.05516722205377,
+                  "y": 22.780498455534275,
+                  "z": 0,
+                  "vx": 0.02451343864489319,
+                  "vy": 0.08096289793050615
+                },
+                "actualDisc": {
+                  "x": 39.84177964807972,
+                  "y": 23.101469301575307,
+                  "z": 1.6599905552465952
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.825063057347826,
+                "targetY": 25.35015203573779,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1460,
+                "lateness": -0.004116652804196486
+              },
+              {
+                "elapsedMs": 480,
+                "playerId": 1018,
+                "observedAtMs": 480,
+                "actualReceiver": {
+                  "x": 46.061984198008965,
+                  "y": 22.80318806340087,
+                  "z": 0,
+                  "vx": 0.1216395818385622,
+                  "vy": 0.40524150598673014
+                },
+                "actualDisc": {
+                  "x": 40.975314017824935,
+                  "y": 23.12949033061225,
+                  "z": 1.6078191675088809
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.82397582599711,
+                "targetY": 25.354986044506468,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1500,
+                "lateness": -0.03126232770606485
+              },
+              {
+                "elapsedMs": 560,
+                "playerId": 1018,
+                "observedAtMs": 560,
+                "actualReceiver": {
+                  "x": 46.07655637834581,
+                  "y": 22.851833265104258,
+                  "z": 0,
+                  "vx": 0.21846392935317882,
+                  "vy": 0.7297726715843407
+                },
+                "actualDisc": {
+                  "x": 42.03815308726012,
+                  "y": 23.203917917232694,
+                  "z": 1.495408486635947
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.826235383734094,
+                "targetY": 25.345930871723148,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1300,
+                "lateness": 0.2005738311325571
+              },
+              {
+                "elapsedMs": 640,
+                "playerId": 1018,
+                "observedAtMs": 640,
+                "actualReceiver": {
+                  "x": 46.09891180203632,
+                  "y": 22.92643569250912,
+                  "z": 0,
+                  "vx": 0.3160354127328017,
+                  "vy": 1.0541981178560496
+                },
+                "actualDisc": {
+                  "x": 43.0211973128995,
+                  "y": 23.387407094946298,
+                  "z": 1.3228181788947784
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 45.75744029007287,
+                "targetY": 24.69700264601372,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 900,
+                "lateness": 0.3624487325862267
+              },
+              {
+                "elapsedMs": 720,
+                "playerId": 1018,
+                "observedAtMs": 720,
+                "actualReceiver": {
+                  "x": 46.12464091836131,
+                  "y": 23.02770722426357,
+                  "z": 0,
+                  "vx": 0.322146809307263,
+                  "vy": 1.3929778668051818
+                },
+                "actualDisc": {
+                  "x": 43.92474992385909,
+                  "y": 23.700468967636446,
+                  "z": 1.0903407030766512
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 45.758661474734865,
+                "targetY": 24.692072594109597,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 900,
+                "lateness": 0.3648880584572121
+              },
+              {
+                "elapsedMs": 800,
+                "playerId": 1018,
+                "observedAtMs": 800,
+                "actualReceiver": {
+                  "x": 46.149824853573016,
+                  "y": 23.156083349279825,
+                  "z": 0,
+                  "vx": 0.30814026671841527,
+                  "vy": 1.7316574511080698
+                },
+                "actualDisc": {
+                  "x": 44.76032219428257,
+                  "y": 24.114841704155108,
+                  "z": 0.798253328815069
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.14081541343791,
+                "targetY": 24.91254058311497,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 940,
+                "lateness": 0.36432429277337064
+              },
+              {
+                "elapsedMs": 880,
+                "playerId": 1018,
+                "observedAtMs": 880,
+                "actualReceiver": {
+                  "x": 46.17319141572978,
+                  "y": 23.31152063109454,
+                  "z": 0,
+                  "vx": 0.281335551555759,
+                  "vy": 2.0696711563482624
+                },
+                "actualDisc": {
+                  "x": 45.56418521437855,
+                  "y": 24.575034745411717,
+                  "z": 0.45948200495018915
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.13514928407939,
+                "targetY": 24.908688165265048,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 940,
+                "lateness": 0.3616464833628171
+              },
+              {
+                "elapsedMs": 940,
+                "playerId": 1018,
+                "observedAtMs": 940,
+                "actualReceiver": {
+                  "x": 46.18902320918991,
+                  "y": 23.445820505542443,
+                  "z": 0,
+                  "vx": 0.25459790375648833,
+                  "vy": 2.3226088691261615
+                },
+                "actualDisc": {
+                  "x": 46.134276803903006,
+                  "y": 24.90802403750243,
+                  "z": 0.2362439460385124
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.32202867984844,
+                "targetY": 25.018520928810943,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 960,
+                "lateness": 0.36922072189233135
+              },
+              {
+                "elapsedMs": 960,
+                "playerId": 1018,
+                "observedAtMs": 960,
+                "actualReceiver": {
+                  "x": 46.19423525342425,
+                  "y": 23.493964235924075,
+                  "z": 0,
+                  "vx": 0.2606022117171877,
+                  "vy": 2.407186519081532
+                },
+                "actualDisc": {
+                  "x": 46.321787665673995,
+                  "y": 25.01828587387515,
+                  "z": 0.16544971720638785
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.50838595130386,
+                "targetY": 25.128439196779777,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 980,
+                "lateness": 0.4104949740810963
+              },
+              {
+                "elapsedMs": 980,
+                "playerId": 1018,
+                "observedAtMs": 980,
+                "actualReceiver": {
+                  "x": 46.199846792578384,
+                  "y": 23.543756121588455,
+                  "z": 0,
+                  "vx": 0.2805769577064038,
+                  "vy": 2.48959428321895
+                },
+                "actualDisc": {
+                  "x": 46.508152751829236,
+                  "y": 25.128211369332945,
+                  "z": 0.09603576514973332
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.69365339308765,
+                "targetY": 25.23803780547903,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1000,
+                "lateness": 0.4695732346331567
+              },
+              {
+                "elapsedMs": 1000,
+                "playerId": 1018,
+                "observedAtMs": 1000,
+                "actualReceiver": {
+                  "x": 46.20604882609025,
+                  "y": 23.59513784002486,
+                  "z": 0,
+                  "vx": 0.31010167559356144,
+                  "vy": 2.5690859218203785
+                },
+                "actualDisc": {
+                  "x": 46.69342775582426,
+                  "y": 25.23781715043885,
+                  "z": 0.027812562166489904
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.82065120269732,
+                "targetY": 25.3132126263865,
+                "reachable": false,
+                "legal": false,
+                "predictedAtMs": 1020,
+                "lateness": 3
+              },
+              {
+                "elapsedMs": 1020,
+                "playerId": 1018,
+                "observedAtMs": 1020,
+                "actualReceiver": {
+                  "x": 46.21285672342204,
+                  "y": 23.64810367356877,
+                  "z": 0,
+                  "vx": 0.34039486658946644,
+                  "vy": 2.648291677195407
+                },
+                "actualDisc": {
+                  "x": 46.769689961828206,
+                  "y": 25.283061664508743,
+                  "z": 0
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 46.14218281369297,
+                "targetY": 24.906252872460225,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1320,
+                "lateness": -0.008335907859160663
+              }
+            ],
+            "recoveryReceiverId": null,
+            "lastTouchType": null,
+            "bodyAvoidanceTicks": 0,
+            "bodyAvoidance": [],
+            "toeIn": null,
+            "restartPoint": null
+          }
+        },
+        {
+          "seed": 742459,
+          "distanceM": 25.19460561377776,
+          "stallCount": 3,
+          "releasePoint": {
+            "x": 49,
+            "y": 26.15571879746873
+          },
+          "diagnosis": {
+            "primary": "block",
+            "outcome": "block",
+            "cause": "defender_contact",
+            "causeConfirmed": true,
+            "inference": false,
+            "contributors": [
+              "arc_error",
+              "curve_error",
+              "marker_pressure",
+              "wind_execution"
+            ],
+            "missM": 0,
+            "validationStatus": "reachable",
+            "decisionAtMs": 3900,
+            "releaseAtMs": 3900,
+            "observationAtMs": 3900,
+            "receiverObservation": {
+              "x": 25.08683429518071,
+              "y": 9.0490503639278,
+              "vx": 4.687905058637323,
+              "vy": 1.9653163616076188
+            },
+            "plannedLateness": -3.0447333597706034,
+            "plannedSupport": {
+              "x": 33.827822023861,
+              "y": 1.2654395843350357,
+              "legal": true,
+              "reachRemaining": 0.18861211823035062,
+              "toeInContact": null
+            },
+            "plannedDetourSec": 0,
+            "plannedAvoidedId": null,
+            "markerPressure": 3.1441666666666634,
+            "windPenalty": -3.5960598296527366,
+            "fatiguePenalty": 0,
+            "fatigueComponents": {
+              "execution": 0
+            },
+            "arcExecutionError": 0.10082504007410259,
+            "curveExecutionError": -0.04615221437277273,
+            "judgementLoss": 0,
+            "contacts": [
+              {
+                "x": 35.96515774282253,
+                "y": 3.0970366510913854,
+                "z": 2.0840959184919465,
+                "ms": 9967.311035727773,
+                "playerId": 2007,
+                "type": "drop",
+                "inBounds": true
+              },
+              {
+                "x": 36.445980010708304,
+                "y": 3.3657957985633407,
+                "z": 1.944804379727293,
+                "ms": 10080,
+                "playerId": 1020,
+                "type": "interception",
+                "inBounds": true
+              }
+            ],
+            "receiverReads": [
+              {
+                "elapsedMs": 0,
+                "playerId": 2007,
+                "observedAtMs": 0,
+                "actualReceiver": {
+                  "x": 25.08683429518071,
+                  "y": 9.0490503639278,
+                  "z": 0,
+                  "vx": 4.687905058637323,
+                  "vy": 1.9653163616076188
+                },
+                "actualDisc": {
+                  "x": 49,
+                  "y": 26.15571879746873,
+                  "z": 1.1
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 28.929358938300254,
+                "targetY": 10.267402267673035,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1820,
+                "lateness": 0.05292905455228514
+              },
+              {
+                "elapsedMs": 80,
+                "playerId": 2007,
+                "observedAtMs": 80,
+                "actualReceiver": {
+                  "x": 25.47993616979946,
+                  "y": 9.20735127996795,
+                  "z": 0,
+                  "vx": 5.049372955947136,
+                  "vy": 1.9854126946154038
+                },
+                "actualDisc": {
+                  "x": 47.8564832900201,
+                  "y": 24.96768297277925,
+                  "z": 1.240061550564723
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 29.146775231846185,
+                "targetY": 10.599716360133225,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1780,
+                "lateness": 0.05039388314743709
+              },
+              {
+                "elapsedMs": 160,
+                "playerId": 2007,
+                "observedAtMs": 80,
+                "actualReceiver": {
+                  "x": 25.901057036320736,
+                  "y": 9.371914687533142,
+                  "z": 0,
+                  "vx": 5.39288038305084,
+                  "vy": 2.099759670608888
+                },
+                "actualDisc": {
+                  "x": 46.75590526388016,
+                  "y": 23.837829006203417,
+                  "z": 1.3841306016709771
+                },
+                "observationAgeMs": 80,
+                "visibility": 0.9636363636363636,
+                "targetX": 29.132528117784826,
+                "targetY": 10.618455592220968,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1780,
+                "lateness": 0.10740903627720921
+              },
+              {
+                "elapsedMs": 240,
+                "playerId": 2007,
+                "observedAtMs": 80,
+                "actualReceiver": {
+                  "x": 26.349471862910463,
+                  "y": 9.546157454909878,
+                  "z": 0,
+                  "vx": 5.732608707466727,
+                  "vy": 2.2248898379422375
+                },
+                "actualDisc": {
+                  "x": 45.68312390884831,
+                  "y": 22.77747595556198,
+                  "z": 1.5313411274421578
+                },
+                "observationAgeMs": 160,
+                "visibility": 0.9272727272727272,
+                "targetX": 29.109976082219973,
+                "targetY": 10.648118289289354,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1780,
+                "lateness": 0.20135398301012286
+              },
+              {
+                "elapsedMs": 320,
+                "playerId": 2007,
+                "observedAtMs": 80,
+                "actualReceiver": {
+                  "x": 26.824390217235933,
+                  "y": 9.732001903975586,
+                  "z": 0,
+                  "vx": 6.058530954429047,
+                  "vy": 2.3825150668975
+                },
+                "actualDisc": {
+                  "x": 44.62534461911451,
+                  "y": 21.79576959613231,
+                  "z": 1.6808720799748547
+                },
+                "observationAgeMs": 240,
+                "visibility": 0.8909090909090909,
+                "targetX": 28.871818707031586,
+                "targetY": 10.34308494582681,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1820,
+                "lateness": 0.28832556238434814
+              },
+              {
+                "elapsedMs": 400,
+                "playerId": 2007,
+                "observedAtMs": 80,
+                "actualReceiver": {
+                  "x": 27.32383433484793,
+                  "y": 9.91213276989905,
+                  "z": 0,
+                  "vx": 6.351493273522967,
+                  "vy": 2.16997963233159
+                },
+                "actualDisc": {
+                  "x": 43.57282727172541,
+                  "y": 20.89865175042053,
+                  "z": 1.8319450533600679
+                },
+                "observationAgeMs": 320,
+                "visibility": 0.8545454545454545,
+                "targetX": 28.868661422052508,
+                "targetY": 10.347237723416384,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1820,
+                "lateness": 0.29813816450568953
+              },
+              {
+                "elapsedMs": 480,
+                "playerId": 2007,
+                "observedAtMs": 480,
+                "actualReceiver": {
+                  "x": 27.846160403526067,
+                  "y": 10.074518537985284,
+                  "z": 0,
+                  "vx": 6.633419905043065,
+                  "vy": 1.9429817975107178
+                },
+                "actualDisc": {
+                  "x": 42.519379403525896,
+                  "y": 20.088125474467507,
+                  "z": 1.9838220690259647
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 28.918704465094486,
+                "targetY": 10.292330394530488,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1820,
+                "lateness": 0.3407775284414202
+              },
+              {
+                "elapsedMs": 560,
+                "playerId": 2007,
+                "observedAtMs": 560,
+                "actualReceiver": {
+                  "x": 28.381782049128063,
+                  "y": 10.212545360302657,
+                  "z": 0,
+                  "vx": 6.730526586424108,
+                  "vy": 1.5942366893843953
+                },
+                "actualDisc": {
+                  "x": 41.462588873836395,
+                  "y": 19.361872554516466,
+                  "z": 2.1358034761012097
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 28.940357203896674,
+                "targetY": 10.2662560728524,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1820,
+                "lateness": 0.3431895133797722
+              },
+              {
+                "elapsedMs": 640,
+                "playerId": 2007,
+                "observedAtMs": 640,
+                "actualReceiver": {
+                  "x": 28.920570210024078,
+                  "y": 10.322122209801092,
+                  "z": 0,
+                  "vx": 6.713216732025523,
+                  "vy": 1.2373394199602612
+                },
+                "actualDisc": {
+                  "x": 40.40377201911604,
+                  "y": 18.71325136874745,
+                  "z": 2.2872259608251553
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 29.179044757137977,
+                "targetY": 10.572981934344442,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1780,
+                "lateness": 0.4331282138313509
+              },
+              {
+                "elapsedMs": 720,
+                "playerId": 2007,
+                "observedAtMs": 720,
+                "actualReceiver": {
+                  "x": 29.43694988403965,
+                  "y": 10.426924038672725,
+                  "z": 0,
+                  "vx": 6.150031979855465,
+                  "vy": 1.276294541528892
+                },
+                "actualDisc": {
+                  "x": 39.34763769938244,
+                  "y": 18.13167227713989,
+                  "z": 2.4374606593414216
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 29.662317038708125,
+                "targetY": 11.235079167732822,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1700,
+                "lateness": 0.7314478023146418
+              },
+              {
+                "elapsedMs": 800,
+                "playerId": 2007,
+                "observedAtMs": 800,
+                "actualReceiver": {
+                  "x": 29.907855620343696,
+                  "y": 10.534369175020437,
+                  "z": 0,
+                  "vx": 5.58493111153254,
+                  "vy": 1.3111152395501688
+                },
+                "actualDisc": {
+                  "x": 38.301691831450285,
+                  "y": 17.603316918224593,
+                  "z": 2.5859113685055592
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 30.175290840435096,
+                "targetY": 11.91143254115843,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1620,
+                "lateness": 0.9557436644310422
+              },
+              {
+                "elapsedMs": 880,
+                "playerId": 2007,
+                "observedAtMs": 880,
+                "actualReceiver": {
+                  "x": 30.342020390044723,
+                  "y": 10.652172725209525,
+                  "z": 0,
+                  "vx": 5.324199394438191,
+                  "vy": 1.5609154296123358
+                },
+                "actualDisc": {
+                  "x": 37.27542903383166,
+                  "y": 17.112139695068578,
+                  "z": 2.7319996378313807
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 33.78108251353059,
+                "targetY": 15.31336975302046,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1180,
+                "lateness": 1.0292224557924716
+              },
+              {
+                "elapsedMs": 960,
+                "playerId": 2007,
+                "observedAtMs": 960,
+                "actualReceiver": {
+                  "x": 30.77281501833988,
+                  "y": 10.794449091168866,
+                  "z": 0,
+                  "vx": 5.410736772251374,
+                  "vy": 1.911605646797736
+                },
+                "actualDisc": {
+                  "x": 36.27937607496431,
+                  "y": 16.6410666746291,
+                  "z": 2.8741590656664213
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 33.780820454944866,
+                "targetY": 15.313977577504003,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1180,
+                "lateness": 0.957312125269353
+              },
+              {
+                "elapsedMs": 1040,
+                "playerId": 2007,
+                "observedAtMs": 1040,
+                "actualReceiver": {
+                  "x": 31.206360801138892,
+                  "y": 10.965439835896007,
+                  "z": 0,
+                  "vx": 5.41474980488291,
+                  "vy": 2.272969113045904
+                },
+                "actualDisc": {
+                  "x": 35.32406444431978,
+                  "y": 16.173291032022476,
+                  "z": 3.0112342237434797
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 33.77949213452963,
+                "targetY": 15.315898843714555,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1180,
+                "lateness": 0.891138057861779
+              },
+              {
+                "elapsedMs": 1120,
+                "playerId": 2007,
+                "observedAtMs": 1120,
+                "actualReceiver": {
+                  "x": 31.63661818509592,
+                  "y": 11.165124180625504,
+                  "z": 0,
+                  "vx": 5.348572820671008,
+                  "vy": 2.6284753034817814
+                },
+                "actualDisc": {
+                  "x": 34.41901552456867,
+                  "y": 15.693556390477024,
+                  "z": 3.1427434474139835
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 33.77821821996227,
+                "targetY": 15.317699303318006,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1180,
+                "lateness": 0.829738980995499
+              },
+              {
+                "elapsedMs": 1180,
+                "playerId": 2007,
+                "observedAtMs": 1180,
+                "actualReceiver": {
+                  "x": 31.95420242603125,
+                  "y": 11.333166666284983,
+                  "z": 0,
+                  "vx": 5.262244244691045,
+                  "vy": 2.885793736885497
+                },
+                "actualDisc": {
+                  "x": 33.77787557528043,
+                  "y": 15.318232062502195,
+                  "z": 3.237447114373184
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 33.57186471421107,
+                "targetY": 15.189236185397109,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1200,
+                "lateness": 0.7974199925023523
+              },
+              {
+                "elapsedMs": 1200,
+                "playerId": 2007,
+                "observedAtMs": 1200,
+                "actualReceiver": {
+                  "x": 32.05865089424819,
+                  "y": 11.392508131535948,
+                  "z": 0,
+                  "vx": 5.222423410846966,
+                  "vy": 2.967073262548251
+                },
+                "actualDisc": {
+                  "x": 33.57182103439987,
+                  "y": 15.189320593231997,
+                  "z": 3.2682300877941723
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 33.369760900459625,
+                "targetY": 15.058201488030063,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1220,
+                "lateness": 0.8044064476626509
+              },
+              {
+                "elapsedMs": 1220,
+                "playerId": 2007,
+                "observedAtMs": 1220,
+                "actualReceiver": {
+                  "x": 32.16212311222524,
+                  "y": 11.453373985027852,
+                  "z": 0,
+                  "vx": 5.173610898852412,
+                  "vy": 3.043292674595193
+                },
+                "actualDisc": {
+                  "x": 33.36970522949115,
+                  "y": 15.058301450317657,
+                  "z": 3.2986094817402263
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 33.17164234132799,
+                "targetY": 14.924961258813294,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1240,
+                "lateness": 0.8177617839290837
+              },
+              {
+                "elapsedMs": 1240,
+                "playerId": 2007,
+                "observedAtMs": 1240,
+                "actualReceiver": {
+                  "x": 32.26448880361755,
+                  "y": 11.515672466509598,
+                  "z": 0,
+                  "vx": 5.118284569615758,
+                  "vy": 3.1149240740872965
+                },
+                "actualDisc": {
+                  "x": 33.171575039371156,
+                  "y": 14.925076305925437,
+                  "z": 3.3285787555929716
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.9775428491898,
+                "targetY": 14.789434740447623,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1260,
+                "lateness": 0.83886909479697
+              },
+              {
+                "elapsedMs": 1260,
+                "playerId": 2007,
+                "observedAtMs": 1260,
+                "actualReceiver": {
+                  "x": 32.36561789101386,
+                  "y": 11.57929292930629,
+                  "z": 0,
+                  "vx": 5.056454369815572,
+                  "vy": 3.181023139834621
+                },
+                "actualDisc": {
+                  "x": 32.97746433724586,
+                  "y": 14.789564324251607,
+                  "z": 3.3581314553634645
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.78748295475269,
+                "targetY": 14.651559007909565,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1280,
+                "lateness": 0.8677767460745478
+              },
+              {
+                "elapsedMs": 1280,
+                "playerId": 2007,
+                "observedAtMs": 1280,
+                "actualReceiver": {
+                  "x": 32.46538277555827,
+                  "y": 11.644103255380362,
+                  "z": 0,
+                  "vx": 4.988244227220371,
+                  "vy": 3.240516303703609
+                },
+                "actualDisc": {
+                  "x": 32.787393712448925,
+                  "y": 14.651702504617381,
+                  "z": 3.3872612125448027
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.601469700291965,
+                "targetY": 14.511289219659634,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1300,
+                "lateness": 0.906986833365733
+              },
+              {
+                "elapsedMs": 1300,
+                "playerId": 2007,
+                "observedAtMs": 1300,
+                "actualReceiver": {
+                  "x": 32.563662118343835,
+                  "y": 11.709947984529997,
+                  "z": 0,
+                  "vx": 4.913967139278254,
+                  "vy": 3.2922364574817924
+                },
+                "actualDisc": {
+                  "x": 32.601370263369546,
+                  "y": 14.511445933071622,
+                  "z": 3.4159617429799245
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.41949650509029,
+                "targetY": 14.368598776025342,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1320,
+                "lateness": 0.9605628771790387
+              },
+              {
+                "elapsedMs": 1320,
+                "playerId": 2007,
+                "observedAtMs": 1320,
+                "actualReceiver": {
+                  "x": 32.66034628656377,
+                  "y": 11.776648425164414,
+                  "z": 0,
+                  "vx": 4.8342084109970305,
+                  "vy": 3.335022031720804
+                },
+                "actualDisc": {
+                  "x": 32.41938746260061,
+                  "y": 14.368767941151932,
+                  "z": 3.4442268457444136
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.24154310373965,
+                "targetY": 14.223479383897592,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1340,
+                "lateness": 1.0343937615544516
+              },
+              {
+                "elapsedMs": 1340,
+                "playerId": 2007,
+                "observedAtMs": 1340,
+                "actualReceiver": {
+                  "x": 32.75534387632217,
+                  "y": 11.844006343656307,
+                  "z": 0,
+                  "vx": 4.749879487920095,
+                  "vy": 3.3678959245946993
+                },
+                "actualDisc": {
+                  "x": 32.241425094962146,
+                  "y": 14.223660170939434,
+                  "z": 3.4720504020440934
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.067575557578756,
+                "targetY": 14.075941027366202,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1360,
+                "lateness": 1.136687265021074
+              },
+              {
+                "elapsedMs": 1360,
+                "playerId": 2007,
+                "observedAtMs": 1360,
+                "actualReceiver": {
+                  "x": 32.84858759720547,
+                  "y": 11.911812333581063,
+                  "z": 0,
+                  "vx": 4.662186044164959,
+                  "vy": 3.3902994962377364
+                },
+                "actualDisc": {
+                  "x": 32.06744926867762,
+                  "y": 14.07613254603281,
+                  "z": 3.4994263741272276
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 31.89754633916344,
+                "targetY": 13.926011844414756,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1380,
+                "lateness": 1.2775264415459537
+              },
+              {
+                "elapsedMs": 1380,
+                "playerId": 2007,
+                "observedAtMs": 1380,
+                "actualReceiver": {
+                  "x": 32.94003707882475,
+                  "y": 11.979858176593044,
+                  "z": 0.08930507271876086,
+                  "vx": 4.572474080964009,
+                  "vy": 3.402292150599114
+                },
+                "actualDisc": {
+                  "x": 31.897412499600115,
+                  "y": 13.926213148558341,
+                  "z": 3.5263488042111213
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 31.73139448928623,
+                "targetY": 13.773737910283025,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1400,
+                "lateness": 1.46547950419346
+              },
+              {
+                "elapsedMs": 1400,
+                "playerId": 2007,
+                "observedAtMs": 1400,
+                "actualReceiver": {
+                  "x": 33.02625836872438,
+                  "y": 12.044013820265537,
+                  "z": 0.1746861454375217,
+                  "vx": 4.311064494981418,
+                  "vy": 3.2077821836246425
+                },
+                "actualDisc": {
+                  "x": 31.73125386800624,
+                  "y": 13.773948002823973,
+                  "z": 3.552811813422953
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 31.569045845684148,
+                "targetY": 13.61918292859502,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1420,
+                "lateness": 1.570431173327996
+              },
+              {
+                "elapsedMs": 1420,
+                "playerId": 2007,
+                "observedAtMs": 1420,
+                "actualReceiver": {
+                  "x": 33.10725146690435,
+                  "y": 12.10427926459854,
+                  "z": 0.25614321815628255,
+                  "vx": 4.049654908998826,
+                  "vy": 3.013272216650171
+                },
+                "actualDisc": {
+                  "x": 31.56889924709845,
+                  "y": 13.619400766712971,
+                  "z": 3.578809600754614
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 31.41041334220251,
+                "targetY": 13.462427831831366,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1440,
+                "lateness": 1.6271781165464425
+              },
+              {
+                "elapsedMs": 1440,
+                "playerId": 2007,
+                "observedAtMs": 1440,
+                "actualReceiver": {
+                  "x": 33.18301637336467,
+                  "y": 12.160654509592055,
+                  "z": 0.33367629087504336,
+                  "vx": 3.788245323016234,
+                  "vy": 2.818762249675699
+                },
+                "actualDisc": {
+                  "x": 31.410261601984153,
+                  "y": 13.462652332394988,
+                  "z": 3.604336442031414
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 31.255397376815537,
+                "targetY": 13.303570293198698,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1460,
+                "lateness": 1.6907283819967924
+              },
+              {
+                "elapsedMs": 1460,
+                "playerId": 2007,
+                "observedAtMs": 1460,
+                "actualReceiver": {
+                  "x": 33.25355308810535,
+                  "y": 12.21313955524608,
+                  "z": 0.4072853635938042,
+                  "vx": 3.5268357370336423,
+                  "vy": 2.6242522827012276
+                },
+                "actualDisc": {
+                  "x": 31.255241357533507,
+                  "y": 13.303800338405694,
+                  "z": 3.6293866888944275
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 31.103886246546967,
+                "targetY": 13.142724152411496,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1480,
+                "lateness": 1.7587491539476119
+              },
+              {
+                "elapsedMs": 1480,
+                "playerId": 2007,
+                "observedAtMs": 1480,
+                "actualReceiver": {
+                  "x": 33.31886161112637,
+                  "y": 12.261734401560615,
+                  "z": 0.476970436312565,
+                  "vx": 3.2654261510510505,
+                  "vy": 2.429742315726756
+                },
+                "actualDisc": {
+                  "x": 31.103726833160135,
+                  "y": 13.142958595609699,
+                  "z": 3.653954767796331
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 30.95575664698665,
+                "targetY": 12.980018758351891,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1500,
+                "lateness": 1.829140205395532
+              },
+              {
+                "elapsedMs": 1500,
+                "playerId": 2007,
+                "observedAtMs": 1500,
+                "actualReceiver": {
+                  "x": 33.378941942427744,
+                  "y": 12.30643904853566,
+                  "z": 0.5427315090313258,
+                  "vx": 3.0040165650684587,
+                  "vy": 2.2352323487522843
+                },
+                "actualDisc": {
+                  "x": 30.955594742221137,
+                  "y": 12.980256430010817,
+                  "z": 3.678035179010534
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 30.81087423376283,
+                "targetY": 12.815598232006616,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1520,
+                "lateness": 1.8922695570907657
+              },
+              {
+                "elapsedMs": 1520,
+                "playerId": 2007,
+                "observedAtMs": 1520,
+                "actualReceiver": {
+                  "x": 33.43379408200946,
+                  "y": 12.347253496171216,
+                  "z": 0.6045685817500867,
+                  "vx": 2.742606979085867,
+                  "vy": 2.0407223817778126
+                },
+                "actualDisc": {
+                  "x": 30.810710753397018,
+                  "y": 12.815837945808447,
+                  "z": 3.701622495653431
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 30.66909424300842,
+                "targetY": 12.649620653497042,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1540,
+                "lateness": 1.9202540177163872
+              },
+              {
+                "elapsedMs": 1540,
+                "playerId": 2007,
+                "observedAtMs": 1540,
+                "actualReceiver": {
+                  "x": 33.48341802987153,
+                  "y": 12.384177744467284,
+                  "z": 0.6624816544688474,
+                  "vx": 2.481197393103275,
+                  "vy": 1.8462124148033412
+                },
+                "actualDisc": {
+                  "x": 30.668930111090063,
+                  "y": 12.649861212515427,
+                  "z": 3.7247113627196162
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 30.53026216755262,
+                "targetY": 12.4822571774151,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1560,
+                "lateness": 1.9528322976016337
+              },
+              {
+                "elapsedMs": 1560,
+                "playerId": 2007,
+                "observedAtMs": 1560,
+                "actualReceiver": {
+                  "x": 33.527813786013944,
+                  "y": 12.417211793423862,
+                  "z": 0.7164707271876083,
+                  "vx": 2.2197878071206834,
+                  "vy": 1.6517024478288698
+                },
+                "actualDisc": {
+                  "x": 30.530098311573063,
+                  "y": 12.482497380349177,
+                  "z": 3.747296496129861
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 30.394214485279857,
+                "targetY": 12.313691081051433,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1580,
+                "lateness": 1.9883540641310586
+              },
+              {
+                "elapsedMs": 1580,
+                "playerId": 2007,
+                "observedAtMs": 1580,
+                "actualReceiver": {
+                  "x": 33.566981350436706,
+                  "y": 12.446355643040949,
+                  "z": 0.7665357999063691,
+                  "vx": 1.9583782211380916,
+                  "vy": 1.4571924808543983
+                },
+                "actualDisc": {
+                  "x": 30.39405183133066,
+                  "y": 12.313929728483131,
+                  "z": 3.7693726817917117
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 30.26077943582765,
+                "targetY": 12.144116750454412,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.0025373550850956213,
+                "avoidedId": 1034,
+                "predictedAtMs": 1600,
+                "lateness": 2.028208501686743
+              },
+              {
+                "elapsedMs": 1600,
+                "playerId": 2007,
+                "observedAtMs": 1600,
+                "actualReceiver": {
+                  "x": 33.600920723139815,
+                  "y": 12.471609293318547,
+                  "z": 0.8126768726251299,
+                  "vx": 1.6969686351554998,
+                  "vy": 1.262682513879927
+                },
+                "actualDisc": {
+                  "x": 30.260618903764357,
+                  "y": 12.14435265109572,
+                  "z": 3.7909347746725275
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 30.12977784154197,
+                "targetY": 11.973738609581213,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.014794968863483271,
+                "avoidedId": 1034,
+                "predictedAtMs": 1620,
+                "lateness": 2.078763681835344
+              },
+              {
+                "elapsedMs": 1620,
+                "playerId": 2007,
+                "observedAtMs": 1620,
+                "actualReceiver": {
+                  "x": 33.62963190412327,
+                  "y": 12.492972744256656,
+                  "z": 0.8548939453438907,
+                  "vx": 1.435559049172908,
+                  "vy": 1.0681725469054555
+                },
+                "actualDisc": {
+                  "x": 30.12962034018112,
+                  "y": 11.973970586479599,
+                  "z": 3.8119776978847884
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 30.001023968382047,
+                "targetY": 11.802769998102223,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.02469268314344507,
+                "avoidedId": 1034,
+                "predictedAtMs": 1640,
+                "lateness": 2.1273517631103713
+              },
+              {
+                "elapsedMs": 1640,
+                "playerId": 2007,
+                "observedAtMs": 1640,
+                "actualReceiver": {
+                  "x": 33.65311489338708,
+                  "y": 12.510445995855276,
+                  "z": 0.8931870180626515,
+                  "vx": 1.1741494631903162,
+                  "vy": 0.8736625799309841
+                },
+                "actualDisc": {
+                  "x": 30.000870390755296,
+                  "y": 11.802996894771054,
+                  "z": 3.8324964417835323
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 29.874326422255166,
+                "targetY": 11.631432003685545,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.032830519536659414,
+                "avoidedId": 1034,
+                "predictedAtMs": 1660,
+                "lateness": 2.174143018865597
+              },
+              {
+                "elapsedMs": 1660,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.67136969093123,
+                  "y": 12.524029048114407,
+                  "z": 0.9275560907814123,
+                  "vx": 0.9127398772077242,
+                  "vy": 0.6791526129565127
+                },
+                "actualDisc": {
+                  "x": 29.874177640946478,
+                  "y": 11.631652690128332,
+                  "z": 3.8524860630757325
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 29.74948907608209,
+                "targetY": 11.459952254829116,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.03963436370569226,
+                "avoidedId": 1034,
+                "predictedAtMs": 1680,
+                "lateness": 2.219245217492076
+              },
+              {
+                "elapsedMs": 1680,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.68439629675573,
+                  "y": 12.533721901034047,
+                  "z": 0.9580011635001732,
+                  "vx": 0.6513302912251323,
+                  "vy": 0.4846426459820414
+                },
+                "actualDisc": {
+                  "x": 29.749345938671347,
+                  "y": 11.460165633425493,
+                  "z": 3.8719416839414778
+                },
+                "observationAgeMs": 20,
+                "visibility": 0.990909090909091,
+                "targetX": 29.626347105325337,
+                "targetY": 11.288273292108068,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.0454178667170907,
+                "avoidedId": 1034,
+                "predictedAtMs": 1700,
+                "lateness": 2.2630326262868836
+              },
+              {
+                "elapsedMs": 1700,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.68439629675573,
+                  "y": 12.533721901034047,
+                  "z": 0.984522236218934,
+                  "vx": 0,
+                  "vy": 0
+                },
+                "actualDisc": {
+                  "x": 29.626175347368513,
+                  "y": 11.288768691735093,
+                  "z": 3.8908584911667923
+                },
+                "observationAgeMs": 40,
+                "visibility": 0.9818181818181818,
+                "targetX": 29.504707508369908,
+                "targetY": 11.116857518164132,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.04821333031151785,
+                "avoidedId": 1034,
+                "predictedAtMs": 1720,
+                "lateness": 2.0923245633360725
+              },
+              {
+                "elapsedMs": 1720,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.68258629078021,
+                  "y": 12.533695398042134,
+                  "z": 1.0071193089376949,
+                  "vx": -0.09050029877602096,
+                  "vy": -0.001325149595683043
+                },
+                "actualDisc": {
+                  "x": 29.50446311996079,
+                  "y": 11.11769887104657,
+                  "z": 3.909231735287942
+                },
+                "observationAgeMs": 60,
+                "visibility": 0.9727272727272728,
+                "targetX": 29.387003463330657,
+                "targetY": 10.948005287693867,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.05487488785614493,
+                "avoidedId": 1034,
+                "predictedAtMs": 1740,
+                "lateness": 2.148445312842788
+              },
+              {
+                "elapsedMs": 1740,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.678966113878765,
+                  "y": 12.533658635472142,
+                  "z": 1.0257923816564556,
+                  "vx": -0.18100884507218062,
+                  "vy": -0.0018381284996579336
+                },
+                "actualDisc": {
+                  "x": 29.386651732708785,
+                  "y": 10.949244464018674,
+                  "z": 3.9270567297470715
+                },
+                "observationAgeMs": 80,
+                "visibility": 0.9636363636363636,
+                "targetX": 29.27032416344876,
+                "targetY": 10.778684101386549,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.05331836594382082,
+                "avoidedId": 1034,
+                "predictedAtMs": 1760,
+                "lateness": 2.1799800533834173
+              },
+              {
+                "elapsedMs": 1760,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.673620111854845,
+                  "y": 12.533075657114532,
+                  "z": 1.0405414543752165,
+                  "vx": -0.2673001011958245,
+                  "vy": -0.029148917880481406
+                },
+                "actualDisc": {
+                  "x": 29.271763986656676,
+                  "y": 10.783043549521581,
+                  "z": 3.9495688797735173
+                },
+                "observationAgeMs": 100,
+                "visibility": 0.9545454545454546,
+                "targetX": 29.156354281728888,
+                "targetY": 10.611448041978848,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.04851969590476719,
+                "avoidedId": 1034,
+                "predictedAtMs": 1780,
+                "lateness": 2.202699501547265
+              },
+              {
+                "elapsedMs": 1780,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.66660758842746,
+                  "y": 12.531785904074445,
+                  "z": 1.0513665270939774,
+                  "vx": -0.3506261713690999,
+                  "vy": -0.06448765200436288
+                },
+                "actualDisc": {
+                  "x": 29.159643933096465,
+                  "y": 10.618998943216454,
+                  "z": 3.9760810017182173
+                },
+                "observationAgeMs": 120,
+                "visibility": 0.9454545454545454,
+                "targetX": 29.044986489329624,
+                "targetY": 10.446235526817723,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.044844689947105096,
+                "avoidedId": 1034,
+                "predictedAtMs": 1800,
+                "lateness": 2.2304974947218383
+              },
+              {
+                "elapsedMs": 1800,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.657984631104384,
+                  "y": 12.529669515257485,
+                  "z": 1.0582675998127382,
+                  "vx": -0.43114786615369793,
+                  "vy": -0.10581944084801251
+                },
+                "actualDisc": {
+                  "x": 29.050162315336376,
+                  "y": 10.457031926821324,
+                  "z": 4.006004736069519
+                },
+                "observationAgeMs": 140,
+                "visibility": 0.9363636363636364,
+                "targetX": 28.936129104684415,
+                "targetY": 10.28299466718919,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.04180374604238661,
+                "avoidedId": 1034,
+                "predictedAtMs": 1820,
+                "lateness": 2.261795315051298
+              },
+              {
+                "elapsedMs": 1820,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.64780240455366,
+                  "y": 12.526633613789338,
+                  "z": 1.061244672531499,
+                  "vx": -0.5091113275363748,
+                  "vy": -0.1517950734073569
+                },
+                "actualDisc": {
+                  "x": 28.943210433314718,
+                  "y": 10.297077546691124,
+                  "z": 4.038833391670775
+                },
+                "observationAgeMs": 160,
+                "visibility": 0.9272727272727272,
+                "targetX": 28.829702722753762,
+                "targetY": 10.121680806944935,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.039304136864117746,
+                "avoidedId": 1034,
+                "predictedAtMs": 1840,
+                "lateness": 2.2958311155807642
+              },
+              {
+                "elapsedMs": 1840,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.63610765824575,
+                  "y": 12.522603173219833,
+                  "z": 1.0602977452502598,
+                  "vx": -0.5847373153955369,
+                  "vy": -0.20152202847526626
+                },
+                "actualDisc": {
+                  "x": 28.838695590593474,
+                  "y": 10.139081174767485,
+                  "z": 4.074128589827533
+                },
+                "observationAgeMs": 180,
+                "visibility": 0.9181818181818182,
+                "targetX": 28.725637668750494,
+                "targetY": 9.96225471451975,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.037272283019374554,
+                "avoidedId": 1034,
+                "predictedAtMs": 1860,
+                "lateness": 2.3320670952751796
+              },
+              {
+                "elapsedMs": 1860,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.62294331953884,
+                  "y": 12.517515792623263,
+                  "z": 1.0554268179690205,
+                  "vx": -0.6582169353453642,
+                  "vy": -0.25436902982850246
+                },
+                "actualDisc": {
+                  "x": 28.736537677921145,
+                  "y": 9.98299597533165,
+                  "z": 4.111509653695952
+                },
+                "observationAgeMs": 200,
+                "visibility": 0.9090909090909091,
+                "targetX": 28.62387205841643,
+                "targetY": 9.804681251375426,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.0356539202554325,
+                "avoidedId": 1034,
+                "predictedAtMs": 1880,
+                "lateness": 2.3703050696567085
+              },
+              {
+                "elapsedMs": 1880,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.60834902390183,
+                  "y": 12.511318435802604,
+                  "z": 1.0466318906877814,
+                  "vx": -0.7297147818506595,
+                  "vy": -0.3098678410329348
+                },
+                "actualDisc": {
+                  "x": 28.636666584768896,
+                  "y": 9.828781029139728,
+                  "z": 4.150645031279157
+                },
+                "observationAgeMs": 220,
+                "visibility": 0.9,
+                "targetX": 28.52435030894594,
+                "targetY": 9.648928389933564,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.034402850681315975,
+                "avoidedId": 1034,
+                "predictedAtMs": 1900,
+                "lateness": 2.4102129031050827
+              },
+              {
+                "elapsedMs": 1900,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.5923615604859,
+                  "y": 12.503965264299662,
+                  "z": 1.0339129634065423,
+                  "vx": -0.7993731707966216,
+                  "vy": -0.36765857514709077
+                },
+                "actualDisc": {
+                  "x": 28.539020221275518,
+                  "y": 9.67639993893659,
+                  "z": 4.191245259962696
+                },
+                "observationAgeMs": 240,
+                "visibility": 0.8909090909090909,
+                "targetX": 28.427021987585107,
+                "targetY": 9.494966488999458,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.0334827073570102,
+                "avoidedId": 1034,
+                "predictedAtMs": 1920,
+                "lateness": 2.45146930365797
+              },
+              {
+                "elapsedMs": 1920,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.57501524125389,
+                  "y": 12.495416126697238,
+                  "z": 1.017270036125303,
+                  "vx": -0.8673159616005389,
+                  "vy": -0.42745688012118793
+                },
+                "actualDisc": {
+                  "x": 28.443542994814386,
+                  "y": 9.5258197899297,
+                  "z": 4.233057124389565
+                },
+                "observationAgeMs": 260,
+                "visibility": 0.8818181818181818,
+                "targetX": 28.331840915150728,
+                "targetY": 9.342767759456917,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.03286511824986209,
+                "avoidedId": 1034,
+                "predictedAtMs": 1940,
+                "lateness": 2.493804418464947
+              },
+              {
+                "elapsedMs": 1940,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.556342207056076,
+                  "y": 12.485635465063577,
+                  "z": 0.9967031088440639,
+                  "vx": -0.9336517098906755,
+                  "vy": -0.4890330816830548
+                },
+                "actualDisc": {
+                  "x": 28.350184628149357,
+                  "y": 9.3770103734034,
+                  "z": 4.275858755731253
+                },
+                "observationAgeMs": 280,
+                "visibility": 0.8727272727272728,
+                "targetX": 28.238764463281548,
+                "targetY": 9.19230587080709,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.032532971914723846,
+                "avoidedId": 1034,
+                "predictedAtMs": 1960,
+                "lateness": 2.536994684074922
+              },
+              {
+                "elapsedMs": 1960,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.536372683577575,
+                  "y": 12.47459149840536,
+                  "z": 0.9722121815628247,
+                  "vx": -0.9984761739248833,
+                  "vy": -0.5521983329109071
+                },
+                "actualDisc": {
+                  "x": 28.258899236238094,
+                  "y": 9.229943606183706,
+                  "z": 4.319455486109503
+                },
+                "observationAgeMs": 300,
+                "visibility": 0.8636363636363636,
+                "targetX": 28.14775299981634,
+                "targetY": 9.043555662032952,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.032470155688815054,
+                "avoidedId": 1034,
+                "predictedAtMs": 1980,
+                "lateness": 2.5808463945582982
+              },
+              {
+                "elapsedMs": 1980,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.51513519670133,
+                  "y": 12.46225559797873,
+                  "z": 0.9437972542815856,
+                  "vx": -1.0618743438124385,
+                  "vy": -0.6167950213315119
+                },
+                "actualDisc": {
+                  "x": 28.169644600230942,
+                  "y": 9.084593096286213,
+                  "z": 4.363676317642267
+                },
+                "observationAgeMs": 320,
+                "visibility": 0.8545454545454545,
+                "targetX": 28.058769448069036,
+                "targetY": 8.896492929713522,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.032665188013070307,
+                "avoidedId": 1034,
+                "predictedAtMs": 2000,
+                "lateness": 2.625194618632849
+              },
+              {
+                "elapsedMs": 2000,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.492656755666,
+                  "y": 12.448601798915995,
+                  "z": 0.9114583270003463,
+                  "vx": -1.12392205176673,
+                  "vy": -0.682689953136765
+                },
+                "actualDisc": {
+                  "x": 28.082381592753027,
+                  "y": 8.940933817879621,
+                  "z": 4.408370898017175
+                },
+                "observationAgeMs": 340,
+                "visibility": 0.8454545454545455,
+                "targetX": 27.971778934149455,
+                "targetY": 8.751094273264275,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.033110515581627975,
+                "avoidedId": 1034,
+                "predictedAtMs": 2020,
+                "lateness": 2.6698987763089392
+              },
+              {
+                "elapsedMs": 2020,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.46896301036147,
+                  "y": 12.433606411401732,
+                  "z": 0.8751953997191072,
+                  "vx": -1.1846872652265115,
+                  "vy": -0.7497693757131945
+                },
+                "actualDisc": {
+                  "x": 27.9970737199161,
+                  "y": 8.79894186807875,
+                  "z": 4.4534069179411
+                },
+                "observationAgeMs": 360,
+                "visibility": 0.8363636363636364,
+                "targetX": 27.886748502697657,
+                "targetY": 8.607336982325624,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.0338076198741442,
+                "avoidedId": 1034,
+                "predictedAtMs": 2040,
+                "lateness": 2.7148447410798506
+              },
+              {
+                "elapsedMs": 2040,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.44407838855635,
+                  "y": 12.417247705435916,
+                  "z": 0.835008472437868,
+                  "vx": -1.2442310902559697,
+                  "vy": -0.8179352982908378
+                },
+                "actualDisc": {
+                  "x": 27.91368675388715,
+                  "y": 8.658594285007041,
+                  "z": 4.49866786308741
+                },
+                "observationAgeMs": 380,
+                "visibility": 0.8272727272727273,
+                "targetX": 27.803646886047257,
+                "targetY": 8.465198955144677,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.034755728222721376,
+                "avoidedId": 1034,
+                "predictedAtMs": 2060,
+                "lateness": 2.7599310808400355
+              },
+              {
+                "elapsedMs": 2060,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.41802621563301,
+                  "y": 12.399505652649395,
+                  "z": 0.7908975451566288,
+                  "vx": -1.3026086461668387,
+                  "vy": -0.8871026393259923
+                },
+                "actualDisc": {
+                  "x": 27.832188436074212,
+                  "y": 8.51986891171269,
+                  "z": 4.5440510661267375
+                },
+                "observationAgeMs": 400,
+                "visibility": 0.8181818181818181,
+                "targetX": 27.722444315326882,
+                "targetY": 8.324658639644813,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.035956724415543595,
+                "avoidedId": 1034,
+                "predictedAtMs": 2080,
+                "lateness": 2.8050719124632115
+              },
+              {
+                "elapsedMs": 2080,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.39082882048083,
+                  "y": 12.380361711819363,
+                  "z": 0.7428626178753897,
+                  "vx": -1.3598697576094054,
+                  "vy": -0.9571970415016438
+                },
+                "actualDisc": {
+                  "x": 27.75254823565889,
+                  "y": 8.382744294361057,
+                  "z": 4.589466014334166
+                },
+                "observationAgeMs": 420,
+                "visibility": 0.8090909090909091,
+                "targetX": 27.64311236464926,
+                "targetY": 8.185694991005516,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.037414857032442336,
+                "avoidedId": 1034,
+                "predictedAtMs": 2100,
+                "lateness": 2.8501948783766586
+              },
+              {
+                "elapsedMs": 2100,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.36250763003879,
+                  "y": 12.359798648659677,
+                  "z": 0.6909036905941505,
+                  "vx": -1.4160595221016956,
+                  "vy": -1.0281531579843048
+                },
+                "actualDisc": {
+                  "x": 27.67473715172457,
+                  "y": 8.247199606001224,
+                  "z": 4.6348328759670965
+                },
+                "observationAgeMs": 440,
+                "visibility": 0.8,
+                "targetX": 27.565623821542264,
+                "targetY": 8.048287441166408,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.03914365825605264,
+                "avoidedId": 1034,
+                "predictedAtMs": 2120,
+                "lateness": 2.895246595446177
+              },
+              {
+                "elapsedMs": 2120,
+                "playerId": 2007,
+                "observedAtMs": 1660,
+                "actualReceiver": {
+                  "x": 33.33308325591415,
+                  "y": 12.337800381750547,
+                  "z": 0.6350207633129112,
+                  "vx": -1.4712187062322961,
+                  "vy": -1.0999133454565133
+                },
+                "actualDisc": {
+                  "x": 27.598727549896658,
+                  "y": 8.113214589364269,
+                  "z": 4.680081214691105
+                },
+                "observationAgeMs": 460,
+                "visibility": 0.7909090909090909,
+                "targetX": 27.48995257830528,
+                "targetY": 7.912415876860199,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.04115222359288345,
+                "avoidedId": 1034,
+                "predictedAtMs": 2140,
+                "lateness": 2.9401776781738036
+              },
+              {
+                "elapsedMs": 6180,
+                "playerId": 2007,
+                "observedAtMs": 6180,
+                "actualReceiver": {
+                  "x": 36.441130888982116,
+                  "y": 3.4552481637000128,
+                  "z": 0,
+                  "vx": 1.8685330020741564,
+                  "vy": -0.7688645455944954
+                },
+                "actualDisc": {
+                  "x": 36.52858708282735,
+                  "y": 3.4125552706217177,
+                  "z": 1.9143399995857626
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 36.611194154946396,
+                "targetY": 3.4593147426800948,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 6200,
+                "lateness": -0.02
+              }
+            ],
+            "recoveryReceiverId": null,
+            "lastTouchType": "interception",
+            "bodyAvoidanceTicks": 213,
+            "bodyAvoidance": [
+              {
+                "atMs": 1580,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 33.566981350436706,
+                "y": 12.446355643040949,
+                "plannedX": 30.26077943582765,
+                "plannedY": 12.144116750454412,
+                "movementX": 32.081703341810865,
+                "movementY": 12.329321890028488,
+                "requestedSpeed": 7.0600000000000005
+              },
+              {
+                "atMs": 1780,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 33.66660758842746,
+                "y": 12.531785904074445,
+                "plannedX": 29.044986489329624,
+                "plannedY": 10.446235526817723,
+                "movementX": 32.57466509844813,
+                "movementY": 11.549105759893713,
+                "requestedSpeed": 7.0600000000000005
+              },
+              {
+                "atMs": 1980,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 33.51513519670133,
+                "y": 12.46225559797873,
+                "plannedX": 28.058769448069036,
+                "plannedY": 8.896492929713522,
+                "movementX": 32.62128746651102,
+                "movementY": 11.498559565295567,
+                "requestedSpeed": 7.0600000000000005
+              },
+              {
+                "atMs": 2180,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 33.2383865140317,
+                "y": 12.263048198164391,
+                "plannedX": 27.273596305412998,
+                "plannedY": 7.513822479547983,
+                "movementX": 32.595432161452244,
+                "movementY": 11.270324922218235,
+                "requestedSpeed": 7.0600000000000005
+              },
+              {
+                "atMs": 2440,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 32.72783141435771,
+                "y": 11.779944670212503,
+                "plannedX": 31.64446799058494,
+                "plannedY": 0.43490398988613016,
+                "movementX": 32.67671393168802,
+                "movementY": 11.051774017653274,
+                "requestedSpeed": 5.863853496793723
+              },
+              {
+                "atMs": 2640,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 32.281884760032966,
+                "y": 11.216678524715295,
+                "plannedX": 32.567428273446616,
+                "plannedY": 0.773615991868443,
+                "movementX": 32.59129251337691,
+                "movementY": 10.467101366729874,
+                "requestedSpeed": 5.218547944796358
+              },
+              {
+                "atMs": 2840,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 31.928782336785765,
+                "y": 10.54765909657527,
+                "plannedX": 33.60085473122567,
+                "plannedY": 1.5401521966975458,
+                "movementX": 32.52072534408762,
+                "movementY": 9.73030441383503,
+                "requestedSpeed": 2.7865299922340037
+              },
+              {
+                "atMs": 3040,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 31.70994662391366,
+                "y": 9.969990402923871,
+                "plannedX": 33.598136901580425,
+                "plannedY": 1.5649750797867004,
+                "movementX": 32.50803327472954,
+                "movementY": 8.766892536865411,
+                "requestedSpeed": 3.32081564940913
+              },
+              {
+                "atMs": 3240,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 31.665726542512026,
+                "y": 9.406511081048839,
+                "plannedX": 33.63494583340318,
+                "plannedY": 1.5667630340149565,
+                "movementX": 32.57421770393482,
+                "movementY": 7.723936717763719,
+                "requestedSpeed": 3.376912919184714
+              },
+              {
+                "atMs": 3440,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 31.79907458134829,
+                "y": 8.809003093388114,
+                "plannedX": 33.514172593269045,
+                "plannedY": 1.5409131784699532,
+                "movementX": 32.65182964363456,
+                "movementY": 6.814958133806135,
+                "requestedSpeed": 3.468408436801792
+              },
+              {
+                "atMs": 3640,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 32.03777577045701,
+                "y": 8.16661270178273,
+                "plannedX": 33.52360245139531,
+                "plannedY": 1.5887391446224923,
+                "movementX": 32.73003694683362,
+                "movementY": 6.08034611725247,
+                "requestedSpeed": 3.4526409695751226
+              },
+              {
+                "atMs": 3840,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 32.24160665326454,
+                "y": 7.509042966476853,
+                "plannedX": 33.53090872793981,
+                "plannedY": 1.6212562695828439,
+                "movementX": 32.822648908373345,
+                "movementY": 5.5184941763440865,
+                "requestedSpeed": 3.4377450288030893
+              },
+              {
+                "atMs": 4040,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 32.4336185393229,
+                "y": 6.851831142521665,
+                "plannedX": 33.54373749159267,
+                "plannedY": 1.6712730652365477,
+                "movementX": 32.96121218900571,
+                "movementY": 5.121066429522283,
+                "requestedSpeed": 3.4105649716925517
+              },
+              {
+                "atMs": 4240,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 32.65409009462867,
+                "y": 6.209834217303883,
+                "plannedX": 33.55369130299674,
+                "plannedY": 1.7055520273204903,
+                "movementX": 33.22276244000817,
+                "movementY": 4.833638913373297,
+                "requestedSpeed": 3.3934124439276316
+              },
+              {
+                "atMs": 4460,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 32.9953953802072,
+                "y": 5.546422098410367,
+                "plannedX": 35.99917168106487,
+                "plannedY": 1.2228901828274754,
+                "movementX": 33.53526211422189,
+                "movementY": 4.801127814930709,
+                "requestedSpeed": 4.415644873017936
+              },
+              {
+                "atMs": 4660,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 33.3695655125835,
+                "y": 4.984457796158272,
+                "plannedX": 35.13971808257417,
+                "plannedY": 2.542561546873211,
+                "movementX": 33.89180568006168,
+                "movementY": 4.588282154593545,
+                "requestedSpeed": 1.6976921949357149
+              },
+              {
+                "atMs": 4860,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 33.67120253305825,
+                "y": 4.584760101366596,
+                "plannedX": 35.7100782303372,
+                "plannedY": 2.8726530578653886,
+                "movementX": 34.17036083483039,
+                "movementY": 4.472086552069896,
+                "requestedSpeed": 1.27145056335785
+              },
+              {
+                "atMs": 5060,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 33.89841008592234,
+                "y": 4.349150291860386,
+                "plannedX": 35.74220063704182,
+                "plannedY": 2.937102723584589,
+                "movementX": 34.524851442626094,
+                "movementY": 4.284772657091553,
+                "requestedSpeed": 1.441403614193967
+              },
+              {
+                "atMs": 5260,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 34.179041053205324,
+                "y": 4.255577451324489,
+                "plannedX": 35.761743444122935,
+                "plannedY": 2.976326979037082,
+                "movementX": 34.91531655209864,
+                "movementY": 4.08520771749586,
+                "requestedSpeed": 2.043886789375307
+              },
+              {
+                "atMs": 5460,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 34.60349283903662,
+                "y": 4.132422239415785,
+                "plannedX": 35.773003509795984,
+                "plannedY": 2.997823075645723,
+                "movementX": 35.33711675353185,
+                "movementY": 3.8738835753291045,
+                "requestedSpeed": 2.4638955115028907
+              },
+              {
+                "atMs": 5660,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 35.09508546443687,
+                "y": 3.9386587183867974,
+                "plannedX": 35.77560656966386,
+                "plannedY": 3.001455539706233,
+                "movementX": 35.14605262241678,
+                "movementY": 3.8138523080429625,
+                "requestedSpeed": 0.5392482360540529
+              },
+              {
+                "atMs": 5860,
+                "playerId": 2007,
+                "avoidedId": 1034,
+                "x": 35.61844068081349,
+                "y": 3.7369479406760364,
+                "plannedX": 36.48609583182015,
+                "plannedY": 3.3928320685157773,
+                "movementX": 35.93353855321624,
+                "movementY": 3.6525041606959974,
+                "requestedSpeed": 3.9076660348306786
+              }
+            ],
+            "toeIn": null,
+            "restartPoint": null
+          }
+        },
+        {
+          "seed": 754459,
+          "distanceM": 6.4836448897987795,
+          "stallCount": 3,
+          "releasePoint": {
+            "x": 37.87627281871714,
+            "y": 20.14114259813146
+          },
+          "diagnosis": {
+            "primary": "unknown_no_contact",
+            "outcome": "no_contact",
+            "cause": "unknown_no_contact",
+            "causeConfirmed": false,
+            "inference": true,
+            "contributors": [
+              "aim_error",
+              "arc_error",
+              "curve_error",
+              "marker_pressure",
+              "wind_execution",
+              "fatigue"
+            ],
+            "missM": 2.3799999999999972,
+            "validationStatus": "reachable",
+            "decisionAtMs": 2860,
+            "releaseAtMs": 2860,
+            "observationAtMs": 2860,
+            "receiverObservation": {
+              "x": 34.57869721102291,
+              "y": 26.75733633719749,
+              "vx": 0.36565107644613704,
+              "vy": -2.9165981939911187
+            },
+            "plannedLateness": -0.045514960924869396,
+            "plannedSupport": {
+              "x": 35.41365137674539,
+              "y": 25.23038076260498,
+              "legal": true,
+              "reachRemaining": 0.7935506104592435,
+              "toeInContact": null
+            },
+            "plannedDetourSec": 0,
+            "plannedAvoidedId": null,
+            "markerPressure": 2.572499999999999,
+            "windPenalty": -0.02959191448518729,
+            "fatiguePenalty": 12.817329333094317,
+            "fatigueComponents": {
+              "execution": 12.817329333094317
+            },
+            "arcExecutionError": -0.061462153773959735,
+            "curveExecutionError": 0.03077572984336876,
+            "judgementLoss": 0,
+            "contacts": [],
+            "receiverReads": [
+              {
+                "elapsedMs": 0,
+                "playerId": 1002,
+                "observedAtMs": 0,
+                "actualReceiver": {
+                  "x": 34.57869721102291,
+                  "y": 26.75733633719749,
+                  "z": 0,
+                  "vx": 0.36565107644613704,
+                  "vy": -2.9165981939911187
+                },
+                "actualDisc": {
+                  "x": 37.87627281871714,
+                  "y": 20.14114259813146,
+                  "z": 1.1
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 35.38661387401274,
+                "targetY": 25.259013123941028,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 380,
+                "lateness": -0.056637394636730676
+              },
+              {
+                "elapsedMs": 80,
+                "playerId": 1002,
+                "observedAtMs": 80,
+                "actualReceiver": {
+                  "x": 34.6147302760112,
+                  "y": 26.508043425862656,
+                  "z": 0,
+                  "vx": 0.5025363022834054,
+                  "vy": -3.235355836967455
+                },
+                "actualDisc": {
+                  "x": 37.30834417412688,
+                  "y": 21.53889935617602,
+                  "z": 1.252882319290657
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 35.38661387401274,
+                "targetY": 25.259013123941028,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 380,
+                "lateness": -0.043405988238384985
+              },
+              {
+                "elapsedMs": 160,
+                "playerId": 1002,
+                "observedAtMs": 160,
+                "actualReceiver": {
+                  "x": 34.66221732384227,
+                  "y": 26.233473119898616,
+                  "z": 0,
+                  "vx": 0.6494880548144876,
+                  "vy": -3.549599144969849
+                },
+                "actualDisc": {
+                  "x": 37.171081210509094,
+                  "y": 22.806551259209204,
+                  "z": 1.3435625039078665
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 35.19263878596252,
+                "targetY": 25.60986639751325,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 420,
+                "lateness": -0.1651914986469351
+              },
+              {
+                "elapsedMs": 240,
+                "playerId": 1002,
+                "observedAtMs": 240,
+                "actualReceiver": {
+                  "x": 34.72220017324058,
+                  "y": 25.934127982886345,
+                  "z": 0,
+                  "vx": 0.8119750098909747,
+                  "vy": -3.856066783060011
+                },
+                "actualDisc": {
+                  "x": 37.41402586814621,
+                  "y": 23.980111507544656,
+                  "z": 1.371541787399231
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 35.43065284658064,
+                "targetY": 26.02231367417102,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 460,
+                "lateness": 0.0030563725520592797
+              },
+              {
+                "elapsedMs": 320,
+                "playerId": 1002,
+                "observedAtMs": 320,
+                "actualReceiver": {
+                  "x": 34.77429112394933,
+                  "y": 25.686748220850305,
+                  "z": 0,
+                  "vx": 0.5546340082404831,
+                  "vy": -2.6339551708847884
+                },
+                "actualDisc": {
+                  "x": 37.58749172109208,
+                  "y": 25.026867367118342,
+                  "z": 1.320709171821046
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 34.45458504248206,
+                "targetY": 28.336448418491454,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1740,
+                "lateness": -0.010486114692041637
+              },
+              {
+                "elapsedMs": 400,
+                "playerId": 1002,
+                "observedAtMs": 400,
+                "actualReceiver": {
+                  "x": 34.80579479452605,
+                  "y": 25.53713738778828,
+                  "z": 0,
+                  "vx": 0.2972930065899918,
+                  "vy": -1.411843558709566
+                },
+                "actualDisc": {
+                  "x": 37.33658361154769,
+                  "y": 25.919008434395185,
+                  "z": 1.182315666486254
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 35.45224586154181,
+                "targetY": 29.927121997449532,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 2020,
+                "lateness": -0.03359280749208837
+              },
+              {
+                "elapsedMs": 480,
+                "playerId": 1002,
+                "observedAtMs": 480,
+                "actualReceiver": {
+                  "x": 34.814073924188634,
+                  "y": 25.500712168136417,
+                  "z": 0,
+                  "vx": 0.012376221187159298,
+                  "vy": 0.08584242569456266
+                },
+                "actualDisc": {
+                  "x": 36.697240205580194,
+                  "y": 26.80989989917962,
+                  "z": 0.9410075245524786
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 35.28237552465539,
+                "targetY": 30.651162975092856,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1900,
+                "lateness": -0.0064802933220105
+              },
+              {
+                "elapsedMs": 560,
+                "playerId": 1002,
+                "observedAtMs": 560,
+                "actualReceiver": {
+                  "x": 34.816614534240415,
+                  "y": 25.524856125143717,
+                  "z": 0,
+                  "vx": 0.043387101140890685,
+                  "vy": 0.4313736279357057
+                },
+                "actualDisc": {
+                  "x": 36.1302873599085,
+                  "y": 27.52136765096173,
+                  "z": 0.7765858808574402
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 35.37109126499454,
+                "targetY": 30.875229193078525,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1940,
+                "lateness": -0.016612533496142667
+              },
+              {
+                "elapsedMs": 640,
+                "playerId": 1002,
+                "observedAtMs": 640,
+                "actualReceiver": {
+                  "x": 34.821879386912116,
+                  "y": 25.576619006252972,
+                  "z": 0,
+                  "vx": 0.07926477235317017,
+                  "vy": 0.7764334475443954
+                },
+                "actualDisc": {
+                  "x": 35.56435264972362,
+                  "y": 28.19770028225155,
+                  "z": 0.6444527153052959
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 35.470300287270966,
+                "targetY": 31.097772650667203,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1980,
+                "lateness": -0.022563691158466792
+              },
+              {
+                "elapsedMs": 720,
+                "playerId": 1002,
+                "observedAtMs": 720,
+                "actualReceiver": {
+                  "x": 34.83029732811237,
+                  "y": 25.655954912742605,
+                  "z": 0,
+                  "vx": 0.12079959865485722,
+                  "vy": 1.1208581049129156
+                },
+                "actualDisc": {
+                  "x": 34.99937696536379,
+                  "y": 28.844104924696772,
+                  "z": 0.5307058264617838
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 35.57168222775796,
+                "targetY": 31.319826942162088,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 2020,
+                "lateness": -0.02874283608918171
+              },
+              {
+                "elapsedMs": 800,
+                "playerId": 1002,
+                "observedAtMs": 800,
+                "actualReceiver": {
+                  "x": 34.842330422060954,
+                  "y": 25.76280701124671,
+                  "z": 0,
+                  "vx": 0.16818114263401304,
+                  "vy": 1.4645272418531987
+                },
+                "actualDisc": {
+                  "x": 34.43534671585697,
+                  "y": 29.463690255822968,
+                  "z": 0.42679057441400514
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 35.67114483149845,
+                "targetY": 31.541742385309913,
+                "reachable": true,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 2060,
+                "lateness": -0.03492532845286411
+              },
+              {
+                "elapsedMs": 880,
+                "playerId": 1002,
+                "observedAtMs": 880,
+                "actualReceiver": {
+                  "x": 34.85844026927,
+                  "y": 25.897110742495258,
+                  "z": 0,
+                  "vx": 0.22128646597832533,
+                  "vy": 1.8073585575407058
+                },
+                "actualDisc": {
+                  "x": 33.87227362647097,
+                  "y": 30.058412756242152,
+                  "z": 0.3271382087799007
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 33.753612369596425,
+                "targetY": 30.181924706580382,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.0007427516790239008,
+                "avoidedId": 2003,
+                "predictedAtMs": 900,
+                "lateness": 1.0209583157575899
+              },
+              {
+                "elapsedMs": 900,
+                "playerId": 1002,
+                "observedAtMs": 900,
+                "actualReceiver": {
+                  "x": 34.86261302804092,
+                  "y": 25.93497396815031,
+                  "z": 0,
+                  "vx": 0.20863793854612703,
+                  "vy": 1.8931612827526532
+                },
+                "actualDisc": {
+                  "x": 33.73165787442933,
+                  "y": 30.20336790398548,
+                  "z": 0.3024213736528352
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 33.613048487582205,
+                "targetY": 30.325637571106977,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.023054552195329408,
+                "avoidedId": 2003,
+                "predictedAtMs": 920,
+                "lateness": 1.0600919199965404
+              },
+              {
+                "elapsedMs": 920,
+                "playerId": 1002,
+                "observedAtMs": 900,
+                "actualReceiver": {
+                  "x": 34.86651400119015,
+                  "y": 25.97455036914252,
+                  "z": 0,
+                  "vx": 0.1950486574614831,
+                  "vy": 1.9788200496104742
+                },
+                "actualDisc": {
+                  "x": 33.591104166994654,
+                  "y": 30.346865067993836,
+                  "z": 0.2776846021397746
+                },
+                "observationAgeMs": 20,
+                "visibility": 0.990909090909091,
+                "targetX": 33.47206506805947,
+                "targetY": 30.424511802942952,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.04941533392643983,
+                "avoidedId": 2003,
+                "predictedAtMs": 940,
+                "lateness": 1.0969117091019622
+              },
+              {
+                "elapsedMs": 940,
+                "playerId": 1002,
+                "observedAtMs": 900,
+                "actualReceiver": {
+                  "x": 34.87012547860562,
+                  "y": 26.01583704186172,
+                  "z": 0,
+                  "vx": 0.18057387077390077,
+                  "vy": 2.0643336359599482
+                },
+                "actualDisc": {
+                  "x": 33.4506130939667,
+                  "y": 30.48891751656238,
+                  "z": 0.25288602816211725
+                },
+                "observationAgeMs": 40,
+                "visibility": 0.9818181818181818,
+                "targetX": 33.33323818284305,
+                "targetY": 30.521162949922168,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.07018969713920804,
+                "avoidedId": 2003,
+                "predictedAtMs": 960,
+                "lateness": 1.127981310205863
+              },
+              {
+                "elapsedMs": 960,
+                "playerId": 1002,
+                "observedAtMs": 900,
+                "actualReceiver": {
+                  "x": 34.87341379207218,
+                  "y": 26.05882794526428,
+                  "z": 0,
+                  "vx": 0.16441567332784662,
+                  "vy": 2.1495451701281247
+                },
+                "actualDisc": {
+                  "x": 33.31018528151185,
+                  "y": 30.62953713818463,
+                  "z": 0.22798733676214683
+                },
+                "observationAgeMs": 60,
+                "visibility": 0.9727272727272728,
+                "targetX": 33.19656783193294,
+                "targetY": 30.615591012044632,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.04129482427155302,
+                "avoidedId": 2003,
+                "predictedAtMs": 980,
+                "lateness": 1.1091345049477892
+              },
+              {
+                "elapsedMs": 980,
+                "playerId": 1002,
+                "observedAtMs": 900,
+                "actualReceiver": {
+                  "x": 34.87636213245137,
+                  "y": 26.103519805885547,
+                  "z": 0,
+                  "vx": 0.14741701895968234,
+                  "vy": 2.234593031063434
+                },
+                "actualDisc": {
+                  "x": 33.16982138982761,
+                  "y": 30.768734565477185,
+                  "z": 0.2029534266697654
+                },
+                "observationAgeMs": 80,
+                "visibility": 0.9636363636363636,
+                "targetX": 33.06205401532914,
+                "targetY": 30.70779598931034,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.01763070757603606,
+                "avoidedId": 2003,
+                "predictedAtMs": 1000,
+                "lateness": 1.0953311645417219
+              },
+              {
+                "elapsedMs": 1000,
+                "playerId": 1002,
+                "observedAtMs": 1000,
+                "actualReceiver": {
+                  "x": 34.87895468254325,
+                  "y": 26.149909385691917,
+                  "z": 0,
+                  "vx": 0.12962750459412906,
+                  "vy": 2.319478990318412
+                },
+                "actualDisc": {
+                  "x": 33.02952211105449,
+                  "y": 30.906519285143954,
+                  "z": 0.17775211038214114
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.911179669409364,
+                "targetY": 31.022740696182872,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0.002803319459540966,
+                "avoidedId": 2003,
+                "predictedAtMs": 1020,
+                "lateness": 1.1206806699590186
+              },
+              {
+                "elapsedMs": 1020,
+                "playerId": 1002,
+                "observedAtMs": 1020,
+                "actualReceiver": {
+                  "x": 34.881176569797574,
+                  "y": 26.197993499717725,
+                  "z": 0,
+                  "vx": 0.1110943627162059,
+                  "vy": 2.4042057012904117
+                },
+                "actualDisc": {
+                  "x": 32.889288167392536,
+                  "y": 31.042899735929048,
+                  "z": 0.15235384696082196
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.771000835913675,
+                "targetY": 31.157936646166274,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1040,
+                "lateness": 1.133897957439716
+              },
+              {
+                "elapsedMs": 1040,
+                "playerId": 1002,
+                "observedAtMs": 1040,
+                "actualReceiver": {
+                  "x": 34.88301113164803,
+                  "y": 26.247768417159524,
+                  "z": 0,
+                  "vx": 0.0917280925227979,
+                  "vy": 2.4887458720898366
+                },
+                "actualDisc": {
+                  "x": 32.749120309387386,
+                  "y": 31.177883396199867,
+                  "z": 0.12673150346996304
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.63088872116004,
+                "targetY": 31.291742113638303,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1060,
+                "lateness": 1.150587634237973
+              },
+              {
+                "elapsedMs": 1060,
+                "playerId": 1002,
+                "observedAtMs": 1060,
+                "actualReceiver": {
+                  "x": 34.88444164592973,
+                  "y": 26.299230220110825,
+                  "z": 0,
+                  "vx": 0.0715257140849256,
+                  "vy": 2.573090147565135
+                },
+                "actualDisc": {
+                  "x": 32.609019314356594,
+                  "y": 31.311476862548673,
+                  "z": 0.10086014157459526
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.49084412504812,
+                "targetY": 31.42416295141389,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1080,
+                "lateness": 1.1682367586852376
+              },
+              {
+                "elapsedMs": 1080,
+                "playerId": 1002,
+                "observedAtMs": 1080,
+                "actualReceiver": {
+                  "x": 34.88545184869477,
+                  "y": 26.352374929889308,
+                  "z": 0,
+                  "vx": 0.05051013825202959,
+                  "vy": 2.6572354889240706
+                },
+                "actualDisc": {
+                  "x": 32.468985984932104,
+                  "y": 31.44368592059136,
+                  "z": 0.07471682631327504
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.35086787156255,
+                "targetY": 31.555204261050367,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1100,
+                "lateness": 1.1873385921922546
+              },
+              {
+                "elapsedMs": 1100,
+                "playerId": 1002,
+                "observedAtMs": 1100,
+                "actualReceiver": {
+                  "x": 34.88602589579197,
+                  "y": 26.407198509940745,
+                  "z": 0,
+                  "vx": 0.028702354859869605,
+                  "vy": 2.741179002571765
+                },
+                "actualDisc": {
+                  "x": 32.329021147698676,
+                  "y": 31.574515608968234,
+                  "z": 0.0482804544738451
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.21096080749228,
+                "targetY": 31.684870451114126,
+                "reachable": false,
+                "legal": true,
+                "detourSec": 0,
+                "avoidedId": null,
+                "predictedAtMs": 1120,
+                "lateness": 1.2091804417061152
+              },
+              {
+                "elapsedMs": 1120,
+                "playerId": 1002,
+                "observedAtMs": 1120,
+                "actualReceiver": {
+                  "x": 34.88614832686966,
+                  "y": 26.463696867628443,
+                  "z": 0,
+                  "vx": 0.006121553884574308,
+                  "vy": 2.824917884384899
+                },
+                "actualDisc": {
+                  "x": 32.189125651911375,
+                  "y": 31.703970277406622,
+                  "z": 0.021531600349316404
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 32.07112380121479,
+                "targetY": 31.8131652902344,
+                "reachable": false,
+                "legal": false,
+                "predictedAtMs": 1140,
+                "lateness": 3
+              },
+              {
+                "elapsedMs": 1140,
+                "playerId": 1002,
+                "observedAtMs": 1140,
+                "actualReceiver": {
+                  "x": 34.88580691664535,
+                  "y": 26.521866658355947,
+                  "z": 0,
+                  "vx": -0.017070511215287156,
+                  "vy": 2.9084895363752947
+                },
+                "actualDisc": {
+                  "x": 32.07794587097881,
+                  "y": 31.805813662078776,
+                  "z": 0
+                },
+                "observationAgeMs": 0,
+                "visibility": 1,
+                "targetX": 31.98416572576219,
+                "targetY": 31.89171855704974,
+                "reachable": false,
+                "legal": false,
+                "predictedAtMs": 1160,
+                "lateness": 3
+              }
+            ],
+            "recoveryReceiverId": null,
+            "lastTouchType": null,
+            "bodyAvoidanceTicks": 9,
+            "bodyAvoidance": [
+              {
+                "atMs": 880,
+                "playerId": 1002,
+                "avoidedId": 2003,
+                "x": 34.85844026927,
+                "y": 25.897110742495258,
+                "plannedX": 33.753612369596425,
+                "plannedY": 30.181924706580382,
+                "movementX": 34.088552662933175,
+                "movementY": 28.909217486407012,
+                "requestedSpeed": 6.864000000000001
+              },
+              {
+                "atMs": 1120,
+                "playerId": 1002,
+                "avoidedId": 1032,
+                "x": 34.88614832686966,
+                "y": 26.463696867628443,
+                "plannedX": 32.07112380121479,
+                "plannedY": 31.8131652902344,
+                "movementX": 33.7300846790409,
+                "movementY": 28.853473066307462,
+                "requestedSpeed": 6.864000000000001
+              }
+            ],
+            "toeIn": null,
+            "restartPoint": null
+          }
+        }
+      ]
+    }
+  },
+  "balance": {
+    "configuration": {
+      "block": {
+        "spatialPressure": true,
+        "selectContact": true,
+        "deflectionReaction": true,
+        "interceptions": true,
+        "baseChance": 0.05,
+        "skillSpan": 0.14,
+        "edgePenalty": 0.65,
+        "hardSpeedMps": 21,
+        "easySpeedMps": 8
+      },
+      "deflection": {
+        "controlledSwat": true
+      },
+      "fatigue": {
+        "singleExecution": true,
+        "maximumPenalty": 24,
+        "exponent": 1.5
+      },
+      "approach": {
+        "enabled": true,
+        "arrivalLeadSec": 0.15,
+        "stopBufferM": 0.08,
+        "readDelayScale": 1,
+        "interceptJumpClock": true,
+        "readIntervalMs": 80,
+        "readBlendScale": 0.5,
+        "purposefulLayout": true
+      },
+      "bodyTraffic": {
+        "enabled": true,
+        "planning": true,
+        "offBall": true,
+        "clearanceM": 0.12,
+        "lookAheadSec": 0.5
+      },
+      "resetCuts": {
+        "stable": true
+      },
+      "arrival": {
+        "kinematics": true,
+        "observationRisk": true,
+        "horizonSec": 0.8,
+        "maxUncertaintyM": 0.5
+      },
+      "miss": {
+        "cleanMargin": 12,
+        "missPerMarginPoint": 0.14,
+        "maxMissM": 15,
+        "missDistanceFractionCap": 0.4,
+        "missChanceAtPivot": 0.04,
+        "minMissChance": 0.015,
+        "skillMissPivot": 60,
+        "skillMissSpan": 45,
+        "errorMissMinM": 0.7,
+        "errorMissSpanM": 1
+      },
+      "fast": {
+        "skillMult": 1,
+        "gapOffset": -6,
+        "advanceMult": 0.8,
+        "windMult": 1,
+        "windSkillSlope": 0,
+        "windSkillRef": 83,
+        "lateralFrac": 0.45
+      },
+      "resetPass": {
+        "enabled": false,
+        "speedReserve": 0.85,
+        "maxUncertaintyM": 0.15,
+        "lateAllowanceMs": 0
+      }
+    },
+    "sourceHashes": {
+      "scripts/balance-engine.mjs": "de91e34c52d5a0c1420905f893b5a038da98cdb12dd070f1519b7645004de317",
+      "scripts/calibrate-situations.mjs": "497e1729e41bda6d31ec49634aa9a93db1b7d492c8eecc97c60d8897c0613a3c",
+      "scripts/engine-realism.mjs": "91e8d4b13ed32370ac8629c6877bb818021bafe9ee283909f02b1162731a9fb9",
+      "src/data/academyScoutGeography.js": "0d9ba258dc9d0c9e6a52b76b0d527e942b031d4a84a1df35c51fa452ecdfe579",
+      "src/data/demoMatchTeams.js": "661874a82391df5e8b39e7661ca208f935fd63fb35ea709426cf0f80bcf5825e",
+      "src/data/eucs/eucsCountryStrength.js": "da7011c306f1807bb3183fe52370026bb3bdd56772813b8d58965254a16be063",
+      "src/data/eucs/eucsNationalityOverrides.js": "1fc3db04a79072e4600e3b53d78bfac8fc08dc0f54a21a1ad6aee5d88d3357b9",
+      "src/data/eucs/worldChampionshipHistoryReal.js": "10889e212dec92c20b112e524594fd992fa85a43202afa8db8400f0cb80e1bbc",
+      "src/data/eucsLeagueTeams.js": "524c903381718da20a112b8e25d38b432ca0a3a0a49daa4781994d14aa2896a4",
+      "src/data/eucsRosterBalance.js": "06d96e2c2868d0ef4c4ce48454cb7d2486b02db64c2adee6b39aa19ca7c1f5cd",
+      "src/data/fictionalTeams.js": "c150cf1ce54eaa4a0fbb15909c979c7933a5c1dd2f63e298511eda4f14724838",
+      "src/data/mockPlayers.js": "bc61d5277d90e8cb77b9c32efa11bb5f70da42bcc80b995b36ac635effd4f669",
+      "src/data/playerStatsFromUfa.js": "5dec3864b0ed28d3390766d19fb8d488c3760973c4497141a57d014331ca6e27",
+      "src/data/randomRosterSkills.js": "15599ba184ba396e634a91a38f7faea49bedfa6ee36692e3d21853e08fbac51b",
+      "src/data/rosterStructures.js": "3e7d5bc1919c11234f867fee16455090b3da3f1a177b8122c5f08912445e4503",
+      "src/data/seasonLeagueBuilder.js": "b8b534b724a19ef0f46976ca3a8ac79e2957ed060d21bf26d5e039ad467f3d9f",
+      "src/data/tacticsGuide.js": "b8e6a51d14b0e8d45fdafa7a5c92dff5b3dc1d349263a1e3e607873c4435a07e",
+      "src/data/tacticsGuideEn.js": "540a8ddcf7548186e794ca9d018481233c5faa0a8e4d176233f033641859c201",
+      "src/data/teamColors.js": "5182b0fb40fc36a643754dc99900f652d2feadd7c28038d52f407ed1f2e0726e",
+      "src/data/teamTacticalIdentities.js": "2477ee55c0c89f7c5935d8fb1b9508df51d0ad794c482380e03ba6b5dba80d22",
+      "src/data/tutorialGuide.js": "08f6a6d0f8cbce33d22b5c4a9add428a2d7411313e947ed71a31f59ef6cf3cc8",
+      "src/data/ufa2025LeagueRosters.js": "55bae61b08ca7b179b51cd75758c8f917aab347e3337c0d9ecd78afbba244f99",
+      "src/data/ufa2025LeagueRosters.raw.js": "225acbac95b96ef4524b824f238f7e077bd175c77b041fb4f182aaee1955789f",
+      "src/data/ufa2025LeagueStatMax.js": "1531ba7645b1843612cca38d877e531ee1377e84e181c85d3cb63b37b1850709",
+      "src/data/ufa2025Rosters.js": "6344b870138d8ffac8229e5545f055456147239c2ac793c5ffc19dcbb70a130c",
+      "src/data/ufa2025Rosters.raw.js": "caab0c956eb52ffad83d97c21fde71808ea7cf9be600c520b02f4a851bb3c792",
+      "src/data/ufaLeagueTeams.js": "bc5b97f028ff541b5abc05300ceccec3db355c0fb35a0dc7528abd13d4a8f815",
+      "src/matchEngine/ai/actionSimulator.js": "96a6e57c26abe187b4e071ec2c78d81b62f465f7e96ab4897581f100ef363ff6",
+      "src/matchEngine/ai/arrivalMotion.js": "33d827b76557734618f39899a28f0af0a2c82936af8f0b6b2897313439eb5deb",
+      "src/matchEngine/ai/bodyTraffic.js": "4e3218769e7e44c6759ac72bae896da3d45b928d23384f3ff76634ed758f8bef",
+      "src/matchEngine/ai/catchRules.js": "4fb504af7e23dfd24ed37dd81ae4661eed209139d90fae45cf3b3799a9e8aed5",
+      "src/matchEngine/ai/cutterBrain.js": "e3f6e85dc8f08668a33005c0e6d693817c332b703b591293d93ae2631612da14",
+      "src/matchEngine/ai/defenderBrain.js": "9b4b379c5038223fa9957282f2d2134d9bd45eab0a709a631cf46087cb6d5fbd",
+      "src/matchEngine/ai/discAerodynamics.js": "341d09aaa6ad6f6f0b08f056dc9174844fd14f2c8dd1716947aa79513e5c063e",
+      "src/matchEngine/ai/discAttitude.js": "b26119e636b5be92a35cd3e274e48002b9c53d7c4149eb878dd9ef668499556e",
+      "src/matchEngine/ai/discContact.js": "87f335ddb005fa4482a1d4fbbb87dc6e502728a4330053bf53b2297ce7aaf937",
+      "src/matchEngine/ai/discDeflection.js": "23632107d2a5ac731cb1c608030aab5f944be071a48604768a88f8308d7a40f8",
+      "src/matchEngine/ai/discFlightPredict.js": "85d9932cf881150edfb77e370b198d2b5a2128364f74b9fab32986b2165b9690",
+      "src/matchEngine/ai/discIntercept.js": "5cb8afd485aacc3168833cb9068d88c3f98f110142f8fcbf7b405867074c333f",
+      "src/matchEngine/ai/discPhysics.js": "82895ec7a8783d8fab9ed845ffaddf75eff867c231a9405778a3e0836d41231a",
+      "src/matchEngine/ai/discTrajectory.js": "e312024834695e7f1be7c128df8241827c61ae3b873b22e810d56bd14deb21bf",
+      "src/matchEngine/ai/flightKinematics.js": "d8b373c00d797e5222dcc029ff1b422199417d744da8e9ce8e3a5bad3f71c605",
+      "src/matchEngine/ai/flightSpeed.js": "374043bcb9688e9eac619d351d8b2cede2cb3aae60e3d768a9f69f2a3bec21a1",
+      "src/matchEngine/ai/motionPipeline.js": "4245acff8a65d524894b2de766e0015101a40f96c79e7fb85f90001645a03651",
+      "src/matchEngine/ai/offenseReorganization.js": "f2c49355ce4a0868401ca4de533c5911bfe87b61c8a78043ec4ef3461357d4ce",
+      "src/matchEngine/ai/playerMovement.js": "d1fa3bf4d7882ed8267d4de4b014797d7383009d8ee4096f99b748e95c063e7a",
+      "src/matchEngine/ai/playerPerception.js": "36647a1c79f4382ac205315b4737e2cdb6f1ad2d4e3e91a41a895e4f3b3cbb65",
+      "src/matchEngine/ai/routeAwareness.js": "4f4eaea60d61f083311df6b2330f0bd9dfb134477da926ee1c186992ab769922",
+      "src/matchEngine/ai/spaceMap.js": "050c0ee7a02a7c5440f092eac55fc0fa62379e2d0212852b57c277f46f3ec6f4",
+      "src/matchEngine/ai/spatialEvaluator.js": "f1c7286ccbfd7e9be8cf21ac23b58243248bbb9a044c9fc0b3fdeeccd5b706ba",
+      "src/matchEngine/ai/statFormulas.js": "2d7d659af8c4ec3817952c851e0b8c907063a4cb2b4c0e4a292a41fe04ff4636",
+      "src/matchEngine/ai/tacticsBehavior.js": "d0e0808ee2929573f73cc2cc81ac210ade93dc613587d41d9b52f6b4379037bb",
+      "src/matchEngine/ai/teamCoordination.js": "ff3500a66ede9d84ba89987db2b94e7430be113d1458b9c536c17ced736cddc6",
+      "src/matchEngine/ai/throwDiagnosis.js": "6ab4c838e5879523b75ec4d0495ba968a994bca689032e56953643638f51c538",
+      "src/matchEngine/ai/throwShape.js": "be1d142f3a22fc799cfd7daa64a19e2574c749b14f24a2a032854952aaf8d28f",
+      "src/matchEngine/ai/throwerBrain.js": "bfd7534c799f5a1a8d2ab44d7f75d2fedf040fc727ddf453d4fd7d4b738b8d41",
+      "src/matchEngine/ai/throwerDecision.js": "8326c687aafb67f7488c533df387399d62e48d8999f18475f3af1dfcbb5f134c",
+      "src/matchEngine/ai/traitBehavior.js": "290de510de023b34a93ecc75702b26b59798d1311d2ed6790e9c269f934452a0",
+      "src/matchEngine/aiCoachProfile.js": "7bc87a0672aafe64433dd6612f98181fbe76c4defe54be6601da7f49b29ea95c",
+      "src/matchEngine/aiLineup.js": "4239b1b930fdc3ea85a09466f31d6d52e23e82e4cc6364da256d2cf10afd404c",
+      "src/matchEngine/aiTacticsAdapt.js": "f72716dc6e9a2fbbb08530b5bc80844aa4d83aa44dec86ff5a864a2fffe8aae4",
+      "src/matchEngine/autoSub.js": "0707df39e4e13ef501caaf555ae8fc37bc5437bfccedae78d4526b4e36cc8397",
+      "src/matchEngine/boxScore.js": "7db0f65f7a77de9b96e5e3829dddb446026eea8fecf0f4baa4de38af152f6688",
+      "src/matchEngine/coachDirectives.js": "1f0610bb0fa81668420c90d20b71bb16d00bb4d18a7a4f9d6504b02668f527d5",
+      "src/matchEngine/config.js": "b0eaed515089dc179c2059a6c21d5d81e0ecd463ce4c4d78d57749e69dbd3649",
+      "src/matchEngine/defenseZoneRoles.js": "882455431f569bb789cfbf547b43c3b2ce962de904df055777f9177ca2805bff",
+      "src/matchEngine/discState.js": "8bc6b31a92a9c82bb68f62af539c239b8617e68d476efe71e52707719d2b4f13",
+      "src/matchEngine/events.js": "b501fc77dd0b9749fe0e5709a6dd1b1ddaf249d647ecc4e525248fc4be8ba6d0",
+      "src/matchEngine/fastPossession.js": "119b98be0d208d02b21e613473f897bdaa02734097842dc5993935d1d972f252",
+      "src/matchEngine/fieldDimensions.js": "744ed6cee0220c00be73e01033602f4780efd9335a72397b144803e6bf3894d5",
+      "src/matchEngine/fieldMotion.js": "4504dc383c543c4fd522eb25a719ab60b0e383e6de8ffa9cb798476bd2b7b57f",
+      "src/matchEngine/fieldPlayback.js": "b2fe4f1dba4a406687de5bf02782e051681d4e97601dbe55820a9cc3b7d83373",
+      "src/matchEngine/fieldViz.js": "afbb35e01bc38d594c31306e972c8d6cf4d04618df7a59a36a24e2c974869a65",
+      "src/matchEngine/index.js": "3b1d640885d22f6419445f18633648bfbe417dc0354b98614c01dccba6bbda41",
+      "src/matchEngine/lineManager.js": "360535defefc5c8e87d204526878545bd3846be30ce955e6aa6ae9da86b9ffe8",
+      "src/matchEngine/lineups.js": "3c464a26c99b9128f870630e8731e8328a8b1afb86375527f7b43a19184d831d",
+      "src/matchEngine/match.js": "de7720727cdab8161793909e25bcf139c56d67b3b9f231a1d9f9010ed66588f8",
+      "src/matchEngine/matchSession.js": "bb40cead5a12cea7a441ea2d8bed64705c78db61a4db74f9411e1dec450557ee",
+      "src/matchEngine/matchStats.js": "9167b6f684b834bc44d63c3e7123e7c3ed5e3dec203c96e5f76e95e158250052",
+      "src/matchEngine/motionFromTicks.js": "fc18ff8f654899dc2419eb53d95c8db40e671ceb8ee0de642f810c905413b4ca",
+      "src/matchEngine/offenseLineSlots.js": "c9f410315c712ac7a71911b0af2ea6a1455dd57f8177ba4eaf014b91e8433775",
+      "src/matchEngine/participants.js": "d40f22963cfff833e5f146f7593fd24954860075f8be0c814dbc1b9ecfeb6928",
+      "src/matchEngine/playbackInterpolation.js": "44377972ff11390da8243196c766f376e6861048070fc476316c4a75425356dd",
+      "src/matchEngine/playerInstructions.js": "d22c8385ab34f5131b11a4d1f5f64e3d7794ae33bf1f26bf38b0a8c24c1334f1",
+      "src/matchEngine/playerMods.js": "c2d453fee1754d10692f5bef47ee8975dc4803b27ba514027e4e30c351b9f7ba",
+      "src/matchEngine/playerModsRegistry.js": "27cd5a76832d11089f6dbd507e60c16f553a0984dc2d3c751f29cb523af7e416",
+      "src/matchEngine/playerSubRoles.js": "a684bc259400c8ff3e31b5354bc0cc339bc9ad26acc49493fa66966a05a69934",
+      "src/matchEngine/point.js": "84e0d5e4f3c8071240255a5133f888fd5bad59c897478ee9fbc2b060773f3cdf",
+      "src/matchEngine/pointHistory.js": "607795c14c13a8493c9c25072987f5506e4ca57556a1326283add2fa1831f38e",
+      "src/matchEngine/pointLineStats.js": "131aa7abaf416edd1f0e916f1406e4cfef12deb1554516521048dcf5bdf22a57",
+      "src/matchEngine/resolution.js": "d3d2f08dc1f00a20da16edcb275a3bf059f8e41d47aa67f397c28319618c7efe",
+      "src/matchEngine/rng.js": "d4b070447e6d852271a38ec6d4e0442becf43b69f43d9db9172f10913880088e",
+      "src/matchEngine/rotation.js": "f9e968ce22d0bb3a0b11a6b564d7365e7f52725ad89d4b794acef4590ec814e6",
+      "src/matchEngine/separation.js": "ac89bff215945e7e1a8a47440a88f1a6f007175932d8204500595a0506bcb4ee",
+      "src/matchEngine/stall.js": "a6026aeb92e7da04d1f0c04d78b6d5b9735202dc15c8cd4398d6c688e4a5a0f1",
+      "src/matchEngine/stamina.js": "30c5c618d91d092a0e090dd8d199df0677e7defd556564d65e189f03d1fd374c",
+      "src/matchEngine/staminaPlayback.js": "02588efdc57a2f236151cf4502a1b316414b76ca9371a35e5deaf9eefc6f01dd",
+      "src/matchEngine/styleEvidence.js": "d02a3367e629fd8340853f179f9d9d1f96092305e2d3be54a7fb36ec554a8992",
+      "src/matchEngine/tacticsModifiers.js": "8aa052a38c76ef725b050b9c571bb01939360a23fa95323417fab43d8a3a087e",
+      "src/matchEngine/throwTechnique.js": "a30821b50141731038aa27e96e48bbea978ac5f599389b5e71992cd4bd2c7d4c",
+      "src/matchEngine/throwTypes.js": "470cf9107b5da44fbd24a6237fab4aa224ea6eecb35b6c7b0585aecfb8672d64",
+      "src/matchEngine/wind.js": "7c786c66a89e8de374d387568ebc205b3cda0e325f78cce5400772032053c5a2",
+      "src/models/attributeAliases.js": "687b50898d6c2ad23e3ddd8db2b80ab4c2152c3f04a0dc2cd26a0ca651221882",
+      "src/models/detailedAttributes.js": "7b6d948e3f815cdbf5abfa1108519a50d636c78fe19c2f7c728cbf40003a23b7",
+      "src/models/playerArchetypes.js": "053d4d67aa1e433a8c9d4c8fd737573107e9d22d9cd298d7019854430b2f7a79",
+      "src/models/playerBody.js": "608705ca9ac73f2d88da6b9605be595a6a33075925185026742474e837189a24",
+      "src/models/playerForm.js": "27087c55c1e6131d625c4344024a3034286f95142b4e31f1272d2127e2350f65",
+      "src/models/playerInjury.js": "f7dce9cb61f27c342a7480c28a3b6da8486e3bffd0108f1a3a096d8cf24b46d3",
+      "src/models/playerLoyalty.js": "ea4a019379e0b4bf8139287c892e9cfe2b9952075fe2c2012361c85fe37ffdb0",
+      "src/models/playerMorale.js": "7778c052240c95f40a634df9b524b87884fe10968c8341d6d4945f7250de7a19",
+      "src/models/playerPersonalities.js": "f2018fe48070bbec714d3564e1a09a5ef07dd70659afc03699f6dea2b7f65271",
+      "src/models/playerProfile.js": "b456f435f32e73f4f729be03490e2d19ab7426dab4c933a492e43d88a6cf7232",
+      "src/models/playerSkillsHistory.js": "14cb9f0dcd87285833cf24bdd01d70c3a9f4c4a0670758f97e342175dbadb110",
+      "src/models/playerStats.js": "aed5a087a295fd32a47d7d97dc6d527928144b60a1c02f1607a9915144095ee1",
+      "src/models/playerTraits.js": "883c4c34475849be01af35e826316f597fcb386c8cb117becebb0b590f88f8f2",
+      "src/models/playingStyleGeneration.js": "3076e8ec5286febab32879e3924f992811551ae0724f0c50a18eed32f184aea3",
+      "src/models/teamElo.js": "893a21b4e285a51833ddf91e7a438cd1273941c22bc2ff44aebf8b7c7922d5ac",
+      "src/models/teamFans.js": "be76bcd4e0ba6d5bb04bb2e6ecfd5bc7bc637b324a3de2318b0779c6b357144a",
+      "src/models/teamReputation.js": "0d15f0fb24af30ce19808feafc732dd05ae7152c071970f2e570394f2d1c1fb9",
+      "src/models/teamTalk.js": "6491b6948a10ad605c8fba950b9d36aadbd502b2f4c11c902b8a4c10cbec1adf",
+      "src/models/traitDesign.js": "efbdb8cdb485a761fe73e09e58588916e6182f058df315f6e940c9e8b8c25191"
+    },
+    "changedDuringRun": [],
+    "args": [
+      "--fast",
+      "0",
+      "--full",
+      "4",
+      "--offset",
+      "731459",
+      "--purposeful-layout",
+      "--miss-slope",
+      "0.14",
+      "--clean-margin",
+      "12",
+      "--reset-losses",
+      "--progress",
+      "--output",
+      "C:/Users/marod/ultimate-manager-ufa/artifacts/engine-audit/reset95-execution.json"
+    ]
+  }
+}

@@ -1,0 +1,564 @@
+{
+  "names": [
+    "route-v2-control",
+    "route-v2-final",
+    "route-v2-validation"
+  ],
+  "acceptancePassed": false,
+  "summaries": [
+    {
+      "matches": 8,
+      "msPerMatch": 12029.719075000003,
+      "homeMargin": -10.5,
+      "meanInitialWindMph": 13.5,
+      "completionPct": 84.42714126807564,
+      "holdPct": 34.61538461538461,
+      "cleanHoldPct": 14.743589743589743,
+      "throwsPerPoint": 11.525641025641026,
+      "turnoversPerPoint": 1.794871794871795,
+      "blocksPerMatch": 13.5,
+      "dropsPerMatch": 1.5,
+      "throwawaysPerMatch": 20,
+      "stallOutsPerMatch": 0,
+      "framesPerMatch": 39904.625,
+      "playerSnapshotsPerMatch": 558664.75,
+      "throwLimits": 0,
+      "completedDistanceM": {
+        "n": 1518,
+        "p10": 1.8970663383300734,
+        "p50": 8.609711512657954,
+        "p90": 24.773794989512687,
+        "p99": 45.11021301069674,
+        "shortPct": 58.95915678524374,
+        "longPct": 9.94729907773386
+      },
+      "holdMs": {
+        "n": 1798,
+        "p10": 1080,
+        "p50": 2080,
+        "p90": 3060,
+        "p99": 4260
+      },
+      "representedPointMs": {
+        "n": 156,
+        "p10": 9280,
+        "p50": 34040,
+        "p90": 80940,
+        "p99": 113840
+      },
+      "possessionThrows": {
+        "n": 436,
+        "p10": 1,
+        "p50": 3,
+        "p90": 9,
+        "p99": 16
+      },
+      "attemptedDistanceM": {
+        "n": 1798,
+        "p10": 5.549100754179923,
+        "p50": 11.148999878485263,
+        "p90": 25.576532770940307,
+        "p99": 42.95230265924468
+      },
+      "possessionMs": {
+        "n": 436,
+        "p10": 3620,
+        "p50": 11200,
+        "p90": 29320,
+        "p99": 46900
+      },
+      "firstThrowAfterTurnoverMs": {
+        "n": 274,
+        "p10": 1560,
+        "p50": 2720,
+        "p90": 4680,
+        "p99": 6480
+      },
+      "estimatedPointMs": {
+        "n": 0,
+        "p10": null,
+        "p50": null,
+        "p90": null,
+        "p99": null
+      },
+      "pressuredThrows": 11,
+      "pressuredResetPct": 54.54545454545455,
+      "types": {
+        "standard": {
+          "attempts": 1212,
+          "completions": 1031
+        },
+        "dump_swing": {
+          "attempts": 481,
+          "completions": 398
+        },
+        "huck": {
+          "attempts": 93,
+          "completions": 79
+        },
+        "over_the_top": {
+          "attempts": 12,
+          "completions": 10
+        }
+      },
+      "stallHistogram": {
+        "0": 157,
+        "1": 312,
+        "2": 676,
+        "3": 524,
+        "4": 118,
+        "5": 8,
+        "6": 2,
+        "8": 1
+      },
+      "turnoverLocations": {
+        "ownThird": 85,
+        "middleThird": 118,
+        "attackingThird": 77,
+        "missing": 0
+      },
+      "diagnoses": {
+        "completed": 1518,
+        "unknown_no_contact": 136,
+        "block": 104,
+        "boundary": 28,
+        "drop": 12
+      },
+      "segments": {
+        "15+mph|skill<80|long": {
+          "attempts": 65,
+          "completions": 54
+        },
+        "15+mph|skill80+|short": {
+          "attempts": 133,
+          "completions": 112
+        },
+        "15+mph|skill80+|long": {
+          "attempts": 43,
+          "completions": 37
+        },
+        "15+mph|skill<80|mid": {
+          "attempts": 350,
+          "completions": 293
+        },
+        "15+mph|skill<80|short": {
+          "attempts": 274,
+          "completions": 227
+        },
+        "15+mph|skill80+|mid": {
+          "attempts": 137,
+          "completions": 116
+        },
+        "7-15mph|skill<80|mid": {
+          "attempts": 177,
+          "completions": 157
+        },
+        "7-15mph|skill80+|short": {
+          "attempts": 119,
+          "completions": 96
+        },
+        "7-15mph|skill80+|mid": {
+          "attempts": 75,
+          "completions": 65
+        },
+        "7-15mph|skill80+|long": {
+          "attempts": 31,
+          "completions": 22
+        },
+        "7-15mph|skill<80|short": {
+          "attempts": 145,
+          "completions": 121
+        },
+        "7-15mph|skill<80|long": {
+          "attempts": 26,
+          "completions": 25
+        },
+        "0-7mph|skill80+|mid": {
+          "attempts": 33,
+          "completions": 32
+        },
+        "0-7mph|skill80+|long": {
+          "attempts": 9,
+          "completions": 7
+        },
+        "0-7mph|skill80+|short": {
+          "attempts": 28,
+          "completions": 23
+        },
+        "0-7mph|skill<80|mid": {
+          "attempts": 74,
+          "completions": 66
+        },
+        "0-7mph|skill<80|short": {
+          "attempts": 64,
+          "completions": 53
+        },
+        "0-7mph|skill<80|long": {
+          "attempts": 15,
+          "completions": 12
+        }
+      },
+      "recoveredTouches": 57,
+      "multiTouchThrows": 69,
+      "bodyExposure": {
+        "flightFrames": 106688,
+        "overlapFrames": 22259,
+        "overlappingPairs": 27223
+      },
+      "overlapFramePct": 20.86363977204559
+    },
+    {
+      "matches": 8,
+      "msPerMatch": 20555.634425,
+      "homeMargin": -5.375,
+      "meanInitialWindMph": 13.5,
+      "completionPct": 84.99278499278499,
+      "holdPct": 48.63387978142077,
+      "cleanHoldPct": 22.950819672131146,
+      "throwsPerPoint": 11.360655737704919,
+      "turnoversPerPoint": 1.7049180327868851,
+      "blocksPerMatch": 15.875,
+      "dropsPerMatch": 1.25,
+      "throwawaysPerMatch": 21.875,
+      "stallOutsPerMatch": 0,
+      "framesPerMatch": 50414.75,
+      "playerSnapshotsPerMatch": 705806.5,
+      "throwLimits": 0,
+      "completedDistanceM": {
+        "n": 1767,
+        "p10": 2.9873532655490775,
+        "p50": 9.868685918961072,
+        "p90": 31.30862672533306,
+        "p99": 48.26504646254845,
+        "shortPct": 50.65082059988681,
+        "longPct": 13.52574985851726
+      },
+      "holdMs": {
+        "n": 2079,
+        "p10": 1260,
+        "p50": 2080,
+        "p90": 3380,
+        "p99": 4680
+      },
+      "representedPointMs": {
+        "n": 183,
+        "p10": 15060,
+        "p50": 36080,
+        "p90": 75840,
+        "p99": 174740
+      },
+      "possessionThrows": {
+        "n": 495,
+        "p10": 1,
+        "p50": 3,
+        "p90": 8,
+        "p99": 14
+      },
+      "attemptedDistanceM": {
+        "n": 2079,
+        "p10": 5.8997543714706,
+        "p50": 12.295625074349521,
+        "p90": 29.418774728071757,
+        "p99": 45.41182651745243
+      },
+      "possessionMs": {
+        "n": 495,
+        "p10": 4500,
+        "p50": 13360,
+        "p90": 31620,
+        "p99": 45880
+      },
+      "firstThrowAfterTurnoverMs": {
+        "n": 309,
+        "p10": 1500,
+        "p50": 2640,
+        "p90": 4760,
+        "p99": 6100
+      },
+      "estimatedPointMs": {
+        "n": 0,
+        "p10": null,
+        "p50": null,
+        "p90": null,
+        "p99": null
+      },
+      "pressuredThrows": 29,
+      "pressuredResetPct": 44.827586206896555,
+      "types": {
+        "standard": {
+          "attempts": 1379,
+          "completions": 1172
+        },
+        "dump_swing": {
+          "attempts": 556,
+          "completions": 469
+        },
+        "huck": {
+          "attempts": 132,
+          "completions": 114
+        },
+        "over_the_top": {
+          "attempts": 12,
+          "completions": 12
+        }
+      },
+      "stallHistogram": {
+        "0": 197,
+        "1": 341,
+        "2": 772,
+        "3": 561,
+        "4": 179,
+        "5": 23,
+        "6": 4,
+        "7": 2
+      },
+      "turnoverLocations": {
+        "ownThird": 70,
+        "middleThird": 148,
+        "attackingThird": 94,
+        "missing": 0
+      },
+      "diagnoses": {
+        "completed": 1767,
+        "boundary": 29,
+        "block": 125,
+        "unknown_no_contact": 148,
+        "drop": 10
+      },
+      "segments": {
+        "15+mph|skill<80|mid": {
+          "attempts": 280,
+          "completions": 239
+        },
+        "15+mph|skill80+|mid": {
+          "attempts": 169,
+          "completions": 139
+        },
+        "15+mph|skill<80|short": {
+          "attempts": 230,
+          "completions": 192
+        },
+        "15+mph|skill80+|short": {
+          "attempts": 114,
+          "completions": 98
+        },
+        "15+mph|skill80+|long": {
+          "attempts": 70,
+          "completions": 60
+        },
+        "15+mph|skill<80|long": {
+          "attempts": 55,
+          "completions": 42
+        },
+        "7-15mph|skill<80|mid": {
+          "attempts": 224,
+          "completions": 201
+        },
+        "7-15mph|skill80+|mid": {
+          "attempts": 147,
+          "completions": 128
+        },
+        "7-15mph|skill80+|short": {
+          "attempts": 108,
+          "completions": 86
+        },
+        "7-15mph|skill80+|long": {
+          "attempts": 78,
+          "completions": 71
+        },
+        "7-15mph|skill<80|short": {
+          "attempts": 235,
+          "completions": 191
+        },
+        "7-15mph|skill<80|long": {
+          "attempts": 61,
+          "completions": 54
+        },
+        "0-7mph|skill80+|mid": {
+          "attempts": 72,
+          "completions": 62
+        },
+        "0-7mph|skill80+|long": {
+          "attempts": 25,
+          "completions": 24
+        },
+        "0-7mph|skill80+|short": {
+          "attempts": 50,
+          "completions": 43
+        },
+        "0-7mph|skill<80|mid": {
+          "attempts": 82,
+          "completions": 69
+        },
+        "0-7mph|skill<80|long": {
+          "attempts": 30,
+          "completions": 25
+        },
+        "0-7mph|skill<80|short": {
+          "attempts": 49,
+          "completions": 43
+        }
+      },
+      "recoveredTouches": 66,
+      "multiTouchThrows": 77,
+      "bodyExposure": {
+        "flightFrames": 142682,
+        "overlapFrames": 14112,
+        "overlappingPairs": 15845
+      },
+      "overlapFramePct": 9.890525784611935
+    },
+    {
+      "matches": 8,
+      "msPerMatch": 23217.842837499993,
+      "homeMargin": -2.375,
+      "meanInitialWindMph": 20,
+      "completionPct": 85.7849196538937,
+      "holdPct": 47.20812182741117,
+      "cleanHoldPct": 24.873096446700508,
+      "throwsPerPoint": 12.319796954314722,
+      "turnoversPerPoint": 1.751269035532995,
+      "blocksPerMatch": 17.75,
+      "dropsPerMatch": 1.375,
+      "throwawaysPerMatch": 24,
+      "stallOutsPerMatch": 0,
+      "framesPerMatch": 60956.875,
+      "playerSnapshotsPerMatch": 853396.25,
+      "throwLimits": 1,
+      "completedDistanceM": {
+        "n": 2082,
+        "p10": 3.2868956601977066,
+        "p50": 8.536748988883783,
+        "p90": 26.12431444609337,
+        "p99": 48.05282779539241,
+        "shortPct": 57.732949087415946,
+        "longPct": 11.047070124879923
+      },
+      "holdMs": {
+        "n": 2427,
+        "p10": 1300,
+        "p50": 2240,
+        "p90": 3460,
+        "p99": 4200
+      },
+      "representedPointMs": {
+        "n": 197,
+        "p10": 14420,
+        "p50": 36260,
+        "p90": 91220,
+        "p99": 185560
+      },
+      "possessionThrows": {
+        "n": 542,
+        "p10": 1,
+        "p50": 3,
+        "p90": 9,
+        "p99": 21
+      },
+      "attemptedDistanceM": {
+        "n": 2427,
+        "p10": 6.050237705763487,
+        "p50": 11.25219049306027,
+        "p90": 27.89956152010307,
+        "p99": 44.29612768081139
+      },
+      "possessionMs": {
+        "n": 542,
+        "p10": 4120,
+        "p50": 13680,
+        "p90": 33800,
+        "p99": 72620
+      },
+      "firstThrowAfterTurnoverMs": {
+        "n": 341,
+        "p10": 1640,
+        "p50": 2880,
+        "p90": 4760,
+        "p99": 6160
+      },
+      "estimatedPointMs": {
+        "n": 0,
+        "p10": null,
+        "p50": null,
+        "p90": null,
+        "p99": null
+      },
+      "pressuredThrows": 18,
+      "pressuredResetPct": 72.22222222222223,
+      "types": {
+        "standard": {
+          "attempts": 1472,
+          "completions": 1240
+        },
+        "dump_swing": {
+          "attempts": 800,
+          "completions": 713
+        },
+        "huck": {
+          "attempts": 141,
+          "completions": 115
+        },
+        "over_the_top": {
+          "attempts": 14,
+          "completions": 14
+        }
+      },
+      "stallHistogram": {
+        "0": 196,
+        "1": 335,
+        "2": 868,
+        "3": 707,
+        "4": 303,
+        "5": 16,
+        "6": 2
+      },
+      "turnoverLocations": {
+        "ownThird": 80,
+        "middleThird": 147,
+        "attackingThird": 118,
+        "missing": 0
+      },
+      "diagnoses": {
+        "completed": 2082,
+        "unknown_no_contact": 157,
+        "block": 136,
+        "drop": 11,
+        "boundary": 41
+      },
+      "segments": {
+        "15+mph|skill80+|mid": {
+          "attempts": 392,
+          "completions": 337
+        },
+        "15+mph|skill80+|short": {
+          "attempts": 385,
+          "completions": 332
+        },
+        "15+mph|skill80+|long": {
+          "attempts": 152,
+          "completions": 128
+        },
+        "15+mph|skill<80|short": {
+          "attempts": 654,
+          "completions": 577
+        },
+        "15+mph|skill<80|mid": {
+          "attempts": 677,
+          "completions": 568
+        },
+        "15+mph|skill<80|long": {
+          "attempts": 167,
+          "completions": 140
+        }
+      },
+      "recoveredTouches": 65,
+      "multiTouchThrows": 85,
+      "bodyExposure": {
+        "flightFrames": 168759,
+        "overlapFrames": 17736,
+        "overlappingPairs": 20461
+      },
+      "overlapFramePct": 10.509661706931185
+    }
+  ]
+}

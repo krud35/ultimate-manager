@@ -1,0 +1,1692 @@
+{
+  "pausedAt": "2026-09-09T16:18:50.029Z",
+  "completed": [
+    {
+      "id": "effects-00299",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00300",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00301",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00302",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00303",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00304",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00305",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00306",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00307",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00308",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00309",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00310",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00311",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00312",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00313",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00314",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00315",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00316",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00317",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00318",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00319",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00320",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00321",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00322",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00323",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00324",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00325",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00326",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00327",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00328",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00329",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00330",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00331",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00332",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00333",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00334",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00335",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00336",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00337",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00338",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00339",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00340",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00341",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00342",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00343",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00344",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00345",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00346",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00347",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00348",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00349",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00350",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00351",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00352",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00353",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00354",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00355",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00356",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00357",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00358",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00359",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00360",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00361",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00362",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00363",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00364",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00365",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00366",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00367",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00368",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00369",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00370",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00371",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00372",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00373",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00374",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00375",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00376",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00377",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00378",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00379",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00380",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00381",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00382",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00383",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00384",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00385",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00386",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00387",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00388",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00389",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00390",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00391",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00392",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00393",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00394",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00395",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00396",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00397",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00398",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00399",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00400",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00401",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00431",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00432",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00433",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00434",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00435",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00436",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00437",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00438",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00439",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00440",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00441",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00442",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00443",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00444",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "effects-00445",
+      "phase": "effects",
+      "status": "complete"
+    },
+    {
+      "id": "integrity-00001",
+      "phase": "integrity",
+      "status": "complete"
+    },
+    {
+      "id": "integrity-00002",
+      "phase": "integrity",
+      "status": "complete"
+    },
+    {
+      "id": "integrity-00003",
+      "phase": "integrity",
+      "status": "complete"
+    },
+    {
+      "id": "integrity-00004",
+      "phase": "integrity",
+      "status": "complete_external_check"
+    },
+    {
+      "id": "reference-00038",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00039",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00040",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00041",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00042",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00043",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00044",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00045",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00046",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00047",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00048",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00049",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00050",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00051",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00052",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00053",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00054",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00055",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00056",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00057",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00058",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00059",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00060",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00061",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00062",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00063",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00064",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00065",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00066",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00067",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00068",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00069",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00070",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00071",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00072",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00073",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00074",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00075",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00076",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "reference-00077",
+      "phase": "reference",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00005",
+      "phase": "situations",
+      "status": "complete_external_check"
+    },
+    {
+      "id": "situations-00006",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00007",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00008",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00009",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00010",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00011",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00012",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00013",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00014",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00015",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00016",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00017",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00018",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00019",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00020",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00021",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00022",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00023",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00024",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00025",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00026",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00027",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00028",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00029",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00030",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00031",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00032",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00033",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00034",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00035",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "situations-00036",
+      "phase": "situations",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00158",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00159",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00160",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00161",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00162",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00163",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00164",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00165",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00166",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00167",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00168",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00169",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00170",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00171",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00172",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00173",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00174",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00175",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00176",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00177",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00178",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00179",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00180",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00181",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00182",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00183",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00184",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00185",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00186",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00187",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00188",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00189",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00190",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00191",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00192",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00193",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00194",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00195",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00196",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00197",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00198",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00199",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00200",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00201",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00202",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00203",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00204",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00205",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00206",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00207",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00208",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00209",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00210",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00211",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00212",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00213",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00214",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00215",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00216",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00217",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00218",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00219",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00220",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00221",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00222",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00223",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00224",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00225",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00226",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00227",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00228",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00229",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00230",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00231",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00232",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00233",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00234",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00235",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00236",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00237",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00238",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00239",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00240",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00241",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00242",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00243",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00244",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00245",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00246",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00247",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00248",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00249",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00250",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00251",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00252",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00253",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00254",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00255",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00256",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00257",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00258",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00259",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00260",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00261",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00262",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00263",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00264",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00265",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00266",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00267",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00268",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00269",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00270",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00271",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00272",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00273",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00274",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00275",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00276",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00277",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00278",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00279",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00280",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00281",
+      "phase": "tactics",
+      "status": "complete"
+    },
+    {
+      "id": "tactics-00282",
+      "phase": "tactics",
+      "status": "complete_external_check"
+    },
+    {
+      "id": "tactics-00283",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00284",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00285",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00286",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00287",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00288",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00289",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00290",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00291",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00292",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00293",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00294",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00295",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00296",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00297",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    },
+    {
+      "id": "tactics-00298",
+      "phase": "tactics",
+      "status": "complete_point_sample"
+    }
+  ],
+  "other": [
+    {
+      "id": "situations-00037",
+      "phase": "situations",
+      "status": "censored"
+    }
+  ],
+  "interrupted": [
+    "effects-00402",
+    "effects-00403"
+  ],
+  "policy": "Do not restart automatically. Preserve frozen snapshot and all results. Interrupted jobs must restart from their original seeds; point checkpoints are evidence, not complete executable state."
+}

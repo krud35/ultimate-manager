@@ -1,0 +1,121 @@
+{
+  "id": "effects-00443",
+  "phase": "effects",
+  "kind": "effects",
+  "seed": 194239826,
+  "observe": true,
+  "state": "morale",
+  "variants": [
+    {
+      "state": "morale",
+      "value": 35
+    },
+    {
+      "state": "morale",
+      "value": 65
+    },
+    {
+      "state": "morale",
+      "value": 90
+    }
+  ],
+  "cases": [
+    {
+      "id": "open",
+      "hard": false,
+      "stall": 1,
+      "seed": 191061709
+    },
+    {
+      "id": "pressure",
+      "hard": true,
+      "stall": 8,
+      "seed": 191061710
+    },
+    {
+      "id": "open",
+      "hard": false,
+      "stall": 1,
+      "seed": 191061711
+    },
+    {
+      "id": "pressure",
+      "hard": true,
+      "stall": 8,
+      "seed": 191061712
+    },
+    {
+      "id": "open",
+      "hard": false,
+      "stall": 1,
+      "seed": 191061713
+    },
+    {
+      "id": "pressure",
+      "hard": true,
+      "stall": 8,
+      "seed": 191061714
+    },
+    {
+      "id": "open",
+      "hard": false,
+      "stall": 1,
+      "seed": 191061715
+    },
+    {
+      "id": "pressure",
+      "hard": true,
+      "stall": 8,
+      "seed": 191061716
+    },
+    {
+      "id": "open",
+      "hard": false,
+      "stall": 1,
+      "seed": 191061717
+    },
+    {
+      "id": "pressure",
+      "hard": true,
+      "stall": 8,
+      "seed": 191061718
+    },
+    {
+      "id": "open",
+      "hard": false,
+      "stall": 1,
+      "seed": 191061719
+    },
+    {
+      "id": "pressure",
+      "hard": true,
+      "stall": 8,
+      "seed": 191061720
+    },
+    {
+      "id": "open",
+      "hard": false,
+      "stall": 1,
+      "seed": 191061721
+    },
+    {
+      "id": "pressure",
+      "hard": true,
+      "stall": 8,
+      "seed": 191061722
+    },
+    {
+      "id": "open",
+      "hard": false,
+      "stall": 1,
+      "seed": 191061723
+    },
+    {
+      "id": "pressure",
+      "hard": true,
+      "stall": 8,
+      "seed": 191061724
+    }
+  ],
+  "budgetMs": 60000
+}

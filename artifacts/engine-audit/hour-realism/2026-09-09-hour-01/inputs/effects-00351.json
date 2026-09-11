@@ -1,0 +1,89 @@
+{
+  "id": "effects-00351",
+  "phase": "effects",
+  "kind": "effects",
+  "seed": 193511278,
+  "observe": true,
+  "attribute": "mental.spatialAwareness",
+  "repeat": 1,
+  "variants": [
+    {
+      "category": "mental",
+      "key": "spatialAwareness",
+      "delta": 0
+    },
+    {
+      "category": "mental",
+      "key": "spatialAwareness",
+      "delta": -10
+    },
+    {
+      "category": "mental",
+      "key": "spatialAwareness",
+      "delta": 10
+    }
+  ],
+  "cases": [
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031713
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041713
+    },
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031714
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041714
+    },
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031715
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041715
+    },
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031716
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041716
+    }
+  ],
+  "budgetMs": 60000
+}

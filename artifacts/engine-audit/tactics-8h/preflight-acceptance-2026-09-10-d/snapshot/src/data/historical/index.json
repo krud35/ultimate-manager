@@ -1,0 +1,72 @@
+{
+  "years": [
+    {
+      "year": 2013,
+      "realTeamCount": 12,
+      "file": "season-2013.json"
+    },
+    {
+      "year": 2014,
+      "realTeamCount": 17,
+      "file": "season-2014.json"
+    },
+    {
+      "year": 2015,
+      "realTeamCount": 25,
+      "file": "season-2015.json"
+    },
+    {
+      "year": 2016,
+      "realTeamCount": 26,
+      "file": "season-2016.json"
+    },
+    {
+      "year": 2017,
+      "realTeamCount": 24,
+      "file": "season-2017.json"
+    },
+    {
+      "year": 2018,
+      "realTeamCount": 23,
+      "file": "season-2018.json"
+    },
+    {
+      "year": 2019,
+      "realTeamCount": 21,
+      "file": "season-2019.json"
+    },
+    {
+      "year": 2020,
+      "realTeamCount": 21,
+      "file": "season-2020.json",
+      "note": "Sezon 2020 odwołany (COVID) — składy na bazie 2019 / dostępnych stron Almanac."
+    },
+    {
+      "year": 2021,
+      "realTeamCount": 22,
+      "file": "season-2021.json"
+    },
+    {
+      "year": 2022,
+      "realTeamCount": 25,
+      "file": "season-2022.json"
+    },
+    {
+      "year": 2023,
+      "realTeamCount": 24,
+      "file": "season-2023.json"
+    },
+    {
+      "year": 2024,
+      "realTeamCount": 24,
+      "file": "season-2024.json"
+    },
+    {
+      "year": 2025,
+      "realTeamCount": 24,
+      "file": "season-2025.json"
+    }
+  ],
+  "source": "ufaalmanac.com (UFA Stats / watchufa)",
+  "generatedAt": "2026-08-07T17:37:52.533Z"
+}

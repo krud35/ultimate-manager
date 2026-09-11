@@ -1,0 +1,26 @@
+{
+  "id": "tactics-00279",
+  "phase": "tactics",
+  "kind": "setups",
+  "seed": 192941110,
+  "observe": true,
+  "force": "force_sideline",
+  "awayPatch": {
+    "force": "force_sideline"
+  },
+  "cases": [
+    {
+      "id": "force-force_sideline-33",
+      "y": 33,
+      "hard": true,
+      "seed": 190961709
+    },
+    {
+      "id": "force-force_sideline-33",
+      "y": 33,
+      "hard": true,
+      "seed": 190961710
+    }
+  ],
+  "budgetMs": 60000
+}

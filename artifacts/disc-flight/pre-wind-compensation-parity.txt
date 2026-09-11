@@ -1,0 +1,25 @@
+fast: 40 meczów, pełny tick: 20 meczów…
+
+metryka                        FAST        PEŁNY             cel   rozjazd
+------------------------------------------------------------------------------------
+completion%                   85.01 XX     85.89 XX        90–93   0.88
+rzuty krótkie 0-10m%          39.93 XX     48.71 XX        50–60   8.78
+rzuty średnie 10-25m%         51.38 XX     40.59 XX        30–35   10.79
+rzuty długie 25m+%             8.69 ok     10.70 XX         5–10   2.01
+śr. dystans rzutu m           12.53       12.58              —   0.06
+hold%                         51.80 XX     47.70 XX        70–85   4.10
+udział standard%              62.52 XX     71.07 XX        45–62   8.55
+udział dump%                  20.83 XX     21.82 XX        22–38   1.00
+udział huck%                  13.09 ok      6.76 XX         7–16   6.33
+udział OTT%                    3.56 ok      0.35 XX        0.5–4   3.21
+turnovery/punkt                1.19 XX      1.60 XX    0.45–0.85   0.42
+rzutów/punkt                   7.91 ok     11.36 ok         7–12   3.45
+stall przy rzucie (med)        2.00 ok      2.00 ok          2–4   0.00
+stall-outy/mecz                0.00 ok      0.00 ok        0–1.5   0.00
+bloki/mecz                    12.88 ok      9.50 ok         5–16   3.38
+------------------------------------------------------------------------------------
+wydajność: fast 92 ms/mecz, pełny 5055 ms/mecz (54.8× wolniej)
+punktów/mecz: fast 25.7, pełny 23.9   |   huck completion: fast 66.04%, pełny 76.84%
+
+komórek poza orientacyjnym pasmem: 17 / 28 zmierzonych
+początkowy wiatr: fast 10.68 mph, pełny 10.00 mph; dystanse obejmują udane podania

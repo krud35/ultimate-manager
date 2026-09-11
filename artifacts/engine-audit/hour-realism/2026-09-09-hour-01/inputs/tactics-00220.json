@@ -1,0 +1,24 @@
+{
+  "id": "tactics-00220",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190951709,
+  "observe": true,
+  "points": 1,
+  "adaptive": false,
+  "rotate": false,
+  "directive": "coverageShade",
+  "value": 0,
+  "pair": "coach-coverageShade-0",
+  "homePatch": {
+    "directives": {
+      "coverageShade": 0
+    }
+  },
+  "awayPatch": {
+    "directives": {
+      "coverageShade": 0
+    }
+  },
+  "budgetMs": 60000
+}

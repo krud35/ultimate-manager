@@ -1,0 +1,26 @@
+{
+  "scope": "Review of outside-target catches; target location alone does not determine legality",
+  "cases": [
+    {
+      "seed": 2163665171,
+      "layer": "execution",
+      "missM": 3.8022541742306206,
+      "contact": {
+        "x": 48.256065139416734,
+        "y": -0.4361474742083251,
+        "z": 1.2512269278533121,
+        "ms": 1120,
+        "playerId": 2
+      },
+      "toeIn": {
+        "x": 48.38780726578055,
+        "y": 0.1911411562467436
+      },
+      "contributors": [
+        "aim_error",
+        "arc_error",
+        "curve_error"
+      ]
+    }
+  ]
+}

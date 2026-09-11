@@ -1,0 +1,5 @@
+{
+  "at": "2026-09-09T23:49:45.291Z",
+  "change": "Corrected aggregate maxSpeed to maximum across matches instead of sum. Simulation results and completion counts unchanged.",
+  "simulationRerun": false
+}

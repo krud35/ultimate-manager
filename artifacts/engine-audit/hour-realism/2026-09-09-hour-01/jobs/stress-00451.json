@@ -1,0 +1,17 @@
+{
+  "job": {
+    "id": "stress-00451",
+    "phase": "stress",
+    "kind": "check",
+    "seed": 194303178,
+    "observe": true,
+    "script": "check-arrival-window.mjs",
+    "budgetMs": 60000
+  },
+  "status": "complete_external_check",
+  "code": 0,
+  "log": "logs/stress-00451.log",
+  "timings": {
+    "wallMs": 406.66320000000997
+  }
+}

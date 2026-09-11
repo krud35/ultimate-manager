@@ -1,0 +1,26 @@
+{
+  "id": "tactics-00276",
+  "phase": "tactics",
+  "kind": "setups",
+  "seed": 192917353,
+  "observe": true,
+  "force": "force_middle",
+  "awayPatch": {
+    "force": "force_middle"
+  },
+  "cases": [
+    {
+      "id": "force-force_middle-4",
+      "y": 4,
+      "hard": true,
+      "seed": 190961709
+    },
+    {
+      "id": "force-force_middle-4",
+      "y": 4,
+      "hard": true,
+      "seed": 190961710
+    }
+  ],
+  "budgetMs": 60000
+}

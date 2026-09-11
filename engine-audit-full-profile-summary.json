@@ -1,0 +1,208 @@
+{
+  "mode": "full",
+  "durationS": 43.149124,
+  "self": [
+    {
+      "pct": 7.49,
+      "name": "|src/matchEngine/ai/spaceMap.js|436"
+    },
+    {
+      "pct": 6.4,
+      "name": "(garbage collector)||0"
+    },
+    {
+      "pct": 5.93,
+      "name": "threatCellForMark|src/matchEngine/ai/spaceMap.js|391"
+    },
+    {
+      "pct": 5.24,
+      "name": "perceiveSpaceMap|src/matchEngine/ai/spaceMap.js|427"
+    },
+    {
+      "pct": 4.6,
+      "name": "buildSpaceMap|src/matchEngine/ai/spaceMap.js|274"
+    },
+    {
+      "pct": 4.26,
+      "name": "tickCutterBrain|src/matchEngine/ai/cutterBrain.js|635"
+    },
+    {
+      "pct": 4.17,
+      "name": "applyTickStaminaDrain|src/matchEngine/stamina.js|375"
+    },
+    {
+      "pct": 4.07,
+      "name": "runContinuousThrowSimulation|src/matchEngine/ai/actionSimulator.js|767"
+    },
+    {
+      "pct": 3.61,
+      "name": "tickDefenderBrain|src/matchEngine/ai/defenderBrain.js|238"
+    },
+    {
+      "pct": 3.21,
+      "name": "applyStaminaFromMotionTrace|src/matchEngine/stamina.js|428"
+    },
+    {
+      "pct": 3.04,
+      "name": "subStat|src/matchEngine/ai/statFormulas.js|8"
+    },
+    {
+      "pct": 2.79,
+      "name": "moveToward|src/matchEngine/ai/defenderBrain.js|131"
+    },
+    {
+      "pct": 2.73,
+      "name": "occupancyContribution|src/matchEngine/ai/spaceMap.js|125"
+    },
+    {
+      "pct": 2.37,
+      "name": "|src/matchEngine/ai/actionSimulator.js|1419"
+    },
+    {
+      "pct": 2.06,
+      "name": "|src/matchEngine/ai/actionSimulator.js|1093"
+    },
+    {
+      "pct": 1.91,
+      "name": "sprintSpeedMps|src/matchEngine/ai/flightKinematics.js|81"
+    },
+    {
+      "pct": 1.65,
+      "name": "integrateAgentMotion|src/matchEngine/ai/playerMovement.js|139"
+    },
+    {
+      "pct": 1.6,
+      "name": "tickDefenseAgent|src/matchEngine/ai/defenderBrain.js|941"
+    },
+    {
+      "pct": 1.42,
+      "name": "snapshotFrame|src/matchEngine/ai/actionSimulator.js|691"
+    },
+    {
+      "pct": 1.38,
+      "name": "evaluatePlayerSituation|src/matchEngine/ai/spatialEvaluator.js|30"
+    },
+    {
+      "pct": 1.22,
+      "name": "getSubStat|src/models/playerStats.js|265"
+    },
+    {
+      "pct": 1.13,
+      "name": "mergeTraitAndCoachMods|src/matchEngine/coachDirectives.js|576"
+    },
+    {
+      "pct": 1.02,
+      "name": "scanThrowOptions|src/matchEngine/ai/throwerBrain.js|598"
+    },
+    {
+      "pct": 1.02,
+      "name": "maxSpeedMps|src/matchEngine/ai/statFormulas.js|14"
+    },
+    {
+      "pct": 1,
+      "name": "hasNestedShape|src/models/playerStats.js|156"
+    }
+  ],
+  "inclusive": [
+    {
+      "pct": 100,
+      "name": "(root)||0"
+    },
+    {
+      "pct": 93.15,
+      "name": "evaluate||0"
+    },
+    {
+      "pct": 93.15,
+      "name": "run|node:internal/modules/esm/module_job|428"
+    },
+    {
+      "pct": 93.05,
+      "name": "|scripts/engine-parity.mjs|1"
+    },
+    {
+      "pct": 93.03,
+      "name": "measure|scripts/engine-parity.mjs|103"
+    },
+    {
+      "pct": 93.01,
+      "name": "simulateMatch|src/matchEngine/matchSession.js|452"
+    },
+    {
+      "pct": 92.87,
+      "name": "playNextPoint|src/matchEngine/matchSession.js|284"
+    },
+    {
+      "pct": 90.44,
+      "name": "simulatePoint|src/matchEngine/point.js|108"
+    },
+    {
+      "pct": 82.58,
+      "name": "runThrowMotionSimulation|src/matchEngine/ai/motionPipeline.js|7"
+    },
+    {
+      "pct": 82.12,
+      "name": "runContinuousThrowSimulation|src/matchEngine/ai/actionSimulator.js|767"
+    },
+    {
+      "pct": 33.54,
+      "name": "tickDefenseAgent|src/matchEngine/ai/defenderBrain.js|941"
+    },
+    {
+      "pct": 28.61,
+      "name": "tickDefenderBrain|src/matchEngine/ai/defenderBrain.js|238"
+    },
+    {
+      "pct": 21.09,
+      "name": "|src/matchEngine/ai/actionSimulator.js|1468"
+    },
+    {
+      "pct": 15.39,
+      "name": "|src/matchEngine/ai/actionSimulator.js|1187"
+    },
+    {
+      "pct": 13.93,
+      "name": "tickCutterBrain|src/matchEngine/ai/cutterBrain.js|635"
+    },
+    {
+      "pct": 12.87,
+      "name": "perceiveSpaceMap|src/matchEngine/ai/spaceMap.js|427"
+    },
+    {
+      "pct": 12.59,
+      "name": "|src/matchEngine/ai/actionSimulator.js|1419"
+    },
+    {
+      "pct": 9.25,
+      "name": "scanThrowOptions|src/matchEngine/ai/throwerBrain.js|598"
+    },
+    {
+      "pct": 8.76,
+      "name": "|src/matchEngine/ai/actionSimulator.js|1093"
+    },
+    {
+      "pct": 8.62,
+      "name": "buildSpaceMap|src/matchEngine/ai/spaceMap.js|274"
+    },
+    {
+      "pct": 7.49,
+      "name": "|src/matchEngine/ai/spaceMap.js|436"
+    },
+    {
+      "pct": 6.88,
+      "name": "applyTickStaminaDrain|src/matchEngine/stamina.js|375"
+    },
+    {
+      "pct": 6.64,
+      "name": "applyThrowStaminaFromTrace|src/matchEngine/point.js|234"
+    },
+    {
+      "pct": 6.57,
+      "name": "applyStaminaFromMotionTrace|src/matchEngine/stamina.js|428"
+    },
+    {
+      "pct": 6.4,
+      "name": "(garbage collector)||0"
+    }
+  ]
+}

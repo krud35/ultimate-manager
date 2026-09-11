@@ -1,0 +1,357 @@
+[
+  {
+    "category": "throwing",
+    "key": "backhand",
+    "label": "Backhand",
+    "references": [
+      "src/matchEngine/ai/flightKinematics.js",
+      "src/matchEngine/ai/throwerBrain.js",
+      "src/matchEngine/throwTechnique.js",
+      "src/matchEngine/wind.js"
+    ]
+  },
+  {
+    "category": "throwing",
+    "key": "forehand",
+    "label": "Forehand",
+    "references": [
+      "src/matchEngine/ai/flightKinematics.js",
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/ai/throwerBrain.js",
+      "src/matchEngine/ai/throwShape.js",
+      "src/matchEngine/throwTechnique.js",
+      "src/matchEngine/wind.js"
+    ]
+  },
+  {
+    "category": "throwing",
+    "key": "huck",
+    "label": "Huck",
+    "references": [
+      "src/matchEngine/ai/flightKinematics.js",
+      "src/matchEngine/ai/throwerBrain.js",
+      "src/matchEngine/aiTacticsAdapt.js",
+      "src/matchEngine/point.js",
+      "src/matchEngine/resolution.js",
+      "src/matchEngine/throwTechnique.js",
+      "src/matchEngine/throwTypes.js",
+      "src/matchEngine/wind.js"
+    ]
+  },
+  {
+    "category": "throwing",
+    "key": "hammer",
+    "label": "Hammer",
+    "references": [
+      "src/matchEngine/ai/flightKinematics.js",
+      "src/matchEngine/ai/throwerBrain.js",
+      "src/matchEngine/throwTechnique.js"
+    ]
+  },
+  {
+    "category": "throwing",
+    "key": "power",
+    "label": "Throwing power",
+    "references": [
+      "src/matchEngine/resolution.js"
+    ]
+  },
+  {
+    "category": "throwing",
+    "key": "touch",
+    "label": "Touch",
+    "references": [
+      "src/matchEngine/ai/flightKinematics.js",
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/resolution.js"
+    ]
+  },
+  {
+    "category": "throwing",
+    "key": "releaseControl",
+    "label": "Release control",
+    "references": [
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/resolution.js"
+    ]
+  },
+  {
+    "category": "throwing",
+    "key": "windControl",
+    "label": "Wind control",
+    "references": [
+      "src/matchEngine/ai/throwShape.js",
+      "src/matchEngine/resolution.js",
+      "src/matchEngine/wind.js"
+    ]
+  },
+  {
+    "category": "physical",
+    "key": "speed",
+    "label": "Speed",
+    "references": [
+      "src/matchEngine/ai/cutterBrain.js",
+      "src/matchEngine/ai/spatialEvaluator.js",
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/aiLineup.js",
+      "src/matchEngine/autoSub.js",
+      "src/matchEngine/separation.js"
+    ]
+  },
+  {
+    "category": "physical",
+    "key": "endurance",
+    "label": "Endurance",
+    "references": [
+      "src/matchEngine/aiLineup.js",
+      "src/matchEngine/stamina.js"
+    ]
+  },
+  {
+    "category": "physical",
+    "key": "agility",
+    "label": "Agility",
+    "references": [
+      "src/matchEngine/ai/actionSimulator.js",
+      "src/matchEngine/ai/playerMovement.js",
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/resolution.js",
+      "src/matchEngine/stamina.js"
+    ]
+  },
+  {
+    "category": "physical",
+    "key": "jump",
+    "label": "Jump",
+    "references": [
+      "src/matchEngine/ai/actionSimulator.js",
+      "src/matchEngine/ai/statFormulas.js"
+    ]
+  },
+  {
+    "category": "physical",
+    "key": "acceleration",
+    "label": "Acceleration",
+    "references": [
+      "src/matchEngine/ai/discIntercept.js",
+      "src/matchEngine/ai/playerMovement.js",
+      "src/matchEngine/separation.js"
+    ]
+  },
+  {
+    "category": "physical",
+    "key": "balance",
+    "label": "Balance",
+    "references": [
+      "src/matchEngine/ai/playerMovement.js"
+    ]
+  },
+  {
+    "category": "mental",
+    "key": "vision",
+    "label": "Vision",
+    "references": [
+      "src/matchEngine/ai/actionSimulator.js",
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/ai/tacticsBehavior.js",
+      "src/matchEngine/ai/throwerBrain.js",
+      "src/matchEngine/ai/throwerDecision.js",
+      "src/matchEngine/ai/throwShape.js",
+      "src/matchEngine/aiLineup.js",
+      "src/matchEngine/resolution.js",
+      "src/matchEngine/stall.js",
+      "src/matchEngine/throwTypes.js"
+    ]
+  },
+  {
+    "category": "mental",
+    "key": "composure",
+    "label": "Composure",
+    "references": [
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/ai/tacticsBehavior.js",
+      "src/matchEngine/ai/throwerBrain.js",
+      "src/matchEngine/fastPossession.js",
+      "src/matchEngine/stall.js",
+      "src/matchEngine/wind.js"
+    ]
+  },
+  {
+    "category": "mental",
+    "key": "reactions",
+    "label": "Reactions",
+    "references": [
+      "src/matchEngine/ai/actionSimulator.js",
+      "src/matchEngine/ai/cutterBrain.js",
+      "src/matchEngine/ai/defenderBrain.js",
+      "src/matchEngine/ai/flightKinematics.js",
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/ai/tacticsBehavior.js",
+      "src/matchEngine/aiLineup.js",
+      "src/matchEngine/resolution.js",
+      "src/matchEngine/stall.js"
+    ]
+  },
+  {
+    "category": "mental",
+    "key": "decisionMaking",
+    "label": "Decision making",
+    "references": [
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/ai/tacticsBehavior.js",
+      "src/matchEngine/ai/throwerBrain.js",
+      "src/matchEngine/ai/throwerDecision.js",
+      "src/matchEngine/ai/throwShape.js",
+      "src/matchEngine/aiLineup.js",
+      "src/matchEngine/fastPossession.js",
+      "src/matchEngine/resolution.js",
+      "src/matchEngine/stall.js"
+    ]
+  },
+  {
+    "category": "mental",
+    "key": "anticipation",
+    "label": "Anticipation",
+    "references": [
+      "src/matchEngine/ai/cutterBrain.js",
+      "src/matchEngine/ai/flightKinematics.js",
+      "src/matchEngine/separation.js"
+    ]
+  },
+  {
+    "category": "mental",
+    "key": "spatialAwareness",
+    "label": "Spatial awareness",
+    "references": [
+      "src/matchEngine/ai/cutterBrain.js",
+      "src/matchEngine/ai/spaceMap.js",
+      "src/matchEngine/ai/throwerDecision.js"
+    ]
+  },
+  {
+    "category": "offensive",
+    "key": "cutterMovement",
+    "label": "Cutter movement",
+    "references": [
+      "src/matchEngine/ai/cutterBrain.js",
+      "src/matchEngine/aiLineup.js"
+    ]
+  },
+  {
+    "category": "offensive",
+    "key": "handlerMovement",
+    "label": "Handler movement",
+    "references": [
+      "src/matchEngine/aiLineup.js"
+    ]
+  },
+  {
+    "category": "offensive",
+    "key": "offensiveSystemsKnowledge",
+    "label": "Offensive systems",
+    "references": [
+      "src/matchEngine/ai/cutterBrain.js",
+      "src/matchEngine/ai/spaceMap.js",
+      "src/matchEngine/ai/spatialEvaluator.js",
+      "src/matchEngine/aiLineup.js",
+      "src/matchEngine/coachDirectives.js",
+      "src/matchEngine/playerInstructions.js"
+    ]
+  },
+  {
+    "category": "offensive",
+    "key": "catching",
+    "label": "Catching",
+    "references": [
+      "src/matchEngine/ai/actionSimulator.js",
+      "src/matchEngine/ai/cutterBrain.js",
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/aiLineup.js"
+    ]
+  },
+  {
+    "category": "offensive",
+    "key": "cutTiming",
+    "label": "Cut timing",
+    "references": [
+      "src/matchEngine/ai/cutterBrain.js",
+      "src/matchEngine/separation.js"
+    ]
+  },
+  {
+    "category": "offensive",
+    "key": "discReading",
+    "label": "Disc reading",
+    "references": [
+      "src/matchEngine/ai/flightKinematics.js"
+    ]
+  },
+  {
+    "category": "defensive",
+    "key": "defensiveCutterMovement",
+    "label": "Def. cutter",
+    "references": [
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/aiLineup.js"
+    ]
+  },
+  {
+    "category": "defensive",
+    "key": "defensiveHandlerMovement",
+    "label": "Def. handler",
+    "references": [
+      "src/matchEngine/aiLineup.js",
+      "src/matchEngine/stall.js"
+    ]
+  },
+  {
+    "category": "defensive",
+    "key": "defensiveSystemsKnowledge",
+    "label": "Defensive systems",
+    "references": [
+      "src/matchEngine/ai/spaceMap.js",
+      "src/matchEngine/aiLineup.js",
+      "src/matchEngine/coachDirectives.js",
+      "src/matchEngine/playerInstructions.js"
+    ]
+  },
+  {
+    "category": "defensive",
+    "key": "blocking",
+    "label": "Blocking",
+    "references": [
+      "src/matchEngine/ai/actionSimulator.js",
+      "src/matchEngine/ai/statFormulas.js",
+      "src/matchEngine/aiLineup.js",
+      "src/matchEngine/resolution.js",
+      "src/matchEngine/stall.js"
+    ]
+  },
+  {
+    "category": "defensive",
+    "key": "positioning",
+    "label": "Positioning",
+    "references": [
+      "src/matchEngine/ai/defenderBrain.js",
+      "src/matchEngine/playerInstructions.js",
+      "src/matchEngine/separation.js"
+    ]
+  },
+  {
+    "category": "defensive",
+    "key": "marking",
+    "label": "Marking",
+    "references": [
+      "src/matchEngine/ai/defenderBrain.js",
+      "src/matchEngine/resolution.js"
+    ]
+  },
+  {
+    "category": "defensive",
+    "key": "discReading",
+    "label": "Disc reading",
+    "references": [
+      "src/matchEngine/ai/flightKinematics.js"
+    ]
+  }
+]

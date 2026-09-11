@@ -1,0 +1,24 @@
+{
+  "id": "tactics-00216",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190951709,
+  "observe": true,
+  "points": 1,
+  "adaptive": false,
+  "rotate": false,
+  "directive": "possessionTempo",
+  "value": 1,
+  "pair": "coach-possessionTempo-0",
+  "homePatch": {
+    "directives": {
+      "possessionTempo": 1
+    }
+  },
+  "awayPatch": {
+    "directives": {
+      "possessionTempo": 1
+    }
+  },
+  "budgetMs": 60000
+}

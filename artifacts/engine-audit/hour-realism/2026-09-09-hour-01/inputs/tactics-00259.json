@@ -1,0 +1,24 @@
+{
+  "id": "tactics-00259",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190951710,
+  "observe": true,
+  "points": 1,
+  "adaptive": false,
+  "rotate": false,
+  "directive": "cushionDepth",
+  "value": -1,
+  "pair": "coach-cushionDepth-1",
+  "homePatch": {
+    "directives": {
+      "cushionDepth": -1
+    }
+  },
+  "awayPatch": {
+    "directives": {
+      "cushionDepth": -1
+    }
+  },
+  "budgetMs": 60000
+}

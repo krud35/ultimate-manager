@@ -1,0 +1,31 @@
+{
+  "id": "tactics-00291",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190971709,
+  "observe": true,
+  "points": 1,
+  "adaptive": false,
+  "rotate": false,
+  "interaction": [
+    "poachSeeking",
+    "helpDeep"
+  ],
+  "values": [
+    -1,
+    -1
+  ],
+  "homePatch": {
+    "directives": {
+      "poachSeeking": -1,
+      "helpDeep": -1
+    }
+  },
+  "awayPatch": {
+    "directives": {
+      "poachSeeking": -1,
+      "helpDeep": -1
+    }
+  },
+  "budgetMs": 60000
+}

@@ -1,0 +1,89 @@
+{
+  "id": "effects-00404",
+  "phase": "effects",
+  "kind": "effects",
+  "seed": 193930985,
+  "observe": true,
+  "attribute": "throwing.releaseControl",
+  "repeat": 3,
+  "variants": [
+    {
+      "category": "throwing",
+      "key": "releaseControl",
+      "delta": 0
+    },
+    {
+      "category": "throwing",
+      "key": "releaseControl",
+      "delta": -10
+    },
+    {
+      "category": "throwing",
+      "key": "releaseControl",
+      "delta": 10
+    }
+  ],
+  "cases": [
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031721
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041721
+    },
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031722
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041722
+    },
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031723
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041723
+    },
+    {
+      "id": "open-moving",
+      "moving": true,
+      "seed": 191031724
+    },
+    {
+      "id": "pressure-wind",
+      "hard": true,
+      "stall": 5,
+      "wind": {
+        "speedMph": 15,
+        "directionDeg": 90
+      },
+      "seed": 191041724
+    }
+  ],
+  "budgetMs": 60000
+}

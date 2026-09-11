@@ -1,0 +1,17 @@
+{
+  "job": {
+    "id": "situations-00005",
+    "phase": "situations",
+    "kind": "flight",
+    "seed": 190771304,
+    "observe": true,
+    "n": 128,
+    "budgetMs": 180000
+  },
+  "status": "complete_external_check",
+  "code": 0,
+  "log": "logs/situations-00005.log",
+  "timings": {
+    "wallMs": 19499.215200000006
+  }
+}

@@ -1,0 +1,3786 @@
+{
+  "holdout": {
+    "deep-4": {
+      "n": 36,
+      "completion": 93.11489008710079,
+      "conversion": 58.5518102372035,
+      "reset": 94.93212669683258,
+      "hucks": 5.91041061800083,
+      "holdMs": 2736.420572376607,
+      "width": 19.88729432113715,
+      "throwsPerScore": 10.281449893390192,
+      "wins": 20
+    },
+    "isolation-5": {
+      "n": 36,
+      "completion": 93.8715953307393,
+      "conversion": 67.1018276762402,
+      "reset": 96.55172413793103,
+      "hucks": 5.958171206225681,
+      "holdMs": 2608.818093385214,
+      "width": 15.195083580482105,
+      "throwsPerScore": 8,
+      "wins": 28
+    },
+    "pragmatic-4": {
+      "n": 35,
+      "completion": 93.75130181212248,
+      "conversion": 60.317460317460316,
+      "reset": 95.30141843971631,
+      "hucks": 4.332430743595085,
+      "holdMs": 2705.6779837533845,
+      "width": 17.0014875502107,
+      "throwsPerScore": 10.528508771929825,
+      "wins": 20
+    },
+    "reference-balanced": {
+      "n": 36,
+      "completion": 92.85231116121759,
+      "conversion": 60.57213930348259,
+      "reset": 92.91497975708502,
+      "hucks": 5.343855693348365,
+      "holdMs": 2751.792559188275,
+      "width": 15.61218550244404,
+      "throwsPerScore": 9.106776180698152,
+      "wins": 24
+    },
+    "reference-mastermind": {
+      "n": 34,
+      "completion": 93.1104769669792,
+      "conversion": 55.87467362924282,
+      "reset": 94.6372239747634,
+      "hucks": 3.811659192825112,
+      "holdMs": 2688.6139421117,
+      "width": 17.170829703959477,
+      "throwsPerScore": 11.462616822429906,
+      "wins": 16
+    },
+    "zone-6": {
+      "n": 35,
+      "completion": 92.45122985581001,
+      "conversion": 46.878680800942284,
+      "reset": 93.9650872817955,
+      "hucks": 2.595419847328244,
+      "holdMs": 2920.871925360475,
+      "width": 15.120298252269237,
+      "throwsPerScore": 14.811557788944723,
+      "wins": 9
+    }
+  },
+  "contrasts": [
+    {
+      "a": "deep-4",
+      "b": "isolation-5",
+      "commonBlocks": 18,
+      "differencePp": -8.857651562213338,
+      "ci95": [
+        -14.837569001873343,
+        -2.3108619803166146
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "deep-4",
+      "b": "pragmatic-4",
+      "commonBlocks": 17,
+      "differencePp": -3.96920078518433,
+      "ci95": [
+        -9.800966006916337,
+        1.6725590051746115
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "deep-4",
+      "b": "reference-balanced",
+      "commonBlocks": 18,
+      "differencePp": -1.9843393943905667,
+      "ci95": [
+        -8.87749055033872,
+        4.659603104074336
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "deep-4",
+      "b": "reference-mastermind",
+      "commonBlocks": 17,
+      "differencePp": 3.9736068496562247,
+      "ci95": [
+        -1.5694141428859751,
+        9.393399616721583
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "deep-4",
+      "b": "zone-6",
+      "commonBlocks": 17,
+      "differencePp": 12.0565189757954,
+      "ci95": [
+        5.892450328260788,
+        18.34234045241682
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "isolation-5",
+      "b": "pragmatic-4",
+      "commonBlocks": 17,
+      "differencePp": 6.722514314302061,
+      "ci95": [
+        2.0849367557529863,
+        11.41667229936589
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "isolation-5",
+      "b": "reference-balanced",
+      "commonBlocks": 18,
+      "differencePp": 6.87331216782277,
+      "ci95": [
+        1.5463441755921155,
+        12.400806341636677
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "isolation-5",
+      "b": "reference-mastermind",
+      "commonBlocks": 17,
+      "differencePp": 12.62253114861188,
+      "ci95": [
+        6.560260707831176,
+        18.893572335027415
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "isolation-5",
+      "b": "zone-6",
+      "commonBlocks": 17,
+      "differencePp": 21.337495361191507,
+      "ci95": [
+        16.56078920191417,
+        26.146732133264216
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "pragmatic-4",
+      "b": "reference-balanced",
+      "commonBlocks": 17,
+      "differencePp": 0.18974679726183757,
+      "ci95": [
+        -5.5766454462602875,
+        5.624828215047698
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "pragmatic-4",
+      "b": "reference-mastermind",
+      "commonBlocks": 16,
+      "differencePp": 7.466008146194438,
+      "ci95": [
+        2.126180583448562,
+        13.432702551061345
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "pragmatic-4",
+      "b": "zone-6",
+      "commonBlocks": 16,
+      "differencePp": 14.451015990107337,
+      "ci95": [
+        9.998472670010628,
+        19.440883640632638
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "reference-balanced",
+      "b": "reference-mastermind",
+      "commonBlocks": 17,
+      "differencePp": 4.695555850978293,
+      "ci95": [
+        0.035545607474851276,
+        9.020570760592978
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "reference-balanced",
+      "b": "zone-6",
+      "commonBlocks": 17,
+      "differencePp": 13.73666450734942,
+      "ci95": [
+        9.741177799133098,
+        18.262786687128415
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    },
+    {
+      "a": "reference-mastermind",
+      "b": "zone-6",
+      "commonBlocks": 16,
+      "differencePp": 9.450976006478095,
+      "ci95": [
+        3.9476813421941865,
+        15.12213528389433
+      ],
+      "status": "EXPLORATORY_MULTIPLE_COMPARISONS_NO_AUTOMATIC_PROMOTION"
+    }
+  ],
+  "coaches": {
+    "patient_controller": {
+      "n": 16,
+      "completion": 93.62680683311433,
+      "conversion": 45.27777777777778,
+      "reset": 94.79591836734694,
+      "hucks": 3.515111695137976,
+      "holdMs": 2924.8883048620237,
+      "width": 17.583159393103223,
+      "throwsPerScore": 18.67484662576687,
+      "wins": 4
+    },
+    "tempo_pusher": {
+      "n": 15,
+      "completion": 94.00292540224281,
+      "conversion": 60.064935064935064,
+      "reset": 95.0561797752809,
+      "hucks": 5.509507557289127,
+      "holdMs": 2485.177961969771,
+      "width": 20.176926314796724,
+      "throwsPerScore": 11.086486486486486,
+      "wins": 7
+    },
+    "huck_gambler": {
+      "n": 16,
+      "completion": 93.61123697326688,
+      "conversion": 58.771929824561404,
+      "reset": 94.51219512195122,
+      "hucks": 5.573176257362936,
+      "holdMs": 2586.878115088355,
+      "width": 19.331107394566168,
+      "throwsPerScore": 10.980099502487562,
+      "wins": 7
+    },
+    "zone_architect": {
+      "n": 16,
+      "completion": 92.6177536231884,
+      "conversion": 53.80281690140845,
+      "reset": 94.66019417475728,
+      "hucks": 4.076086956521739,
+      "holdMs": 2802.3822463768115,
+      "width": 18.61815212855987,
+      "throwsPerScore": 11.56020942408377,
+      "wins": 7
+    },
+    "creative_iso": {
+      "n": 16,
+      "completion": 92.8652321630804,
+      "conversion": 61.81818181818182,
+      "reset": 93.44729344729345,
+      "hucks": 6.9648924122310305,
+      "holdMs": 2612.7746319365797,
+      "width": 14.850267152388204,
+      "throwsPerScore": 8.656862745098039,
+      "wins": 9
+    },
+    "balanced_pro": {
+      "n": 16,
+      "completion": 93.28984156570364,
+      "conversion": 59.497206703910614,
+      "reset": 94.57700650759219,
+      "hucks": 4.659832246039143,
+      "holdMs": 2720.969245107176,
+      "width": 15.335380319969396,
+      "throwsPerScore": 10.075117370892018,
+      "wins": 8
+    },
+    "grind_defense": {
+      "n": 16,
+      "completion": 94.53028430160693,
+      "conversion": 50.824175824175825,
+      "reset": 95.40329575021683,
+      "hucks": 3.2138442521631645,
+      "holdMs": 2850.210135970334,
+      "width": 17.69324999605591,
+      "throwsPerScore": 17.491891891891893,
+      "wins": 7
+    },
+    "trap_counter": {
+      "n": 16,
+      "completion": 94.11764705882354,
+      "conversion": 54.223433242506815,
+      "reset": 95.09692132269099,
+      "hucks": 4.411764705882353,
+      "holdMs": 2759.8249299719887,
+      "width": 18.8004183071839,
+      "throwsPerScore": 14.35175879396985,
+      "wins": 6
+    },
+    "veteran_grinder": {
+      "n": 16,
+      "completion": 93.48132487667371,
+      "conversion": 44.01197604790419,
+      "reset": 94.33573635427395,
+      "hucks": 3.382663847780127,
+      "holdMs": 2837.399577167019,
+      "width": 17.87019454963594,
+      "throwsPerScore": 19.306122448979593,
+      "wins": 3
+    },
+    "deep_strike": {
+      "n": 16,
+      "completion": 93.2420872540633,
+      "conversion": 56.59340659340659,
+      "reset": 94.15929203539822,
+      "hucks": 5.5175363558597095,
+      "holdMs": 2654.251497005988,
+      "width": 19.047063404198077,
+      "throwsPerScore": 11.349514563106796,
+      "wins": 6
+    },
+    "junk_hybrid": {
+      "n": 16,
+      "completion": 94.2058623040218,
+      "conversion": 50.86705202312139,
+      "reset": 95.66184649610679,
+      "hucks": 2.8629856850715747,
+      "holdMs": 2616.53715064758,
+      "width": 17.85200994794773,
+      "throwsPerScore": 16.670454545454547,
+      "wins": 5
+    },
+    "cup_grinder": {
+      "n": 16,
+      "completion": 93.06596701649175,
+      "conversion": 48.793565683646115,
+      "reset": 93.99509803921569,
+      "hucks": 3.185907046476762,
+      "holdMs": 2747.5262368815593,
+      "width": 16.491705763673362,
+      "throwsPerScore": 14.659340659340659,
+      "wins": 7
+    },
+    "bait_switch": {
+      "n": 16,
+      "completion": 93.86409736308316,
+      "conversion": 65.22988505747126,
+      "reset": 96.875,
+      "hucks": 5.223123732251521,
+      "holdMs": 2657.2718052738337,
+      "width": 15.216478377671436,
+      "throwsPerScore": 8.687224669603523,
+      "wins": 11
+    },
+    "motion_system": {
+      "n": 16,
+      "completion": 94.71451876019576,
+      "conversion": 52.76967930029154,
+      "reset": 96.34591961023142,
+      "hucks": 2.6101141924959217,
+      "holdMs": 2450.929853181077,
+      "width": 17.506006358959443,
+      "throwsPerScore": 16.933701657458563,
+      "wins": 5
+    },
+    "tactical_mastermind": {
+      "n": 16,
+      "completion": 92.67384105960265,
+      "conversion": 51.63934426229508,
+      "reset": 93.84384384384384,
+      "hucks": 3.80794701986755,
+      "holdMs": 2706.58940397351,
+      "width": 18.26563136959809,
+      "throwsPerScore": 12.783068783068783,
+      "wins": 7
+    }
+  },
+  "attack": {
+    "vertical_stack": {
+      "n": 160,
+      "completion": 94.44904722452361,
+      "conversion": 63.58695652173913,
+      "reset": 95.71428571428571,
+      "hucks": 4.391052195526098,
+      "holdMs": 2731.897265948633,
+      "width": 14.086446535949175,
+      "throwsPerScore": 10.316239316239317,
+      "wins": 117
+    },
+    "horizontal_stack": {
+      "n": 160,
+      "completion": 93.77916018662519,
+      "conversion": 56.28415300546448,
+      "reset": 95.34883720930233,
+      "hucks": 4.276827371695179,
+      "holdMs": 2579.611197511664,
+      "width": 22.694102774983378,
+      "throwsPerScore": 12.485436893203884,
+      "wins": 103
+    },
+    "split_stack": {
+      "n": 160,
+      "completion": 95.53695955369595,
+      "conversion": 64.83516483516483,
+      "reset": 96.65071770334929,
+      "hucks": 2.2315202231520224,
+      "holdMs": 2681.771269177127,
+      "width": 19.123281300675266,
+      "throwsPerScore": 12.152542372881356,
+      "wins": 118
+    },
+    "side_stack": {
+      "n": 160,
+      "completion": 93.63507779349364,
+      "conversion": 51.61290322580645,
+      "reset": 96.70781893004116,
+      "hucks": 2.1923620933521923,
+      "holdMs": 2810.2828854314002,
+      "width": 17.71213919390533,
+      "throwsPerScore": 14.729166666666666,
+      "wins": 96
+    },
+    "motion_offense": {
+      "n": 160,
+      "completion": 94.4160074453234,
+      "conversion": 37.5,
+      "reset": 97.11864406779661,
+      "hucks": 1.0237319683573756,
+      "holdMs": 2687.9851093531875,
+      "width": 17.40276477321983,
+      "throwsPerScore": 29.84722222222222,
+      "wins": 72
+    },
+    "hex_offense": {
+      "n": 160,
+      "completion": 94.28685577307232,
+      "conversion": 25.906735751295336,
+      "reset": 96.21890547263682,
+      "hucks": 2.596883739512585,
+      "holdMs": 2909.2289252896526,
+      "width": 18.831965568882897,
+      "throwsPerScore": 50.06,
+      "wins": 50
+    },
+    "zone_offense": {
+      "n": 160,
+      "completion": 94.76520400307929,
+      "conversion": 60.23391812865497,
+      "reset": 94.9748743718593,
+      "hucks": 2.4634334103156275,
+      "holdMs": 2682.3556581986145,
+      "width": 20.374719029290382,
+      "throwsPerScore": 12.611650485436893,
+      "wins": 103
+    }
+  },
+  "defense": {
+    "person": {
+      "n": 224,
+      "completion": 94.47168970129292,
+      "conversion": 52.12355212355212,
+      "reset": 94.39461883408072,
+      "hucks": 3.299152920196166,
+      "holdMs": 2741.0699955416853,
+      "width": 18.148285009656295,
+      "throwsPerScore": 16.614814814814814,
+      "wins": 135
+    },
+    "zone_cup": {
+      "n": 224,
+      "completion": 95.01359927470534,
+      "conversion": 57.36434108527132,
+      "reset": 97.87234042553192,
+      "hucks": 2.402538531278332,
+      "holdMs": 2829.628286491387,
+      "width": 19.20629107119676,
+      "throwsPerScore": 14.905405405405405,
+      "wins": 148
+    },
+    "zone_wall": {
+      "n": 224,
+      "completion": 94.68857470385939,
+      "conversion": 48.3271375464684,
+      "reset": 96.92737430167598,
+      "hucks": 1.9487963316774932,
+      "holdMs": 2819.5185326709975,
+      "width": 19.181467744724298,
+      "throwsPerScore": 20.130769230769232,
+      "wins": 130
+    },
+    "clam": {
+      "n": 224,
+      "completion": 94.21753097751262,
+      "conversion": 49.397590361445786,
+      "reset": 96.94117647058823,
+      "hucks": 2.89123451124369,
+      "holdMs": 2625.406149609913,
+      "width": 17.78625306611487,
+      "throwsPerScore": 17.715447154471544,
+      "wins": 123
+    },
+    "all_person": {
+      "n": 224,
+      "completion": 93.50268685881778,
+      "conversion": 48.046875,
+      "reset": 94.4186046511628,
+      "hucks": 2.3937469467513433,
+      "holdMs": 2680.5178309721546,
+      "width": 18.1423862539904,
+      "throwsPerScore": 16.642276422764226,
+      "wins": 123
+    }
+  },
+  "matrix": {
+    "vertical_stack|person": {
+      "n": 32,
+      "completion": 92.91666666666667,
+      "conversion": 55.26315789473684,
+      "reset": 91.89189189189189,
+      "hucks": 5,
+      "holdMs": 2721.4166666666665,
+      "width": 13.799512697185017,
+      "throwsPerScore": 11.428571428571429,
+      "wins": 21
+    },
+    "vertical_stack|zone_cup": {
+      "n": 32,
+      "completion": 94.78260869565217,
+      "conversion": 69.23076923076923,
+      "reset": 98.14814814814815,
+      "hucks": 5.6521739130434785,
+      "holdMs": 2799.391304347826,
+      "width": 14.325643478631742,
+      "throwsPerScore": 8.518518518518519,
+      "wins": 27
+    },
+    "vertical_stack|zone_wall": {
+      "n": 32,
+      "completion": 95.86776859504133,
+      "conversion": 72.22222222222223,
+      "reset": 97.43589743589743,
+      "hucks": 3.71900826446281,
+      "holdMs": 2760.495867768595,
+      "width": 14.244370296333011,
+      "throwsPerScore": 9.307692307692308,
+      "wins": 26
+    },
+    "vertical_stack|clam": {
+      "n": 32,
+      "completion": 94.33198380566802,
+      "conversion": 58.8235294117647,
+      "reset": 91.89189189189189,
+      "hucks": 3.2388663967611335,
+      "holdMs": 2702.186234817814,
+      "width": 13.965284407883047,
+      "throwsPerScore": 12.35,
+      "wins": 20
+    },
+    "vertical_stack|all_person": {
+      "n": 32,
+      "completion": 94.35483870967742,
+      "conversion": 62.16216216216216,
+      "reset": 97.67441860465117,
+      "hucks": 4.435483870967742,
+      "holdMs": 2681.1290322580644,
+      "width": 14.101161661358448,
+      "throwsPerScore": 10.782608695652174,
+      "wins": 23
+    },
+    "horizontal_stack|person": {
+      "n": 32,
+      "completion": 92.8,
+      "conversion": 51.351351351351354,
+      "reset": 95.55555555555556,
+      "hucks": 6,
+      "holdMs": 2693.2,
+      "width": 23.53086150451367,
+      "throwsPerScore": 13.157894736842104,
+      "wins": 19
+    },
+    "horizontal_stack|zone_cup": {
+      "n": 32,
+      "completion": 96.7032967032967,
+      "conversion": 74.28571428571429,
+      "reset": 100,
+      "hucks": 1.465201465201465,
+      "holdMs": 2550.4761904761904,
+      "width": 22.194714691406105,
+      "throwsPerScore": 10.5,
+      "wins": 26
+    },
+    "horizontal_stack|zone_wall": {
+      "n": 32,
+      "completion": 94.16058394160584,
+      "conversion": 56.75675675675676,
+      "reset": 100,
+      "hucks": 4.014598540145985,
+      "holdMs": 2600.29197080292,
+      "width": 21.818944442040976,
+      "throwsPerScore": 13.047619047619047,
+      "wins": 21
+    },
+    "horizontal_stack|clam": {
+      "n": 32,
+      "completion": 93.38842975206612,
+      "conversion": 52.94117647058823,
+      "reset": 96.55172413793103,
+      "hucks": 5.371900826446281,
+      "holdMs": 2450.0826446280994,
+      "width": 22.83357387219471,
+      "throwsPerScore": 13.444444444444445,
+      "wins": 18
+    },
+    "horizontal_stack|all_person": {
+      "n": 32,
+      "completion": 91.49797570850203,
+      "conversion": 47.5,
+      "reset": 89.1304347826087,
+      "hucks": 4.8582995951417,
+      "holdMs": 2600.8097165991903,
+      "width": 23.19745896164136,
+      "throwsPerScore": 13,
+      "wins": 19
+    },
+    "split_stack|person": {
+      "n": 32,
+      "completion": 95.26813880126183,
+      "conversion": 63.41463414634146,
+      "reset": 95.45454545454545,
+      "hucks": 2.2082018927444795,
+      "holdMs": 2756.529968454259,
+      "width": 18.85721274869266,
+      "throwsPerScore": 12.192307692307692,
+      "wins": 26
+    },
+    "split_stack|zone_cup": {
+      "n": 32,
+      "completion": 98.18840579710145,
+      "conversion": 85.71428571428571,
+      "reset": 100,
+      "hucks": 2.536231884057971,
+      "holdMs": 2724.2753623188405,
+      "width": 19.79492401479976,
+      "throwsPerScore": 9.2,
+      "wins": 30
+    },
+    "split_stack|zone_wall": {
+      "n": 32,
+      "completion": 93.04029304029304,
+      "conversion": 52.5,
+      "reset": 96.96969696969697,
+      "hucks": 1.465201465201465,
+      "holdMs": 2641.2454212454213,
+      "width": 19.153736603543404,
+      "throwsPerScore": 13,
+      "wins": 21
+    },
+    "split_stack|clam": {
+      "n": 32,
+      "completion": 97.45222929936305,
+      "conversion": 75,
+      "reset": 97.72727272727273,
+      "hucks": 1.910828025477707,
+      "holdMs": 2622.0382165605097,
+      "width": 18.758367199345397,
+      "throwsPerScore": 13.083333333333334,
+      "wins": 24
+    },
+    "split_stack|all_person": {
+      "n": 32,
+      "completion": 93.30708661417323,
+      "conversion": 50,
+      "reset": 92.10526315789474,
+      "hucks": 3.1496062992125986,
+      "holdMs": 2659.685039370079,
+      "width": 19.129595342552033,
+      "throwsPerScore": 14.941176470588236,
+      "wins": 17
+    },
+    "side_stack|person": {
+      "n": 32,
+      "completion": 94.82758620689656,
+      "conversion": 57.142857142857146,
+      "reset": 98.41269841269842,
+      "hucks": 3.4482758620689653,
+      "holdMs": 2850.0689655172414,
+      "width": 17.04024862628024,
+      "throwsPerScore": 14.5,
+      "wins": 20
+    },
+    "side_stack|zone_cup": {
+      "n": 32,
+      "completion": 95.22058823529412,
+      "conversion": 65.78947368421052,
+      "reset": 98.11320754716981,
+      "hucks": 2.573529411764706,
+      "holdMs": 2887.426470588235,
+      "width": 18.57317942850738,
+      "throwsPerScore": 10.88,
+      "wins": 25
+    },
+    "side_stack|zone_wall": {
+      "n": 32,
+      "completion": 93.72937293729373,
+      "conversion": 51.282051282051285,
+      "reset": 93.61702127659575,
+      "hucks": 1.6501650165016502,
+      "holdMs": 2836.963696369637,
+      "width": 18.31165270867426,
+      "throwsPerScore": 15.15,
+      "wins": 20
+    },
+    "side_stack|clam": {
+      "n": 32,
+      "completion": 89.37007874015748,
+      "conversion": 28.94736842105263,
+      "reset": 100,
+      "hucks": 1.968503937007874,
+      "holdMs": 2745.196850393701,
+      "width": 17.03156445852569,
+      "throwsPerScore": 23.09090909090909,
+      "wins": 11
+    },
+    "side_stack|all_person": {
+      "n": 32,
+      "completion": 94.57627118644068,
+      "conversion": 55.55555555555556,
+      "reset": 93.33333333333333,
+      "hucks": 1.3559322033898304,
+      "holdMs": 2728.677966101695,
+      "width": 17.5145422190508,
+      "throwsPerScore": 14.75,
+      "wins": 20
+    },
+    "motion_offense|person": {
+      "n": 32,
+      "completion": 95.37037037037037,
+      "conversion": 45.945945945945944,
+      "reset": 94.50549450549451,
+      "hucks": 1.1574074074074074,
+      "holdMs": 2640,
+      "width": 16.36092214264471,
+      "throwsPerScore": 25.41176470588235,
+      "wins": 17
+    },
+    "motion_offense|zone_cup": {
+      "n": 32,
+      "completion": 94.20935412026726,
+      "conversion": 33.333333333333336,
+      "reset": 98.80239520958084,
+      "hucks": 0.89086859688196,
+      "holdMs": 2910.6458797327396,
+      "width": 18.469054471641307,
+      "throwsPerScore": 34.53846153846154,
+      "wins": 13
+    },
+    "motion_offense|zone_wall": {
+      "n": 32,
+      "completion": 94.43298969072166,
+      "conversion": 32.5,
+      "reset": 96.66666666666667,
+      "hucks": 1.2371134020618557,
+      "holdMs": 2778.020618556701,
+      "width": 18.853123479595418,
+      "throwsPerScore": 37.30769230769231,
+      "wins": 13
+    },
+    "motion_offense|clam": {
+      "n": 32,
+      "completion": 94.9238578680203,
+      "conversion": 44.44444444444444,
+      "reset": 97.75280898876404,
+      "hucks": 1.015228426395939,
+      "holdMs": 2480.964467005076,
+      "width": 16.167934606312404,
+      "throwsPerScore": 24.625,
+      "wins": 16
+    },
+    "motion_offense|all_person": {
+      "n": 32,
+      "completion": 93.05912596401028,
+      "conversion": 32.5,
+      "reset": 96.7741935483871,
+      "hucks": 0.7712082262210797,
+      "holdMs": 2581.6966580976864,
+      "width": 16.451209580299754,
+      "throwsPerScore": 29.923076923076923,
+      "wins": 13
+    },
+    "hex_offense|person": {
+      "n": 32,
+      "completion": 94.62102689486552,
+      "conversion": 38.888888888888886,
+      "reset": 94.16666666666667,
+      "hucks": 4.400977995110025,
+      "holdMs": 2817.359413202934,
+      "width": 17.670630710140017,
+      "throwsPerScore": 29.214285714285715,
+      "wins": 14
+    },
+    "hex_offense|zone_cup": {
+      "n": 32,
+      "completion": 93.56223175965665,
+      "conversion": 16.666666666666668,
+      "reset": 96.38009049773756,
+      "hucks": 1.9313304721030042,
+      "holdMs": 3032.489270386266,
+      "width": 20.033172892962103,
+      "throwsPerScore": 77.66666666666667,
+      "wins": 6
+    },
+    "hex_offense|zone_wall": {
+      "n": 32,
+      "completion": 95.56400506970849,
+      "conversion": 16.666666666666668,
+      "reset": 97.3753280839895,
+      "hucks": 1.394169835234474,
+      "holdMs": 3039.873257287706,
+      "width": 19.988375190156333,
+      "throwsPerScore": 112.71428571428571,
+      "wins": 7
+    },
+    "hex_offense|clam": {
+      "n": 32,
+      "completion": 93.99585921325051,
+      "conversion": 30.952380952380953,
+      "reset": 96.20253164556962,
+      "hucks": 3.7267080745341614,
+      "holdMs": 2745.0931677018634,
+      "width": 17.34254901439512,
+      "throwsPerScore": 37.15384615384615,
+      "wins": 13
+    },
+    "hex_offense|all_person": {
+      "n": 32,
+      "completion": 92.41573033707866,
+      "conversion": 27.027027027027028,
+      "reset": 94.4,
+      "hucks": 2.5280898876404496,
+      "holdMs": 2786.5730337078653,
+      "width": 17.678720360243194,
+      "throwsPerScore": 35.6,
+      "wins": 10
+    },
+    "zone_offense|person": {
+      "n": 32,
+      "completion": 94.42622950819673,
+      "conversion": 51.42857142857143,
+      "reset": 89.1304347826087,
+      "hucks": 2.2950819672131146,
+      "holdMs": 2716.9180327868853,
+      "width": 20.67556908707749,
+      "throwsPerScore": 16.944444444444443,
+      "wins": 18
+    },
+    "zone_offense|zone_cup": {
+      "n": 32,
+      "completion": 93.75,
+      "conversion": 58.333333333333336,
+      "reset": 97.61904761904762,
+      "hucks": 3.75,
+      "holdMs": 2686.3333333333335,
+      "width": 20.6264740153434,
+      "throwsPerScore": 11.428571428571429,
+      "wins": 21
+    },
+    "zone_offense|zone_wall": {
+      "n": 32,
+      "completion": 94.8207171314741,
+      "conversion": 62.857142857142854,
+      "reset": 94.73684210526316,
+      "hucks": 1.9920318725099602,
+      "holdMs": 2676.0956175298807,
+      "width": 20.228809769239675,
+      "throwsPerScore": 11.409090909090908,
+      "wins": 22
+    },
+    "zone_offense|clam": {
+      "n": 32,
+      "completion": 95.10204081632654,
+      "conversion": 63.63636363636363,
+      "reset": 100,
+      "hucks": 3.673469387755102,
+      "holdMs": 2597.6326530612246,
+      "width": 20.086204663204807,
+      "throwsPerScore": 11.666666666666666,
+      "wins": 21
+    },
+    "zone_offense|all_person": {
+      "n": 32,
+      "completion": 95.73643410852713,
+      "conversion": 65.625,
+      "reset": 95,
+      "hucks": 0.7751937984496124,
+      "holdMs": 2724.3410852713178,
+      "width": 20.18727853749172,
+      "throwsPerScore": 12.285714285714286,
+      "wins": 21
+    }
+  },
+  "effects": {
+    "creativity": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 94.48818897637796,
+          "conversion": 66.66666666666667,
+          "reset": 100,
+          "hucks": 4.724409448818897,
+          "holdMs": 2792.9133858267714,
+          "width": 13.870655451564797,
+          "throwsPerScore": 9.071428571428571,
+          "wins": 14
+        },
+        "-1": {
+          "n": 20,
+          "completion": 96.2406015037594,
+          "conversion": 75,
+          "reset": 100,
+          "hucks": 2.255639097744361,
+          "holdMs": 2860.3007518796994,
+          "width": 14.366181380015703,
+          "throwsPerScore": 8.866666666666667,
+          "wins": 15
+        }
+      }
+    },
+    "huckAppetite": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 92.8,
+          "conversion": 57.142857142857146,
+          "reset": 95,
+          "hucks": 1.6,
+          "holdMs": 2786.24,
+          "width": 13.823953760593836,
+          "throwsPerScore": 10.416666666666666,
+          "wins": 12
+        },
+        "-1": {
+          "n": 20,
+          "completion": 92.62295081967213,
+          "conversion": 57.142857142857146,
+          "reset": 92.5925925925926,
+          "hucks": 5.737704918032787,
+          "holdMs": 2832.2950819672133,
+          "width": 14.051927155467027,
+          "throwsPerScore": 10.166666666666666,
+          "wins": 12
+        }
+      }
+    },
+    "breakAppetite": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 91.53846153846153,
+          "conversion": 47.61904761904762,
+          "reset": 93.33333333333333,
+          "hucks": 3.8461538461538463,
+          "holdMs": 2722.769230769231,
+          "width": 13.793024885047338,
+          "throwsPerScore": 13,
+          "wins": 10
+        },
+        "-1": {
+          "n": 20,
+          "completion": 92.80575539568345,
+          "conversion": 56.52173913043478,
+          "reset": 100,
+          "hucks": 3.597122302158273,
+          "holdMs": 2864.028776978417,
+          "width": 13.220178187711417,
+          "throwsPerScore": 10.692307692307692,
+          "wins": 13
+        }
+      }
+    },
+    "passSelectivity": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 92.3076923076923,
+          "conversion": 54.54545454545455,
+          "reset": 94.73684210526316,
+          "hucks": 2.3076923076923075,
+          "holdMs": 2785.076923076923,
+          "width": 14.734630267674527,
+          "throwsPerScore": 10.833333333333334,
+          "wins": 12
+        },
+        "-1": {
+          "n": 20,
+          "completion": 95.53571428571429,
+          "conversion": 75,
+          "reset": 96.15384615384616,
+          "hucks": 9.821428571428571,
+          "holdMs": 3245.1785714285716,
+          "width": 14.054348848360773,
+          "throwsPerScore": 7.466666666666667,
+          "wins": 15
+        }
+      }
+    },
+    "possessionTempo": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 90.44117647058823,
+          "conversion": 45.833333333333336,
+          "reset": 92.3076923076923,
+          "hucks": 4.411764705882353,
+          "holdMs": 2576.176470588235,
+          "width": 14.06125904455327,
+          "throwsPerScore": 12.363636363636363,
+          "wins": 11
+        },
+        "-1": {
+          "n": 20,
+          "completion": 96.73202614379085,
+          "conversion": 77.27272727272727,
+          "reset": 100,
+          "hucks": 3.9215686274509802,
+          "holdMs": 3112.549019607843,
+          "width": 13.59739871026071,
+          "throwsPerScore": 9,
+          "wins": 17
+        }
+      }
+    },
+    "stackDepth": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 94.96402877697842,
+          "conversion": 68.18181818181819,
+          "reset": 100,
+          "hucks": 7.913669064748201,
+          "holdMs": 2760.143884892086,
+          "width": 14.081526483423968,
+          "throwsPerScore": 9.266666666666667,
+          "wins": 15
+        },
+        "-1": {
+          "n": 20,
+          "completion": 92.10526315789474,
+          "conversion": 47.82608695652174,
+          "reset": 96.7741935483871,
+          "hucks": 5.921052631578948,
+          "holdMs": 2793.2894736842104,
+          "width": 13.497371347129018,
+          "throwsPerScore": 13.818181818181818,
+          "wins": 11
+        }
+      }
+    },
+    "coverageShade": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.54838709677419,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.225806451612903,
+          "holdMs": 2763.064516129032,
+          "width": 14.388611141541414,
+          "throwsPerScore": 9.538461538461538,
+          "wins": 13
+        },
+        "-1": {
+          "n": 20,
+          "completion": 93.7062937062937,
+          "conversion": 60.869565217391305,
+          "reset": 100,
+          "hucks": 3.4965034965034967,
+          "holdMs": 2775.664335664336,
+          "width": 14.225394203781459,
+          "throwsPerScore": 10.214285714285714,
+          "wins": 14
+        }
+      }
+    },
+    "cushionDepth": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 92.06349206349206,
+          "conversion": 54.54545454545455,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2770.7936507936506,
+          "width": 14.324732308638932,
+          "throwsPerScore": 10.5,
+          "wins": 12
+        },
+        "-1": {
+          "n": 20,
+          "completion": 94.8051948051948,
+          "conversion": 66.66666666666667,
+          "reset": 100,
+          "hucks": 3.896103896103896,
+          "holdMs": 2791.948051948052,
+          "width": 14.514107384690057,
+          "throwsPerScore": 9.625,
+          "wins": 16
+        }
+      }
+    },
+    "markShape": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 92.8,
+          "conversion": 57.142857142857146,
+          "reset": 100,
+          "hucks": 3.2,
+          "holdMs": 2758.88,
+          "width": 14.383716904519211,
+          "throwsPerScore": 10.416666666666666,
+          "wins": 12
+        },
+        "-1": {
+          "n": 20,
+          "completion": 91.42857142857143,
+          "conversion": 52,
+          "reset": 100,
+          "hucks": 4.285714285714286,
+          "holdMs": 2736.714285714286,
+          "width": 14.295765229555819,
+          "throwsPerScore": 10.76923076923077,
+          "wins": 13
+        }
+      }
+    },
+    "poachSeeking": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.7007874015748,
+          "conversion": 63.63636363636363,
+          "reset": 100,
+          "hucks": 3.1496062992125986,
+          "holdMs": 2760.472440944882,
+          "width": 14.261871148476258,
+          "throwsPerScore": 9.071428571428571,
+          "wins": 14
+        },
+        "-1": {
+          "n": 20,
+          "completion": 93.6,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.2,
+          "holdMs": 2765.92,
+          "width": 14.380381293337535,
+          "throwsPerScore": 9.615384615384615,
+          "wins": 13
+        }
+      }
+    },
+    "helpDeep": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 94,
+          "conversion": 62.5,
+          "reset": 100,
+          "hucks": 2.6666666666666665,
+          "holdMs": 2737.866666666667,
+          "width": 14.740759958320588,
+          "throwsPerScore": 10,
+          "wins": 15
+        },
+        "-1": {
+          "n": 20,
+          "completion": 93.54838709677419,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.225806451612903,
+          "holdMs": 2765.1612903225805,
+          "width": 14.421083201195012,
+          "throwsPerScore": 9.538461538461538,
+          "wins": 13
+        }
+      }
+    },
+    "poachResetHandler": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.6,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.2,
+          "holdMs": 2765.92,
+          "width": 14.380381293337535,
+          "throwsPerScore": 9.615384615384615,
+          "wins": 13
+        }
+      }
+    },
+    "throw_hucks": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 92.74193548387096,
+          "conversion": 55,
+          "reset": 95.23809523809524,
+          "hucks": 0,
+          "holdMs": 2789.6774193548385,
+          "width": 13.732791258682662,
+          "throwsPerScore": 11.272727272727273,
+          "wins": 11
+        }
+      }
+    },
+    "no_hucks": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 94.65648854961832,
+          "conversion": 66.66666666666667,
+          "reset": 100,
+          "hucks": 5.343511450381679,
+          "holdMs": 2765.648854961832,
+          "width": 14.069217915768915,
+          "throwsPerScore": 9.357142857142858,
+          "wins": 14
+        }
+      }
+    },
+    "break_mark": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 89.68253968253968,
+          "conversion": 40.90909090909091,
+          "reset": 100,
+          "hucks": 5.555555555555555,
+          "holdMs": 2698.4126984126983,
+          "width": 14.10258319290888,
+          "throwsPerScore": 14,
+          "wins": 9
+        }
+      }
+    },
+    "no_break_mark": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 90.9090909090909,
+          "conversion": 54.166666666666664,
+          "reset": 95.65217391304348,
+          "hucks": 6.6115702479338845,
+          "holdMs": 2819.3388429752067,
+          "width": 12.580889959825035,
+          "throwsPerScore": 9.307692307692308,
+          "wins": 13
+        }
+      }
+    },
+    "dump_first": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 95.8041958041958,
+          "conversion": 72.72727272727273,
+          "reset": 100,
+          "hucks": 2.797202797202797,
+          "holdMs": 2783.4965034965035,
+          "width": 14.126038591272907,
+          "throwsPerScore": 8.9375,
+          "wins": 16
+        }
+      }
+    },
+    "look_downfield": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 94.23076923076923,
+          "conversion": 64,
+          "reset": 96.42857142857143,
+          "hucks": 3.8461538461538463,
+          "holdMs": 2814.871794871795,
+          "width": 13.64939522529463,
+          "throwsPerScore": 9.75,
+          "wins": 16
+        }
+      }
+    },
+    "safe_throws": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.57142857142857,
+          "conversion": 62.5,
+          "reset": 100,
+          "hucks": 2.142857142857143,
+          "holdMs": 2753,
+          "width": 13.743048921426924,
+          "throwsPerScore": 9.333333333333334,
+          "wins": 15
+        }
+      }
+    },
+    "take_risks": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 92.95774647887323,
+          "conversion": 58.333333333333336,
+          "reset": 96.42857142857143,
+          "hucks": 4.225352112676056,
+          "holdMs": 2721.830985915493,
+          "width": 14.043264245037099,
+          "throwsPerScore": 10.142857142857142,
+          "wins": 14
+        }
+      }
+    },
+    "cut_deep": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 92.85714285714286,
+          "conversion": 65,
+          "reset": 95,
+          "hucks": 11.224489795918368,
+          "holdMs": 2766.530612244898,
+          "width": 12.179931037725261,
+          "throwsPerScore": 7.538461538461538,
+          "wins": 13
+        }
+      }
+    },
+    "cut_under": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 95.33333333333333,
+          "conversion": 66.66666666666667,
+          "reset": 95,
+          "hucks": 0.6666666666666666,
+          "holdMs": 2745.2,
+          "width": 14.108203430472535,
+          "throwsPerScore": 10.714285714285714,
+          "wins": 14
+        }
+      }
+    },
+    "tight_mark": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.75,
+          "conversion": 63.63636363636363,
+          "reset": 100,
+          "hucks": 3.125,
+          "holdMs": 2752.65625,
+          "width": 14.261717537108607,
+          "throwsPerScore": 9.142857142857142,
+          "wins": 14
+        }
+      }
+    },
+    "loose_mark": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.83561643835617,
+          "conversion": 64,
+          "reset": 100,
+          "hucks": 4.109589041095891,
+          "holdMs": 2726.027397260274,
+          "width": 14.608642277394097,
+          "throwsPerScore": 9.125,
+          "wins": 16
+        }
+      }
+    },
+    "poach": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 92.6470588235294,
+          "conversion": 56.52173913043478,
+          "reset": 100,
+          "hucks": 2.9411764705882355,
+          "holdMs": 2775.8823529411766,
+          "width": 14.181413556025168,
+          "throwsPerScore": 10.461538461538462,
+          "wins": 13
+        }
+      }
+    },
+    "no_poach": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        }
+      }
+    },
+    "shade_deep": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.84615384615384,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.8461538461538463,
+          "holdMs": 2773.230769230769,
+          "width": 14.501139113855295,
+          "throwsPerScore": 10,
+          "wins": 13
+        }
+      }
+    },
+    "shade_under": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.43065693430657,
+          "conversion": 60.869565217391305,
+          "reset": 100,
+          "hucks": 3.6496350364963503,
+          "holdMs": 2765.5474452554745,
+          "width": 14.468454855957734,
+          "throwsPerScore": 9.785714285714286,
+          "wins": 14
+        }
+      }
+    },
+    "dominate": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 92.53731343283582,
+          "conversion": 54.54545454545455,
+          "reset": 100,
+          "hucks": 5.223880597014926,
+          "holdMs": 2638.0597014925374,
+          "width": 14.539779682763369,
+          "throwsPerScore": 11.166666666666666,
+          "wins": 12
+        }
+      }
+    },
+    "give_space": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.16239316239316,
+          "conversion": 63.63636363636363,
+          "reset": 100,
+          "hucks": 7.6923076923076925,
+          "holdMs": 2621.025641025641,
+          "width": 15.04939938911217,
+          "throwsPerScore": 8.357142857142858,
+          "wins": 14
+        }
+      }
+    },
+    "play_fast": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 93.4640522875817,
+          "conversion": 56.52173913043478,
+          "reset": 96.875,
+          "hucks": 3.2679738562091503,
+          "holdMs": 2397.777777777778,
+          "width": 14.575075332101493,
+          "throwsPerScore": 11.76923076923077,
+          "wins": 13
+        }
+      }
+    },
+    "play_slow": {
+      "pairedContexts": 20,
+      "levels": {
+        "0": {
+          "n": 20,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.1746031746031744,
+          "holdMs": 2760.15873015873,
+          "width": 14.446873111797975,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "1": {
+          "n": 20,
+          "completion": 94.4055944055944,
+          "conversion": 66.66666666666667,
+          "reset": 95.45454545454545,
+          "hucks": 6.993006993006993,
+          "holdMs": 3371.328671328671,
+          "width": 14.204932242316156,
+          "throwsPerScore": 8.9375,
+          "wins": 16
+        }
+      }
+    },
+    "take_space": {
+      "pairedContexts": 18,
+      "levels": {
+        "0": {
+          "n": 18,
+          "completion": 94.0677966101695,
+          "conversion": 63.1578947368421,
+          "reset": 100,
+          "hucks": 3.389830508474576,
+          "holdMs": 2771.864406779661,
+          "width": 14.627312273970183,
+          "throwsPerScore": 9.833333333333334,
+          "wins": 12
+        },
+        "1": {
+          "n": 18,
+          "completion": 93.22033898305085,
+          "conversion": 57.89473684210526,
+          "reset": 95,
+          "hucks": 1.694915254237288,
+          "holdMs": 2673.0508474576272,
+          "width": 13.033645978237887,
+          "throwsPerScore": 10.727272727272727,
+          "wins": 11
+        }
+      }
+    },
+    "wait_your_turn": {
+      "pairedContexts": 18,
+      "levels": {
+        "0": {
+          "n": 18,
+          "completion": 94.0677966101695,
+          "conversion": 63.1578947368421,
+          "reset": 100,
+          "hucks": 3.389830508474576,
+          "holdMs": 2771.864406779661,
+          "width": 14.627312273970183,
+          "throwsPerScore": 9.833333333333334,
+          "wins": 12
+        },
+        "1": {
+          "n": 18,
+          "completion": 89.32038834951456,
+          "conversion": 45,
+          "reset": 95,
+          "hucks": 4.854368932038835,
+          "holdMs": 2792.233009708738,
+          "width": 13.623522073722826,
+          "throwsPerScore": 11.444444444444445,
+          "wins": 9
+        }
+      }
+    },
+    "force": {
+      "pairedContexts": 18,
+      "levels": {
+        "force_forehand": {
+          "n": 18,
+          "completion": 94.0677966101695,
+          "conversion": 63.1578947368421,
+          "reset": 100,
+          "hucks": 3.389830508474576,
+          "holdMs": 2771.864406779661,
+          "width": 14.627312273970183,
+          "throwsPerScore": 9.833333333333334,
+          "wins": 12
+        },
+        "force_backhand": {
+          "n": 18,
+          "completion": 93.91304347826087,
+          "conversion": 61.111111111111114,
+          "reset": 100,
+          "hucks": 3.4782608695652173,
+          "holdMs": 2783.478260869565,
+          "width": 14.569427085434443,
+          "throwsPerScore": 10.454545454545455,
+          "wins": 11
+        },
+        "force_middle": {
+          "n": 18,
+          "completion": 93.65079365079364,
+          "conversion": 61.904761904761905,
+          "reset": 100,
+          "hucks": 3.9682539682539684,
+          "holdMs": 2784.9206349206347,
+          "width": 14.609818202051997,
+          "throwsPerScore": 9.692307692307692,
+          "wins": 13
+        },
+        "force_sideline": {
+          "n": 18,
+          "completion": 94.11764705882354,
+          "conversion": 63.1578947368421,
+          "reset": 100,
+          "hucks": 4.201680672268908,
+          "holdMs": 2779.4957983193276,
+          "width": 14.555695374402571,
+          "throwsPerScore": 9.916666666666666,
+          "wins": 12
+        },
+        "force_straight": {
+          "n": 18,
+          "completion": 92.62295081967213,
+          "conversion": 57.142857142857146,
+          "reset": 100,
+          "hucks": 3.278688524590164,
+          "holdMs": 2773.7704918032787,
+          "width": 14.384928315839806,
+          "throwsPerScore": 10.166666666666666,
+          "wins": 12
+        }
+      }
+    },
+    "conflict-throw_hucks+no_hucks": {
+      "pairedContexts": 16,
+      "levels": {
+        "none": {
+          "n": 16,
+          "completion": 94.21487603305785,
+          "conversion": 58.8235294117647,
+          "reset": 100,
+          "hucks": 1.6528925619834711,
+          "holdMs": 2804.9586776859505,
+          "width": 13.780266494756383,
+          "throwsPerScore": 12.1,
+          "wins": 10
+        },
+        "throw_hucks": {
+          "n": 16,
+          "completion": 97.61904761904762,
+          "conversion": 82.3529411764706,
+          "reset": 94.44444444444444,
+          "hucks": 2.380952380952381,
+          "holdMs": 2765.714285714286,
+          "width": 13.78841407902002,
+          "throwsPerScore": 9,
+          "wins": 14
+        },
+        "no_hucks": {
+          "n": 16,
+          "completion": 91.42857142857143,
+          "conversion": 47.05882352941177,
+          "reset": 82.3529411764706,
+          "hucks": 3.8095238095238093,
+          "holdMs": 2837.1428571428573,
+          "width": 13.43721435738395,
+          "throwsPerScore": 13.125,
+          "wins": 8
+        },
+        "throw_hucks+no_hucks": {
+          "n": 16,
+          "completion": 91.42857142857143,
+          "conversion": 47.05882352941177,
+          "reset": 82.3529411764706,
+          "hucks": 3.8095238095238093,
+          "holdMs": 2837.1428571428573,
+          "width": 13.43721435738395,
+          "throwsPerScore": 13.125,
+          "wins": 8
+        }
+      }
+    },
+    "conflict-play_fast+play_slow": {
+      "pairedContexts": 16,
+      "levels": {
+        "none": {
+          "n": 16,
+          "completion": 94.21487603305785,
+          "conversion": 58.8235294117647,
+          "reset": 100,
+          "hucks": 1.6528925619834711,
+          "holdMs": 2804.9586776859505,
+          "width": 13.780266494756383,
+          "throwsPerScore": 12.1,
+          "wins": 10
+        },
+        "play_fast": {
+          "n": 16,
+          "completion": 92.42424242424242,
+          "conversion": 47.36842105263158,
+          "reset": 93.33333333333333,
+          "hucks": 3.0303030303030303,
+          "holdMs": 2485.4545454545455,
+          "width": 13.386131263549862,
+          "throwsPerScore": 14.666666666666666,
+          "wins": 9
+        },
+        "play_slow": {
+          "n": 16,
+          "completion": 93.51851851851852,
+          "conversion": 58.8235294117647,
+          "reset": 100,
+          "hucks": 2.7777777777777777,
+          "holdMs": 3301.6666666666665,
+          "width": 14.000231443930385,
+          "throwsPerScore": 10.8,
+          "wins": 10
+        },
+        "play_fast+play_slow": {
+          "n": 16,
+          "completion": 93.51851851851852,
+          "conversion": 58.8235294117647,
+          "reset": 100,
+          "hucks": 2.7777777777777777,
+          "holdMs": 3301.6666666666665,
+          "width": 14.000231443930385,
+          "throwsPerScore": 10.8,
+          "wins": 10
+        }
+      }
+    },
+    "conflict-poach+no_poach": {
+      "pairedContexts": 16,
+      "levels": {
+        "none": {
+          "n": 16,
+          "completion": 94.21487603305785,
+          "conversion": 58.8235294117647,
+          "reset": 100,
+          "hucks": 1.6528925619834711,
+          "holdMs": 2804.9586776859505,
+          "width": 13.780266494756383,
+          "throwsPerScore": 12.1,
+          "wins": 10
+        },
+        "poach": {
+          "n": 16,
+          "completion": 94.28571428571429,
+          "conversion": 57.89473684210526,
+          "reset": 100,
+          "hucks": 2.142857142857143,
+          "holdMs": 2793.8571428571427,
+          "width": 14.054279664823863,
+          "throwsPerScore": 12.727272727272727,
+          "wins": 11
+        },
+        "no_poach": {
+          "n": 16,
+          "completion": 94.21487603305785,
+          "conversion": 58.8235294117647,
+          "reset": 100,
+          "hucks": 1.6528925619834711,
+          "holdMs": 2804.9586776859505,
+          "width": 13.780266494756383,
+          "throwsPerScore": 12.1,
+          "wins": 10
+        },
+        "poach+no_poach": {
+          "n": 16,
+          "completion": 94.21487603305785,
+          "conversion": 58.8235294117647,
+          "reset": 100,
+          "hucks": 1.6528925619834711,
+          "holdMs": 2804.9586776859505,
+          "width": 13.780266494756383,
+          "throwsPerScore": 12.1,
+          "wins": 10
+        }
+      }
+    },
+    "conflict-cut_deep+cut_under": {
+      "pairedContexts": 16,
+      "levels": {
+        "none": {
+          "n": 16,
+          "completion": 94.21487603305785,
+          "conversion": 58.8235294117647,
+          "reset": 100,
+          "hucks": 1.6528925619834711,
+          "holdMs": 2804.9586776859505,
+          "width": 13.780266494756383,
+          "throwsPerScore": 12.1,
+          "wins": 10
+        },
+        "cut_deep": {
+          "n": 16,
+          "completion": 94.18604651162791,
+          "conversion": 68.75,
+          "reset": 93.75,
+          "hucks": 17.441860465116278,
+          "holdMs": 2746.5116279069766,
+          "width": 12.42396183307324,
+          "throwsPerScore": 7.818181818181818,
+          "wins": 11
+        },
+        "cut_under": {
+          "n": 16,
+          "completion": 97.40259740259741,
+          "conversion": 76.47058823529412,
+          "reset": 95.45454545454545,
+          "hucks": 0.6493506493506493,
+          "holdMs": 2714.5454545454545,
+          "width": 14.170846198901978,
+          "throwsPerScore": 11.846153846153847,
+          "wins": 13
+        },
+        "cut_deep+cut_under": {
+          "n": 16,
+          "completion": 97.40259740259741,
+          "conversion": 76.47058823529412,
+          "reset": 95.45454545454545,
+          "hucks": 0.6493506493506493,
+          "holdMs": 2714.5454545454545,
+          "width": 14.170846198901978,
+          "throwsPerScore": 11.846153846153847,
+          "wins": 13
+        }
+      }
+    },
+    "conflict-dump_first+safe_throws": {
+      "pairedContexts": 16,
+      "levels": {
+        "none": {
+          "n": 16,
+          "completion": 94.21487603305785,
+          "conversion": 58.8235294117647,
+          "reset": 100,
+          "hucks": 1.6528925619834711,
+          "holdMs": 2804.9586776859505,
+          "width": 13.780266494756383,
+          "throwsPerScore": 12.1,
+          "wins": 10
+        },
+        "dump_first": {
+          "n": 16,
+          "completion": 94.64285714285714,
+          "conversion": 64.70588235294117,
+          "reset": 94.11764705882354,
+          "hucks": 4.464285714285714,
+          "holdMs": 2753.3928571428573,
+          "width": 13.39015450586809,
+          "throwsPerScore": 10.181818181818182,
+          "wins": 11
+        },
+        "safe_throws": {
+          "n": 16,
+          "completion": 89.10891089108911,
+          "conversion": 38.888888888888886,
+          "reset": 92.85714285714286,
+          "hucks": 2.9702970297029703,
+          "holdMs": 2798.8118811881186,
+          "width": 14.207386079500482,
+          "throwsPerScore": 14.428571428571429,
+          "wins": 7
+        },
+        "dump_first+safe_throws": {
+          "n": 16,
+          "completion": 95.49549549549549,
+          "conversion": 68.75,
+          "reset": 95.23809523809524,
+          "hucks": 6.306306306306307,
+          "holdMs": 2802.3423423423424,
+          "width": 12.709064131841387,
+          "throwsPerScore": 10.090909090909092,
+          "wins": 11
+        }
+      }
+    },
+    "trait-disciplined": {
+      "pairedContexts": 14,
+      "levels": {
+        "0": {
+          "n": 14,
+          "completion": 94.96855345911949,
+          "conversion": 68,
+          "reset": 100,
+          "hucks": 5.031446540880503,
+          "holdMs": 2698.7421383647797,
+          "width": 13.425891869595889,
+          "throwsPerScore": 9.352941176470589,
+          "wins": 4
+        },
+        "1": {
+          "n": 14,
+          "completion": 96.26865671641791,
+          "conversion": 76.19047619047619,
+          "reset": 95.65217391304348,
+          "hucks": 7.462686567164179,
+          "holdMs": 2813.582089552239,
+          "width": 12.883375350714383,
+          "throwsPerScore": 8.375,
+          "wins": 2
+        }
+      }
+    },
+    "trait-huck_lover": {
+      "pairedContexts": 14,
+      "levels": {
+        "0": {
+          "n": 14,
+          "completion": 94.96855345911949,
+          "conversion": 68,
+          "reset": 100,
+          "hucks": 5.031446540880503,
+          "holdMs": 2698.7421383647797,
+          "width": 13.425891869595889,
+          "throwsPerScore": 9.352941176470589,
+          "wins": 4
+        },
+        "1": {
+          "n": 14,
+          "completion": 94.81481481481481,
+          "conversion": 68.18181818181819,
+          "reset": 100,
+          "hucks": 6.666666666666667,
+          "holdMs": 2764,
+          "width": 13.144881485310322,
+          "throwsPerScore": 9,
+          "wins": 3
+        }
+      }
+    },
+    "trait-dump_guy": {
+      "pairedContexts": 14,
+      "levels": {
+        "0": {
+          "n": 14,
+          "completion": 94.96855345911949,
+          "conversion": 68,
+          "reset": 100,
+          "hucks": 5.031446540880503,
+          "holdMs": 2698.7421383647797,
+          "width": 13.425891869595889,
+          "throwsPerScore": 9.352941176470589,
+          "wins": 4
+        },
+        "1": {
+          "n": 14,
+          "completion": 94.5945945945946,
+          "conversion": 62.96296296296296,
+          "reset": 83.87096774193549,
+          "hucks": 4.324324324324325,
+          "holdMs": 2730.3783783783783,
+          "width": 13.061298504004867,
+          "throwsPerScore": 10.882352941176471,
+          "wins": 4
+        }
+      }
+    },
+    "trait-poacher": {
+      "pairedContexts": 14,
+      "levels": {
+        "0": {
+          "n": 14,
+          "completion": 94.54545454545455,
+          "conversion": 62.5,
+          "reset": 100,
+          "hucks": 5.454545454545454,
+          "holdMs": 2660.969696969697,
+          "width": 13.59772804245065,
+          "throwsPerScore": 11,
+          "wins": 2
+        },
+        "1": {
+          "n": 14,
+          "completion": 91.41104294478528,
+          "conversion": 50,
+          "reset": 95.65217391304348,
+          "hucks": 4.294478527607362,
+          "holdMs": 2661.2269938650306,
+          "width": 13.015867651479647,
+          "throwsPerScore": 11.642857142857142,
+          "wins": 4
+        }
+      }
+    },
+    "trait-under_cutter": {
+      "pairedContexts": 14,
+      "levels": {
+        "0": {
+          "n": 14,
+          "completion": 94.96855345911949,
+          "conversion": 68,
+          "reset": 100,
+          "hucks": 5.031446540880503,
+          "holdMs": 2698.7421383647797,
+          "width": 13.425891869595889,
+          "throwsPerScore": 9.352941176470589,
+          "wins": 4
+        },
+        "1": {
+          "n": 14,
+          "completion": 92.3076923076923,
+          "conversion": 48,
+          "reset": 96.7741935483871,
+          "hucks": 6.508875739644971,
+          "holdMs": 2644.9704142011833,
+          "width": 13.22900865033274,
+          "throwsPerScore": 14.083333333333334,
+          "wins": 1
+        }
+      }
+    },
+    "trait-deep_threat": {
+      "pairedContexts": 14,
+      "levels": {
+        "0": {
+          "n": 14,
+          "completion": 94.96855345911949,
+          "conversion": 68,
+          "reset": 100,
+          "hucks": 5.031446540880503,
+          "holdMs": 2698.7421383647797,
+          "width": 13.425891869595889,
+          "throwsPerScore": 9.352941176470589,
+          "wins": 4
+        },
+        "1": {
+          "n": 14,
+          "completion": 90.1639344262295,
+          "conversion": 55.55555555555556,
+          "reset": 100,
+          "hucks": 14.754098360655737,
+          "holdMs": 2531.967213114754,
+          "width": 12.733910493645139,
+          "throwsPerScore": 8.133333333333333,
+          "wins": 2
+        }
+      }
+    }
+  },
+  "ablations": {
+    "none": {
+      "n": 120,
+      "completion": 94.00496630010642,
+      "conversion": 52.124645892351275,
+      "reset": 95.27458492975734,
+      "hucks": 3.3699893579283433,
+      "holdMs": 2824.490954239092,
+      "width": 18.35994330691146,
+      "throwsPerScore": 15.320652173913043,
+      "wins": 63
+    },
+    "preferences": {
+      "n": 120,
+      "completion": 94.64438731790916,
+      "conversion": 60.44303797468354,
+      "reset": 94.5945945945946,
+      "hucks": 3.3847472150814055,
+      "holdMs": 2713.007712082262,
+      "width": 18.052241898957213,
+      "throwsPerScore": 12.219895287958115,
+      "wins": 62
+    },
+    "biases": {
+      "n": 120,
+      "completion": 94.12013536379018,
+      "conversion": 58.875739644970416,
+      "reset": 95.75645756457564,
+      "hucks": 3.214890016920474,
+      "holdMs": 2704.5769881556685,
+      "width": 18.39814974444094,
+      "throwsPerScore": 11.879396984924623,
+      "wins": 73
+    },
+    "instructions": {
+      "n": 120,
+      "completion": 94.27250088936322,
+      "conversion": 54.51977401129943,
+      "reset": 95.9493670886076,
+      "hucks": 3.7353255069370332,
+      "holdMs": 2825.407328352899,
+      "width": 18.283509021707488,
+      "throwsPerScore": 14.564766839378239,
+      "wins": 65
+    },
+    "lineup": {
+      "n": 120,
+      "completion": 93.42846413819001,
+      "conversion": 47.447447447447445,
+      "reset": 95.73901464713715,
+      "hucks": 3.2294404806609087,
+      "holdMs": 2827.818250093879,
+      "width": 18.33964334167836,
+      "throwsPerScore": 16.854430379746834,
+      "wins": 48
+    },
+    "adaptation": {
+      "n": 120,
+      "completion": 94.55630126771067,
+      "conversion": 54.6583850931677,
+      "reset": 95.34282018111254,
+      "hucks": 3.5794183445190155,
+      "holdMs": 2834.1685309470545,
+      "width": 18.421648276649343,
+      "throwsPerScore": 15.238636363636363,
+      "wins": 59
+    },
+    "rotation": {
+      "n": 120,
+      "completion": 93.5575221238938,
+      "conversion": 49.863013698630134,
+      "reset": 94.52054794520548,
+      "hucks": 3.398230088495575,
+      "holdMs": 2831.624778761062,
+      "width": 18.291628981530078,
+      "throwsPerScore": 15.521978021978022,
+      "wins": 64
+    }
+  },
+  "ablationByCoach": {
+    "patient_controller|none": {
+      "n": 8,
+      "completion": 94.31438127090301,
+      "conversion": 45.16129032258065,
+      "reset": 97.32142857142857,
+      "hucks": 2.3411371237458196,
+      "holdMs": 3123.678929765886,
+      "width": 18.03616813090384,
+      "throwsPerScore": 21.357142857142858,
+      "wins": 4
+    },
+    "tempo_pusher|none": {
+      "n": 8,
+      "completion": 95.71428571428571,
+      "conversion": 71.42857142857143,
+      "reset": 95.23809523809524,
+      "hucks": 5,
+      "holdMs": 2455.5714285714284,
+      "width": 21.70236279294712,
+      "throwsPerScore": 9.333333333333334,
+      "wins": 6
+    },
+    "huck_gambler|none": {
+      "n": 8,
+      "completion": 92.66666666666667,
+      "conversion": 54.166666666666664,
+      "reset": 88.46153846153847,
+      "hucks": 4,
+      "holdMs": 2605.733333333333,
+      "width": 21.035926581901847,
+      "throwsPerScore": 11.538461538461538,
+      "wins": 4
+    },
+    "zone_architect|none": {
+      "n": 8,
+      "completion": 90.97222222222223,
+      "conversion": 48,
+      "reset": 93.54838709677419,
+      "hucks": 1.3888888888888888,
+      "holdMs": 2855,
+      "width": 19.88001662826467,
+      "throwsPerScore": 12,
+      "wins": 4
+    },
+    "creative_iso|none": {
+      "n": 8,
+      "completion": 93.13725490196079,
+      "conversion": 61.111111111111114,
+      "reset": 87.5,
+      "hucks": 5.882352941176471,
+      "holdMs": 2694.901960784314,
+      "width": 14.418013570557745,
+      "throwsPerScore": 9.272727272727273,
+      "wins": 4
+    },
+    "balanced_pro|none": {
+      "n": 8,
+      "completion": 91.93548387096774,
+      "conversion": 54.54545454545455,
+      "reset": 90.47619047619048,
+      "hucks": 4.838709677419355,
+      "holdMs": 2771.451612903226,
+      "width": 13.67243681204011,
+      "throwsPerScore": 10.333333333333334,
+      "wins": 3
+    },
+    "grind_defense|none": {
+      "n": 8,
+      "completion": 95,
+      "conversion": 33.333333333333336,
+      "reset": 96.17834394904459,
+      "hucks": 1.5,
+      "holdMs": 3059.9,
+      "width": 18.3664299229684,
+      "throwsPerScore": 40,
+      "wins": 3
+    },
+    "trap_counter|none": {
+      "n": 8,
+      "completion": 89.93288590604027,
+      "conversion": 42.30769230769231,
+      "reset": 90.3225806451613,
+      "hucks": 8.053691275167786,
+      "holdMs": 2722.953020134228,
+      "width": 21.94965057660911,
+      "throwsPerScore": 13.545454545454545,
+      "wins": 3
+    },
+    "veteran_grinder|none": {
+      "n": 8,
+      "completion": 92.82868525896414,
+      "conversion": 30.76923076923077,
+      "reset": 92.92929292929293,
+      "hucks": 5.577689243027889,
+      "holdMs": 3018.00796812749,
+      "width": 18.13821156143507,
+      "throwsPerScore": 31.375,
+      "wins": 1
+    },
+    "deep_strike|none": {
+      "n": 8,
+      "completion": 92.85714285714286,
+      "conversion": 57.142857142857146,
+      "reset": 92.85714285714286,
+      "hucks": 3.1746031746031744,
+      "holdMs": 2742.5396825396824,
+      "width": 20.07303624542662,
+      "throwsPerScore": 10.5,
+      "wins": 5
+    },
+    "junk_hybrid|none": {
+      "n": 8,
+      "completion": 96.11650485436893,
+      "conversion": 53.84615384615385,
+      "reset": 98.1981981981982,
+      "hucks": 2.26537216828479,
+      "holdMs": 2781.229773462783,
+      "width": 18.74052751882261,
+      "throwsPerScore": 22.071428571428573,
+      "wins": 6
+    },
+    "cup_grinder|none": {
+      "n": 8,
+      "completion": 94.95798319327731,
+      "conversion": 70,
+      "reset": 100,
+      "hucks": 5.042016806722689,
+      "holdMs": 2873.27731092437,
+      "width": 13.83576975680164,
+      "throwsPerScore": 8.5,
+      "wins": 5
+    },
+    "bait_switch|none": {
+      "n": 8,
+      "completion": 91.66666666666667,
+      "conversion": 50,
+      "reset": 95.23809523809524,
+      "hucks": 3.0303030303030303,
+      "holdMs": 2630.3030303030305,
+      "width": 15.003351350489227,
+      "throwsPerScore": 12,
+      "wins": 4
+    },
+    "motion_system|none": {
+      "n": 8,
+      "completion": 95.6896551724138,
+      "conversion": 54.54545454545455,
+      "reset": 98.36065573770492,
+      "hucks": 1.7241379310344827,
+      "holdMs": 2614.051724137931,
+      "width": 17.385077603914304,
+      "throwsPerScore": 19.333333333333332,
+      "wins": 5
+    },
+    "tactical_mastermind|none": {
+      "n": 8,
+      "completion": 97.1830985915493,
+      "conversion": 78.94736842105263,
+      "reset": 91.66666666666667,
+      "hucks": 2.816901408450704,
+      "holdMs": 2649.43661971831,
+      "width": 21.742538226529085,
+      "throwsPerScore": 9.466666666666667,
+      "wins": 6
+    },
+    "patient_controller|preferences": {
+      "n": 8,
+      "completion": 95.05703422053232,
+      "conversion": 45.833333333333336,
+      "reset": 98.63013698630137,
+      "hucks": 2.661596958174905,
+      "holdMs": 2830.494296577947,
+      "width": 17.59489561723367,
+      "throwsPerScore": 23.90909090909091,
+      "wins": 3
+    },
+    "tempo_pusher|preferences": {
+      "n": 8,
+      "completion": 98.11320754716981,
+      "conversion": 88.88888888888889,
+      "reset": 100,
+      "hucks": 2.830188679245283,
+      "holdMs": 2508.867924528302,
+      "width": 13.23183435276302,
+      "throwsPerScore": 6.625,
+      "wins": 7
+    },
+    "huck_gambler|preferences": {
+      "n": 8,
+      "completion": 95.91836734693878,
+      "conversion": 76.47058823529412,
+      "reset": 100,
+      "hucks": 9.183673469387756,
+      "holdMs": 2602.4489795918366,
+      "width": 13.369500025227927,
+      "throwsPerScore": 7.538461538461538,
+      "wins": 4
+    },
+    "zone_architect|preferences": {
+      "n": 8,
+      "completion": 94.16058394160584,
+      "conversion": 63.63636363636363,
+      "reset": 95.45454545454545,
+      "hucks": 4.37956204379562,
+      "holdMs": 2680.875912408759,
+      "width": 22.20031907196863,
+      "throwsPerScore": 9.785714285714286,
+      "wins": 4
+    },
+    "creative_iso|preferences": {
+      "n": 8,
+      "completion": 92.17391304347827,
+      "conversion": 55,
+      "reset": 88.88888888888889,
+      "hucks": 2.608695652173913,
+      "holdMs": 2651.8260869565215,
+      "width": 13.781855540137846,
+      "throwsPerScore": 10.454545454545455,
+      "wins": 3
+    },
+    "balanced_pro|preferences": {
+      "n": 8,
+      "completion": 96,
+      "conversion": 70,
+      "reset": 96.55172413793103,
+      "hucks": 5.333333333333333,
+      "holdMs": 2630.266666666667,
+      "width": 21.266263870181614,
+      "throwsPerScore": 10.714285714285714,
+      "wins": 6
+    },
+    "grind_defense|preferences": {
+      "n": 8,
+      "completion": 93.95348837209302,
+      "conversion": 43.47826086956522,
+      "reset": 96.7741935483871,
+      "hucks": 2.3255813953488373,
+      "holdMs": 2891.906976744186,
+      "width": 16.88672386127795,
+      "throwsPerScore": 21.5,
+      "wins": 2
+    },
+    "trap_counter|preferences": {
+      "n": 8,
+      "completion": 91.60839160839161,
+      "conversion": 47.82608695652174,
+      "reset": 94.11764705882354,
+      "hucks": 7.6923076923076925,
+      "holdMs": 2677.762237762238,
+      "width": 21.21557286400924,
+      "throwsPerScore": 13,
+      "wins": 3
+    },
+    "veteran_grinder|preferences": {
+      "n": 8,
+      "completion": 95.72649572649573,
+      "conversion": 56.52173913043478,
+      "reset": 98.48484848484848,
+      "hucks": 1.2820512820512822,
+      "holdMs": 2831.709401709402,
+      "width": 17.398550440837376,
+      "throwsPerScore": 18,
+      "wins": 5
+    },
+    "deep_strike|preferences": {
+      "n": 8,
+      "completion": 92.90780141843972,
+      "conversion": 52.38095238095238,
+      "reset": 86.66666666666667,
+      "hucks": 2.8368794326241136,
+      "holdMs": 2744.255319148936,
+      "width": 21.814935236878878,
+      "throwsPerScore": 12.818181818181818,
+      "wins": 2
+    },
+    "junk_hybrid|preferences": {
+      "n": 8,
+      "completion": 93.27731092436974,
+      "conversion": 61.904761904761905,
+      "reset": 90.47619047619048,
+      "hucks": 3.361344537815126,
+      "holdMs": 2781.176470588235,
+      "width": 14.17069817640568,
+      "throwsPerScore": 9.153846153846153,
+      "wins": 5
+    },
+    "cup_grinder|preferences": {
+      "n": 8,
+      "completion": 95.34883720930233,
+      "conversion": 54.54545454545455,
+      "reset": 90.9090909090909,
+      "hucks": 1.3953488372093024,
+      "holdMs": 2722.9767441860463,
+      "width": 17.445865657163427,
+      "throwsPerScore": 17.916666666666668,
+      "wins": 4
+    },
+    "bait_switch|preferences": {
+      "n": 8,
+      "completion": 92.72727272727273,
+      "conversion": 61.904761904761905,
+      "reset": 94.11764705882354,
+      "hucks": 2.727272727272727,
+      "holdMs": 2660.7272727272725,
+      "width": 13.50798119263567,
+      "throwsPerScore": 8.461538461538462,
+      "wins": 3
+    },
+    "motion_system|preferences": {
+      "n": 8,
+      "completion": 94.20289855072464,
+      "conversion": 61.904761904761905,
+      "reset": 88.46153846153847,
+      "hucks": 4.3478260869565215,
+      "holdMs": 2439.5652173913045,
+      "width": 22.078104882145794,
+      "throwsPerScore": 10.615384615384615,
+      "wins": 4
+    },
+    "tactical_mastermind|preferences": {
+      "n": 8,
+      "completion": 97.33333333333333,
+      "conversion": 80,
+      "reset": 92,
+      "hucks": 2.6666666666666665,
+      "holdMs": 2666.6666666666665,
+      "width": 21.578826811969464,
+      "throwsPerScore": 9.375,
+      "wins": 7
+    },
+    "patient_controller|biases": {
+      "n": 8,
+      "completion": 90.5982905982906,
+      "conversion": 56,
+      "reset": 100,
+      "hucks": 4.273504273504273,
+      "holdMs": 2690.940170940171,
+      "width": 13.946815016260992,
+      "throwsPerScore": 8.357142857142858,
+      "wins": 5
+    },
+    "tempo_pusher|biases": {
+      "n": 8,
+      "completion": 93.47826086956522,
+      "conversion": 57.142857142857146,
+      "reset": 92.85714285714286,
+      "hucks": 1.4492753623188406,
+      "holdMs": 2645.072463768116,
+      "width": 21.181628897414527,
+      "throwsPerScore": 11.5,
+      "wins": 5
+    },
+    "huck_gambler|biases": {
+      "n": 8,
+      "completion": 95.5223880597015,
+      "conversion": 68.42105263157895,
+      "reset": 91.66666666666667,
+      "hucks": 2.2388059701492535,
+      "holdMs": 2600.7462686567164,
+      "width": 21.19811815936355,
+      "throwsPerScore": 10.307692307692308,
+      "wins": 5
+    },
+    "zone_architect|biases": {
+      "n": 8,
+      "completion": 94.92753623188406,
+      "conversion": 66.66666666666667,
+      "reset": 100,
+      "hucks": 3.6231884057971016,
+      "holdMs": 2708.985507246377,
+      "width": 19.145862077152724,
+      "throwsPerScore": 9.857142857142858,
+      "wins": 5
+    },
+    "creative_iso|biases": {
+      "n": 8,
+      "completion": 96.02649006622516,
+      "conversion": 68.42105263157895,
+      "reset": 96.55172413793103,
+      "hucks": 3.3112582781456954,
+      "holdMs": 2643.4437086092717,
+      "width": 22.411839540873988,
+      "throwsPerScore": 11.615384615384615,
+      "wins": 5
+    },
+    "balanced_pro|biases": {
+      "n": 8,
+      "completion": 92.5,
+      "conversion": 62.5,
+      "reset": 100,
+      "hucks": 5,
+      "holdMs": 2777,
+      "width": 14.40192967420442,
+      "throwsPerScore": 8,
+      "wins": 6
+    },
+    "grind_defense|biases": {
+      "n": 8,
+      "completion": 92.25806451612904,
+      "conversion": 50,
+      "reset": 96.96969696969697,
+      "hucks": 4.516129032258065,
+      "holdMs": 2683.6129032258063,
+      "width": 14.190540052197367,
+      "throwsPerScore": 12.916666666666666,
+      "wins": 5
+    },
+    "trap_counter|biases": {
+      "n": 8,
+      "completion": 95.3125,
+      "conversion": 60.869565217391305,
+      "reset": 93.02325581395348,
+      "hucks": 3.125,
+      "holdMs": 2642.9166666666665,
+      "width": 19.4295961227767,
+      "throwsPerScore": 13.714285714285714,
+      "wins": 6
+    },
+    "veteran_grinder|biases": {
+      "n": 8,
+      "completion": 85.59322033898304,
+      "conversion": 41.37931034482759,
+      "reset": 100,
+      "hucks": 5.932203389830509,
+      "holdMs": 2654.915254237288,
+      "width": 13.70310211231347,
+      "throwsPerScore": 9.833333333333334,
+      "wins": 4
+    },
+    "deep_strike|biases": {
+      "n": 8,
+      "completion": 94.85714285714286,
+      "conversion": 59.09090909090909,
+      "reset": 94.5945945945946,
+      "hucks": 3.4285714285714284,
+      "holdMs": 2668.114285714286,
+      "width": 21.366011324874627,
+      "throwsPerScore": 13.461538461538462,
+      "wins": 5
+    },
+    "junk_hybrid|biases": {
+      "n": 8,
+      "completion": 94.26229508196721,
+      "conversion": 39.130434782608695,
+      "reset": 91.95402298850574,
+      "hucks": 2.0491803278688523,
+      "holdMs": 2813.5245901639346,
+      "width": 18.058740813477986,
+      "throwsPerScore": 27.11111111111111,
+      "wins": 1
+    },
+    "cup_grinder|biases": {
+      "n": 8,
+      "completion": 93.33333333333333,
+      "conversion": 54.166666666666664,
+      "reset": 96.15384615384616,
+      "hucks": 3.0303030303030303,
+      "holdMs": 2884.969696969697,
+      "width": 15.75289762921268,
+      "throwsPerScore": 12.692307692307692,
+      "wins": 4
+    },
+    "bait_switch|biases": {
+      "n": 8,
+      "completion": 96.21212121212122,
+      "conversion": 72.22222222222223,
+      "reset": 96,
+      "hucks": 3.0303030303030303,
+      "holdMs": 2642.2727272727275,
+      "width": 21.621945210340318,
+      "throwsPerScore": 10.153846153846153,
+      "wins": 5
+    },
+    "motion_system|biases": {
+      "n": 8,
+      "completion": 95.88477366255144,
+      "conversion": 62.96296296296296,
+      "reset": 100,
+      "hucks": 2.4691358024691357,
+      "holdMs": 2748.559670781893,
+      "width": 17.537072963186635,
+      "throwsPerScore": 14.294117647058824,
+      "wins": 6
+    },
+    "tactical_mastermind|biases": {
+      "n": 8,
+      "completion": 97.1830985915493,
+      "conversion": 78.94736842105263,
+      "reset": 91.66666666666667,
+      "hucks": 2.816901408450704,
+      "holdMs": 2649.43661971831,
+      "width": 21.742538226529085,
+      "throwsPerScore": 9.466666666666667,
+      "wins": 6
+    },
+    "patient_controller|instructions": {
+      "n": 8,
+      "completion": 94.37086092715232,
+      "conversion": 45.16129032258065,
+      "reset": 97.34513274336283,
+      "hucks": 2.3178807947019866,
+      "holdMs": 3129.139072847682,
+      "width": 18.00385666930942,
+      "throwsPerScore": 21.571428571428573,
+      "wins": 4
+    },
+    "tempo_pusher|instructions": {
+      "n": 8,
+      "completion": 95.71428571428571,
+      "conversion": 71.42857142857143,
+      "reset": 95.23809523809524,
+      "hucks": 5,
+      "holdMs": 2455.5714285714284,
+      "width": 21.70236279294712,
+      "throwsPerScore": 9.333333333333334,
+      "wins": 6
+    },
+    "huck_gambler|instructions": {
+      "n": 8,
+      "completion": 96.06299212598425,
+      "conversion": 76.19047619047619,
+      "reset": 95.83333333333333,
+      "hucks": 7.086614173228346,
+      "holdMs": 2583.779527559055,
+      "width": 20.69508585588118,
+      "throwsPerScore": 7.9375,
+      "wins": 7
+    },
+    "zone_architect|instructions": {
+      "n": 8,
+      "completion": 90.97222222222223,
+      "conversion": 48,
+      "reset": 93.54838709677419,
+      "hucks": 1.3888888888888888,
+      "holdMs": 2855,
+      "width": 19.88001662826467,
+      "throwsPerScore": 12,
+      "wins": 4
+    },
+    "creative_iso|instructions": {
+      "n": 8,
+      "completion": 92.5,
+      "conversion": 59.09090909090909,
+      "reset": 100,
+      "hucks": 8.333333333333334,
+      "holdMs": 2636.5,
+      "width": 14.826754444687479,
+      "throwsPerScore": 9.23076923076923,
+      "wins": 3
+    },
+    "balanced_pro|instructions": {
+      "n": 8,
+      "completion": 91.93548387096774,
+      "conversion": 54.54545454545455,
+      "reset": 90.47619047619048,
+      "hucks": 4.838709677419355,
+      "holdMs": 2771.451612903226,
+      "width": 13.67243681204011,
+      "throwsPerScore": 10.333333333333334,
+      "wins": 3
+    },
+    "grind_defense|instructions": {
+      "n": 8,
+      "completion": 95,
+      "conversion": 33.333333333333336,
+      "reset": 96.17834394904459,
+      "hucks": 1.5,
+      "holdMs": 3059.9,
+      "width": 18.3664299229684,
+      "throwsPerScore": 40,
+      "wins": 3
+    },
+    "trap_counter|instructions": {
+      "n": 8,
+      "completion": 89.93288590604027,
+      "conversion": 42.30769230769231,
+      "reset": 90.3225806451613,
+      "hucks": 8.053691275167786,
+      "holdMs": 2722.953020134228,
+      "width": 21.94965057660911,
+      "throwsPerScore": 13.545454545454545,
+      "wins": 3
+    },
+    "veteran_grinder|instructions": {
+      "n": 8,
+      "completion": 92.82868525896414,
+      "conversion": 30.76923076923077,
+      "reset": 92.92929292929293,
+      "hucks": 5.577689243027889,
+      "holdMs": 3018.00796812749,
+      "width": 18.13821156143507,
+      "throwsPerScore": 31.375,
+      "wins": 1
+    },
+    "deep_strike|instructions": {
+      "n": 8,
+      "completion": 92.85714285714286,
+      "conversion": 57.142857142857146,
+      "reset": 92.85714285714286,
+      "hucks": 3.1746031746031744,
+      "holdMs": 2742.5396825396824,
+      "width": 20.07303624542662,
+      "throwsPerScore": 10.5,
+      "wins": 5
+    },
+    "junk_hybrid|instructions": {
+      "n": 8,
+      "completion": 96.11650485436893,
+      "conversion": 53.84615384615385,
+      "reset": 98.1981981981982,
+      "hucks": 2.26537216828479,
+      "holdMs": 2781.229773462783,
+      "width": 18.74052751882261,
+      "throwsPerScore": 22.071428571428573,
+      "wins": 6
+    },
+    "cup_grinder|instructions": {
+      "n": 8,
+      "completion": 94.95798319327731,
+      "conversion": 70,
+      "reset": 100,
+      "hucks": 5.042016806722689,
+      "holdMs": 2873.27731092437,
+      "width": 13.83576975680164,
+      "throwsPerScore": 8.5,
+      "wins": 5
+    },
+    "bait_switch|instructions": {
+      "n": 8,
+      "completion": 94.44444444444444,
+      "conversion": 68.18181818181819,
+      "reset": 100,
+      "hucks": 5.555555555555555,
+      "holdMs": 2677.6190476190477,
+      "width": 14.26340204811664,
+      "throwsPerScore": 8.4,
+      "wins": 4
+    },
+    "motion_system|instructions": {
+      "n": 8,
+      "completion": 95.6896551724138,
+      "conversion": 54.54545454545455,
+      "reset": 98.36065573770492,
+      "hucks": 1.7241379310344827,
+      "holdMs": 2614.051724137931,
+      "width": 17.385077603914304,
+      "throwsPerScore": 19.333333333333332,
+      "wins": 5
+    },
+    "tactical_mastermind|instructions": {
+      "n": 8,
+      "completion": 97.1830985915493,
+      "conversion": 78.94736842105263,
+      "reset": 91.66666666666667,
+      "hucks": 2.816901408450704,
+      "holdMs": 2649.43661971831,
+      "width": 21.742538226529085,
+      "throwsPerScore": 9.466666666666667,
+      "wins": 6
+    },
+    "patient_controller|lineup": {
+      "n": 8,
+      "completion": 95.13888888888889,
+      "conversion": 36.36363636363637,
+      "reset": 97.43589743589743,
+      "hucks": 2.0833333333333335,
+      "holdMs": 3090.8333333333335,
+      "width": 18.198615533227663,
+      "throwsPerScore": 36,
+      "wins": 2
+    },
+    "tempo_pusher|lineup": {
+      "n": 8,
+      "completion": 92.10526315789474,
+      "conversion": 45.45454545454545,
+      "reset": 96.55172413793103,
+      "hucks": 2.6315789473684212,
+      "holdMs": 2585.657894736842,
+      "width": 20.7706605277193,
+      "throwsPerScore": 15.2,
+      "wins": 3
+    },
+    "huck_gambler|lineup": {
+      "n": 8,
+      "completion": 94.11764705882354,
+      "conversion": 60,
+      "reset": 95.83333333333333,
+      "hucks": 5.882352941176471,
+      "holdMs": 2584.5588235294117,
+      "width": 20.75171301892121,
+      "throwsPerScore": 11.333333333333334,
+      "wins": 5
+    },
+    "zone_architect|lineup": {
+      "n": 8,
+      "completion": 94.83870967741936,
+      "conversion": 61.904761904761905,
+      "reset": 92.5,
+      "hucks": 4.516129032258065,
+      "holdMs": 2753.8064516129034,
+      "width": 20.69334482550537,
+      "throwsPerScore": 11.923076923076923,
+      "wins": 5
+    },
+    "creative_iso|lineup": {
+      "n": 8,
+      "completion": 93.16239316239316,
+      "conversion": 57.89473684210526,
+      "reset": 95,
+      "hucks": 3.4188034188034186,
+      "holdMs": 2788.8888888888887,
+      "width": 13.480228402473074,
+      "throwsPerScore": 10.636363636363637,
+      "wins": 2
+    },
+    "balanced_pro|lineup": {
+      "n": 8,
+      "completion": 93.91304347826087,
+      "conversion": 65,
+      "reset": 94.73684210526316,
+      "hucks": 4.3478260869565215,
+      "holdMs": 2761.0434782608695,
+      "width": 14.805658017372492,
+      "throwsPerScore": 8.846153846153847,
+      "wins": 5
+    },
+    "grind_defense|lineup": {
+      "n": 8,
+      "completion": 95.35714285714286,
+      "conversion": 43.47826086956522,
+      "reset": 94.11764705882354,
+      "hucks": 2.142857142857143,
+      "holdMs": 2990.0714285714284,
+      "width": 18.327952509803865,
+      "throwsPerScore": 28,
+      "wins": 2
+    },
+    "trap_counter|lineup": {
+      "n": 8,
+      "completion": 88.34355828220859,
+      "conversion": 29.62962962962963,
+      "reset": 90.47619047619048,
+      "hucks": 3.6809815950920246,
+      "holdMs": 2825.521472392638,
+      "width": 21.362963882237754,
+      "throwsPerScore": 20.375,
+      "wins": 2
+    },
+    "veteran_grinder|lineup": {
+      "n": 8,
+      "completion": 93.82239382239382,
+      "conversion": 33.333333333333336,
+      "reset": 94.54545454545455,
+      "hucks": 2.7027027027027026,
+      "holdMs": 3061.003861003861,
+      "width": 18.357007529842548,
+      "throwsPerScore": 32.375,
+      "wins": 2
+    },
+    "deep_strike|lineup": {
+      "n": 8,
+      "completion": 94.28571428571429,
+      "conversion": 60,
+      "reset": 96.7741935483871,
+      "hucks": 7.142857142857143,
+      "holdMs": 2719.1428571428573,
+      "width": 20.472824673532,
+      "throwsPerScore": 11.666666666666666,
+      "wins": 4
+    },
+    "junk_hybrid|lineup": {
+      "n": 8,
+      "completion": 92.93680297397769,
+      "conversion": 26.923076923076923,
+      "reset": 97.91666666666667,
+      "hucks": 2.973977695167286,
+      "holdMs": 2836.1338289962823,
+      "width": 17.44199605807103,
+      "throwsPerScore": 38.42857142857143,
+      "wins": 0
+    },
+    "cup_grinder|lineup": {
+      "n": 8,
+      "completion": 87.5,
+      "conversion": 44,
+      "reset": 94.44444444444444,
+      "hucks": 2.6785714285714284,
+      "holdMs": 2828.035714285714,
+      "width": 14.055230022688537,
+      "throwsPerScore": 10.181818181818182,
+      "wins": 4
+    },
+    "bait_switch|lineup": {
+      "n": 8,
+      "completion": 96.18320610687023,
+      "conversion": 72.22222222222223,
+      "reset": 95,
+      "hucks": 3.053435114503817,
+      "holdMs": 2696.641221374046,
+      "width": 14.718656439592355,
+      "throwsPerScore": 10.076923076923077,
+      "wins": 5
+    },
+    "motion_system|lineup": {
+      "n": 8,
+      "completion": 93.56435643564356,
+      "conversion": 43.47826086956522,
+      "reset": 98.14814814814815,
+      "hucks": 1.4851485148514851,
+      "holdMs": 2618.5148514851485,
+      "width": 17.68750008639827,
+      "throwsPerScore": 20.2,
+      "wins": 2
+    },
+    "tactical_mastermind|lineup": {
+      "n": 8,
+      "completion": 92.36111111111111,
+      "conversion": 52.17391304347826,
+      "reset": 100,
+      "hucks": 3.4722222222222223,
+      "holdMs": 2722.3611111111113,
+      "width": 22.051815543488676,
+      "throwsPerScore": 12,
+      "wins": 5
+    },
+    "patient_controller|adaptation": {
+      "n": 8,
+      "completion": 94.11764705882354,
+      "conversion": 32,
+      "reset": 97.24770642201835,
+      "hucks": 2.422145328719723,
+      "holdMs": 3153.5640138408303,
+      "width": 18.58217004193562,
+      "throwsPerScore": 36.125,
+      "wins": 2
+    },
+    "tempo_pusher|adaptation": {
+      "n": 8,
+      "completion": 91.74311926605505,
+      "conversion": 52.63157894736842,
+      "reset": 85,
+      "hucks": 6.422018348623853,
+      "holdMs": 2538.348623853211,
+      "width": 22.505933337599284,
+      "throwsPerScore": 10.9,
+      "wins": 2
+    },
+    "huck_gambler|adaptation": {
+      "n": 8,
+      "completion": 94.8529411764706,
+      "conversion": 66.66666666666667,
+      "reset": 91.66666666666667,
+      "hucks": 4.411764705882353,
+      "holdMs": 2586.176470588235,
+      "width": 20.6033758482859,
+      "throwsPerScore": 9.714285714285714,
+      "wins": 5
+    },
+    "zone_architect|adaptation": {
+      "n": 8,
+      "completion": 95.48872180451127,
+      "conversion": 72.72727272727273,
+      "reset": 100,
+      "hucks": 3.7593984962406015,
+      "holdMs": 2758.496240601504,
+      "width": 20.89786792606534,
+      "throwsPerScore": 8.3125,
+      "wins": 6
+    },
+    "creative_iso|adaptation": {
+      "n": 8,
+      "completion": 96.03960396039604,
+      "conversion": 76.47058823529412,
+      "reset": 93.33333333333333,
+      "hucks": 4.9504950495049505,
+      "holdMs": 2586.732673267327,
+      "width": 13.933404688868622,
+      "throwsPerScore": 7.769230769230769,
+      "wins": 5
+    },
+    "balanced_pro|adaptation": {
+      "n": 8,
+      "completion": 95.6896551724138,
+      "conversion": 75,
+      "reset": 100,
+      "hucks": 6.896551724137931,
+      "holdMs": 2859.655172413793,
+      "width": 13.254060753488323,
+      "throwsPerScore": 7.733333333333333,
+      "wins": 6
+    },
+    "grind_defense|adaptation": {
+      "n": 8,
+      "completion": 95.15570934256056,
+      "conversion": 39.130434782608695,
+      "reset": 95.7983193277311,
+      "hucks": 2.0761245674740483,
+      "holdMs": 3103.3910034602077,
+      "width": 18.305249586727044,
+      "throwsPerScore": 32.111111111111114,
+      "wins": 2
+    },
+    "trap_counter|adaptation": {
+      "n": 8,
+      "completion": 90.22556390977444,
+      "conversion": 45.833333333333336,
+      "reset": 89.65517241379311,
+      "hucks": 7.518796992481203,
+      "holdMs": 2661.2030075187968,
+      "width": 20.548362227718375,
+      "throwsPerScore": 12.090909090909092,
+      "wins": 4
+    },
+    "veteran_grinder|adaptation": {
+      "n": 8,
+      "completion": 93.7956204379562,
+      "conversion": 32,
+      "reset": 95.45454545454545,
+      "hucks": 2.18978102189781,
+      "holdMs": 3055.985401459854,
+      "width": 17.89388898278124,
+      "throwsPerScore": 34.25,
+      "wins": 2
+    },
+    "deep_strike|adaptation": {
+      "n": 8,
+      "completion": 94.63087248322148,
+      "conversion": 65.21739130434783,
+      "reset": 93.33333333333333,
+      "hucks": 6.040268456375839,
+      "holdMs": 2718.6577181208054,
+      "width": 21.323746139837052,
+      "throwsPerScore": 9.933333333333334,
+      "wins": 6
+    },
+    "junk_hybrid|adaptation": {
+      "n": 8,
+      "completion": 95.71865443425077,
+      "conversion": 41.666666666666664,
+      "reset": 96.12403100775194,
+      "hucks": 1.834862385321101,
+      "holdMs": 2864.4036697247707,
+      "width": 18.920346478075203,
+      "throwsPerScore": 32.7,
+      "wins": 3
+    },
+    "cup_grinder|adaptation": {
+      "n": 8,
+      "completion": 95.8041958041958,
+      "conversion": 68.42105263157895,
+      "reset": 97.5,
+      "hucks": 6.293706293706293,
+      "holdMs": 2794.4055944055945,
+      "width": 15.250851087515757,
+      "throwsPerScore": 11,
+      "wins": 5
+    },
+    "bait_switch|adaptation": {
+      "n": 8,
+      "completion": 94.73684210526316,
+      "conversion": 68.18181818181819,
+      "reset": 88,
+      "hucks": 4.511278195488722,
+      "holdMs": 2664.06015037594,
+      "width": 13.703619230627737,
+      "throwsPerScore": 8.866666666666667,
+      "wins": 6
+    },
+    "motion_system|adaptation": {
+      "n": 8,
+      "completion": 95.69377990430623,
+      "conversion": 52.63157894736842,
+      "reset": 98,
+      "hucks": 0.9569377990430622,
+      "holdMs": 2606.602870813397,
+      "width": 17.973307841810126,
+      "throwsPerScore": 20.9,
+      "wins": 2
+    },
+    "tactical_mastermind|adaptation": {
+      "n": 8,
+      "completion": 92.90780141843972,
+      "conversion": 47.36842105263158,
+      "reset": 91.30434782608695,
+      "hucks": 2.8368794326241136,
+      "holdMs": 2645.3900709219856,
+      "width": 21.79228417483586,
+      "throwsPerScore": 15.666666666666666,
+      "wins": 3
+    },
+    "patient_controller|rotation": {
+      "n": 8,
+      "completion": 93.1740614334471,
+      "conversion": 37.5,
+      "reset": 97.11538461538461,
+      "hucks": 2.3890784982935154,
+      "holdMs": 3083.7542662116043,
+      "width": 17.839521729181804,
+      "throwsPerScore": 24.416666666666668,
+      "wins": 4
+    },
+    "tempo_pusher|rotation": {
+      "n": 8,
+      "completion": 95.86206896551724,
+      "conversion": 71.42857142857143,
+      "reset": 95.45454545454545,
+      "hucks": 4.137931034482759,
+      "holdMs": 2444.551724137931,
+      "width": 21.71669167516065,
+      "throwsPerScore": 9.666666666666666,
+      "wins": 6
+    },
+    "huck_gambler|rotation": {
+      "n": 8,
+      "completion": 91.11111111111111,
+      "conversion": 52,
+      "reset": 87.5,
+      "hucks": 5.185185185185185,
+      "holdMs": 2536.8888888888887,
+      "width": 20.853066109997908,
+      "throwsPerScore": 10.384615384615385,
+      "wins": 5
+    },
+    "zone_architect|rotation": {
+      "n": 8,
+      "completion": 91.19496855345912,
+      "conversion": 48.148148148148145,
+      "reset": 94.28571428571429,
+      "hucks": 0.6289308176100629,
+      "holdMs": 2876.9811320754716,
+      "width": 19.67517935704687,
+      "throwsPerScore": 12.23076923076923,
+      "wins": 4
+    },
+    "creative_iso|rotation": {
+      "n": 8,
+      "completion": 94.54545454545455,
+      "conversion": 68.42105263157895,
+      "reset": 84.21052631578948,
+      "hucks": 4.545454545454546,
+      "holdMs": 2660.7272727272725,
+      "width": 14.181402105558323,
+      "throwsPerScore": 8.461538461538462,
+      "wins": 4
+    },
+    "balanced_pro|rotation": {
+      "n": 8,
+      "completion": 92.1259842519685,
+      "conversion": 58.333333333333336,
+      "reset": 90,
+      "hucks": 4.724409448818897,
+      "holdMs": 2759.685039370079,
+      "width": 13.689831240667367,
+      "throwsPerScore": 9.071428571428571,
+      "wins": 5
+    },
+    "grind_defense|rotation": {
+      "n": 8,
+      "completion": 94.1025641025641,
+      "conversion": 25.806451612903224,
+      "reset": 94.9367088607595,
+      "hucks": 2.051282051282051,
+      "holdMs": 3086.051282051282,
+      "width": 18.58433422806446,
+      "throwsPerScore": 48.75,
+      "wins": 2
+    },
+    "trap_counter|rotation": {
+      "n": 8,
+      "completion": 87.58620689655173,
+      "conversion": 35.714285714285715,
+      "reset": 85.29411764705883,
+      "hucks": 8.96551724137931,
+      "holdMs": 2701.9310344827586,
+      "width": 21.551251292356845,
+      "throwsPerScore": 14.5,
+      "wins": 3
+    },
+    "veteran_grinder|rotation": {
+      "n": 8,
+      "completion": 93.02325581395348,
+      "conversion": 30.76923076923077,
+      "reset": 93.93939393939394,
+      "hucks": 3.488372093023256,
+      "holdMs": 3028.6046511627906,
+      "width": 18.32247018829035,
+      "throwsPerScore": 32.25,
+      "wins": 1
+    },
+    "deep_strike|rotation": {
+      "n": 8,
+      "completion": 93.75,
+      "conversion": 61.904761904761905,
+      "reset": 93.33333333333333,
+      "hucks": 3.90625,
+      "holdMs": 2781.5625,
+      "width": 20.346917564424977,
+      "throwsPerScore": 9.846153846153847,
+      "wins": 5
+    },
+    "junk_hybrid|rotation": {
+      "n": 8,
+      "completion": 96.75324675324676,
+      "conversion": 56.52173913043478,
+      "reset": 98.27586206896552,
+      "hucks": 2.9220779220779223,
+      "holdMs": 2843.116883116883,
+      "width": 18.91602128348626,
+      "throwsPerScore": 23.692307692307693,
+      "wins": 4
+    },
+    "cup_grinder|rotation": {
+      "n": 8,
+      "completion": 89.84375,
+      "conversion": 44,
+      "reset": 91.17647058823529,
+      "hucks": 6.25,
+      "holdMs": 2904.375,
+      "width": 13.78079349732248,
+      "throwsPerScore": 11.636363636363637,
+      "wins": 5
+    },
+    "bait_switch|rotation": {
+      "n": 8,
+      "completion": 92.14285714285714,
+      "conversion": 52.17391304347826,
+      "reset": 96.29629629629629,
+      "hucks": 2.857142857142857,
+      "holdMs": 2719.285714285714,
+      "width": 14.414566079679718,
+      "throwsPerScore": 11.666666666666666,
+      "wins": 5
+    },
+    "motion_system|rotation": {
+      "n": 8,
+      "completion": 95.92760180995475,
+      "conversion": 57.142857142857146,
+      "reset": 98.24561403508773,
+      "hucks": 1.8099547511312217,
+      "holdMs": 2599.9095022624433,
+      "width": 17.35656483092573,
+      "throwsPerScore": 18.416666666666668,
+      "wins": 5
+    },
+    "tactical_mastermind|rotation": {
+      "n": 8,
+      "completion": 97.10144927536231,
+      "conversion": 78.94736842105263,
+      "reset": 91.66666666666667,
+      "hucks": 2.898550724637681,
+      "holdMs": 2628.840579710145,
+      "width": 21.88836560348803,
+      "throwsPerScore": 9.2,
+      "wins": 6
+    }
+  },
+  "adaptation": {
+    "ordinaryHold": {
+      "n": 1920,
+      "changedDefense": 244,
+      "changedAttack": 0
+    },
+    "recovery": {
+      "patient_controller": {
+        "n": 128,
+        "maxHuck": 85,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 0.9840429687500002
+      },
+      "tempo_pusher": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 128,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "huck_gambler": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 42,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "zone_architect": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "creative_iso": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "balanced_pro": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "grind_defense": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "trap_counter": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "veteran_grinder": {
+        "n": 128,
+        "maxHuck": 85,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 0.9697656249999992
+      },
+      "deep_strike": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "junk_hybrid": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "cup_grinder": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "bait_switch": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "motion_system": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 128,
+        "stillPanic": 0,
+        "meanHuck": 1
+      },
+      "tactical_mastermind": {
+        "n": 128,
+        "maxHuck": 128,
+        "maxTempo": 0,
+        "stillPanic": 0,
+        "meanHuck": 1
+      }
+    },
+    "signals": {}
+  }
+}

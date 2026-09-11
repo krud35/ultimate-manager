@@ -1,0 +1,164 @@
+import { pickDict, UI_LANG } from '../locale'
+
+const pl = {
+  standingsTitle: 'Tabela ligowa',
+  standingsHint: 'W-L · punkty zdobyte / stracone · bilans',
+  team: 'Drużyna',
+  scheduleTeam: 'Terminarz drużyny',
+  scheduleTeamHint: (date) =>
+    `Tylko mecze Twojej drużyny · H dom / A wyjazd / N neutralne · dziś: ${date}`,
+  scheduleLeague: 'Terminarz ligi',
+  scheduleLeagueHint: (rounds, date) =>
+    `${rounds} kolejek ligowych · każdy z każdym (u siebie i na wyjeździe) · mecze Pt/So/Nd · dziś: ${date}`,
+  nextMatch: 'Następny mecz',
+  noFixtures: 'Brak zaplanowanych meczów.',
+  current: '(bieżąca)',
+  yourMatch: 'Twój mecz',
+  cup: 'puchar',
+  you: '(Ty)',
+  scheduled: 'zaplanowany',
+  toPlay: 'do rozegrania',
+  play: 'Graj',
+  round: (n) => `Kolejka ${n}`,
+  leadersTitle: 'Liderzy ligowi',
+  leadersHint: 'Statystyki tylko z meczów ligowych — osobna klasyfikacja pucharowa jest w zakładce Puchar.',
+  leadersMyLeague: 'Mój poziom',
+  noData: 'Brak danych — rozegraj mecze sezonu.',
+  goals: 'Gole',
+  assists: 'Asysty',
+  blocks: 'Bloki',
+  plusMinus: 'Bilans',
+  pointsPlayed: 'Punkty rozegrane',
+  cupTitle: 'Puchar Ligi',
+  cupIntro:
+    'Turniej styczniowy · 16 drużyn według tabeli po jesieni · boisko neutralne (N) · osobna klasyfikacja zawodników',
+  // Puchar Piramidy: 48 klubów, rozstawienie 1–48 wg tabel z dnia losowania (tydzień 1 stycznia).
+  pyramidCupTitle: 'Puchar Piramidy',
+  pyramidCupIntro:
+    'Turniej styczniowy · wszystkie 48 klubów piramidy · rozstawienie wg tabel z 1 stycznia (Liga 1: 1–16, Liga 2: 17–32, Liga 3: 33–48) · boisko neutralne (N) · osobna klasyfikacja zawodników',
+  cupNotStarted: 'Puchar jeszcze się nie rozpoczął. Drabinka powstanie po zakończeniu jesieni.',
+  cupEmptyBody:
+    'Po 15. kolejce ligowej (jesień) 16 najlepszych drużyn wchodzi do pucharowej drabinki: 1/8, ćwierćfinały, półfinały i finał.',
+  cupRound: {
+    prequarter: '1/8 finału',
+    quarter: 'Ćwierćfinały',
+    semi: 'Półfinały',
+    final: 'Finał',
+    // Puchar Piramidy (48 drużyn) — dodatkowe wczesne rundy, których nie ma zwykły puchar.
+    round1: 'Runda 1',
+    roundOf32: 'Runda 32',
+    roundOf16: '1/8 finału',
+    quarterfinal: 'Ćwierćfinał',
+    semifinal: 'Półfinał',
+  },
+  tabBracket: 'Terminarz',
+  tabResults: 'Wyniki',
+  tabStats: 'Liderzy',
+  noCupData: 'Brak danych — rozegraj mecze pucharu.',
+  noCupMatches: 'Brak meczów pucharowych.',
+  bracketHint: 'Drabinka pojawi się po zakończeniu rundy jesiennej (kolejki 1–15).',
+  winner: 'Zwycięzca',
+  champion: (name) => `Mistrz: ${name}`,
+  bracketReady: 'Drabinka turniejowa',
+  cupPhaseActive: 'Trwa faza pucharowa',
+  afterFall: 'Po jesieni · 16 drużyn',
+  playedMatches: (c, total) => `Rozegrano ${c}/${total} meczów`,
+  finished: ' · zakończony',
+  cupFooter: 'Terminarz · wyniki · liderzy pucharowi',
+  waiting: 'Oczekuje…',
+  awaiting: 'Oczekuje…',
+
+  pyramidTitle: 'Piramida UltiLeague',
+  pyramidHint:
+    'Wszystkie 3 poziomy grają dzień po dniu w tym samym kalendarzu — tabele są zawsze aktualne, nie tylko Twój poziom.',
+  pyramidNotAvailable: 'Dostępne tylko w karierach UltiLeague.',
+  pyramidTier: (n) => `UltiLeague ${n}`,
+  pyramidYourTier: (n) => `UltiLeague ${n} · Twój poziom`,
+  pyramidZonePromote: 'Awans bezpośredni',
+  pyramidZonePlayoff: 'Baraż o awans (3.–6.)',
+  pyramidZoneRelegate: 'Spadek',
+}
+
+const en = {
+  standingsTitle: 'League table',
+  standingsHint: 'W-L · points for / against · differential',
+  team: 'Team',
+  scheduleTeam: 'Team schedule',
+  scheduleTeamHint: (date) =>
+    `Your team only · H home / A away / N neutral · today: ${date}`,
+  scheduleLeague: 'League schedule',
+  scheduleLeagueHint: (rounds, date) =>
+    `${rounds} league rounds · home and away vs every team · Fri/Sat/Sun matches · today: ${date}`,
+  nextMatch: 'Next match',
+  noFixtures: 'No scheduled matches.',
+  current: '(current)',
+  yourMatch: 'Your match',
+  cup: 'cup',
+  you: '(You)',
+  scheduled: 'scheduled',
+  toPlay: 'to play',
+  play: 'Play',
+  round: (n) => `Round ${n}`,
+  leadersTitle: 'League leaders',
+  leadersHint:
+    'League matches only — cup leaders are on the Cup tab.',
+  leadersMyLeague: 'My tier',
+  noData: 'No data yet — play some season matches.',
+  goals: 'Goals',
+  assists: 'Assists',
+  blocks: 'Blocks',
+  plusMinus: 'Plus/minus',
+  pointsPlayed: 'Points played',
+  cupTitle: 'League Cup',
+  cupIntro:
+    'January tournament · 16 teams by fall standings · neutral venue (N) · separate player leaders',
+  // Pyramid Cup: 48 clubs, seeded 1–48 from the tables on draw day (week of January 1st).
+  pyramidCupTitle: 'Pyramid Cup',
+  pyramidCupIntro:
+    'January tournament · all 48 pyramid clubs · seeded from the Jan 1 tables (Liga 1: 1–16, Liga 2: 17–32, Liga 3: 33–48) · neutral venue (N) · separate player leaders',
+  cupNotStarted: 'The cup has not started yet. The bracket appears after fall ends.',
+  cupEmptyBody:
+    'After league round 15 (fall), the top 16 teams enter the cup bracket: round of 16, quarters, semis and final.',
+  cupRound: {
+    prequarter: 'Round of 16',
+    quarter: 'Quarterfinals',
+    semi: 'Semifinals',
+    final: 'Final',
+    // Pyramid Cup (48 teams) — extra early rounds the regular cup doesn't have.
+    round1: 'Round 1',
+    roundOf32: 'Round of 32',
+    roundOf16: 'Round of 16',
+    quarterfinal: 'Quarterfinal',
+    semifinal: 'Semifinal',
+  },
+  tabBracket: 'Bracket',
+  tabResults: 'Results',
+  tabStats: 'Leaders',
+  noCupData: 'No data yet — play cup matches.',
+  noCupMatches: 'No cup matches.',
+  bracketHint: 'The bracket appears after the fall round (rounds 1–15).',
+  winner: 'Winner',
+  champion: (name) => `Champion: ${name}`,
+  bracketReady: 'Tournament bracket',
+  cupPhaseActive: 'Cup phase in progress',
+  afterFall: 'After fall · 16 teams',
+  playedMatches: (c, total) => `Played ${c}/${total} matches`,
+  finished: ' · finished',
+  cupFooter: 'Bracket · results · cup leaders',
+  waiting: 'Waiting…',
+  awaiting: 'Waiting…',
+
+  pyramidTitle: 'UltiLeague Pyramid',
+  pyramidHint:
+    'All 3 tiers play day by day on the same calendar — every table is always up to date, not just yours.',
+  pyramidNotAvailable: 'Only available for UltiLeague careers.',
+  pyramidTier: (n) => `UltiLeague ${n}`,
+  pyramidYourTier: (n) => `UltiLeague ${n} · your tier`,
+  pyramidZonePromote: 'Automatic promotion',
+  pyramidZonePlayoff: 'Promotion playoff (3rd–6th)',
+  pyramidZoneRelegate: 'Relegation',
+}
+
+export function leagueViewsStrings(lang = UI_LANG.PL) {
+  return pickDict({ pl, en }, lang)
+}

@@ -1,0 +1,28 @@
+{
+  "id": "reference-00086",
+  "phase": "reference",
+  "kind": "match",
+  "seed": 190833727,
+  "observe": true,
+  "home": "salt-lake-shred",
+  "away": "atlanta-hustle",
+  "group": 0,
+  "tactical": 0,
+  "swap": false,
+  "round": 2,
+  "seedIndex": 0,
+  "pair": "reference-2-0-0-0",
+  "wind": {
+    "speedMph": 0,
+    "directionDeg": 0
+  },
+  "homePatch": {
+    "attack": "horizontal_stack",
+    "defense": "person"
+  },
+  "awayPatch": {
+    "attack": "vertical_stack",
+    "defense": "person"
+  },
+  "budgetMs": 86219.67790000001
+}

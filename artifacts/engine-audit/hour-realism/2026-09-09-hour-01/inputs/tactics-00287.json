@@ -1,0 +1,31 @@
+{
+  "id": "tactics-00287",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190971709,
+  "observe": true,
+  "points": 1,
+  "adaptive": false,
+  "rotate": false,
+  "interaction": [
+    "possessionTempo",
+    "passSelectivity"
+  ],
+  "values": [
+    1,
+    -1
+  ],
+  "homePatch": {
+    "directives": {
+      "possessionTempo": 1,
+      "passSelectivity": -1
+    }
+  },
+  "awayPatch": {
+    "directives": {
+      "possessionTempo": 1,
+      "passSelectivity": -1
+    }
+  },
+  "budgetMs": 60000
+}

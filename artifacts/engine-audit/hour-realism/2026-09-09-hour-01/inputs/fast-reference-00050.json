@@ -1,0 +1,30 @@
+{
+  "id": "fast-reference-00050",
+  "phase": "fast",
+  "kind": "match",
+  "seed": 190831810,
+  "observe": false,
+  "home": "salt-lake-shred",
+  "away": "atlanta-hustle",
+  "group": 0,
+  "tactical": 0,
+  "swap": false,
+  "round": 0,
+  "seedIndex": 1,
+  "pair": "reference-0-1-0-0",
+  "wind": {
+    "speedMph": 7,
+    "directionDeg": 90
+  },
+  "homePatch": {
+    "attack": "horizontal_stack",
+    "defense": "person"
+  },
+  "awayPatch": {
+    "attack": "vertical_stack",
+    "defense": "person"
+  },
+  "fast": true,
+  "referenceId": "reference-00050",
+  "budgetMs": 150000
+}

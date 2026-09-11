@@ -336,3 +336,4 @@ i wykonanie nadal podlegają atrybutom i ograniczeniom silnika.
 | Parametr | Bez cechy | Z cechą |
 |---|---:|---:|
 | recoveryDefense | 0 | 1 |
+

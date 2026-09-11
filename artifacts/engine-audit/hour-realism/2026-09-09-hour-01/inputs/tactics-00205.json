@@ -1,0 +1,24 @@
+{
+  "id": "tactics-00205",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190951709,
+  "observe": true,
+  "points": 1,
+  "adaptive": false,
+  "rotate": false,
+  "directive": "huckAppetite",
+  "value": 0,
+  "pair": "coach-huckAppetite-0",
+  "homePatch": {
+    "directives": {
+      "huckAppetite": 0
+    }
+  },
+  "awayPatch": {
+    "directives": {
+      "huckAppetite": 0
+    }
+  },
+  "budgetMs": 60000
+}

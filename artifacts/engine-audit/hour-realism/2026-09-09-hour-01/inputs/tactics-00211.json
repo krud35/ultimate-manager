@@ -1,0 +1,24 @@
+{
+  "id": "tactics-00211",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190951709,
+  "observe": true,
+  "points": 1,
+  "adaptive": false,
+  "rotate": false,
+  "directive": "passSelectivity",
+  "value": 0,
+  "pair": "coach-passSelectivity-0",
+  "homePatch": {
+    "directives": {
+      "passSelectivity": 0
+    }
+  },
+  "awayPatch": {
+    "directives": {
+      "passSelectivity": 0
+    }
+  },
+  "budgetMs": 60000
+}

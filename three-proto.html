@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Throw Replay — prototyp</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #0b0f14; overflow: hidden; }
+      #app { position: relative; width: 100vw; height: 100vh; }
+      canvas { display: block; }
+      .hud {
+        position: absolute; top: 0; left: 0; right: 0;
+        display: flex; align-items: center; gap: 16px;
+        padding: 10px 16px; font-family: ui-sans-serif, system-ui, sans-serif;
+        background: linear-gradient(#0b0f14dd, #0b0f1400);
+        color: #f2f4f7; pointer-events: none; font-size: 14px;
+      }
+      .hud b { font-size: 16px; }
+      .badge { background:#dc2626; padding:2px 8px; border-radius:4px; font-weight:700; }
+      .controls {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        display: flex; align-items: center; gap: 10px; justify-content: center;
+        padding: 14px; background: linear-gradient(#0b0f1400, #0b0f14dd);
+      }
+      button, select {
+        font-family: ui-sans-serif, system-ui, sans-serif; font-size: 13px;
+        background: #1a222c; color: #f2f4f7; border: 1px solid #334155;
+        border-radius: 6px; padding: 8px 14px; cursor: pointer;
+      }
+      button:hover { background: #243040; }
+      .note {
+        position: absolute; top: 54px; left: 16px; max-width: 360px;
+        font-family: ui-sans-serif, system-ui, sans-serif; font-size: 12px;
+        color: #94a3b8; background: #0b0f14aa; padding: 8px 10px; border-radius: 6px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="hud">
+        <span class="badge">PROTOTYP</span>
+        <b>RBS 0–0 MUFTC</b>
+        <span id="clock">00:00</span>
+      </div>
+      <div class="note">
+        Tor dysku (wysokość + boczny dryf turn/fade) liczony przez
+        <code>integrateDiscFlight3D()</code> z discPhysics.js — dokładnie ten sam kod,
+        który już steruje 2D widokiem meczu. Tylko renderer jest tu nowy (Three.js).
+      </div>
+      <div class="controls">
+        <button id="replay">↻ Replay</button>
+        <select id="speed">
+          <option value="1">1× realtime</option>
+          <option value="0.35" selected>0.35× slow-mo</option>
+          <option value="0.15">0.15× super slow-mo</option>
+        </select>
+      </div>
+    </div>
+    <script type="module" src="/src/three-proto/main.js"></script>
+  </body>
+</html>

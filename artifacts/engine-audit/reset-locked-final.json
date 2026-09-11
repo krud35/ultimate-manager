@@ -1,0 +1,559 @@
+{
+  "options": {
+    "fastCount": 0,
+    "fullCount": 8,
+    "offset": 94437,
+    "frozen": false,
+    "fixedTactics": false,
+    "windSpeed": "20",
+    "direction": 90,
+    "attribute": null,
+    "delta": 5,
+    "swap": false
+  },
+  "modes": {
+    "full": {
+      "summary": {
+        "matches": 8,
+        "msPerMatch": 30650.846137500004,
+        "homeMargin": -5.375,
+        "meanInitialWindMph": 20,
+        "completionPct": 84.133400707428,
+        "holdPct": 43.01675977653631,
+        "cleanHoldPct": 18.99441340782123,
+        "throwsPerPoint": 11.05586592178771,
+        "turnoversPerPoint": 1.7541899441340782,
+        "blocksPerMatch": 17,
+        "dropsPerMatch": 1.75,
+        "throwawaysPerMatch": 20.5,
+        "stallOutsPerMatch": 0,
+        "framesPerMatch": 51705.875,
+        "playerSnapshotsPerMatch": 723882.25,
+        "throwLimits": 0,
+        "completedDistanceM": {
+          "n": 1665,
+          "p10": 3.1078936849179626,
+          "p50": 9.721294298122503,
+          "p90": 31.86563889093275,
+          "p99": 49.08240604534637,
+          "shortPct": 51.591591591591595,
+          "longPct": 14.354354354354355
+        },
+        "holdMs": {
+          "n": 1979,
+          "p10": 1240,
+          "p50": 2200,
+          "p90": 3420,
+          "p99": 4500
+        },
+        "representedPointMs": {
+          "n": 179,
+          "p10": 13260,
+          "p50": 37180,
+          "p90": 84280,
+          "p99": 185720
+        },
+        "possessionThrows": {
+          "n": 493,
+          "p10": 1,
+          "p50": 3,
+          "p90": 8,
+          "p99": 13
+        },
+        "attemptedDistanceM": {
+          "n": 1979,
+          "p10": 6.231528431251757,
+          "p50": 12.395868434469213,
+          "p90": 30.241053294987044,
+          "p99": 45.62002603972642
+        },
+        "possessionMs": {
+          "n": 493,
+          "p10": 4420,
+          "p50": 14140,
+          "p90": 32920,
+          "p99": 48860
+        },
+        "firstThrowAfterTurnoverMs": {
+          "n": 308,
+          "p10": 1600,
+          "p50": 3000,
+          "p90": 5120,
+          "p99": 6780
+        },
+        "estimatedPointMs": {
+          "n": 0,
+          "p10": null,
+          "p50": null,
+          "p90": null,
+          "p99": null
+        },
+        "pressuredThrows": 26,
+        "pressuredResetPct": 80.76923076923077,
+        "types": {
+          "standard": {
+            "attempts": 1196,
+            "completions": 999
+          },
+          "dump_swing": {
+            "attempts": 633,
+            "completions": 536
+          },
+          "huck": {
+            "attempts": 139,
+            "completions": 120
+          },
+          "over_the_top": {
+            "attempts": 11,
+            "completions": 10
+          }
+        },
+        "stallHistogram": {
+          "0": 176,
+          "1": 310,
+          "2": 716,
+          "3": 540,
+          "4": 211,
+          "5": 23,
+          "6": 2,
+          "7": 1
+        },
+        "turnoverLocations": {
+          "ownThird": 83,
+          "middleThird": 130,
+          "attackingThird": 101,
+          "missing": 0
+        },
+        "diagnoses": {
+          "completed": 1665,
+          "unknown_no_contact": 148,
+          "block": 132,
+          "boundary": 20,
+          "drop": 14
+        },
+        "segments": {
+          "15+mph|skill80+|mid": {
+            "attempts": 332,
+            "completions": 290
+          },
+          "15+mph|skill80+|long": {
+            "attempts": 156,
+            "completions": 140
+          },
+          "15+mph|skill<80|long": {
+            "attempts": 169,
+            "completions": 141
+          },
+          "15+mph|skill<80|mid": {
+            "attempts": 616,
+            "completions": 504
+          },
+          "15+mph|skill<80|short": {
+            "attempts": 473,
+            "completions": 400
+          },
+          "15+mph|skill80+|short": {
+            "attempts": 233,
+            "completions": 190
+          }
+        },
+        "recoveredTouches": 68,
+        "multiTouchThrows": 90
+      },
+      "matches": [
+        {
+          "seed": 105437,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 90
+          },
+          "ms": 62460.5472,
+          "points": 19,
+          "attempts": 270,
+          "completions": 234,
+          "holds": 9,
+          "cleanHolds": 4,
+          "blocks": 9,
+          "drops": 1,
+          "throwaways": 26,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 60284,
+          "playerSnapshots": 843976,
+          "homeScore": 4,
+          "awayScore": 15,
+          "bodyExposure": {
+            "flightFrames": 20279,
+            "overlapFrames": 1622,
+            "overlappingPairs": 1704
+          }
+        },
+        {
+          "seed": 117437,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 90
+          },
+          "ms": 34033.9668,
+          "points": 29,
+          "attempts": 295,
+          "completions": 251,
+          "holds": 15,
+          "cleanHolds": 8,
+          "blocks": 15,
+          "drops": 2,
+          "throwaways": 27,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 61619,
+          "playerSnapshots": 862666,
+          "homeScore": 14,
+          "awayScore": 15,
+          "bodyExposure": {
+            "flightFrames": 23888,
+            "overlapFrames": 2551,
+            "overlappingPairs": 3037
+          }
+        },
+        {
+          "seed": 125437,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 90
+          },
+          "ms": 37215.60530000001,
+          "points": 28,
+          "attempts": 299,
+          "completions": 248,
+          "holds": 15,
+          "cleanHolds": 6,
+          "blocks": 21,
+          "drops": 2,
+          "throwaways": 28,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 68500,
+          "playerSnapshots": 959000,
+          "homeScore": 13,
+          "awayScore": 15,
+          "bodyExposure": {
+            "flightFrames": 27276,
+            "overlapFrames": 2383,
+            "overlappingPairs": 3090
+          }
+        },
+        {
+          "seed": 138437,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 90
+          },
+          "ms": 23152.5821,
+          "points": 19,
+          "attempts": 206,
+          "completions": 174,
+          "holds": 7,
+          "cleanHolds": 3,
+          "blocks": 14,
+          "drops": 0,
+          "throwaways": 18,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 42991,
+          "playerSnapshots": 601874,
+          "homeScore": 4,
+          "awayScore": 15,
+          "bodyExposure": {
+            "flightFrames": 15798,
+            "overlapFrames": 1481,
+            "overlappingPairs": 1593
+          }
+        },
+        {
+          "seed": 146437,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 90
+          },
+          "ms": 20429.339399999997,
+          "points": 21,
+          "attempts": 203,
+          "completions": 164,
+          "holds": 8,
+          "cleanHolds": 3,
+          "blocks": 21,
+          "drops": 2,
+          "throwaways": 16,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 41225,
+          "playerSnapshots": 577150,
+          "homeScore": 15,
+          "awayScore": 6,
+          "bodyExposure": {
+            "flightFrames": 16947,
+            "overlapFrames": 1750,
+            "overlappingPairs": 2095
+          }
+        },
+        {
+          "seed": 155437,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 90
+          },
+          "ms": 27426.30600000001,
+          "points": 26,
+          "attempts": 259,
+          "completions": 216,
+          "holds": 9,
+          "cleanHolds": 5,
+          "blocks": 20,
+          "drops": 2,
+          "throwaways": 21,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 53372,
+          "playerSnapshots": 747208,
+          "homeScore": 11,
+          "awayScore": 15,
+          "bodyExposure": {
+            "flightFrames": 20190,
+            "overlapFrames": 2593,
+            "overlappingPairs": 3096
+          }
+        },
+        {
+          "seed": 164437,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 90
+          },
+          "ms": 20278.69770000002,
+          "points": 19,
+          "attempts": 238,
+          "completions": 204,
+          "holds": 7,
+          "cleanHolds": 2,
+          "blocks": 17,
+          "drops": 3,
+          "throwaways": 14,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 44886,
+          "playerSnapshots": 628404,
+          "homeScore": 4,
+          "awayScore": 15,
+          "bodyExposure": {
+            "flightFrames": 17186,
+            "overlapFrames": 1938,
+            "overlappingPairs": 2127
+          }
+        },
+        {
+          "seed": 182437,
+          "initialWind": {
+            "speedMph": 20,
+            "directionDeg": 90
+          },
+          "ms": 20209.724599999987,
+          "points": 18,
+          "attempts": 209,
+          "completions": 174,
+          "holds": 7,
+          "cleanHolds": 3,
+          "blocks": 19,
+          "drops": 2,
+          "throwaways": 14,
+          "stallOuts": 0,
+          "throwLimits": 0,
+          "frames": 40770,
+          "playerSnapshots": 570780,
+          "homeScore": 3,
+          "awayScore": 15,
+          "bodyExposure": {
+            "flightFrames": 14604,
+            "overlapFrames": 1313,
+            "overlappingPairs": 1419
+          }
+        }
+      ]
+    }
+  },
+  "balance": {
+    "configuration": {
+      "block": {
+        "spatialPressure": true,
+        "selectContact": true,
+        "deflectionReaction": true,
+        "interceptions": true,
+        "baseChance": 0.1,
+        "skillSpan": 0.28,
+        "edgePenalty": 0.65,
+        "hardSpeedMps": 21,
+        "easySpeedMps": 8
+      },
+      "deflection": {
+        "controlledSwat": true
+      },
+      "fatigue": {
+        "singleExecution": true,
+        "maximumPenalty": 24,
+        "exponent": 1.5
+      },
+      "approach": {
+        "enabled": true,
+        "arrivalLeadSec": 0.15,
+        "stopBufferM": 0.08,
+        "readDelayScale": 1,
+        "interceptJumpClock": true
+      },
+      "bodyTraffic": {
+        "enabled": true,
+        "planning": true,
+        "offBall": true,
+        "clearanceM": 0.12,
+        "lookAheadSec": 0.5
+      },
+      "resetCuts": {
+        "stable": true
+      }
+    },
+    "sourceHashes": {
+      "scripts/balance-engine.mjs": "fae6cf5bded99cd626f78586ca6110f4d6e1675a619763dafa3e577a3b93d6b2",
+      "scripts/calibrate-situations.mjs": "497e1729e41bda6d31ec49634aa9a93db1b7d492c8eecc97c60d8897c0613a3c",
+      "scripts/engine-realism.mjs": "39a4a8a00b31dd5e4fb3f2298a9631827e826b2e49f241c5d3a32496052c55f5",
+      "src/data/academyScoutGeography.js": "0d9ba258dc9d0c9e6a52b76b0d527e942b031d4a84a1df35c51fa452ecdfe579",
+      "src/data/demoMatchTeams.js": "661874a82391df5e8b39e7661ca208f935fd63fb35ea709426cf0f80bcf5825e",
+      "src/data/eucs/eucsCountryStrength.js": "da7011c306f1807bb3183fe52370026bb3bdd56772813b8d58965254a16be063",
+      "src/data/eucs/eucsNationalityOverrides.js": "1fc3db04a79072e4600e3b53d78bfac8fc08dc0f54a21a1ad6aee5d88d3357b9",
+      "src/data/eucs/worldChampionshipHistoryReal.js": "10889e212dec92c20b112e524594fd992fa85a43202afa8db8400f0cb80e1bbc",
+      "src/data/eucsLeagueTeams.js": "524c903381718da20a112b8e25d38b432ca0a3a0a49daa4781994d14aa2896a4",
+      "src/data/eucsRosterBalance.js": "06d96e2c2868d0ef4c4ce48454cb7d2486b02db64c2adee6b39aa19ca7c1f5cd",
+      "src/data/fictionalTeams.js": "c150cf1ce54eaa4a0fbb15909c979c7933a5c1dd2f63e298511eda4f14724838",
+      "src/data/mockPlayers.js": "bc61d5277d90e8cb77b9c32efa11bb5f70da42bcc80b995b36ac635effd4f669",
+      "src/data/playerStatsFromUfa.js": "5dec3864b0ed28d3390766d19fb8d488c3760973c4497141a57d014331ca6e27",
+      "src/data/randomRosterSkills.js": "15599ba184ba396e634a91a38f7faea49bedfa6ee36692e3d21853e08fbac51b",
+      "src/data/rosterStructures.js": "3e7d5bc1919c11234f867fee16455090b3da3f1a177b8122c5f08912445e4503",
+      "src/data/seasonLeagueBuilder.js": "b8b534b724a19ef0f46976ca3a8ac79e2957ed060d21bf26d5e039ad467f3d9f",
+      "src/data/tacticsGuide.js": "b8e6a51d14b0e8d45fdafa7a5c92dff5b3dc1d349263a1e3e607873c4435a07e",
+      "src/data/tacticsGuideEn.js": "540a8ddcf7548186e794ca9d018481233c5faa0a8e4d176233f033641859c201",
+      "src/data/teamColors.js": "5182b0fb40fc36a643754dc99900f652d2feadd7c28038d52f407ed1f2e0726e",
+      "src/data/teamTacticalIdentities.js": "2477ee55c0c89f7c5935d8fb1b9508df51d0ad794c482380e03ba6b5dba80d22",
+      "src/data/tutorialGuide.js": "08f6a6d0f8cbce33d22b5c4a9add428a2d7411313e947ed71a31f59ef6cf3cc8",
+      "src/data/ufa2025LeagueRosters.js": "55bae61b08ca7b179b51cd75758c8f917aab347e3337c0d9ecd78afbba244f99",
+      "src/data/ufa2025LeagueRosters.raw.js": "225acbac95b96ef4524b824f238f7e077bd175c77b041fb4f182aaee1955789f",
+      "src/data/ufa2025LeagueStatMax.js": "1531ba7645b1843612cca38d877e531ee1377e84e181c85d3cb63b37b1850709",
+      "src/data/ufa2025Rosters.js": "6344b870138d8ffac8229e5545f055456147239c2ac793c5ffc19dcbb70a130c",
+      "src/data/ufa2025Rosters.raw.js": "caab0c956eb52ffad83d97c21fde71808ea7cf9be600c520b02f4a851bb3c792",
+      "src/data/ufaLeagueTeams.js": "bc5b97f028ff541b5abc05300ceccec3db355c0fb35a0dc7528abd13d4a8f815",
+      "src/matchEngine/ai/actionSimulator.js": "7d3f95137a4eb9e48fddfa109182492f65743f14a140a1e395c1369014699045",
+      "src/matchEngine/ai/bodyTraffic.js": "4e3218769e7e44c6759ac72bae896da3d45b928d23384f3ff76634ed758f8bef",
+      "src/matchEngine/ai/catchRules.js": "4fb504af7e23dfd24ed37dd81ae4661eed209139d90fae45cf3b3799a9e8aed5",
+      "src/matchEngine/ai/cutterBrain.js": "e3f6e85dc8f08668a33005c0e6d693817c332b703b591293d93ae2631612da14",
+      "src/matchEngine/ai/defenderBrain.js": "9b4b379c5038223fa9957282f2d2134d9bd45eab0a709a631cf46087cb6d5fbd",
+      "src/matchEngine/ai/discAerodynamics.js": "341d09aaa6ad6f6f0b08f056dc9174844fd14f2c8dd1716947aa79513e5c063e",
+      "src/matchEngine/ai/discAttitude.js": "b26119e636b5be92a35cd3e274e48002b9c53d7c4149eb878dd9ef668499556e",
+      "src/matchEngine/ai/discContact.js": "87f335ddb005fa4482a1d4fbbb87dc6e502728a4330053bf53b2297ce7aaf937",
+      "src/matchEngine/ai/discDeflection.js": "23632107d2a5ac731cb1c608030aab5f944be071a48604768a88f8308d7a40f8",
+      "src/matchEngine/ai/discFlightPredict.js": "85d9932cf881150edfb77e370b198d2b5a2128364f74b9fab32986b2165b9690",
+      "src/matchEngine/ai/discIntercept.js": "86ccd8c33a3d4611e9ba866b3abaa3dde1c0c3f26a2ac5c24ae9e6648789b902",
+      "src/matchEngine/ai/discPhysics.js": "82895ec7a8783d8fab9ed845ffaddf75eff867c231a9405778a3e0836d41231a",
+      "src/matchEngine/ai/discTrajectory.js": "e312024834695e7f1be7c128df8241827c61ae3b873b22e810d56bd14deb21bf",
+      "src/matchEngine/ai/flightKinematics.js": "321a99deb1d3784185bd049978b872ea002635e8aa2f3c604f73ea2b1c9affb3",
+      "src/matchEngine/ai/flightSpeed.js": "374043bcb9688e9eac619d351d8b2cede2cb3aae60e3d768a9f69f2a3bec21a1",
+      "src/matchEngine/ai/motionPipeline.js": "4245acff8a65d524894b2de766e0015101a40f96c79e7fb85f90001645a03651",
+      "src/matchEngine/ai/offenseReorganization.js": "f2c49355ce4a0868401ca4de533c5911bfe87b61c8a78043ec4ef3461357d4ce",
+      "src/matchEngine/ai/playerMovement.js": "d1fa3bf4d7882ed8267d4de4b014797d7383009d8ee4096f99b748e95c063e7a",
+      "src/matchEngine/ai/playerPerception.js": "36647a1c79f4382ac205315b4737e2cdb6f1ad2d4e3e91a41a895e4f3b3cbb65",
+      "src/matchEngine/ai/routeAwareness.js": "4f4eaea60d61f083311df6b2330f0bd9dfb134477da926ee1c186992ab769922",
+      "src/matchEngine/ai/spaceMap.js": "050c0ee7a02a7c5440f092eac55fc0fa62379e2d0212852b57c277f46f3ec6f4",
+      "src/matchEngine/ai/spatialEvaluator.js": "f1c7286ccbfd7e9be8cf21ac23b58243248bbb9a044c9fc0b3fdeeccd5b706ba",
+      "src/matchEngine/ai/statFormulas.js": "2d7d659af8c4ec3817952c851e0b8c907063a4cb2b4c0e4a292a41fe04ff4636",
+      "src/matchEngine/ai/tacticsBehavior.js": "d0e0808ee2929573f73cc2cc81ac210ade93dc613587d41d9b52f6b4379037bb",
+      "src/matchEngine/ai/teamCoordination.js": "ff3500a66ede9d84ba89987db2b94e7430be113d1458b9c536c17ced736cddc6",
+      "src/matchEngine/ai/throwDiagnosis.js": "6ab4c838e5879523b75ec4d0495ba968a994bca689032e56953643638f51c538",
+      "src/matchEngine/ai/throwShape.js": "be1d142f3a22fc799cfd7daa64a19e2574c749b14f24a2a032854952aaf8d28f",
+      "src/matchEngine/ai/throwerBrain.js": "61d02a953adf1c4a9977f9919255b332a40a5209533d35833482689ebe94cf5c",
+      "src/matchEngine/ai/throwerDecision.js": "8326c687aafb67f7488c533df387399d62e48d8999f18475f3af1dfcbb5f134c",
+      "src/matchEngine/ai/traitBehavior.js": "290de510de023b34a93ecc75702b26b59798d1311d2ed6790e9c269f934452a0",
+      "src/matchEngine/aiCoachProfile.js": "7bc87a0672aafe64433dd6612f98181fbe76c4defe54be6601da7f49b29ea95c",
+      "src/matchEngine/aiLineup.js": "4239b1b930fdc3ea85a09466f31d6d52e23e82e4cc6364da256d2cf10afd404c",
+      "src/matchEngine/aiTacticsAdapt.js": "f72716dc6e9a2fbbb08530b5bc80844aa4d83aa44dec86ff5a864a2fffe8aae4",
+      "src/matchEngine/autoSub.js": "0707df39e4e13ef501caaf555ae8fc37bc5437bfccedae78d4526b4e36cc8397",
+      "src/matchEngine/boxScore.js": "7db0f65f7a77de9b96e5e3829dddb446026eea8fecf0f4baa4de38af152f6688",
+      "src/matchEngine/coachDirectives.js": "1f0610bb0fa81668420c90d20b71bb16d00bb4d18a7a4f9d6504b02668f527d5",
+      "src/matchEngine/config.js": "29695787990936726c34b086d2492e7d408c0d8f0b6c1ea19ed39241f46bf605",
+      "src/matchEngine/defenseZoneRoles.js": "882455431f569bb789cfbf547b43c3b2ce962de904df055777f9177ca2805bff",
+      "src/matchEngine/discState.js": "8bc6b31a92a9c82bb68f62af539c239b8617e68d476efe71e52707719d2b4f13",
+      "src/matchEngine/events.js": "b501fc77dd0b9749fe0e5709a6dd1b1ddaf249d647ecc4e525248fc4be8ba6d0",
+      "src/matchEngine/fastPossession.js": "119b98be0d208d02b21e613473f897bdaa02734097842dc5993935d1d972f252",
+      "src/matchEngine/fieldDimensions.js": "744ed6cee0220c00be73e01033602f4780efd9335a72397b144803e6bf3894d5",
+      "src/matchEngine/fieldMotion.js": "4504dc383c543c4fd522eb25a719ab60b0e383e6de8ffa9cb798476bd2b7b57f",
+      "src/matchEngine/fieldPlayback.js": "b2fe4f1dba4a406687de5bf02782e051681d4e97601dbe55820a9cc3b7d83373",
+      "src/matchEngine/fieldViz.js": "afbb35e01bc38d594c31306e972c8d6cf4d04618df7a59a36a24e2c974869a65",
+      "src/matchEngine/index.js": "3b1d640885d22f6419445f18633648bfbe417dc0354b98614c01dccba6bbda41",
+      "src/matchEngine/lineManager.js": "360535defefc5c8e87d204526878545bd3846be30ce955e6aa6ae9da86b9ffe8",
+      "src/matchEngine/lineups.js": "3c464a26c99b9128f870630e8731e8328a8b1afb86375527f7b43a19184d831d",
+      "src/matchEngine/match.js": "de7720727cdab8161793909e25bcf139c56d67b3b9f231a1d9f9010ed66588f8",
+      "src/matchEngine/matchSession.js": "bb40cead5a12cea7a441ea2d8bed64705c78db61a4db74f9411e1dec450557ee",
+      "src/matchEngine/matchStats.js": "9167b6f684b834bc44d63c3e7123e7c3ed5e3dec203c96e5f76e95e158250052",
+      "src/matchEngine/motionFromTicks.js": "fc18ff8f654899dc2419eb53d95c8db40e671ceb8ee0de642f810c905413b4ca",
+      "src/matchEngine/offenseLineSlots.js": "c9f410315c712ac7a71911b0af2ea6a1455dd57f8177ba4eaf014b91e8433775",
+      "src/matchEngine/participants.js": "d40f22963cfff833e5f146f7593fd24954860075f8be0c814dbc1b9ecfeb6928",
+      "src/matchEngine/playbackInterpolation.js": "44377972ff11390da8243196c766f376e6861048070fc476316c4a75425356dd",
+      "src/matchEngine/playerInstructions.js": "d22c8385ab34f5131b11a4d1f5f64e3d7794ae33bf1f26bf38b0a8c24c1334f1",
+      "src/matchEngine/playerMods.js": "c2d453fee1754d10692f5bef47ee8975dc4803b27ba514027e4e30c351b9f7ba",
+      "src/matchEngine/playerModsRegistry.js": "27cd5a76832d11089f6dbd507e60c16f553a0984dc2d3c751f29cb523af7e416",
+      "src/matchEngine/playerSubRoles.js": "a684bc259400c8ff3e31b5354bc0cc339bc9ad26acc49493fa66966a05a69934",
+      "src/matchEngine/point.js": "0d541cf3fb809f0030c99ca8ec7ab6aa2e7d4b699a0a14c943b355277d4401c3",
+      "src/matchEngine/pointHistory.js": "607795c14c13a8493c9c25072987f5506e4ca57556a1326283add2fa1831f38e",
+      "src/matchEngine/pointLineStats.js": "131aa7abaf416edd1f0e916f1406e4cfef12deb1554516521048dcf5bdf22a57",
+      "src/matchEngine/resolution.js": "e647927cc7d2420866fef1900a93112f0d34d4aedbae6870da078f7fdeaa4871",
+      "src/matchEngine/rng.js": "d4b070447e6d852271a38ec6d4e0442becf43b69f43d9db9172f10913880088e",
+      "src/matchEngine/rotation.js": "f9e968ce22d0bb3a0b11a6b564d7365e7f52725ad89d4b794acef4590ec814e6",
+      "src/matchEngine/separation.js": "ac89bff215945e7e1a8a47440a88f1a6f007175932d8204500595a0506bcb4ee",
+      "src/matchEngine/stall.js": "a6026aeb92e7da04d1f0c04d78b6d5b9735202dc15c8cd4398d6c688e4a5a0f1",
+      "src/matchEngine/stamina.js": "30c5c618d91d092a0e090dd8d199df0677e7defd556564d65e189f03d1fd374c",
+      "src/matchEngine/staminaPlayback.js": "02588efdc57a2f236151cf4502a1b316414b76ca9371a35e5deaf9eefc6f01dd",
+      "src/matchEngine/tacticsModifiers.js": "8aa052a38c76ef725b050b9c571bb01939360a23fa95323417fab43d8a3a087e",
+      "src/matchEngine/throwTechnique.js": "a30821b50141731038aa27e96e48bbea978ac5f599389b5e71992cd4bd2c7d4c",
+      "src/matchEngine/throwTypes.js": "470cf9107b5da44fbd24a6237fab4aa224ea6eecb35b6c7b0585aecfb8672d64",
+      "src/matchEngine/wind.js": "7c786c66a89e8de374d387568ebc205b3cda0e325f78cce5400772032053c5a2",
+      "src/models/attributeAliases.js": "687b50898d6c2ad23e3ddd8db2b80ab4c2152c3f04a0dc2cd26a0ca651221882",
+      "src/models/detailedAttributes.js": "7b6d948e3f815cdbf5abfa1108519a50d636c78fe19c2f7c728cbf40003a23b7",
+      "src/models/playerArchetypes.js": "053d4d67aa1e433a8c9d4c8fd737573107e9d22d9cd298d7019854430b2f7a79",
+      "src/models/playerBody.js": "608705ca9ac73f2d88da6b9605be595a6a33075925185026742474e837189a24",
+      "src/models/playerForm.js": "27087c55c1e6131d625c4344024a3034286f95142b4e31f1272d2127e2350f65",
+      "src/models/playerInjury.js": "f7dce9cb61f27c342a7480c28a3b6da8486e3bffd0108f1a3a096d8cf24b46d3",
+      "src/models/playerLoyalty.js": "ea4a019379e0b4bf8139287c892e9cfe2b9952075fe2c2012361c85fe37ffdb0",
+      "src/models/playerMorale.js": "7778c052240c95f40a634df9b524b87884fe10968c8341d6d4945f7250de7a19",
+      "src/models/playerPersonalities.js": "f2018fe48070bbec714d3564e1a09a5ef07dd70659afc03699f6dea2b7f65271",
+      "src/models/playerProfile.js": "b456f435f32e73f4f729be03490e2d19ab7426dab4c933a492e43d88a6cf7232",
+      "src/models/playerSkillsHistory.js": "14cb9f0dcd87285833cf24bdd01d70c3a9f4c4a0670758f97e342175dbadb110",
+      "src/models/playerStats.js": "aed5a087a295fd32a47d7d97dc6d527928144b60a1c02f1607a9915144095ee1",
+      "src/models/playerTraits.js": "dae3fb407df29d600c97b0c2826245d84ec82f035695c6e613b52311e7c66960",
+      "src/models/teamElo.js": "893a21b4e285a51833ddf91e7a438cd1273941c22bc2ff44aebf8b7c7922d5ac",
+      "src/models/teamFans.js": "be76bcd4e0ba6d5bb04bb2e6ecfd5bc7bc637b324a3de2318b0779c6b357144a",
+      "src/models/teamReputation.js": "0d15f0fb24af30ce19808feafc732dd05ae7152c071970f2e570394f2d1c1fb9",
+      "src/models/teamTalk.js": "6491b6948a10ad605c8fba950b9d36aadbd502b2f4c11c902b8a4c10cbec1adf",
+      "src/models/traitDesign.js": "efbdb8cdb485a761fe73e09e58588916e6182f058df315f6e940c9e8b8c25191"
+    },
+    "changedDuringRun": [],
+    "args": [
+      "--fast",
+      "0",
+      "--full",
+      "8",
+      "--offset",
+      "94437",
+      "--wind",
+      "20",
+      "--direction",
+      "90",
+      "--progress",
+      "--output",
+      "C:/Users/marod/ultimate-manager-ufa/artifacts/engine-audit/reset-locked-final.json"
+    ]
+  }
+}

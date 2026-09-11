@@ -1,0 +1,19 @@
+{
+  "id": "tactics-00174",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190941709,
+  "observe": true,
+  "points": 1,
+  "rotate": false,
+  "adaptive": false,
+  "cell": "zone_offense|person",
+  "pair": "system-0",
+  "homePatch": {
+    "attack": "zone_offense"
+  },
+  "awayPatch": {
+    "defense": "person"
+  },
+  "budgetMs": 60000
+}

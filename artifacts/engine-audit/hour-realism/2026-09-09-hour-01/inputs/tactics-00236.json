@@ -1,0 +1,24 @@
+{
+  "id": "tactics-00236",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190951709,
+  "observe": true,
+  "points": 1,
+  "adaptive": false,
+  "rotate": false,
+  "directive": "poachResetHandler",
+  "value": 1,
+  "pair": "coach-poachResetHandler-0",
+  "homePatch": {
+    "directives": {
+      "poachResetHandler": 1
+    }
+  },
+  "awayPatch": {
+    "directives": {
+      "poachResetHandler": 1
+    }
+  },
+  "budgetMs": 60000
+}

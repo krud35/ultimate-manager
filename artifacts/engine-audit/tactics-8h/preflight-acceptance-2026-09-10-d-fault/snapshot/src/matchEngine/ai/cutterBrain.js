@@ -1,0 +1,1133 @@
+import { uplineSpaceBonus, giveAndGoOfferBonus, doubleMoveSetup } from './traitBehavior.js'
+import { playerTravelSec } from './discIntercept.js'
+import { clampAgentPosition } from './spatialEvaluator.js'
+import { attackDirectionX, clampFieldX, clampFieldY, fieldCenterY } from '../fieldDimensions.js'
+import { forceMarkLayoutSide, normalizeForceMark } from '../throwTechnique.js'
+import {
+  pickBreakSideClearTarget,
+  spacingAdjustedTarget,
+  resetSlotTarget,
+} from './offenseReorganization.js'
+import {
+  formationStructuralTarget,
+  preferredCutKind,
+  ATTACK_STYLES,
+} from './tacticsBehavior.js'
+import { maxSpeedMps, plantStopMs, subStat } from './statFormulas.js'
+import { routeConflict } from './routeAwareness.js'
+import { crowdAwareTarget } from './teamCoordination.js'
+import {
+  buildSpaceMap,
+  claimAwarenessFor,
+  perceiveSpaceMap,
+} from './spaceMap.js'
+import { mergeTraitAndCoachMods } from '../coachDirectives.js'
+import { integrateAgentMotion, repositionSpeedMps, waitingHoldSpeedMps } from './playerMovement.js'
+import { bodyAwareTarget, BODY_TRAFFIC_CALIBRATION } from './bodyTraffic.js'
+import {
+  subRoleForAgent,
+  subRoleAllowsInitiateCut,
+  HANDLER_SUB_ROLES,
+} from '../playerSubRoles.js'
+
+export const CUTTER_STATE = {
+  WAITING: 'WAITING',
+  INITIATING_CUT: 'INITIATING_CUT',
+  ACTIVE_CUT: 'ACTIVE_CUT',
+  CLEARING: 'CLEARING',
+}
+
+const ACTIVE_CUT_MS_BASE = 1600
+/** Sufit czasu jednego cutu — nawet najdłuższy deep kiedyś się kończy i trzeba clearować. */
+const MAX_ACTIVE_CUT_MS = 5200
+
+/**
+ * Co ile ms biegnący cutter PRZEGLĄDA swój cut na nowo.
+ *
+ * Dotąd cel był wybierany raz, przy starcie, i zawodnik biegł do niego przez cały cut —
+ * po wydłużeniu cutów do 5.2 s (żeby deep w ogóle mógł dobiec) oznaczało to nawet pięć
+ * sekund biegu do punktu wybranego na podstawie nieaktualnego już obrazu boiska.
+ * Realnie cutter cały czas czyta sytuację: koryguje kierunek, a gdy obrońca go przykryje
+ * i nic lepszego nie ma — rezygnuje i schodzi w clearing, zwalniając przestrzeń.
+ * Tempo przeglądu jest takie samo jak przewartościowanie obrony (300 ms), więc żadna
+ * strona nie dostaje przewagi w częstotliwości decyzji.
+ */
+const CUT_REVIEW_MS = 300
+/** O ile lepszy musi być nowy cel, żeby zmienić kierunek w biegu (histereza). */
+const CUT_RETARGET_MARGIN = 18
+/** Poniżej tego wyniku najlepszej opcji cutter rezygnuje i schodzi w clearing. */
+const CUT_ABANDON_SCORE = 42
+/**
+ * OKNO ZAANGAŻOWANIA w deep cut. Przez ten czas zawodnik biegnie i NIE rozważa
+ * zawracania — dopiero potem ogląda się, czy rzut leci. Bez tego okna przegląd co 300 ms
+ * kasowałby każdy głęboki cut w pierwszej sekundzie, bo daleka przestrzeń wygląda gorzej
+ * dopóki się do niej nie zbliżysz.
+ */
+const DEEP_LOOK_MS = 1500
+/** Po ilu ms bez rzutu deep cut jest uznany za spalony i zawodnik zawraca. */
+const DEEP_GIVE_UP_MS = 2600
+/** Zasięg zawrotki pod dysk i ile metrów zostawić przed rzucającym (nie wbiegamy w niego). */
+const UNDER_CUT_MAX_M = 18
+const UNDER_CUT_KEEP_M = 4
+
+/**
+ * Opóźnienie startu cutu i błąd ustawienia w formacji — czyli NIEIDEALNOŚĆ ATAKU.
+ *
+ * Obrona miała realne opóźnienie reakcji (reactionDelayMs, 112-175 ms) i cushion zależny
+ * od statów, a atak nie miał NICZEGO: cutter decydował i w następnym ticku (20 ms) biegł
+ * już na pełnym zaangażowaniu, trafiał w slot formacji co do metra i czytał zajętość
+ * boiska bezbłędnie. To była asymetria wpisana w architekturę, nie w statystyki.
+ *
+ * Teraz start cutu kosztuje czas (rozpoznanie sytuacji + decyzja + ruszenie z miejsca),
+ * a ustawienie w formacji ma błąd malejący ze znajomością systemu ofensywnego.
+ */
+const CUT_INITIATION_SLOW_MS = 520
+const CUT_INITIATION_FAST_MS = 160
+/** Maks. błąd ustawienia w slocie formacji (m) przy słabej znajomości systemu. */
+const SLOT_ERROR_MAX_M = 3.2
+
+function cutInitiationMs(player) {
+  const skill =
+    subStat(player, 'mental', 'reactions') * 0.5 + subStat(player, 'mental', 'anticipation') * 0.5
+  const t = Math.max(0, Math.min(1, (skill - 50) / 45))
+  return Math.round(CUT_INITIATION_SLOW_MS + (CUT_INITIATION_FAST_MS - CUT_INITIATION_SLOW_MS) * t)
+}
+
+/** Błąd ustawienia: gdzie zawodnikowi się WYDAJE, że jest jego miejsce w formacji. */
+/**
+ * Przesunięcie slotu formacji w POPRZEK boiska, względem pasa rzutu.
+ *
+ * To jest kanał rozkazów pozycyjnych („bierz przestrzeń" / „zostaw przestrzeń innym").
+ * Wcześniej obie te instrukcje ruszały te same gałki co para priorytetu cutowania
+ * (cutRollMult / cutPriorityDelta), czyli były jej duplikatem i nie mówiły nic o tym,
+ * GDZIE zawodnik stoi, zanim cokolwiek się wydarzy.
+ *
+ * Dodatnie = dalej od pasa (oddaje lane), ujemne = bliżej (ustawia się tam, skąd wychodzi
+ * się do cutu). Przy ujemnym biasie nie przechodzimy na drugą stronę dysku — zawodnik ma
+ * wejść w pas, a nie przez niego przelecieć.
+ */
+function applySlotLaneBias(slot, disc, biasM) {
+  if (!slot || !disc || !biasM) return slot
+  const dy = slot.y - disc.y
+  const sign = dy >= 0 ? 1 : -1
+  const shift = biasM >= 0 ? biasM : -Math.min(-biasM, Math.abs(dy))
+  return { ...slot, y: clampFieldY(slot.y + sign * shift) }
+}
+
+/**
+ * Przesunięcie slotu formacji WZDŁUŻ osi ataku — założenie trenerskie „pozycjonowanie
+ * stacka" (coachDirectives.stackDepth).
+ *
+ * Dodatnie = stack dalej od dysku, ujemne = bliżej. Konsekwencje, które opisuje suwak,
+ * biorą się z samej geometrii i nie wymagają osobnych reguł: stack bliżej dysku zostawia
+ * wolną przestrzeń deep, ale skraca dystans do obrońców (łatwiejszy small ball); stack
+ * dalej robi miejsce na długie incuty i dla handlerów, za to zagęszcza deep.
+ *
+ * Zawodnik w roli resetu jest pomijany — jego miejsce wyznacza dysk, nie stack.
+ */
+function applySlotDepthBias(slot, disc, attackSign, biasM, isReset) {
+  if (!slot || !disc || !biasM || isReset) return slot
+  return { ...slot, x: clampFieldX(slot.x + attackSign * biasM) }
+}
+
+function slotWithError(slot, player, rng) {
+  if (!rng?.float) return slot
+  const systems = subStat(player, 'offensive', 'offensiveSystemsKnowledge')
+  const err = Math.max(0, Math.min(1, 1 - (systems - 50) / 45))
+  if (err < 0.02) return slot
+  return {
+    x: clampFieldX(slot.x + (rng.float() - 0.5) * SLOT_ERROR_MAX_M * err),
+    y: clampFieldY(slot.y + (rng.float() - 0.5) * SLOT_ERROR_MAX_M * err),
+  }
+}
+const REORG_WINDOW_MS = 700
+const CLEAR_MAX_MS = 1100
+/** Ilu zawodników tnie naraz — reszta trzyma stack i pilnuje przestrzeni. */
+const MAX_CONCURRENT_CUTTERS = 2
+/** Bliżej dysku niż tyle metrów nie ma sensu inicjować cutu — trzeba najpierw odejść. */
+const MIN_CUT_START_DIST_M = 7
+const DEG = Math.PI / 180
+
+function layoutSideFromForce(forceSide) {
+  return forceMarkLayoutSide(normalizeForceMark(forceSide))
+}
+
+function vectorAtAngle(attackSign, angleDeg, length) {
+  const rad = angleDeg * DEG
+  const ax = Math.cos(rad) * attackSign
+  const ay = Math.sin(rad)
+  const d = Math.hypot(ax, ay) || 1
+  return { dx: (ax / d) * length, dy: (ay / d) * length }
+}
+
+function pickDiagonalAngleDeg(situation, rng, kind, player) {
+  const open = situation.isOpenSide
+  const systems = subStat(player, 'offensive', 'offensiveSystemsKnowledge')
+  const movement = subStat(player, 'offensive', 'cutterMovement')
+  const craft = (systems + movement) / 2
+  const minA = 12 + (craft - 50) * 0.06
+  const maxA = 58 + (craft - 50) * 0.08
+  let base = minA + rng.float() * Math.max(8, maxA - minA)
+  if (kind === 'in') base *= 0.85 + rng.float() * 0.2
+  const sideSign = open ? 1 : -1
+  const ySign = situation.preferredCutSideY ?? (rng.float() < 0.5 ? 1 : -1)
+  return sideSign * ySign * base
+}
+
+function estimateOpenSpaceTarget(agent, disc, attackSign, situation, rng) {
+  const cy = fieldCenterY()
+  const candidates = []
+  for (let i = 0; i < 5; i += 1) {
+    const angle = pickDiagonalAngleDeg(
+      situation,
+      rng,
+      i % 2 === 0 ? 'in' : 'deep',
+      agent?.player ?? agent,
+    )
+    const dist = 5 + rng.float() * 11
+    const { dx, dy } = vectorAtAngle(attackSign, angle, dist)
+    const x = clampFieldX(disc.x + dx)
+    const y = clampFieldY(disc.y + dy)
+    let score = situation.throwWindowScore ?? 40
+    score -= Math.abs(y - cy) < 2 ? 8 : 0
+    score -= Math.hypot(x - agent.x, y - agent.y) < 3 ? 6 : 0
+    score += situation.isOpenSide ? (y - cy) * 0.4 : (cy - y) * 0.35
+    candidates.push({ x, y, score })
+  }
+  candidates.sort((a, b) => b.score - a.score)
+  return candidates[0] ?? { x: disc.x + attackSign * 6, y: disc.y }
+}
+
+/**
+ * Wagi wyboru KOMÓRKI PRZESTRZENI do zaatakowania (patrz spaceMap.js).
+ *
+ * Sens modelu: cutter nie pyta „jaki cut przewiduje mój styl ataku", tylko „gdzie jest
+ * wolne miejsce, do którego zdążę". Formacja wpływa na to POŚREDNIO — przez to, gdzie
+ * stoją koledzy, czyli które komórki są zatkane.
+ */
+/** Główny człon: jak pusta jest komórka (freeness 0-1). */
+/**
+ * Balans „wartość terenu vs koszt dobiegu" przy wyborze przestrzeni do zaatakowania.
+ *
+ * Przekalibrowane po przebudowie cienia na model zaangażowania obrońcy. Wcześniej te
+ * wagi były bezsilne: tło mapy miało freeness 0.97 w głębi przy 0.63 pod dyskiem, więc
+ * niezależnie od ustawień cutterzy biegli daleko (sweep: krótkie rzuty 14.0-15.9% przy
+ * siedmiokrotnej zmianie stosunku wag). Po wyrównaniu cienia do ~0.5 w każdym paśmie
+ * ciąg ku głębi przeniósł się w całości do tego jawnego члena i wagi zaczęły działać.
+ *
+ * Sweep na nowym modelu (tmp-sweep/space-sweep.mjs, rozproszone seedy):
+ *   45/8  -> krótkie 17.7%  długie 25.1%  rzut/pkt 5.98
+ *   30/14 -> krótkie 21.3%  długie 12.9%  rzut/pkt 8.56
+ *   18/20 -> krótkie 24.7%  długie  7.0%  rzut/pkt 10.06  <- wybrane
+ *   8/28  -> krótkie 26.4%  długie  8.1%  rzut/pkt 10.06
+ * 18/20 trafia w pasmo długich (5-10%) i rzutów na punkt (7-12) przy completion 89.9%.
+ * Krótkie zostają na 24.7% wobec celu 50-60% — reszta luki jest w GEOMETRII pasm
+ * (trzy z pięciu środków leżą powyżej 15 m), nie w tych wagach.
+ */
+/**
+ * KARA ZA DOBIEG USUNIĘTA (reach: 0) — była głównym powodem, dla którego atak nie
+ * chodził głęboko.
+ *
+ * Zmierzone przed zmianą (tmp-sweep/cut-depth.mjs, 15 514 decyzji cutu): komórka
+ * głęboka (≥35 m do przodu) istniała na mapie w 100% decyzji i nie wygrała ANI RAZU.
+ * Mediana score: -83.7 dla głębokiej wobec +61.6 dla wybranej, przy freeness 0.59 vs
+ * 0.69 — czyli głęboka przestrzeń NIE była bardziej zatłoczona, tylko dalsza. Kara
+ * 26 pkt za każdą sekundę biegu dawała 145 pkt różnicy, przy rozrzucie freeness ~10 pkt
+ * i terenu ~12 pkt. Formuła "wolna przestrzeń kontra koszt dobiegu" zdegenerowała się
+ * do "wybierz najbliższą komórkę": mediana celu leżała 3.8 m ZA dyskiem, przy dobiegu
+ * 3.4 m.
+ *
+ * Realnie koszt dobiegu nie istnieje w tym sensie — cut MA trwać kilka sekund. Zawodnik
+ * rusza w głąb, po ~1.5 s ogląda się, czy rzut leci, i albo biegnie dalej, albo zawraca
+ * (patrz DEEP_LOOK_MS niżej). Ryzyko biegu donikąd jest ponoszone przez ten mechanizm,
+ * nie przez karę w scoringu.
+ */
+export const SPACE_BALANCE = { yard: 12, reach: 0 }
+const SPACE_FREE_WEIGHT = 100
+/** Osobista preferencja z cech (deep_threat / under_cutter) — cecha ZAWODNIKA, nie
+ *  mnożnik taktyki, więc zostaje. */
+const SPACE_BIAS_WEIGHT = 40
+/** Szum decyzyjny — żeby dwóch cutterów nie wybierało zawsze tej samej komórki. */
+const SPACE_NOISE = 12
+
+/**
+ * WARTOŚĆ TERENU nie rośnie w nieskończoność — przestrzeń, do której nie da się rzucić,
+ * jest bezwartościowa, a nie najcenniejsza.
+ *
+ * Poprzednio było to `ahead / 48`, czyli funkcja monotoniczna bez ograniczenia: komórka
+ * 64 m przed dyskiem dostawała 16 pkt, komórka 13 m — 3.3 pkt. Ponieważ freeness ma na
+ * otwartym boisku znikomy rozrzut (wyścig do dalekiej komórki jest remisowy, bo obrońca
+ * biegnie tam tyle samo co atakujący), ten jeden człon wyznaczał argmax. Zmierzone:
+ * mediana wybranej przestrzeni 64.0 m dla KAŻDEJ roli, 78-82% decyzji celowało w ≥25 m,
+ * a w pas 0-12 m trafiało 3-5%.
+ *
+ * Cutter biegnie w głąb po to, żeby stać się ŁAPALNY, a nie żeby dobiec do strefy
+ * na piechotę. Wartość rośnie więc do realnego zasięgu podania i za nim opada.
+ */
+/**
+ * Pasmo, w którym zawodnik szuka przestrzeni, wynika z POZYCJI, z której gra — nie
+ * z jego podroli.
+ *
+ * Podrole cutterskie (primary / secondary / continuation / filler) opisują KOLEJNOŚĆ
+ * i PRIORYTET wchodzenia w akcję, a nie miejsce na boisku. Primary cutter to często
+ * zawodnik, którego chce się mieć pod dyskiem, bo wypracowuje przewagę — przypisanie mu
+ * pasma głębokiego było błędem projektowym.
+ *
+ * Kierunek (deep vs under) pochodzi z ROZKAZÓW zawodnika (cut_deep / cut_under, ±0.55)
+ * i jego PREFERENCJI z cech (deep_threat / under_cutter, ±0.35), przeliczanych przez
+ * SPACE_BIAS_WEIGHT — czyli 22 i 14 punktów, mocniej niż wartość terenu (12).
+ *
+ * Podział handlerzy/cutterzy działa przez USTAWIENIE: handler stoi przy dysku i stamtąd
+ * atakuje, cutter stoi dalej i atakuje ze swojej pozycji. Przestrzeń, w którą realnie
+ * pobiegną, wychodzi więc z formacji, a nie z osobnej tabeli ról.
+ */
+const YARD_SPREAD_M = 26
+/** Cut z reguły trochę zyskuje teren — stąd przesunięcie środka do przodu. */
+const YARD_FORWARD_TILT_M = 6
+/**
+ * Kara za metr ZA DYSKIEM. Wartość terenu była dotąd liczona wyłącznie względem slotu
+ * zawodnika (`selfAhead`), więc przestrzeń za dyskiem nie była tania — była po prostu
+ * daleko od szczytu krzywej i dostawała zero. Zero nie konkuruje z freeness (waga 100):
+ * gdy obrona obsadza cały przód, komórki za dyskiem są obiektywnie wolniejsze i wygrywają
+ * argmax. Zmierzone przeciw ścianie: najlepsza komórka z tyłu biła najlepszą z przodu
+ * o 5.6 pkt, 59% cutów celowało za dysk, a zawodnik w ACTIVE_CUT był średnio 2.2 m ZA
+ * dyskiem (przeciw obronie 1:1: +2.2 m).
+ *
+ * Złapanie dysku 10 m za rzucającym to realna strata 10 m, więc teren za dyskiem ma
+ * wartość UJEMNĄ, nie zerową. Kara jest liniowa w metrach i ograniczona, żeby reset nie
+ * stał się nielegalny — ma być tańszy niż zysk, a nie zakazany.
+ */
+const YARD_BACK_PENALTY_PER_M = 0.1
+const YARD_BACK_PENALTY_MAX = 1.8
+/**
+ * Reset gra za dyskiem z definicji — to jego zadanie, nie błąd ustawienia. Wyznaczony
+ * dump płaci ułamek tej kary, więc dalej wybiera przestrzeń za dyskiem, gdy jest wolna.
+ */
+const YARD_BACK_RESET_MULT = 0.25
+
+function yardValue(cellAhead, selfAhead, isReset = false) {
+  const peak = selfAhead + YARD_FORWARD_TILT_M
+  const base = Math.max(0, 1 - Math.abs(cellAhead - peak) / YARD_SPREAD_M)
+  if (cellAhead >= 0) return base
+  const penalty = Math.min(YARD_BACK_PENALTY_MAX, -cellAhead * YARD_BACK_PENALTY_PER_M)
+  return base - penalty * (isReset ? YARD_BACK_RESET_MULT : 1)
+}
+
+function pickCutTarget(
+  agent,
+  disc,
+  attackSign,
+  situation,
+  rng,
+  forceSide,
+  attackStyle,
+  stackIndex,
+  offenseTactics = null,
+  teammates = null,
+  defenders = null,
+  throwerPos = null,
+  possessionTeam = null,
+) {
+  const traitMods = mergeTraitAndCoachMods(agent?.player ?? agent, offenseTactics, 'offense')
+  const selfId = agent?.id ?? agent?.player?.id ?? null
+  // Zawodnik działa na SWOJEJ percepcji mapy, nie na prawdziwej — patrz perceiveSpaceMap.
+  const cells = perceiveSpaceMap(
+    buildSpaceMap({
+      disc,
+      attackSign,
+      teammates: teammates ?? [],
+      defenders: defenders ?? [],
+      ignoreId: selfId,
+      claimAwareness: claimAwarenessFor(agent?.player ?? agent),
+      // Cutter ocenia przestrzeń ZE SWOJEJ pozycji — kto będzie tam pierwszy.
+      viewer: { x: agent.x, y: agent.y, player: agent?.player ?? agent },
+    }),
+    agent?.player ?? agent,
+    'offense',
+    rng,
+  )
+
+  // Brak danych o pozycjach (np. wywołanie spoza pełnego ticku) — stara ścieżka
+  // oparta na stylu, żeby nie wywrócić się na niekompletnym kontekście.
+  if (!cells.length) {
+    return legacyStyleCutTarget(agent, disc, attackSign, situation, rng, forceSide, attackStyle, stackIndex, traitMods)
+  }
+
+  const speed = Math.max(3, maxSpeedMps(agent?.player ?? agent))
+  // Środek pasma to SLOT W FORMACJI, nie bieżąca pozycja zawodnika.
+  //
+  // Centrowanie na bieżącej pozycji tworzyło sprzężenie zwrotne: opłacało się zostać
+  // tam, gdzie się jest, więc stack zapadał się w stronę dysku i centrował się coraz
+  // bliżej. Zmierzone: mediana wybranej przestrzeni -2.5 m, czyli ZA dyskiem, przy
+  // udziale głębi 15.3%. Slot formacji jest stabilny — handler ma go przy dysku,
+  // cutter dalej — więc pasmo poszukiwań bierze się z ustawienia, a nie z dryfu.
+  const slot = formationStructuralTarget({
+    attackStyle,
+    x: agent.x,
+    y: agent.y,
+    disc,
+    throwerPos,
+    forceSide,
+    possessionTeam,
+    stackIndex,
+    isDump: agent.isDump === true,
+    rng,
+  })
+  const selfAhead = ((slot?.x ?? agent.x) - (disc?.x ?? agent.x)) * attackSign
+  const deepBias = traitMods.deepCutBias ?? 0
+  const underBias = traitMods.underCutBias ?? 0
+
+  let best = null
+  let bestScore = -Infinity
+  const isReset = agent.isDump === true
+  for (const cell of cells) {
+    // 1. Wolna przestrzeń — to jest istota decyzji. Ale wolna przestrzeń, do której dysk
+    //    nie doleci, nie jest wolna: laneFactor (spaceMap.js) tłumi komórki schowane za
+    //    ciałami obrony i zostawia pełną wartość dziurom, przez które rzut przechodzi.
+    //    Mnożnik działa tylko po stronie ataku — mapa zagrożeń obrony (threatCellForMark)
+    //    zostaje bez zmian, bo obrońca broni przestrzeni także wtedy, gdy sam ją zasłania.
+    let score = cell.freeness * (cell.laneFactor ?? 1) * SPACE_FREE_WEIGHT
+    // 2. Ile metrów da zdobycie tej przestrzeni (ujemnie za dyskiem — patrz yardValue).
+    score += yardValue(cell.ahead, selfAhead, isReset) * SPACE_BALANCE.yard
+    // 3. Czy zdążę tam dobiec.
+    score -= playerTravelSec(agent, cell, agent.player ?? agent, 'offense', speed) * SPACE_BALANCE.reach
+    score -= routeConflict(agent, cell, speed, teammates ?? []) * 12
+      * subStat(agent.player ?? agent, 'mental', 'spatialAwareness') / 100
+    // 4. Osobista preferencja zawodnika.
+    if (cell.depth === 'deep') score += deepBias * SPACE_BIAS_WEIGHT
+    if (cell.depth === 'under') score += underBias * SPACE_BIAS_WEIGHT
+    // Length preference changes space selection, never physical speed.
+    const cutLength = traitMods.cutLengthMult ?? 1
+    score += (cutLength - 1) * Math.min(24, Math.hypot(cell.x - agent.x, cell.y - agent.y)) * 2
+    const edgeDistance = Math.min(cell.y, fieldCenterY() * 2 - cell.y)
+    score += (traitMods.sidelineBias ?? 0) * Math.max(0, 5 - Math.abs(edgeDistance - 3)) * 3
+    // 5. Szum, żeby cała linia nie atakowała jednej komórki.
+    score += (rng?.float ? rng.float() : 0.5) * SPACE_NOISE
+    if (score > bestScore) {
+      bestScore = score
+      best = cell
+    }
+  }
+
+  // Cel wewnątrz komórki, lekko rozrzucony — cutter atakuje PRZESTRZEŃ, nie punkt.
+  const jitterX = (rng?.float ? rng.float() - 0.5 : 0) * 6
+  const jitterY = (rng?.float ? rng.float() - 0.5 : 0) * 6
+  const targetX = clampFieldX(best.x + jitterX)
+  const targetY = clampFieldY(best.y + jitterY)
+
+  // `kind` jest WZGLĘDNY WOBEC RZUCAJĄCEGO, nie wobec boiska.
+  //
+  // deep (albo leading pass przy krótszym rzucie) = odbiorca ODDALA SIĘ od rzucającego,
+  // biegnie w tę samą stronę, w którą leci dysk. under (in-cut) = odbiorca BIEGNIE
+  // W STRONĘ rzucającego. To jest realna definicja z ultimate i nie da się jej wyrazić
+  // pasmem boiska: under z głębi vertical stacka i płaski under z linii horizontala
+  // trafiały wcześniej do różnych pasm, choć oba są tym samym zagraniem — i odwrotnie,
+  // ten sam kawałek boiska bywa deep albo under zależnie od tego, gdzie stoi dysk.
+  const anchor = throwerPos ?? disc
+  const kind =
+    anchor &&
+    Math.hypot(targetX - anchor.x, targetY - anchor.y) >
+      Math.hypot(agent.x - anchor.x, agent.y - anchor.y)
+      ? 'deep'
+      : 'in'
+
+  return { kind, x: targetX, y: targetY, score: bestScore }
+}
+
+/** Stara ścieżka „rodzaj cutu z reguł stylu" — już tylko awaryjnie, gdy brak pozycji. */
+function legacyStyleCutTarget(agent, disc, attackSign, situation, rng, forceSide, attackStyle, stackIndex, traitMods) {
+  const side = layoutSideFromForce(forceSide)
+  const cy = fieldCenterY()
+  const openSpace = estimateOpenSpaceTarget(agent, disc, attackSign, situation, rng)
+  let kind = preferredCutKind(attackStyle, stackIndex, rng)
+  const deepBias = traitMods.deepCutBias ?? 0
+  const underBias = traitMods.underCutBias ?? 0
+  if (deepBias !== 0 || underBias !== 0) {
+    const pDeep = Math.max(0.05, Math.min(0.95, (kind === 'deep' ? 0.55 : 0.45) + deepBias - underBias))
+    kind = rng.float() < pDeep ? 'deep' : 'in'
+  }
+  if (kind === 'in') {
+    const angle = pickDiagonalAngleDeg(
+      { ...situation, preferredCutSideY: openSpace.y >= cy ? 1 : -1 },
+      rng,
+      'in',
+      agent?.player ?? agent,
+    )
+    const dist = 4 + rng.float() * 7
+    const { dx, dy } = vectorAtAngle(attackSign, angle, dist)
+    const breakBias = side === 'away' ? -0.8 : side === 'home' ? 0.8 : 0
+    return { kind: 'in', x: clampFieldX(disc.x + dx + breakBias), y: clampFieldY(disc.y + dy) }
+  }
+  const outAngle = pickDiagonalAngleDeg({ ...situation, isOpenSide: !situation.isOpenSide }, rng, 'deep', agent)
+  const deepDist = Math.min(75, Math.max(20, situation.discDist + 20 + rng.float() * 35))
+  const rad = outAngle * DEG
+  const downfieldFactor = Math.max(0.82, Math.cos(rad))
+  const dx = deepDist * downfieldFactor * attackSign
+  const dy = Math.sin(rad) * deepDist
+  return { kind: 'deep', x: clampFieldX(disc.x + dx), y: clampFieldY(openSpace.y + dy * 0.45) }
+}
+function pickClearTarget(x, y, disc, attackSign, forceSide, rng) {
+  return pickBreakSideClearTarget(x, y, disc, attackSign, forceSide, rng)
+}
+
+/** Pozycja resetu — kilka metrów za dyskiem, na otwartej stronie. */
+/**
+ * Cel aktywnego resetu — teraz przez MAPĘ PRZESTRZENI, nie przez zaszytą geometrię.
+ *
+ * Dopóki reset miał własną, niezależną ścieżkę, pasmo resetowe w spaceMap było martwe:
+ * istniało w mapie, ale nikt, kto realnie robi reset, z niego nie korzystał. Teraz
+ * zawodnik wybiera NAJWOLNIEJSZĄ komórkę resetową (linia dysku i za nią), czyli reset
+ * jest normalnym atakiem na wolną przestrzeń, która akurat jest z tyłu — a nie osobną
+ * mechaniką obok reszty decyzji.
+ */
+function pickResetTarget(disc, throwerPos, attackSign, forceSide, rng, cells = null, mods = {}) {
+  const slot = resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng })
+  const resetCells = (cells ?? []).filter((c) => c.depth === 'reset' || uplineSpaceBonus(mods, (c.x - disc.x) * attackSign, c.y - disc.y) > 0)
+  if (!resetCells.length) return slot
+  // Spośród komórek resetowych bierz najwolniejszą, ale nie odbiegaj daleko od slotu —
+  // reset ma pozostać realnym, bliskim wyjściem spod stallu, nie ucieczką przez pół boiska.
+  let best = null
+  let bestScore = -Infinity
+  for (const c of resetCells) {
+    const score = c.freeness * 100 - Math.hypot(c.x - slot.x, c.y - slot.y) * 2.5
+      + uplineSpaceBonus(mods, (c.x - disc.x) * attackSign, c.y - disc.y)
+    if (score > bestScore) {
+      bestScore = score
+      best = c
+    }
+  }
+  return best ? { x: clampFieldX(best.x), y: clampFieldY(best.y) } : slot
+}
+
+/**
+ * PRZYDATNOŚĆ do roli resetowej — im wyżej, tym bardziej ten zawodnik pasuje, żeby
+ * teraz czekać w przestrzeni resetowej zamiast czyścić do stacka.
+ *
+ * Handlerów ciągnie tam mocniej z samej roli, ale nie na sztywno: jeśli akurat są
+ * daleko albo właśnie wyczyścili, przydatność spada i miejsce zajmuje ktoś inny.
+ */
+const RESET_ROLE_AFFINITY = {
+  // PRIMARY HANDLER MA PIERWSZEŃSTWO przed resetowym — to on jest głównym
+  // rozgrywającym i przez niego ma przechodzić dysk. Zmierzone przy odwrotnej
+  // kolejności: resetowy handler oddawał 24.1 podania na zawodnika, a primary handler
+  // 10.4 — przedostatnie miejsce w drużynie, za trzema podrolami cutterskimi. Reset
+  // jest wtedy pierwszym wyjściem spod stallu, a nie głównym kanałem gry.
+  primary_handler: 1,
+  reset_handler: 0.8,
+  filler_cutter: 0.35,
+  continuation_cutter: 0.3,
+  secondary_cutter: 0.3,
+  primary_cutter: 0.2,
+}
+/** Od jakiej odległości od miejsca resetu przydatność spada do zera. */
+const RESET_RANGE_M = 26
+
+/**
+ * Ile miejsc resetowych ma OBECNA formacja — tyle, ilu zawodników ma podrolę
+ * reset_handler. W vertical stacku jest jeden, w horizontalu dwóch (przy trzech
+ * handlerach). Liczba nie jest więc zaszyta, tylko wynika z ustawienia.
+ */
+function resetSlotCount(agent, teammates) {
+  let n = agent?.subRole === HANDLER_SUB_ROLES.RESET ? 1 : 0
+  for (const t of teammates ?? []) {
+    if ((t.id ?? t.player?.id) === (agent?.id ?? agent?.player?.id)) continue
+    if (t.subRole === HANDLER_SUB_ROLES.RESET) n += 1
+  }
+  return Math.max(1, n)
+}
+
+function resetFitness(agent, resetSlot, preferBonus = 0) {
+  if (!resetSlot) return 0
+  const affinity = (RESET_ROLE_AFFINITY[agent?.subRole] ?? 0.3) + preferBonus
+  const d = Math.hypot((agent.x ?? 0) - resetSlot.x, (agent.y ?? 0) - resetSlot.y)
+  // Wygaszanie KWADRATOWE, nie liniowe: przy liniowym powinowactwo z podroli (1.0 dla
+  // reset_handlera wobec 0.2-0.35 u cutterów) przebijało odległość praktycznie zawsze —
+  // handler oddalony o 52 m miał jeszcze 0.33, a cutter stojący 5 m od miejsca resetu
+  // 0.29. Sytuacja "handler jest daleko albo właśnie wyczyścił" nigdy nie zachodziła
+  // i rola wracała do sztywnego przypisania (zmierzone: 0.0% ról wziętych przez kogoś
+  // bez flagi isDump). Kwadrat sprawia, że dobiegnięcie realnie waży.
+  const rel = d / RESET_RANGE_M
+  const closeness = 1 / (1 + rel * rel)
+  // Zawodnik w trakcie cutu nie jest kandydatem — jest zajęty czym innym.
+  const busy = agent?.state === CUTTER_STATE.ACTIVE_CUT ? 0.35 : 1
+  const craft = subStat(agent.player ?? agent, 'offensive', 'resetMovement') / 100
+  return affinity * closeness * busy * (0.45 + craft * 0.75)
+}
+
+/**
+ * Co robi ten zawodnik po chwycie: czyści do stacka, oferuje się do dysku,
+ * czy zostaje z tyłu jako reset. Każdy decyduje osobno, na podstawie własnej sytuacji.
+ *
+ * RESET NIE JEST PRZYPISANY NA SZTYWNO. Wcześniej rolę brał ten, kto miał podrolę
+ * reset_handler albo pozycję `dump` w formacji, i trzymał ją przez cały punkt —
+ * niezależnie od tego, gdzie w tym czasie powędrował dysk. Drużyna zawsze chce mieć
+ * KOGOŚ na resecie, więc zawodnik ocenia teraz własną przydatność (rola + bliskość
+ * miejsca resetu + czy akurat nie tnie) i porównuje ją z kolegami: zostaje, jeśli jest
+ * najlepszym dostępnym kandydatem. Handlerów ciągnie tam mocniej, ale gdy są daleko
+ * albo właśnie wyczyścili, miejsce naturalnie zajmuje ktoś inny.
+ */
+function pickPostCatchRole(agent, situation, isDump, stackIndex, rng, canCut, coachMods, ctx = {}) {
+
+  if (situation?.inThrowLane) return 'clear'
+  if (canCut && (coachMods?.postCatchOfferBonus ?? 0) >= 0.4 && rng.float() < coachMods.postCatchOfferBonus) return 'offer'
+  // UWAGA: `preferDumpRole` NIE wypala tu skrótem. Wcześniej zwracał reset
+  // bezwarunkowo, więc resetowi handlerzy w ogóle nie przechodzili przez ocenę
+  // sytuacyjną — mechanizm dynamiczny działał wyłącznie dla pozostałych. Preferencja
+  // wchodzi teraz jako premia do przydatności, a nie jako obejście.
+  const { resetSlot = null, teammates = null } = ctx
+  if (resetSlot) {
+    const mine = resetFitness(agent, resetSlot, coachMods?.preferDumpRole ? 0.5 : 0)
+    if (mine > 0) {
+      const selfId = agent?.id ?? agent?.player?.id ?? null
+      // Rolę bierze tylu zawodników, ile miejsc resetowych ma formacja — ci o
+      // najwyższej przydatności. Remis rozstrzyga id, deterministycznie.
+      //
+      // "Dokładnie jeden" było założeniem z vertical stacka i w horizontalu odcinało
+      // drugiego resetowego handlera. "Najlepszy z tolerancją 5%" (wersja jeszcze
+      // wcześniejsza) przepuszczał wszystkich o zbliżonej przydatności — 57.7% decyzji
+      // kończyło się resetem.
+      const selfIdN = selfId ?? 0
+      let better = 0
+      for (const t of teammates ?? []) {
+        const tid = t.id ?? t.player?.id ?? null
+        if (tid === selfId) continue
+        const f = resetFitness(t, resetSlot)
+        if (f > mine || (f === mine && (tid ?? 0) < selfIdN)) better += 1
+      }
+      if (better < resetSlotCount(agent, teammates)) return 'reset'
+    }
+  } else if (isDump) {
+    return 'reset'
+  }
+  if (!canCut) return 'clear'
+  const priority = cutPriority(agent.player, situation, stackIndex)
+  let offerChance = Math.max(0, Math.min(0.8, (priority - 38) / 55))
+  offerChance = Math.max(0, Math.min(0.92, offerChance + (coachMods?.postCatchOfferBonus ?? 0)))
+  return (rng?.float ? rng.float() : 0.5) < offerChance ? 'offer' : 'clear'
+}
+
+/**
+ * Odległość od najbliższego obrońcy (m), przy której krycie nie pomaga ani nie szkodzi
+ * decyzji o rozpoczęciu cutu — mniej więcej typowy cushion krycia 1-na-1.
+ */
+const CUT_COVERAGE_NEUTRAL_M = 2.5
+/** Ile punktów priorytetu waży każdy metr (nad/pod progiem neutralnym). */
+const CUT_COVERAGE_WEIGHT = 4
+/** Sufit wpływu krycia w obie strony — żeby zupełnie wolny cutter nie dostawał
+ *  nieograniczonego priorytetu, a szczelnie kryty nie był wyłączony na stałe. */
+const CUT_COVERAGE_CLAMP = 8
+
+function cutPriority(player, situation, stackIndex) {
+  const cutterMovement = subStat(player, 'offensive', 'cutTiming')
+  const systems = subStat(player, 'offensive', 'offensiveSystemsKnowledge')
+  const catching = subStat(player, 'offensive', 'catching')
+  const speed = subStat(player, 'physical', 'speed')
+  let p =
+    cutterMovement * 0.45 +
+    speed * 0.18 +
+    systems * 0.12 +
+    catching * 0.1 +
+    (situation.throwWindowScore ?? 0) * 0.22
+  p -= (situation.cloggingLevel ?? 0) * 4
+  p -= stackIndex * 0.8
+
+  // Jawny człon krycia. Bez niego sama część „własne umiejętności" dawała przy typowych
+  // statach (~80) już ~68 pkt przy bramce 64 — cutter startował ZAWSZE, gdy był wolny
+  // slot, niezależnie od tego, jak ciasno był kryty, a krycie wchodziło tylko pośrednio
+  // przez throwWindowScore*0.22. Efekt: atak zawsze produkował otwarte opcje, jakość
+  // obrony nie wpływała na wynik meczu (test win-rate: płasko 40/20/25/35%).
+  // Teraz sloty cutowe (MAX_CONCURRENT_CUTTERS) trafiają do najmniej krytych zawodników,
+  // a przeciw szczelnej obronie po prostu startuje mniej cutów — thrower musi czekać albo
+  // resetować, zamiast dostawać otwartą opcję za darmo. Ucieczka przez cutRoll zostaje,
+  // więc kryty cutter nadal czasem pobiegnie (inaczej atak by zamarzał).
+  const sep = situation.separation ?? CUT_COVERAGE_NEUTRAL_M
+  const coverage = (sep - CUT_COVERAGE_NEUTRAL_M) * CUT_COVERAGE_WEIGHT
+  p += Math.max(-CUT_COVERAGE_CLAMP, Math.min(CUT_COVERAGE_CLAMP, coverage))
+  return p
+}
+
+export const RESET_CUT_CALIBRATION = { stable: true }
+
+export function tickCutterBrain(agent, tickCtx) {
+  const {
+    dtSec,
+    disc,
+    possessionTeam,
+    forceSide,
+    situation,
+    rng,
+    stackIndex = 0,
+    isThrower = false,
+    isDump = false,
+    postCatchReorg = false,
+    throwerPos = null,
+    postResetClearout = false,
+    elapsedMs = 0,
+    teammates = null,
+    defenders = null,
+    activeCutters = 0,
+    attackStyle = ATTACK_STYLES.VERTICAL_STACK,
+    maxCutters = MAX_CONCURRENT_CUTTERS,
+    offenseTactics = null,
+    discInFlight = false,
+    flightIsForMe = false,
+  } = tickCtx
+
+  if (isThrower) {
+    return { ...agent, state: CUTTER_STATE.WAITING, vx: 0, vy: 0 }
+  }
+
+  const baseMods = mergeTraitAndCoachMods(agent.player ?? agent, offenseTactics, 'offense')
+  const coachMods = { ...baseMods, postCatchOfferBonus: (baseMods.postCatchOfferBonus ?? 0)
+    + giveAndGoOfferBonus(baseMods, agent.player?.id ?? agent.id, tickCtx.lastThrowerId, elapsedMs) }
+  const subRole = agent.subRole ?? subRoleForAgent(agent, offenseTactics)
+  const attackSign = attackDirectionX(possessionTeam)
+
+  const structuralTarget = () =>
+    applySlotDepthBias(
+      applySlotLaneBias(
+        formationStructuralTarget({
+          attackStyle,
+          x: agent.x,
+          y: agent.y,
+          disc,
+          throwerPos,
+          forceSide,
+          possessionTeam,
+          stackIndex,
+          isDump,
+          rng,
+        }),
+        disc,
+        coachMods.slotLaneBiasM ?? 0,
+      ),
+      disc,
+      attackSign,
+      coachMods.stackDepthBiasM ?? 0,
+      isDump,
+    )
+
+  const distToDisc = Math.hypot(
+    agent.x - (throwerPos?.x ?? disc.x),
+    agent.y - (throwerPos?.y ?? disc.y),
+  )
+  const alreadyCutting =
+    agent.state === CUTTER_STATE.ACTIVE_CUT || agent.state === CUTTER_STATE.INITIATING_CUT
+  // Sloty cutowe (MAX_CONCURRENT_CUTTERS = 2) są tym, co realnie ogranicza „dominuj grę":
+  // sama większa chęć nic nie daje, gdy oba pasy są zajęte. Zmierzone przy cutRollMult 2.2
+  // i cutPriorityDelta -28: inicjacje cutu +0.21 na 1000 ticków przy progu 0.37, czyli nic.
+  // Zawodnik z mocnym rozkazem priorytetu WCHODZI mimo zajętych slotów — i płaci za to
+  // zapchaniem pasa, które silnik i tak wycenia przez cloggingLevel.
+  const priorityClaim = (coachMods.cutPriorityDelta ?? 0) <= -15
+  const canStartCut =
+    alreadyCutting ||
+    ((activeCutters < maxCutters || priorityClaim) && distToDisc >= MIN_CUT_START_DIST_M)
+
+  let state = agent.state ?? CUTTER_STATE.WAITING
+  let targetX = agent.targetX ?? agent.x
+  let targetY = agent.targetY ?? agent.y
+  let stateMs = (agent.stateMs ?? 0) + dtSec * 1000
+
+  // Reorganizacja po chwycie trwa tylko chwilę — potem stack musi wrócić do cięcia,
+  // inaczej cała ofensywa zostaje w CLEARING i ucieka od dysku do końca punktu.
+  const reorgWindow = postCatchReorg && elapsedMs < REORG_WINDOW_MS
+
+  if (reorgWindow && situation?.inThrowLane && state !== CUTTER_STATE.ACTIVE_CUT) {
+    state = CUTTER_STATE.CLEARING
+    stateMs = 0
+    const clr = pickClearTarget(agent.x, agent.y, disc, attackSign, forceSide, rng)
+    targetX = clr.x
+    targetY = clr.y
+  } else if (reorgWindow && state === CUTTER_STATE.WAITING) {
+    const role = pickPostCatchRole(
+      agent,
+      situation,
+      isDump,
+      stackIndex,
+      rng,
+      canStartCut,
+      coachMods,
+      {
+        // Miejsce resetu i skład — do porównania własnej przydatności z kolegami.
+        resetSlot: resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng }),
+        teammates,
+      },
+    )
+    stateMs = 0
+    if (role === 'offer') {
+      state = CUTTER_STATE.INITIATING_CUT
+      const tgt = pickCutTarget(
+        agent,
+        disc,
+        attackSign,
+        situation,
+        rng,
+        forceSide,
+        attackStyle,
+        stackIndex,
+        offenseTactics,
+        teammates,
+        defenders,
+        throwerPos,
+        possessionTeam,
+      )
+      targetX = tgt.x
+      targetY = tgt.y
+      agent.cutKind = tgt.kind
+      agent.cutScore = tgt.score
+      agent.cutReviewMs = 0
+      agent.continuationCut = true
+    } else if (role === 'reset') {
+      state = CUTTER_STATE.CLEARING
+      const tgt = pickResetTarget(
+        disc,
+        throwerPos,
+        attackSign,
+        forceSide,
+        rng,
+        buildSpaceMap({
+          disc,
+          attackSign,
+          teammates: teammates ?? [],
+          defenders: defenders ?? [],
+          ignoreId: agent?.id ?? agent?.player?.id ?? null,
+          // Reset ocenia przestrzeń TAK SAMO jak cut: ze swojej pozycji (wyścig do
+          // komórki) i własnym czytaniem gry. Bez `viewer` mapa szła drugą gałęzią
+          // freeness — tą bez wyścigu — więc resetowy handler korzystał ze starego
+          // modelu, a zaklepana przestrzeń liczyła mu się bez względu na umiejętności.
+          claimAwareness: claimAwarenessFor(agent?.player ?? agent),
+          viewer: { x: agent.x, y: agent.y, player: agent?.player ?? agent },
+        }),
+        coachMods,
+      )
+      targetX = tgt.x
+      targetY = tgt.y
+    } else {
+      const pref = structuralTarget()
+      state = CUTTER_STATE.CLEARING
+      targetX = pref.x
+      targetY = pref.y
+    }
+  } else if (
+    postResetClearout &&
+    // A reset may start a new offer; it must not restart an existing route every
+    // tick or prevent its normal review, under-cut and clearing transitions.
+    (!RESET_CUT_CALIBRATION.stable || (state === CUTTER_STATE.WAITING && canStartCut)) &&
+    !isDump &&
+    !coachMods.continuationOnlyCuts &&
+    !coachMods.fillerCutsOnly &&
+    throwerPos &&
+    Math.hypot(agent.x - throwerPos.x, agent.y - throwerPos.y) < 24 &&
+    // Rozkaz priorytetu cutowania musi obowiązywać też przy clearoucie po resecie.
+    // Ta gałąź wskakiwała prosto w ACTIVE_CUT z pominięciem bramki w WAITING, więc
+    // „czekaj na swoją kolej" nie miał czego powstrzymać — zmierzone: cutInitPer1k
+    // -0.36 przy progu 1.50. Przy braku rozkazu (cutRollMult = 1) warunek jest zawsze
+    // spełniony, czyli dla zawodnika bez instrukcji nic się nie zmienia.
+    ((coachMods.cutRollMult ?? 1) >= 1 || rng.float() < (coachMods.cutRollMult ?? 1))
+  ) {
+    state = RESET_CUT_CALIBRATION.stable ? CUTTER_STATE.INITIATING_CUT : CUTTER_STATE.ACTIVE_CUT
+    stateMs = 0
+    const sideMult = situation?.isOpenSide ? 1 : -1
+    const angleDeg = (22 + rng.float() * 38) * sideMult
+    const dist = 11 + rng.float() * 9
+    const rad = angleDeg * (Math.PI / 180)
+    const ax = Math.cos(rad) * attackSign
+    const ay = Math.sin(rad)
+    const d = Math.hypot(ax, ay) || 1
+    targetX = clampFieldX(throwerPos.x + (ax / d) * dist)
+    targetY = clampFieldY(throwerPos.y + (ay / d) * dist)
+    agent.cutKind = rng.float() < 0.45 ? 'in' : 'deep'
+    if (RESET_CUT_CALIBRATION.stable) agent.cutReviewMs = 0
+    agent.continuationCut = true
+    agent.forceClearout = true
+  } else if (state === CUTTER_STATE.WAITING) {
+    const player = agent.player ?? agent
+    const stamina = player?.currentStamina ?? agent.currentStamina ?? 100
+    const fatigueWaiting = stamina < 40
+    const priority = cutPriority(player, situation, stackIndex) + (coachMods.cutOfferPriority ?? 0) * 2
+    const clogged = (situation.cloggingLevel ?? 0) >= 2 || situation?.inThrowLane
+    const timing = coachMods.timingCutBias ?? 0
+    let cutRoll = (fatigueWaiting ? 0.006 : 0.022) * (coachMods.cutRollMult ?? 1)
+    let priorityGate = (fatigueWaiting ? 72 : 64) + (coachMods.cutPriorityDelta ?? 0)
+    if (coachMods.doubleMove) priorityGate -= doubleMoveSetup(subStat(player, 'offensive', 'cutTiming')).earlyPriority
+    let allowClogEscape = clogged
+    if (timing > 0) {
+      if (clogged) {
+        // Dobry timing: nie uciekaj panicznie w lane — czekaj na czystszy moment.
+        allowClogEscape = false
+        cutRoll *= Math.max(0.35, 1 - timing * 0.7)
+        priorityGate += timing * 6
+      } else if ((situation.cloggingLevel ?? 0) === 0 && (situation.throwWindowScore ?? 0) > 0.45) {
+        cutRoll *= 1 + timing * 0.55
+        priorityGate -= timing * 4
+      }
+    }
+    const roleAllows = subRoleAllowsInitiateCut(subRole, situation, { reorgWindow: false })
+    if (
+      !fatigueWaiting &&
+      canStartCut &&
+      roleAllows &&
+      (allowClogEscape || priority > priorityGate || rng.float() < cutRoll)
+    ) {
+      state = CUTTER_STATE.INITIATING_CUT
+      stateMs = 0
+      const tgt = pickCutTarget(
+        agent,
+        disc,
+        attackSign,
+        situation,
+        rng,
+        forceSide,
+        attackStyle,
+        stackIndex,
+        offenseTactics,
+        teammates,
+        defenders,
+        throwerPos,
+        possessionTeam,
+      )
+      targetX = tgt.x
+      targetY = tgt.y
+      agent.cutKind = tgt.kind
+      agent.cutScore = tgt.score
+      agent.cutReviewMs = 0
+      agent.continuationCut = tgt.kind === 'in' || tgt.kind === 'deep'
+    }
+  } else if (state === CUTTER_STATE.INITIATING_CUT) {
+    // Rozpoznanie, decyzja i ruszenie z miejsca kosztują czas — nie zero ticków.
+    if (stateMs >= cutInitiationMs(agent.player ?? agent) + (coachMods.doubleMove ? doubleMoveSetup(subStat(agent.player ?? agent, 'offensive', 'cutTiming')).extraDelayMs : 0)) {
+      state = CUTTER_STATE.ACTIVE_CUT
+      stateMs = 0
+      agent.continuationCut = true
+    }
+  } else if (state === CUTTER_STATE.ACTIVE_CUT) {
+    const player = agent.player ?? agent
+    // Przegląd cutu w biegu — patrz CUT_REVIEW_MS.
+    const goingDeep = agent.cutKind === 'deep'
+    // Rzut do MNIE jest w powietrzu — nie ma czego rozważać, biegnij pod dysk.
+    const committedToFlight = flightIsForMe
+    // Deep cut dostaje okno zaangażowania; pod nie podlega też pierwsze spojrzenie.
+    const inCommitWindow = goingDeep && stateMs < DEEP_LOOK_MS * (coachMods.cutCommitMult ?? 1)
+    if (
+      !globalThis.__OFF_CUTREVIEW &&
+      !committedToFlight &&
+      !inCommitWindow &&
+      stateMs - (agent.cutReviewMs ?? 0) >= CUT_REVIEW_MS * (coachMods.cutCommitMult ?? 1)
+    ) {
+      agent.cutReviewMs = stateMs
+      const fresh = pickCutTarget(
+        agent, disc, attackSign, situation, rng, forceSide, attackStyle, stackIndex,
+        offenseTactics, teammates, defenders, throwerPos, possessionTeam,
+      )
+      // ZAWRÓĆ: biegłem deep, rzut nie przyszedł. W realnym ultimate to nie jest
+      // zejście z gry — zawodnik hamuje i wraca po dysk (under cut), a dopiero gdy
+      // i to jest zamknięte, czyści przestrzeń.
+      if (goingDeep && !discInFlight && stateMs >= DEEP_GIVE_UP_MS * (coachMods.cutCommitMult ?? 1)) {
+        agent.cutReviewMs = stateMs
+        if (fresh.score < CUT_ABANDON_SCORE) {
+          // Nic nie ma — zejdź i zwolnij przestrzeń.
+          state = CUTTER_STATE.CLEARING
+          stateMs = 0
+          agent.cutReviewMs = 0
+          const clr = structuralTarget()
+          targetX = clr.x
+          targetY = clr.y
+        } else {
+          // UNDER CUT: kierunek jest wyznaczony przez RZUCAJĄCEGO, nie przez ponowny
+          // wybór z mapy. Mapa bez kary za dobieg wskazałaby znowu głęboko i zawodnik
+          // zapętliłby się w nieskończonym deep cucie.
+          const tx = throwerPos?.x ?? disc?.x ?? agent.x
+          const ty = throwerPos?.y ?? disc?.y ?? agent.y
+          const dx = tx - agent.x
+          const dy = ty - agent.y
+          const d = Math.hypot(dx, dy)
+          const runM = Math.min(UNDER_CUT_MAX_M * (coachMods.cutLengthMult ?? 1), Math.max(0, d - UNDER_CUT_KEEP_M))
+          targetX = clampFieldX(agent.x + (d > 1e-6 ? dx / d : 0) * runM)
+          targetY = clampFieldY(agent.y + (d > 1e-6 ? dy / d : 0) * runM)
+          agent.cutKind = 'in'
+          agent.cutScore = fresh.score
+          stateMs = 0
+        }
+      } else if (fresh.score < CUT_ABANDON_SCORE) {
+        // Przykryty i nic lepszego nie ma — zejdź, zwolnij przestrzeń.
+        state = CUTTER_STATE.CLEARING
+        stateMs = 0
+        agent.cutReviewMs = 0
+        const clr = structuralTarget()
+        targetX = clr.x
+        targetY = clr.y
+      } else if (fresh.score > (agent.cutScore ?? 0) + CUT_RETARGET_MARGIN * (coachMods.cutCommitMult ?? 1)) {
+        targetX = fresh.x
+        targetY = fresh.y
+        agent.cutKind = fresh.kind
+        agent.cutScore = fresh.score
+      }
+    }
+    const plantMs = plantStopMs(player)
+    // Czas cutu wynika z DYSTANSU DO WYBRANEJ PRZESTRZENI, nie ze stałej.
+    //
+    // Przy stałej 1600 ms cut kończył się po ~10.9 m (1713 ms przy 6.4 m/s) i zawodnik
+    // przechodził w CLEARING. Próg hucka to 35 m — czyli DEEP CUT BYŁ STRUKTURALNIE
+    // NIEMOŻLIWY DO DOBIEGNIĘCIA, niezależnie od tego, jak dobrze wybrana była
+    // przestrzeń i ile czasu dał rzucający.
+    //
+    // To tłumaczy zmierzoną tabelę hucków per formacja: vertical stack dawał 13-20%,
+    // bo jego ostatni zawodnik STOI na ~33 m i miał do dobiegnięcia kilka metrów;
+    // motion i hex dawały dokładnie 0.0%, bo ich pierścień stoi na 7-10 m. Hucki nigdy
+    // nie brały się z deep cutów, tylko z tego, że ktoś już stał głęboko.
+    const cutDistM = Math.hypot(targetX - agent.x, targetY - agent.y)
+    const travelMs = (cutDistM / Math.max(3, maxSpeedMps(player))) * 1000
+    const activeCutMs =
+      Math.min(
+        MAX_ACTIVE_CUT_MS,
+        Math.max(ACTIVE_CUT_MS_BASE, travelMs) + plantMs * 0.65,
+      ) * (coachMods.clearActiveCutMult ?? 1) * (coachMods.cutCommitMult ?? 1)
+    if (stateMs >= activeCutMs) {
+      state = CUTTER_STATE.CLEARING
+      stateMs = 0
+      const clr = structuralTarget()
+      const extra = coachMods.clearLaneExtraM ?? 0
+      targetX = clampFieldX(clr.x + (extra ? -attackSign * extra * 0.35 : 0))
+      targetY = clr.y
+    }
+  } else if (state === CUTTER_STATE.CLEARING) {
+    const reachedClear = Math.hypot(targetX - agent.x, targetY - agent.y) < 2.5
+    if (reachedClear || stateMs >= CLEAR_MAX_MS) {
+      state = CUTTER_STATE.WAITING
+      stateMs = 0
+      agent.continuationCut = false
+      agent.forceClearout = false
+    }
+  }
+
+  if (state === CUTTER_STATE.INITIATING_CUT && agent.state !== CUTTER_STATE.INITIATING_CUT) {
+    agent.feintOrigin = { x: agent.x, y: agent.y }
+    agent.feintElapsedMs = 0
+  }
+  if (coachMods.doubleMove && [CUTTER_STATE.INITIATING_CUT, CUTTER_STATE.ACTIVE_CUT].includes(state)) {
+    agent.feintElapsedMs = (agent.feintElapsedMs ?? 0) + dtSec * 1000
+  }
+  let x = agent.x
+  let y = agent.y
+  let vx = agent.vx ?? 0
+  let vy = agent.vy ?? 0
+
+  const reorganizing = reorgWindow || state === CUTTER_STATE.CLEARING
+
+  if (state === CUTTER_STATE.ACTIVE_CUT || state === CUTTER_STATE.CLEARING || (state === CUTTER_STATE.INITIATING_CUT && coachMods.doubleMove)) {
+    const player = agent.player ?? agent
+    let speed
+    if (reorganizing) {
+      const dumpLike =
+        isDump ||
+        coachMods.preferDumpRole ||
+        subRole === HANDLER_SUB_ROLES.RESET
+      const dist = Math.hypot(targetX - agent.x, targetY - agent.y)
+      // Reset handler: clear/dump truchtem–biegiem, nie sprintem jak cutter clearing lane.
+      speed = dumpLike
+        ? waitingHoldSpeedMps(player, dist)
+        : repositionSpeedMps(player, dist)
+    } else {
+      const stamina = player?.currentStamina ?? 100
+      let speedMult = 1
+      if (stamina < 50) {
+        speedMult = 1 - (1 - speedMult) * (coachMods.lowStaminaMovePenaltyMult ?? 1)
+      }
+      if (agent.cutKind === 'deep') speedMult *= coachMods.deepSpeedMult ?? 1
+      // Reset handler rzadko cutuje; gdy już, krótszy / wolniejszy wysiłek.
+      if (subRole === HANDLER_SUB_ROLES.RESET) speedMult *= 0.72
+      speed = maxSpeedMps(player) * speedMult
+    }
+    const setup = doubleMoveSetup(subStat(player, 'offensive', 'cutTiming'))
+    const origin = agent.feintOrigin
+    const feint = coachMods.doubleMove && origin && agent.feintElapsedMs < setup.durationMs
+    const distance = origin ? Math.max(0.1, Math.hypot(targetX - origin.x, targetY - origin.y)) : 1
+    const moveX = feint ? clampFieldX(origin.x - (targetX - origin.x) / distance * setup.distanceM) : targetX
+    const moveY = feint ? clampFieldY(origin.y - (targetY - origin.y) / distance * setup.distanceM) : targetY
+    const spaced = crowdAwareTarget(agent, spacingAdjustedTarget(agent, moveX, moveY, teammates), [...(teammates ?? []), ...(defenders ?? [])])
+    const movement = BODY_TRAFFIC_CALIBRATION.offBall ? bodyAwareTarget({ ...agent, x, y, vx, vy }, spaced,
+      [...(teammates ?? []), ...(defenders ?? [])], speed) : { ...spaced, speed }
+    const moved = integrateAgentMotion(
+      { ...agent, x, y, vx, vy },
+      movement.x,
+      movement.y,
+      speed,
+      dtSec,
+      true,
+      // rola 'offense': zwinność + cutterMovement decydują, jak ostro cutter potrafi
+      // zmienić kierunek — czyli ile separacji realnie urywa (patrz mobilityMultiplier).
+      'offense',
+      movement.speed,
+    )
+    x = moved.x
+    y = moved.y
+    vx = moved.vx
+    vy = moved.vy
+  } else if (state === CUTTER_STATE.WAITING) {
+    // Bez piłki zawodnik nie stoi bezczynnie: wraca truchtem / lekkim biegiem na slot
+    // (nie sprint — sprint tylko na ACTIVE_CUT).
+    const slot = slotWithError(structuralTarget(), agent.player ?? agent, rng)
+    const spaced = crowdAwareTarget(agent, spacingAdjustedTarget(agent, slot.x, slot.y, teammates), [...(teammates ?? []), ...(defenders ?? [])])
+    const drift = Math.hypot(spaced.x - agent.x, spaced.y - agent.y)
+    if (drift > 1.5) {
+      const speed = waitingHoldSpeedMps(agent.player ?? agent, drift)
+      const movement = BODY_TRAFFIC_CALIBRATION.offBall ? bodyAwareTarget({ ...agent, x, y, vx, vy }, spaced,
+        [...(teammates ?? []), ...(defenders ?? [])], speed) : { ...spaced, speed }
+      const moved = integrateAgentMotion(
+        { ...agent, x, y, vx, vy },
+        movement.x,
+        movement.y,
+        speed,
+        dtSec,
+        true,
+        'offense',
+        movement.speed,
+      )
+      x = moved.x
+      y = moved.y
+      vx = moved.vx
+      vy = moved.vy
+    } else {
+      const jitter = { x: x + (rng.float() - 0.5) * 0.15, y: y + (rng.float() - 0.5) * 0.12 }
+      if (BODY_TRAFFIC_CALIBRATION.offBall && BODY_TRAFFIC_CALIBRATION.enabled) {
+        const movement = bodyAwareTarget({ ...agent, x, y, vx, vy }, jitter,
+          [...(teammates ?? []), ...(defenders ?? [])], 0.5)
+        const moved = integrateAgentMotion({ ...agent, x, y, vx, vy }, movement.x, movement.y,
+          maxSpeedMps(agent.player ?? agent), dtSec, true, 'offense', movement.speed)
+        ;({ x, y, vx, vy } = moved)
+      } else {
+        x = jitter.x; y = jitter.y; vx *= 0.5; vy *= 0.5
+      }
+    }
+  }
+
+  const clamped = clampAgentPosition(x, y)
+  return {
+    ...agent,
+    x: clamped.x,
+    y: clamped.y,
+    state,
+    stateMs,
+    targetX,
+    targetY,
+    vx,
+    vy,
+  }
+}
+
+export function createCutterAgent(player, x, y) {
+  return {
+    player,
+    id: player.id,
+    x,
+    y,
+    z: 0,
+    vz: 0,
+    state: CUTTER_STATE.WAITING,
+    stateMs: 0,
+    targetX: x,
+    targetY: y,
+    vx: 0,
+    vy: 0,
+  }
+}

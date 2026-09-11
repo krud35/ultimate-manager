@@ -1,0 +1,4800 @@
+[
+  {
+    "id": "integrity-00001",
+    "phase": "integrity",
+    "kind": "match"
+  },
+  {
+    "id": "integrity-00002",
+    "phase": "integrity",
+    "kind": "match"
+  },
+  {
+    "id": "integrity-00003",
+    "phase": "integrity",
+    "kind": "match"
+  },
+  {
+    "id": "integrity-00004",
+    "phase": "integrity",
+    "kind": "check"
+  },
+  {
+    "id": "situations-00005",
+    "phase": "situations",
+    "kind": "flight"
+  },
+  {
+    "id": "situations-00006",
+    "phase": "situations",
+    "kind": "setups"
+  },
+  {
+    "id": "situations-00007",
+    "phase": "situations",
+    "kind": "setups"
+  },
+  {
+    "id": "situations-00008",
+    "phase": "situations",
+    "kind": "setups"
+  },
+  {
+    "id": "situations-00009",
+    "phase": "situations",
+    "kind": "setups"
+  },
+  {
+    "id": "situations-00010",
+    "phase": "situations",
+    "kind": "setups"
+  },
+  {
+    "id": "situations-00011",
+    "phase": "situations",
+    "kind": "setups"
+  },
+  {
+    "id": "situations-00012",
+    "phase": "situations",
+    "kind": "setups"
+  },
+  {
+    "id": "situations-00013",
+    "phase": "situations",
+    "kind": "setups"
+  },
+  {
+    "id": "reference-00014",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00015",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00016",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00017",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00018",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00019",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00020",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00021",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00022",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00023",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00024",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00025",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00026",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00027",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00028",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00029",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00030",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00031",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00032",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00033",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00034",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00035",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00036",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00037",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00038",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00039",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00040",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00041",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00042",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00043",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00044",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00045",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00046",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00047",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00048",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00049",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00050",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00051",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00052",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00053",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00054",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00055",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00056",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00057",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00058",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00059",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00060",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00061",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00062",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00063",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00064",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00065",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00066",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00067",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00068",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00069",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00070",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00071",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00072",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00073",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00074",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00075",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00076",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00077",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00078",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00079",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00080",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00081",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00082",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00083",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00084",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00085",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00086",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00087",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00088",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00089",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00090",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00091",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00092",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00093",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00094",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00095",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00096",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00097",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00098",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00099",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00100",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00101",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00102",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00103",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00104",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00105",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00106",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00107",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00108",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00109",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00110",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00111",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00112",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00113",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00114",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00115",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00116",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00117",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00118",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00119",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00120",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00121",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00122",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00123",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00124",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00125",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00126",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00127",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00128",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00129",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00130",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00131",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00132",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "reference-00133",
+    "phase": "reference",
+    "kind": "match"
+  },
+  {
+    "id": "tactics-00134",
+    "phase": "tactics",
+    "kind": "match"
+  },
+  {
+    "id": "tactics-00135",
+    "phase": "tactics",
+    "kind": "match"
+  },
+  {
+    "id": "tactics-00136",
+    "phase": "tactics",
+    "kind": "match"
+  },
+  {
+    "id": "tactics-00137",
+    "phase": "tactics",
+    "kind": "match"
+  },
+  {
+    "id": "tactics-00138",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "vertical_stack|person"
+  },
+  {
+    "id": "tactics-00139",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "vertical_stack|zone_cup"
+  },
+  {
+    "id": "tactics-00140",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "horizontal_stack|person"
+  },
+  {
+    "id": "tactics-00141",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "horizontal_stack|zone_cup"
+  },
+  {
+    "id": "tactics-00142",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "split_stack|person"
+  },
+  {
+    "id": "tactics-00143",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "split_stack|zone_cup"
+  },
+  {
+    "id": "tactics-00144",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "side_stack|person"
+  },
+  {
+    "id": "tactics-00145",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "side_stack|zone_cup"
+  },
+  {
+    "id": "tactics-00146",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "motion_offense|person"
+  },
+  {
+    "id": "tactics-00147",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "motion_offense|zone_cup"
+  },
+  {
+    "id": "tactics-00148",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "hex_offense|person"
+  },
+  {
+    "id": "tactics-00149",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "hex_offense|zone_cup"
+  },
+  {
+    "id": "tactics-00150",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "zone_offense|person"
+  },
+  {
+    "id": "tactics-00151",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "zone_offense|zone_cup"
+  },
+  {
+    "id": "tactics-00152",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "horizontal_stack|zone_wall"
+  },
+  {
+    "id": "tactics-00153",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "zone_offense|zone_wall"
+  },
+  {
+    "id": "tactics-00154",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "horizontal_stack|clam"
+  },
+  {
+    "id": "tactics-00155",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "zone_offense|clam"
+  },
+  {
+    "id": "tactics-00156",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "horizontal_stack|all_person"
+  },
+  {
+    "id": "tactics-00157",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "zone_offense|all_person"
+  },
+  {
+    "id": "tactics-00158",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "vertical_stack|person"
+  },
+  {
+    "id": "tactics-00159",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "vertical_stack|zone_cup"
+  },
+  {
+    "id": "tactics-00160",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "horizontal_stack|person"
+  },
+  {
+    "id": "tactics-00161",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "horizontal_stack|zone_cup"
+  },
+  {
+    "id": "tactics-00162",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "split_stack|person"
+  },
+  {
+    "id": "tactics-00163",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "split_stack|zone_cup"
+  },
+  {
+    "id": "tactics-00164",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "side_stack|person"
+  },
+  {
+    "id": "tactics-00165",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "side_stack|zone_cup"
+  },
+  {
+    "id": "tactics-00166",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "motion_offense|person"
+  },
+  {
+    "id": "tactics-00167",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "motion_offense|zone_cup"
+  },
+  {
+    "id": "tactics-00168",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "hex_offense|person"
+  },
+  {
+    "id": "tactics-00169",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "hex_offense|zone_cup"
+  },
+  {
+    "id": "tactics-00170",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "zone_offense|person"
+  },
+  {
+    "id": "tactics-00171",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "zone_offense|zone_cup"
+  },
+  {
+    "id": "tactics-00172",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "horizontal_stack|zone_wall"
+  },
+  {
+    "id": "tactics-00173",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "zone_offense|zone_wall"
+  },
+  {
+    "id": "tactics-00174",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "horizontal_stack|clam"
+  },
+  {
+    "id": "tactics-00175",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "zone_offense|clam"
+  },
+  {
+    "id": "tactics-00176",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "horizontal_stack|all_person"
+  },
+  {
+    "id": "tactics-00177",
+    "phase": "tactics",
+    "kind": "match",
+    "cell": "zone_offense|all_person"
+  },
+  {
+    "id": "tactics-00178",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "creativity"
+  },
+  {
+    "id": "tactics-00179",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "creativity"
+  },
+  {
+    "id": "tactics-00180",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "creativity"
+  },
+  {
+    "id": "tactics-00181",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "huckAppetite"
+  },
+  {
+    "id": "tactics-00182",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "huckAppetite"
+  },
+  {
+    "id": "tactics-00183",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "huckAppetite"
+  },
+  {
+    "id": "tactics-00184",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "breakAppetite"
+  },
+  {
+    "id": "tactics-00185",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "breakAppetite"
+  },
+  {
+    "id": "tactics-00186",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "breakAppetite"
+  },
+  {
+    "id": "tactics-00187",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "passSelectivity"
+  },
+  {
+    "id": "tactics-00188",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "passSelectivity"
+  },
+  {
+    "id": "tactics-00189",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "passSelectivity"
+  },
+  {
+    "id": "tactics-00190",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "possessionTempo"
+  },
+  {
+    "id": "tactics-00191",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "possessionTempo"
+  },
+  {
+    "id": "tactics-00192",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "possessionTempo"
+  },
+  {
+    "id": "tactics-00193",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "stackDepth"
+  },
+  {
+    "id": "tactics-00194",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "stackDepth"
+  },
+  {
+    "id": "tactics-00195",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "stackDepth"
+  },
+  {
+    "id": "tactics-00196",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "coverageShade"
+  },
+  {
+    "id": "tactics-00197",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "coverageShade"
+  },
+  {
+    "id": "tactics-00198",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "coverageShade"
+  },
+  {
+    "id": "tactics-00199",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "cushionDepth"
+  },
+  {
+    "id": "tactics-00200",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "cushionDepth"
+  },
+  {
+    "id": "tactics-00201",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "cushionDepth"
+  },
+  {
+    "id": "tactics-00202",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "markShape"
+  },
+  {
+    "id": "tactics-00203",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "markShape"
+  },
+  {
+    "id": "tactics-00204",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "markShape"
+  },
+  {
+    "id": "tactics-00205",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "poachSeeking"
+  },
+  {
+    "id": "tactics-00206",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "poachSeeking"
+  },
+  {
+    "id": "tactics-00207",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "poachSeeking"
+  },
+  {
+    "id": "tactics-00208",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "helpDeep"
+  },
+  {
+    "id": "tactics-00209",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "helpDeep"
+  },
+  {
+    "id": "tactics-00210",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "helpDeep"
+  },
+  {
+    "id": "tactics-00211",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "poachResetHandler"
+  },
+  {
+    "id": "tactics-00212",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "poachResetHandler"
+  },
+  {
+    "id": "tactics-00213",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "creativity"
+  },
+  {
+    "id": "tactics-00214",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "creativity"
+  },
+  {
+    "id": "tactics-00215",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "creativity"
+  },
+  {
+    "id": "tactics-00216",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "huckAppetite"
+  },
+  {
+    "id": "tactics-00217",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "huckAppetite"
+  },
+  {
+    "id": "tactics-00218",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "huckAppetite"
+  },
+  {
+    "id": "tactics-00219",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "breakAppetite"
+  },
+  {
+    "id": "tactics-00220",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "breakAppetite"
+  },
+  {
+    "id": "tactics-00221",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "breakAppetite"
+  },
+  {
+    "id": "tactics-00222",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "passSelectivity"
+  },
+  {
+    "id": "tactics-00223",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "passSelectivity"
+  },
+  {
+    "id": "tactics-00224",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "passSelectivity"
+  },
+  {
+    "id": "tactics-00225",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "possessionTempo"
+  },
+  {
+    "id": "tactics-00226",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "possessionTempo"
+  },
+  {
+    "id": "tactics-00227",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "possessionTempo"
+  },
+  {
+    "id": "tactics-00228",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "stackDepth"
+  },
+  {
+    "id": "tactics-00229",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "stackDepth"
+  },
+  {
+    "id": "tactics-00230",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "stackDepth"
+  },
+  {
+    "id": "tactics-00231",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "coverageShade"
+  },
+  {
+    "id": "tactics-00232",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "coverageShade"
+  },
+  {
+    "id": "tactics-00233",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "coverageShade"
+  },
+  {
+    "id": "tactics-00234",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "cushionDepth"
+  },
+  {
+    "id": "tactics-00235",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "cushionDepth"
+  },
+  {
+    "id": "tactics-00236",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "cushionDepth"
+  },
+  {
+    "id": "tactics-00237",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "markShape"
+  },
+  {
+    "id": "tactics-00238",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "markShape"
+  },
+  {
+    "id": "tactics-00239",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "markShape"
+  },
+  {
+    "id": "tactics-00240",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "poachSeeking"
+  },
+  {
+    "id": "tactics-00241",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "poachSeeking"
+  },
+  {
+    "id": "tactics-00242",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "poachSeeking"
+  },
+  {
+    "id": "tactics-00243",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "helpDeep"
+  },
+  {
+    "id": "tactics-00244",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "helpDeep"
+  },
+  {
+    "id": "tactics-00245",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "helpDeep"
+  },
+  {
+    "id": "tactics-00246",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "poachResetHandler"
+  },
+  {
+    "id": "tactics-00247",
+    "phase": "tactics",
+    "kind": "match",
+    "directive": "poachResetHandler"
+  },
+  {
+    "id": "tactics-00248",
+    "phase": "tactics",
+    "kind": "setups"
+  },
+  {
+    "id": "tactics-00249",
+    "phase": "tactics",
+    "kind": "setups"
+  },
+  {
+    "id": "tactics-00250",
+    "phase": "tactics",
+    "kind": "setups"
+  },
+  {
+    "id": "tactics-00251",
+    "phase": "tactics",
+    "kind": "setups"
+  },
+  {
+    "id": "tactics-00252",
+    "phase": "tactics",
+    "kind": "setups"
+  },
+  {
+    "id": "tactics-00253",
+    "phase": "tactics",
+    "kind": "setups"
+  },
+  {
+    "id": "tactics-00254",
+    "phase": "tactics",
+    "kind": "setups"
+  },
+  {
+    "id": "tactics-00255",
+    "phase": "tactics",
+    "kind": "setups"
+  },
+  {
+    "id": "tactics-00256",
+    "phase": "tactics",
+    "kind": "setups"
+  },
+  {
+    "id": "tactics-00257",
+    "phase": "tactics",
+    "kind": "setups"
+  },
+  {
+    "id": "effects-00258",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00259",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00260",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00261",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00262",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00263",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00264",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00265",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00266",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00267",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00268",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00269",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00270",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00271",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00272",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00273",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00274",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00275",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00276",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00277",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00278",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00279",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00280",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00281",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00282",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00283",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00284",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00285",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00286",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00287",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00288",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00289",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00290",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00786",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00787",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00788",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00789",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00790",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00791",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00792",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00793",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00794",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00795",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00796",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00797",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00798",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00799",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00800",
+    "phase": "effects",
+    "kind": "effects"
+  },
+  {
+    "id": "effects-00291",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00292",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00293",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00294",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00295",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00296",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00297",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00298",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00299",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00300",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00301",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00302",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00303",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00304",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00305",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00306",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00307",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00308",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00309",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00310",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00311",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00312",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00313",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00314",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00315",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00316",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00317",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00318",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00319",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00320",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00321",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00322",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00323",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00324",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00325",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00326",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00327",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00328",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00329",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00330",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00331",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00332",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00333",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00334",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00335",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00336",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00337",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00338",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00339",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00340",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00341",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00342",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00343",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00344",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00345",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00346",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00347",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00348",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00349",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00350",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00351",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00352",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00353",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00354",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00355",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00356",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00357",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00358",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00359",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00360",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00361",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00362",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00363",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00364",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00365",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00366",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00367",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00368",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00369",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00370",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00371",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00372",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00373",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00374",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00375",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00376",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00377",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00378",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00379",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00380",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00381",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00382",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00383",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00384",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00385",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00386",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00387",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00388",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00389",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00390",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00391",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00392",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00393",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00394",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00395",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00396",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00397",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00398",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00399",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00400",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00401",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00402",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00403",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00404",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00405",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00406",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00407",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00408",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00409",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00410",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00411",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00412",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00413",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00414",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00415",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00416",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00417",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00418",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00419",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00420",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00421",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00422",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00423",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00424",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00425",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00426",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00427",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00428",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00429",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00430",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00431",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00432",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00433",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00434",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00435",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00436",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00437",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00438",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00439",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00440",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00441",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00442",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00443",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00444",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00445",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00446",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00447",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00448",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00449",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00450",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00451",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00452",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00453",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00454",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00455",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00456",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00457",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00458",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00459",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00460",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00461",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00462",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00463",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00464",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00465",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00466",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00467",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00468",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00469",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00470",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00471",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00472",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00473",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00474",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00475",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00476",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00477",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00478",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00479",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00480",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00481",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00482",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00483",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00484",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00485",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00486",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00487",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00488",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00489",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00490",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00491",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00492",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00493",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00494",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00495",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00496",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00497",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00498",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00499",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00500",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00501",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00502",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00503",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00504",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00505",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00506",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00507",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00508",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00509",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00510",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00511",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00512",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00513",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00514",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00515",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00516",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00517",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00518",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00519",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00520",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00521",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00522",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00523",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00524",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00525",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00526",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00527",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00528",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00529",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00530",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00531",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00532",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00533",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00534",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00535",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00536",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00537",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00538",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00539",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00540",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00541",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00542",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00543",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00544",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00545",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00546",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00547",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00548",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00549",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00550",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00551",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00552",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00553",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00554",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00555",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00556",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00557",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00558",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00559",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00560",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00561",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00562",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00563",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00564",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00565",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00566",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00567",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00568",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00569",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00570",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00571",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00572",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00573",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00574",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00575",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00576",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00577",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00578",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00579",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00580",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00581",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00582",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00583",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00584",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00585",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00586",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00587",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00588",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00589",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00590",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00591",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00592",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00593",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00594",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00595",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00596",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00597",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00598",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00599",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00600",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00601",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00602",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00603",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00604",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00605",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00606",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00607",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00608",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00609",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00610",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00611",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00612",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00613",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00614",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00615",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00616",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00617",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00618",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00619",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00620",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00621",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00622",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00623",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00624",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00625",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00626",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00627",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00628",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00629",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00630",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00631",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00632",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00633",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00634",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00635",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00636",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00637",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00638",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00639",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00640",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00641",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00642",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00643",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00644",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00645",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00646",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00647",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00648",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00649",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00650",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00651",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00652",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00653",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00654",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00655",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00656",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00657",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00658",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00659",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00660",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00661",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00662",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00663",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00664",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00665",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00666",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00667",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00668",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00669",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00670",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00671",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00672",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00673",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00674",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00675",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00676",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00677",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00678",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00679",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00680",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00681",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00682",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00683",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00684",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00685",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00686",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00687",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00688",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00689",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00690",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00691",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00692",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00693",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00694",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00695",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00696",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00697",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00698",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00699",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00700",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00701",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00702",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00703",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00704",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00705",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00706",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00707",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00708",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00709",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00710",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00711",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00712",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00713",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00714",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00715",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00716",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00717",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00718",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00719",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00720",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00721",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00722",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00723",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00724",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00725",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00726",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00727",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00728",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00729",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00730",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00731",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00732",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00733",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00734",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00735",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00736",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00737",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00738",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00739",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00740",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00741",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00742",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00743",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00744",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00745",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00746",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00747",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00748",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00749",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00750",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00751",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00752",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "effects-00753",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.backhand"
+  },
+  {
+    "id": "effects-00754",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.forehand"
+  },
+  {
+    "id": "effects-00755",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.huck"
+  },
+  {
+    "id": "effects-00756",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.hammer"
+  },
+  {
+    "id": "effects-00757",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.power"
+  },
+  {
+    "id": "effects-00758",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.touch"
+  },
+  {
+    "id": "effects-00759",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.releaseControl"
+  },
+  {
+    "id": "effects-00760",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "throwing.windControl"
+  },
+  {
+    "id": "effects-00761",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.speed"
+  },
+  {
+    "id": "effects-00762",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.endurance"
+  },
+  {
+    "id": "effects-00763",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.agility"
+  },
+  {
+    "id": "effects-00764",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.jump"
+  },
+  {
+    "id": "effects-00765",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.acceleration"
+  },
+  {
+    "id": "effects-00766",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "physical.balance"
+  },
+  {
+    "id": "effects-00767",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.vision"
+  },
+  {
+    "id": "effects-00768",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.composure"
+  },
+  {
+    "id": "effects-00769",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.reactions"
+  },
+  {
+    "id": "effects-00770",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.decisionMaking"
+  },
+  {
+    "id": "effects-00771",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.anticipation"
+  },
+  {
+    "id": "effects-00772",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "mental.spatialAwareness"
+  },
+  {
+    "id": "effects-00773",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.routeCraft"
+  },
+  {
+    "id": "effects-00774",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.resetMovement"
+  },
+  {
+    "id": "effects-00775",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.offensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00776",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.catching"
+  },
+  {
+    "id": "effects-00777",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.cutTiming"
+  },
+  {
+    "id": "effects-00778",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "offensive.discReading"
+  },
+  {
+    "id": "effects-00779",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.matchupReading"
+  },
+  {
+    "id": "effects-00780",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.resetDefense"
+  },
+  {
+    "id": "effects-00781",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.defensiveSystemsKnowledge"
+  },
+  {
+    "id": "effects-00782",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.blocking"
+  },
+  {
+    "id": "effects-00783",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.positioning"
+  },
+  {
+    "id": "effects-00784",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.marking"
+  },
+  {
+    "id": "effects-00785",
+    "phase": "effects",
+    "kind": "effects",
+    "attribute": "defensive.discReading"
+  },
+  {
+    "id": "stress-00801",
+    "phase": "stress",
+    "kind": "match"
+  },
+  {
+    "id": "stress-00802",
+    "phase": "stress",
+    "kind": "match"
+  },
+  {
+    "id": "stress-00803",
+    "phase": "stress",
+    "kind": "match"
+  },
+  {
+    "id": "stress-00804",
+    "phase": "stress",
+    "kind": "match"
+  },
+  {
+    "id": "stress-00805",
+    "phase": "stress",
+    "kind": "check"
+  },
+  {
+    "id": "stress-00806",
+    "phase": "stress",
+    "kind": "check"
+  },
+  {
+    "id": "stress-00807",
+    "phase": "stress",
+    "kind": "check"
+  },
+  {
+    "id": "stress-00808",
+    "phase": "stress",
+    "kind": "check"
+  },
+  {
+    "id": "fast-reference-00014",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00015",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00016",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00017",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00018",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00019",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00020",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00021",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00022",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00023",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00024",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00025",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00026",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00027",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00028",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00029",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00030",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00031",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00032",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00033",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00034",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00035",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00036",
+    "phase": "fast",
+    "kind": "match"
+  },
+  {
+    "id": "fast-reference-00037",
+    "phase": "fast",
+    "kind": "match"
+  }
+]

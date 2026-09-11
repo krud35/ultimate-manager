@@ -1,0 +1,9 @@
+{
+  "id": "situations-00005",
+  "phase": "situations",
+  "kind": "flight",
+  "seed": 190771304,
+  "observe": true,
+  "n": 128,
+  "budgetMs": 180000
+}

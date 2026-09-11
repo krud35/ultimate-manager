@@ -1,0 +1,30 @@
+import fs from 'node:fs'
+import path from 'node:path'
+const out=path.resolve(process.argv[2]); const all=[]
+for(const file of fs.readdirSync(path.join(out,'replays'))){
+ const r=JSON.parse(fs.readFileSync(path.join(out,'replays',file)))
+ const j=JSON.parse(fs.readFileSync(path.join(out,'inputs',r.jobId+'.json')))
+ all.push({file,r,j})
+}
+const wanted=[...['hex_offense','motion_offense'].flatMap(a=>['person','zone_cup','zone_wall'].map(d=>({name:a+' / '+d,test:x=>x.j.phase==='matrix'&&x.j.homeConfig.attack===a&&x.j.awayConfig.defense===d}))),
+ ...['person','zone_cup'].map(d=>({name:'vertical / '+d,test:x=>x.j.phase==='matrix'&&x.j.homeConfig.attack==='vertical_stack'&&x.j.awayConfig.defense===d})),
+ ...['isolation-5','zone-6'].flatMap(id=>[0,1].map(round=>({name:id+' round '+round,test:x=>x.j.phase==='holdout'&&x.j.candidate===id&&x.j.round===round})))];
+const entries=wanted.map(w=>{const choices=all.filter(w.test).filter(x=>x.r.category!=='alarm').sort((a,b)=>a.r.rank.localeCompare(b.r.rank)); const x=choices[0]; if(!x)throw Error(w.name);return {name:w.name,file:x.file,job:x.j,...x.r}})
+for (const file of ['matrix-005402-failure.json','matrix-005408-failure.json','holdout-isolation-5-0-a-failure.json','holdout-zone-6-0-a-failure.json']) {
+ const x=all.find(x=>x.file===file); if(x)entries.push({name:'DIAG '+file,file,job:x.j,...x.r})
+}
+fs.writeFileSync(path.join(out,'VISUAL-SAMPLE.json'),JSON.stringify(entries.map(({clips,scans,...x})=>x),null,2))
+const payload=JSON.stringify(entries).replaceAll('<','\\u003c')
+const html=`<!doctype html><meta charset="utf-8"><title>Przegląd powtórek</title><style>body{background:#13221f;color:#fff;font:15px system-ui;margin:10px}button,select{font:inherit;padding:5px;margin:3px}canvas{width:100%;max-width:1500px}pre{white-space:pre-wrap;font-size:12px}h2{font-size:18px;margin:5px}</style><h2>Ruch: niebiescy atak, czerwoni obrona, żółty dysk. Numery = końcówki ID.</h2><select id=s></select><button id=prev>Poprzednia akcja</button><button id=next>Następna akcja</button><button id=reveal>Pokaż wynik</button><button id=play>Odtwórz</button><input id=seek type=range min=0 value=0><div id=meta></div><canvas id=c width=1500 height=760></canvas><pre id=info></pre><script>
+const entries=${payload},s=document.querySelector('#s'),c=document.querySelector('#c'),ctx=c.getContext('2d'),seek=document.querySelector('#seek');let e=0,a=0,shown=false,playing=false,fi=0;
+entries.forEach((x,i)=>{let o=document.createElement('option');o.value=i;o.textContent=(i+1)+'. '+x.name;s.append(o)})
+function load(){e=+s.value;a=entries[e].selectedAction===0?0:Math.min(1,entries[e].clips.length-1);shown=false;fi=0;draw()}
+function panel(f,clip,ox,oy,title,bounds){const [minX,maxX,minY,maxY]=bounds; const sx=700/(maxX-minX),sy=295/(maxY-minY),scale=Math.min(sx,sy);const X=x=>ox+25+(x-minX)*scale,Y=y=>oy+45+(y-minY)*scale;
+ctx.fillStyle='#1d4936';ctx.fillRect(ox+3,oy+25,738,345);ctx.fillStyle='white';ctx.font='16px system-ui';ctx.fillText(title+' · '+(f.ms/1000).toFixed(2)+'s',ox+12,oy+20);ctx.save();ctx.beginPath();ctx.rect(ox+3,oy+25,738,345);ctx.clip();ctx.strokeStyle='#b5ccbb';ctx.lineWidth=1;ctx.strokeRect(X(0),Y(0),100*scale,37*scale);for(const x of[18,82]){ctx.beginPath();ctx.moveTo(X(x),Y(0));ctx.lineTo(X(x),Y(37));ctx.stroke()}
+for(const p of f.players){const off=!!p.cutterState;ctx.strokeStyle=off?'#74cfff66':'#ff777755';ctx.beginPath();for(const ff of clip.frames.filter(z=>z.ms<=f.ms)){const q=ff.players.find(z=>z.id===p.id);if(q)ctx.lineTo(X(q.x),Y(q.y))}ctx.stroke();if(off&&p.audit?.targetX!=null){ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(X(p.x),Y(p.y));ctx.lineTo(X(p.audit.targetX),Y(p.audit.targetY));ctx.stroke();ctx.setLineDash([])}ctx.fillStyle=off?'#6ed0ff':'#ff8585';ctx.beginPath();ctx.arc(X(p.x),Y(p.y),p.id===clip.receiverId?7:5,0,7);ctx.fill();if(p.id===clip.throwerId){ctx.strokeStyle='white';ctx.strokeRect(X(p.x)-7,Y(p.y)-7,14,14)}ctx.font='12px system-ui';ctx.fillText(p.id.split('-p').at(-1),X(p.x)+6,Y(p.y)-5)}
+if(f.disc){ctx.fillStyle='#ffe553';ctx.beginPath();ctx.arc(X(f.disc.x),Y(f.disc.y),4,0,7);ctx.fill()}ctx.restore()}
+function draw(){let en=entries[e],cl=en.clips[a],fs=cl.frames;ctx.clearRect(0,0,1500,760);seek.max=fs.length-1;seek.value=fi;let b=[Math.max(-8,Math.min(...fs.flatMap(f=>f.players.map(p=>p.x)))-5),Math.min(108,Math.max(...fs.flatMap(f=>f.players.map(p=>p.x)))+5),-3,40]; if(b[1]-b[0]<45)b[1]=b[0]+45;const nearest=t=>fs.reduce((x,y)=>Math.abs(y.ms-t)<Math.abs(x.ms-t)?y:x);let frames=playing?[fs[fi],fs[fi],fs[fi],fs[fi]]:[fs[0],nearest(cl.throwMs*.5),nearest(cl.throwMs-100),shown?fs.at(-1):nearest(cl.throwMs)];frames.forEach((f,i)=>panel(f,cl,(i%2)*750,Math.floor(i/2)*380,['Start','Przygotowanie','Przed wyrzutem',shown?'Koniec':'Wyrzut'][i],b));document.querySelector('#meta').textContent=en.name+' | '+en.jobId+' | punkt '+en.pointIndex+' | akcja '+a+'/'+(en.clips.length-1)+' | atakuje '+cl.possessionTeam;document.querySelector('#info').textContent=JSON.stringify({type:cl.throwType,thrower:cl.throwerId,receiver:cl.receiverId,release:cl.throwMs,selectedLocal:en.selectedAction===0?0:1,...(shown?{resolution:cl.resolution}:{}),scans:en.scans.length},null,2)}
+s.onchange=load;document.querySelector('#next').onclick=()=>{a=Math.min(a+1,entries[e].clips.length-1);shown=false;playing=false;draw()};document.querySelector('#prev').onclick=()=>{a=Math.max(a-1,0);shown=false;playing=false;draw()};document.querySelector('#reveal').onclick=()=>{shown=!shown;draw()};document.querySelector('#play').onclick=()=>{playing=!playing;fi=0;draw()};seek.oninput=()=>{fi=+seek.value;playing=true;draw();playing=false};setInterval(()=>{if(playing){fi++;if(fi>=entries[e].clips[a].frames.length){fi=0;playing=false}draw()}},150);load();
+</script>`
+fs.writeFileSync(path.join(out,'visual-review.html'),html.replace('canvas{width:100%;max-width:1500px}','canvas{width:1500px;max-width:none}'))
+console.log(JSON.stringify(entries.map(x=>({name:x.name,file:x.file,clips:x.clips.length,scans:x.scans.length,selected:x.selectedAction}))))

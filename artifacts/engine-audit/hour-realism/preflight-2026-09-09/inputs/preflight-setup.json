@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "seed": 190731709,
+      "id": "open"
+    },
+    {
+      "hard": true,
+      "id": "hard",
+      "stall": 5,
+      "seed": 190731710
+    }
+  ],
+  "id": "preflight-setup",
+  "budgetMs": 60000,
+  "phase": "preflight",
+  "kind": "setups",
+  "seed": 190731709,
+  "variants": [
+    {
+      "category": "physical",
+      "key": "speed",
+      "delta": 0
+    }
+  ]
+}

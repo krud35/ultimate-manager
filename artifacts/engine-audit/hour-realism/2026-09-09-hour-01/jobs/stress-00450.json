@@ -1,0 +1,17 @@
+{
+  "job": {
+    "id": "stress-00450",
+    "phase": "stress",
+    "kind": "check",
+    "seed": 194295259,
+    "observe": true,
+    "script": "check-disc-intercept.mjs",
+    "budgetMs": 60000
+  },
+  "status": "complete_external_check",
+  "code": 0,
+  "log": "logs/stress-00450.log",
+  "timings": {
+    "wallMs": 429.858899999992
+  }
+}

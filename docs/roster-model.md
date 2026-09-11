@@ -29,7 +29,9 @@ nowych zawodników podczas ładowania. Historyczne i losowe UFA zachowują swój
 6. Indywidualny sufit talentu 74–95, z niewielką zmianą rozkładu zależną od ligi.
    Aktualna siła jest dolną granicą sufitu. Pozostały rozwój zależy od wieku i talentu,
    a nie od jednolitego cofania kary ligowej. Sufit pozostaje zapisany między sezonami.
-7. Dwie cechy charakteru i jedna–dwie cechy stylu. Archetyp faworyzuje wyłącznie styl.
+7. Jedna–trzy cechy charakteru (25/50/25%) i 1–6 stylów gry zależnie od wieku (all-rounder: 3–6, równomiernie między kategoriami). Ukryty typ
+   osobowości faworyzuje cechy charakteru; archetyp faworyzuje wyłącznie styl.
+   Obie nazwy są ukryte w profilu, a konkretne cechy pozostają widoczne.
 
 Definicje: `src/models/playerArchetypes.js`, `src/data/eucsRosterBalance.js` oraz
 `src/models/traitDesign.js`.

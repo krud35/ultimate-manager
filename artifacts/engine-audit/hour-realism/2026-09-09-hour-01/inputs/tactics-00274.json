@@ -1,0 +1,26 @@
+{
+  "id": "tactics-00274",
+  "phase": "tactics",
+  "kind": "setups",
+  "seed": 192901515,
+  "observe": true,
+  "force": "force_backhand",
+  "awayPatch": {
+    "force": "force_backhand"
+  },
+  "cases": [
+    {
+      "id": "force-force_backhand-4",
+      "y": 4,
+      "hard": true,
+      "seed": 190961709
+    },
+    {
+      "id": "force-force_backhand-4",
+      "y": 4,
+      "hard": true,
+      "seed": 190961710
+    }
+  ],
+  "budgetMs": 60000
+}

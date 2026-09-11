@@ -1,0 +1,14 @@
+{
+  "id": "stress-00446",
+  "phase": "stress",
+  "kind": "match",
+  "seed": 194263583,
+  "observe": true,
+  "wind": {
+    "speedMph": 20,
+    "directionDeg": 0
+  },
+  "lockWind": true,
+  "group": "stress",
+  "budgetMs": 150000
+}

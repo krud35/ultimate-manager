@@ -1,0 +1,24 @@
+{
+  "id": "tactics-00267",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190951710,
+  "observe": true,
+  "points": 1,
+  "adaptive": false,
+  "rotate": false,
+  "directive": "helpDeep",
+  "value": 0,
+  "pair": "coach-helpDeep-1",
+  "homePatch": {
+    "directives": {
+      "helpDeep": 0
+    }
+  },
+  "awayPatch": {
+    "directives": {
+      "helpDeep": 0
+    }
+  },
+  "budgetMs": 60000
+}

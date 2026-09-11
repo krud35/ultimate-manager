@@ -1,0 +1,19 @@
+{
+  "id": "tactics-00179",
+  "phase": "tactics",
+  "kind": "match",
+  "seed": 190941709,
+  "observe": true,
+  "points": 1,
+  "rotate": false,
+  "adaptive": false,
+  "cell": "zone_offense|clam",
+  "pair": "system-0",
+  "homePatch": {
+    "attack": "zone_offense"
+  },
+  "awayPatch": {
+    "defense": "clam"
+  },
+  "budgetMs": 60000
+}
