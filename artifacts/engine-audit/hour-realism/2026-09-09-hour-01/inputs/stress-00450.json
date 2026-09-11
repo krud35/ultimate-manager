@@ -1,9 +1,0 @@
-{
-  "id": "stress-00450",
-  "phase": "stress",
-  "kind": "check",
-  "seed": 194295259,
-  "observe": true,
-  "script": "check-disc-intercept.mjs",
-  "budgetMs": 60000
-}

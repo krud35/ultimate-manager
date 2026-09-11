@@ -1,9 +1,0 @@
-{
-  "id": "tactics-00282",
-  "phase": "tactics",
-  "kind": "check",
-  "seed": 192964867,
-  "observe": true,
-  "script": "hour-audit-checks.mjs",
-  "budgetMs": 60000
-}

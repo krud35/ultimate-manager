@@ -29,3 +29,14 @@ tmp-*
 .env
 .env.*
 !.env.example
+
+# Generated engine-audit output (JSON dumps, checkpoints, CPU profiles) —
+# runs into the multi-GB range, never meant to be committed. Keep the small
+# hand-relevant summaries (artifacts/*.md, artifacts/finance-allocation-*.json)
+# out of this; only the raw generated data directories/files are ignored.
+artifacts/engine-audit/
+artifacts/scenarios/
+artifacts/disc-flight/
+artifacts/recommendations/
+*.cpuprofile
+engine-audit-*.json

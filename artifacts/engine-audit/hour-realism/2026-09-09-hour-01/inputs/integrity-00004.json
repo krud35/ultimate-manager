@@ -1,9 +1,0 @@
-{
-  "id": "integrity-00004",
-  "phase": "integrity",
-  "kind": "check",
-  "seed": 190763385,
-  "observe": true,
-  "script": "check-engine-realism.mjs",
-  "budgetMs": 60000
-}

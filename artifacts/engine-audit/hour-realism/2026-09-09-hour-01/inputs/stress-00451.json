@@ -1,9 +1,0 @@
-{
-  "id": "stress-00451",
-  "phase": "stress",
-  "kind": "check",
-  "seed": 194303178,
-  "observe": true,
-  "script": "check-arrival-window.mjs",
-  "budgetMs": 60000
-}

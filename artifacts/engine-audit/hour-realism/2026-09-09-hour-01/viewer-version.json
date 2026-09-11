@@ -1,6 +1,0 @@
-{
-  "generatedAt": "2026-09-09T23:49:45.159Z",
-  "sha256": "86a8ba3a5584343a7938ac1da4917c1cbfd93c8cffd66088bba3fe36522840ff",
-  "source": "scripts/hour-audit-viewer.mjs",
-  "note": "Presentation-only postprocessing; simulation sources and results unchanged."
-}

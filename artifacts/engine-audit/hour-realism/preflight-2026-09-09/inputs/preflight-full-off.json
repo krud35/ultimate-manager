@@ -1,9 +1,0 @@
-{
-  "adaptive": false,
-  "budgetMs": 150000,
-  "observe": false,
-  "seed": 190731709,
-  "id": "preflight-full-off",
-  "phase": "preflight",
-  "kind": "match"
-}

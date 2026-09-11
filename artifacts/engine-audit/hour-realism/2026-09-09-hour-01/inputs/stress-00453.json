@@ -1,9 +1,0 @@
-{
-  "id": "stress-00453",
-  "phase": "stress",
-  "kind": "check",
-  "seed": 194319016,
-  "observe": true,
-  "script": "check-reset-cuts.mjs",
-  "budgetMs": 60000
-}
