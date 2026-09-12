@@ -10,6 +10,8 @@ const pl = {
   scheduleLeague: 'Terminarz ligi',
   scheduleLeagueHint: (rounds, date) =>
     `${rounds} kolejek ligowych · każdy z każdym (u siebie i na wyjeździe) · mecze Pt/So/Nd · dziś: ${date}`,
+  allTeams: 'Wszystkie drużyny',
+  teamFilter: 'Filtruj drużynę',
   nextMatch: 'Następny mecz',
   noFixtures: 'Brak zaplanowanych meczów.',
   current: '(bieżąca)',
@@ -89,6 +91,8 @@ const en = {
   scheduleLeague: 'League schedule',
   scheduleLeagueHint: (rounds, date) =>
     `${rounds} league rounds · home and away vs every team · Fri/Sat/Sun matches · today: ${date}`,
+  allTeams: 'All teams',
+  teamFilter: 'Filter team',
   nextMatch: 'Next match',
   noFixtures: 'No scheduled matches.',
   current: '(current)',

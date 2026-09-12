@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { fixturesForRound, teamNameMap, venueMarkerForTeam } from '../league'
 import { useUiLang } from '../ui/UiLangContext'
 import { leagueViewsStrings } from '../ui/strings/leagueViews'
@@ -14,7 +14,7 @@ function VenueTag({ fixture, playerTeamId }) {
         : 'text-ufa-gold'
   return (
     <span
-      className={`ml-2 inline-flex min-w-[1.35rem] justify-center rounded border border-current/25 px-1 text-[10px] font-semibold tabular-nums ${tone}`}
+      className={`inline-flex min-w-[1.35rem] justify-center rounded border border-current/25 px-1 text-[10px] font-semibold tabular-nums ${tone}`}
       title={marker === 'H' ? 'Home' : marker === 'A' ? 'Away' : 'Neutral'}
     >
       {marker}
@@ -24,40 +24,53 @@ function VenueTag({ fixture, playerTeamId }) {
 
 function FixtureRow({ f, names, playerTeamId, round, currentRound, onPlayFixture, t }) {
   const done = f.status === 'completed'
-  const isPlayer = f.homeTeamId === playerTeamId || f.awayTeamId === playerTeamId
+  const homeIsPlayer = f.homeTeamId === playerTeamId
+  const awayIsPlayer = f.awayTeamId === playerTeamId
+  const isPlayer = homeIsPlayer || awayIsPlayer
+  const canPlay = !done && isPlayer && onPlayFixture && !(round != null && round > currentRound)
+
   return (
     <li
-      className={`flex flex-wrap items-center justify-between gap-2 px-5 py-3 text-sm ${
+      className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm ${
         isPlayer ? 'bg-ufa-accent/5' : ''
       }`}
     >
-      <span className="text-ufa-text flex flex-wrap items-center">
-        <span className={f.homeTeamId === playerTeamId ? 'font-semibold text-ufa-accent' : ''}>
-          {names[f.homeTeamId]}
-        </span>
-        <span className="text-ufa-muted mx-2">vs</span>
-        <span className={f.awayTeamId === playerTeamId ? 'font-semibold text-ufa-accent' : ''}>
-          {names[f.awayTeamId]}
-        </span>
-        {isPlayer && <VenueTag fixture={f} playerTeamId={playerTeamId} />}
-        {f.competition === 'cup' ? (
-          <span className="ml-2 text-[10px] uppercase tracking-wide text-ufa-gold">{t.cup}</span>
-        ) : null}
+      <span
+        className={`min-w-0 flex-1 truncate text-right ${
+          homeIsPlayer ? 'font-semibold text-ufa-accent' : 'text-ufa-text'
+        }`}
+      >
+        {names[f.homeTeamId]}
       </span>
-      <span className="tabular-nums text-ufa-muted">
+      <span className="shrink-0 whitespace-nowrap px-1 text-center tabular-nums font-semibold text-ufa-text">
+        {done ? (
+          <>
+            {f.homeScore} <span className="text-ufa-muted">-</span> {f.awayScore}
+          </>
+        ) : (
+          <span className="text-ufa-muted">vs</span>
+        )}
+      </span>
+      <span
+        className={`min-w-0 flex-1 truncate ${
+          awayIsPlayer ? 'font-semibold text-ufa-accent' : 'text-ufa-text'
+        }`}
+      >
+        {names[f.awayTeamId]}
+      </span>
+      {isPlayer && <VenueTag fixture={f} playerTeamId={playerTeamId} />}
+      {f.competition === 'cup' ? (
+        <span className="text-[10px] uppercase tracking-wide text-ufa-gold">{t.cup}</span>
+      ) : null}
+      <span className="ml-auto shrink-0 whitespace-nowrap text-xs tabular-nums text-ufa-muted">
         {f.date && !done && <span className="mr-2 text-[10px]">{f.date.slice(5)}</span>}
         {done ? (
-          <span className="text-ufa-text font-medium">
-            {f.homeScore}:{f.awayScore}
-            {f.playedByPlayer && (
-              <span className="ml-2 text-[10px] text-ufa-accent">{t.you}</span>
-            )}
-          </span>
+          f.playedByPlayer && <span className="text-ufa-accent">{t.you}</span>
         ) : round != null && round < currentRound ? (
           '—'
         ) : round != null && round > currentRound ? (
           t.scheduled
-        ) : !done && isPlayer && onPlayFixture ? (
+        ) : canPlay ? (
           <button
             type="button"
             className="text-ufa-accent hover:underline font-semibold"
@@ -72,53 +85,78 @@ function FixtureRow({ f, names, playerTeamId, round, currentRound, onPlayFixture
     </li>
   )
 }
-export default function LeagueScheduleView({
-  league,
-  onPlayFixture,
-  scope = 'league',
-}) {
+
+export default function LeagueScheduleView({ league, onPlayFixture }) {
   const { lang } = useUiLang()
   const t = leagueViewsStrings(lang)
   const names = teamNameMap(league, lang)
-  const isTeam = scope === 'team'
+  const [teamFilter, setTeamFilter] = useState('all')
+
+  const teamOptions = useMemo(
+    () => Object.entries(names).sort((a, b) => a[1].localeCompare(b[1])),
+    [names],
+  )
 
   const teamFixtures = useMemo(() => {
-    if (!isTeam) return []
-    const pid = league.playerTeamId
+    if (teamFilter === 'all') return []
     return (league.fixtures ?? [])
-      .filter((f) => f.homeTeamId === pid || f.awayTeamId === pid)
+      .filter((f) => f.homeTeamId === teamFilter || f.awayTeamId === teamFilter)
       .sort(
         (a, b) =>
           String(a.date ?? '').localeCompare(String(b.date ?? '')) ||
           (a.round ?? 0) - (b.round ?? 0),
       )
-  }, [isTeam, league.fixtures, league.playerTeamId])
+  }, [teamFilter, league.fixtures])
 
-  if (isTeam) {
+  const filterSelect = (
+    <select
+      value={teamFilter}
+      onChange={(e) => setTeamFilter(e.target.value)}
+      aria-label={t.teamFilter}
+      className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-1.5 text-sm text-ufa-text"
+    >
+      <option value="all">{t.allTeams}</option>
+      {teamOptions.map(([id, name]) => (
+        <option key={id} value={id}>
+          {name}
+        </option>
+      ))}
+    </select>
+  )
+
+  if (teamFilter !== 'all') {
+    const isOwnTeam = teamFilter === league.playerTeamId
     const upcoming = teamFixtures.filter((f) => f.status !== 'completed')
-    const nextPlayable = upcoming.find(
-      (f) => f.homeTeamId && f.awayTeamId && (!f.date || f.date >= league.currentDate),
-    )
+    const nextPlayable = isOwnTeam
+      ? upcoming.find(
+          (f) => f.homeTeamId && f.awayTeamId && (!f.date || f.date >= league.currentDate),
+        )
+      : null
 
     return (
       <div className="space-y-6">
         <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-ufa-text">{t.scheduleTeam}</h2>
+              <h2 className="text-lg font-semibold text-ufa-text">
+                {names[teamFilter] ?? t.scheduleTeam}
+              </h2>
               <p className="mt-1 text-sm text-ufa-muted">
-                {t.scheduleTeamHint(league.currentDate)}
+                {isOwnTeam ? t.scheduleTeamHint(league.currentDate) : t.scheduleLeague}
               </p>
             </div>
-            {nextPlayable && (
-              <button
-                type="button"
-                onClick={() => onPlayFixture(nextPlayable)}
-                className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
-              >
-                {t.nextMatch}
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {filterSelect}
+              {nextPlayable && (
+                <button
+                  type="button"
+                  onClick={() => onPlayFixture(nextPlayable)}
+                  className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+                >
+                  {t.nextMatch}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -148,10 +186,15 @@ export default function LeagueScheduleView({
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
-        <h2 className="text-lg font-semibold text-ufa-text">{t.scheduleLeague}</h2>
-        <p className="mt-1 text-sm text-ufa-muted">
-          {t.scheduleLeagueHint(league.totalRounds, league.currentDate)}
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-ufa-text">{t.scheduleLeague}</h2>
+            <p className="mt-1 text-sm text-ufa-muted">
+              {t.scheduleLeagueHint(league.totalRounds, league.currentDate)}
+            </p>
+          </div>
+          {filterSelect}
+        </div>
       </div>
 
       {Array.from({ length: league.totalRounds }, (_, i) => i + 1).map((round) => {

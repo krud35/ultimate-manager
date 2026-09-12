@@ -130,21 +130,27 @@ const NAV_CATEGORIES = [
     items: [
       { id: 'hub', labelPl: 'Centrum', labelEn: 'Hub' },
       { id: 'inbox', labelPl: 'Skrzynka', labelEn: 'Inbox' },
+      { id: 'calendar', labelPl: 'Kalendarz', labelEn: 'Calendar' },
       { id: 'match', labelPl: 'Następny mecz', labelEn: 'Next match' },
     ],
   },
   {
-    id: 'club',
+    id: 'team',
     labelPl: 'Drużyna',
     labelEn: 'Team',
     items: [
       { id: 'tactics', labelPl: 'Taktyka', labelEn: 'Tactics' },
-      { id: 'roster', labelPl: 'Skład', labelEn: 'Roster' },
       { id: 'training', labelPl: 'Treningi', labelEn: 'Training' },
-      { id: 'team-schedule', labelPl: 'Terminarz', labelEn: 'Schedule' },
-      { id: 'calendar', labelPl: 'Kalendarz', labelEn: 'Calendar' },
-      { id: 'club-transfers', labelPl: 'Transfery', labelEn: 'Transfers' },
+      { id: 'roster', labelPl: 'Skład', labelEn: 'Roster' },
       { id: 'scouting-center', labelPl: 'Centrum skautingu', labelEn: 'Scouting center' },
+      { id: 'club-transfers', labelPl: 'Transfery', labelEn: 'Transfers' },
+    ],
+  },
+  {
+    id: 'club',
+    labelPl: 'Klub',
+    labelEn: 'Club',
+    items: [
       { id: 'club-board', labelPl: 'Zarząd', labelEn: 'Club board' },
       { id: 'academy', labelPl: 'Akademia', labelEn: 'Academy' },
       { id: 'team-profile', labelPl: 'Profil drużyny', labelEn: 'Team profile' },
@@ -157,9 +163,8 @@ const NAV_CATEGORIES = [
     items: [
       { id: 'standings', labelPl: 'Tabela ligowa', labelEn: 'Standings' },
       { id: 'pyramid', labelPl: 'Piramida', labelEn: 'Pyramid' },
-      { id: 'league-schedule', labelPl: 'Terminarz ligi', labelEn: 'League schedule' },
+      { id: 'league-schedule', labelPl: 'Terminarz', labelEn: 'Schedule' },
       { id: 'leaders', labelPl: 'Liderzy', labelEn: 'Leaders' },
-      { id: 'league-transfers', labelPl: 'Transfery ligowe', labelEn: 'League transfers' },
       { id: 'cup', labelPl: 'Puchar', labelEn: 'Cup' },
     ],
   },
@@ -192,6 +197,8 @@ const TAB_ALIASES = {
   schedule: 'league-schedule',
   transfers: 'club-transfers',
   team: 'team-profile',
+  'team-schedule': 'league-schedule',
+  'league-transfers': 'club-transfers',
 }
 
 const VIEW_TO_CATEGORY = Object.fromEntries(
@@ -297,6 +304,16 @@ function IconBackdrop({ className, off = false }) {
   )
 }
 
+function IconClub({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M4 21V10.5L12 4l8 6.5V21" />
+      <path d="M9 21v-6h6v6" />
+      <path d="M9 13.5h6" />
+    </svg>
+  )
+}
+
 function IconGlobe({ className }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
@@ -309,7 +326,8 @@ function IconGlobe({ className }) {
 
 const NAV_ICONS = {
   home: IconHome,
-  club: IconShirt,
+  team: IconShirt,
+  club: IconClub,
   season: IconTrophy,
   ultiworld: IconNews,
   international: IconGlobe,
@@ -1841,12 +1859,8 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'team-schedule' || activeTab === 'league-schedule') && (
-          <LeagueScheduleView
-            league={league}
-            onPlayFixture={handlePlayFixture}
-            scope={activeTab === 'team-schedule' ? 'team' : 'league'}
-          />
+        {activeTab === 'league-schedule' && (
+          <LeagueScheduleView league={league} onPlayFixture={handlePlayFixture} />
         )}
 
         {activeTab === 'calendar' && (
@@ -1879,12 +1893,8 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'club-transfers' || activeTab === 'league-transfers') && (
-          <TransfersView
-            career={career}
-            onCareerUpdate={handleTransfersUpdate}
-            scope={activeTab === 'club-transfers' ? 'club' : 'league'}
-          />
+        {activeTab === 'club-transfers' && (
+          <TransfersView career={career} onCareerUpdate={handleTransfersUpdate} />
         )}
 
         {activeTab === 'scouting-center' && (
@@ -2002,7 +2012,7 @@ export default function App() {
           aria-label={tShell.navAria}
         >
           {activeCategory.items.length > 1 && (
-            <div className="flex gap-1 overflow-x-auto overscroll-x-contain border-b border-ufa-border/60 px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-1 overflow-x-auto overscroll-x-contain border-b border-ufa-border/60 px-2 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {activeCategory.items.map((item) => {
                 const active = activeTab === item.id
                 const badgeCount =
@@ -2012,7 +2022,7 @@ export default function App() {
                     key={item.id}
                     type="button"
                     onClick={() => navigateTo(item.id)}
-                    className={`relative shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
+                    className={`relative shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${
                       active ? 'bg-ufa-accent text-ufa-bg' : 'bg-ufa-bg text-ufa-muted'
                     }`}
                   >
@@ -2025,7 +2035,7 @@ export default function App() {
               })}
             </div>
           )}
-          <div className="grid grid-cols-5">
+          <div className="flex overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {NAV_CATEGORIES.map((cat) => {
               const Icon = NAV_ICONS[cat.id]
               const active = cat.id === activeCategoryId
@@ -2035,14 +2045,14 @@ export default function App() {
                   key={cat.id}
                   type="button"
                   onClick={() => navigateTo(cat.items[0].id)}
-                  className={`relative flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium ${
+                  className={`relative flex shrink-0 flex-col items-center gap-0.5 px-3.5 py-1.5 text-[9px] font-medium ${
                     active ? 'text-ufa-accent' : 'text-ufa-muted'
                   }`}
                 >
-                  <Icon className="h-5 w-5" />
-                  {pickLabel(cat, uiLang)}
+                  <Icon className="h-4 w-4" />
+                  <span className="whitespace-nowrap">{pickLabel(cat, uiLang)}</span>
                   {badge > 0 ? (
-                    <span className="absolute right-[24%] top-1 min-w-[0.9rem] rounded-full bg-ufa-gold px-1 text-center text-[9px] font-bold leading-[1.1] text-ufa-bg">
+                    <span className="absolute right-1.5 top-0.5 min-w-[0.85rem] rounded-full bg-ufa-gold px-1 text-center text-[8px] font-bold leading-[1.1] text-ufa-bg">
                       {badge > 9 ? '9+' : badge}
                     </span>
                   ) : null}

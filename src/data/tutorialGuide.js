@@ -80,6 +80,17 @@ export const TUTORIAL_SECTIONS = [
         ],
       },
       {
+        crumb: 'Strona główna → Kalendarz',
+        crumbEn: 'Home → Calendar',
+        title: 'Kalendarz',
+        titleEn: 'Calendar',
+        body: 'Widok tydzień/miesiąc/sezon z meczami, sesjami treningowymi i fazami pucharu oznaczonymi kolorami.',
+        bodyEn: 'A week/month/season view with matches, training sessions and cup phases color-coded.',
+        actions: [
+          { t: 'Kliknij przyszły dzień → „Symuluj do tej daty”', e: 'Click a future day → "Simulate to this date"' },
+        ],
+      },
+      {
         crumb: 'Strona główna → Następny mecz',
         crumbEn: 'Home → Next match',
         title: 'Podgląd przed meczem',
@@ -105,11 +116,11 @@ export const TUTORIAL_SECTIONS = [
     ],
   },
   {
-    id: 'club',
+    id: 'team',
     label: 'Drużyna',
     labelEn: 'Team',
-    intro: 'Wszystko, co dotyczy Twojego klubu — od taktyki po finanse.',
-    introEn: 'Everything about your club — from tactics to finances.',
+    intro: 'Wszystko, co dotyczy gry Twojej drużyny — taktyka, treningi, skład i transfery.',
+    introEn: 'Everything about running your team — tactics, training, roster and transfers.',
     cards: [
       {
         crumb: 'Drużyna → Taktyka',
@@ -121,17 +132,6 @@ export const TUTORIAL_SECTIONS = [
         actions: [
           { t: 'Styl ataku / obrony dla linii O i D', e: 'Attack / defense style for the O-line and D-line' },
           { t: 'Ustaw skład 7 osób na formację ataku i obrony', e: 'Set the 7-player lineup for offense and defense' },
-        ],
-      },
-      {
-        crumb: 'Drużyna → Skład',
-        crumbEn: 'Team → Roster',
-        title: 'Skład (Roster)',
-        titleEn: 'Roster',
-        body: 'Sortowalna tabela wszystkich zawodników: wiek, siła (OVR), wartość rynkowa, forma, morale, zmęczenie i statystyki sezonu.',
-        bodyEn: 'A sortable table of every player: age, overall rating, market value, form, morale, fatigue and season stats.',
-        actions: [
-          { t: 'Sortuj po dowolnej kolumnie, kliknij zawodnika, by otworzyć jego profil', e: 'Sort by any column; click a player to open their profile' },
         ],
       },
       {
@@ -147,35 +147,14 @@ export const TUTORIAL_SECTIONS = [
         ],
       },
       {
-        crumb: 'Drużyna → Terminarz',
-        crumbEn: 'Team → Schedule',
-        title: 'Terminarz drużyny',
-        titleEn: 'Team schedule',
-        body: 'Chronologiczna lista Twoich meczów w sezonie, z szybkim przejściem do najbliższego spotkania.',
-        bodyEn: 'A chronological list of your season\'s matches, with a quick link to the next one.',
-        actions: [{ t: 'Kliknij mecz gotowy do rozegrania', e: 'Click a match that is ready to play' }],
-      },
-      {
-        crumb: 'Drużyna → Kalendarz',
-        crumbEn: 'Team → Calendar',
-        title: 'Kalendarz',
-        titleEn: 'Calendar',
-        body: 'Widok tydzień/miesiąc/sezon z meczami, sesjami treningowymi i fazami pucharu oznaczonymi kolorami.',
-        bodyEn: 'A week/month/season view with matches, training sessions and cup phases color-coded.',
+        crumb: 'Drużyna → Skład',
+        crumbEn: 'Team → Roster',
+        title: 'Skład (Roster)',
+        titleEn: 'Roster',
+        body: 'Sortowalna tabela wszystkich zawodników: wiek, siła (OVR), wartość rynkowa, forma, morale, zmęczenie i statystyki sezonu.',
+        bodyEn: 'A sortable table of every player: age, overall rating, market value, form, morale, fatigue and season stats.',
         actions: [
-          { t: 'Kliknij przyszły dzień → „Symuluj do tej daty”', e: 'Click a future day → "Simulate to this date"' },
-        ],
-      },
-      {
-        crumb: 'Drużyna → Transfery',
-        crumbEn: 'Team → Transfers',
-        title: 'Transfery',
-        titleEn: 'Transfers',
-        body: 'Rynek transferowy: wszyscy zawodnicy ligi + wolni agenci, z filtrowaniem, sortowaniem i wyszukiwarką. Na górze status okna transferowego i budżety.',
-        bodyEn: 'The transfer market: every league player plus free agents, filterable, sortable and searchable. Transfer-window status and budgets shown at the top.',
-        actions: [
-          { t: 'Wybierz zawodnika → złóż ofertę (kwota + warunki kontraktu)', e: 'Pick a player → submit an offer (fee + contract terms)' },
-          { t: 'Wolnego agenta podpisujesz od razu, bez negocjacji z klubem', e: 'Free agents can be signed directly, no club negotiation needed' },
+          { t: 'Sortuj po dowolnej kolumnie, kliknij zawodnika, by otworzyć jego profil', e: 'Sort by any column; click a player to open their profile' },
         ],
       },
       {
@@ -190,8 +169,29 @@ export const TUTORIAL_SECTIONS = [
         ],
       },
       {
-        crumb: 'Drużyna → Zarząd',
-        crumbEn: 'Team → Club board',
+        crumb: 'Drużyna → Transfery',
+        crumbEn: 'Team → Transfers',
+        title: 'Transfery',
+        titleEn: 'Transfers',
+        body: 'Rynek transferowy: wszyscy zawodnicy ligi + wolni agenci, z filtrowaniem, sortowaniem i wyszukiwarką. Na górze status okna transferowego i budżety.',
+        bodyEn: 'The transfer market: every league player plus free agents, filterable, sortable and searchable. Transfer-window status and budgets shown at the top.',
+        actions: [
+          { t: 'Wybierz zawodnika → złóż ofertę (kwota + warunki kontraktu)', e: 'Pick a player → submit an offer (fee + contract terms)' },
+          { t: 'Wolnego agenta podpisujesz od razu, bez negocjacji z klubem', e: 'Free agents can be signed directly, no club negotiation needed' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'club',
+    label: 'Klub',
+    labelEn: 'Club',
+    intro: 'Zarządzanie klubem poza boiskiem — finanse, akademia i wizytówka drużyny.',
+    introEn: 'Running the club off the pitch — finances, academy and the team profile.',
+    cards: [
+      {
+        crumb: 'Klub → Zarząd',
+        crumbEn: 'Club → Club board',
         title: 'Zarząd klubu',
         titleEn: 'Club board',
         body: 'Finanse: budżet transferowy i płacowy, a niżej obiekty klubowe (do ulepszenia za budżet) i sloty sponsorskie.',
@@ -202,8 +202,8 @@ export const TUTORIAL_SECTIONS = [
         ],
       },
       {
-        crumb: 'Drużyna → Akademia',
-        crumbEn: 'Team → Academy',
+        crumb: 'Klub → Akademia',
+        crumbEn: 'Club → Academy',
         title: 'Akademia',
         titleEn: 'Academy',
         body: 'Tabela młodych talentów (wiek, siła, potencjał) oraz panel wysyłania skauta w wybrany region po nowe talenty.',
@@ -213,8 +213,8 @@ export const TUTORIAL_SECTIONS = [
         ],
       },
       {
-        crumb: 'Drużyna → Profil drużyny',
-        crumbEn: 'Team → Team profile',
+        crumb: 'Klub → Profil drużyny',
+        crumbEn: 'Club → Team profile',
         title: 'Profil drużyny',
         titleEn: 'Team profile',
         body: 'Pełna wizytówka klubu — Twojego albo dowolnego rywala: skład, finanse, reputacja, wskaźniki ofensywy/defensywy, a przy przeciwnikach — poziom wywiadu skautingowego.',
@@ -240,12 +240,12 @@ export const TUTORIAL_SECTIONS = [
         actions: [{ t: 'Kliknij drużynę, by otworzyć jej profil', e: 'Click a team to open its profile' }],
       },
       {
-        crumb: 'Sezon → Terminarz ligi',
-        crumbEn: 'Season → League schedule',
-        title: 'Terminarz ligi',
-        titleEn: 'League schedule',
-        body: 'Pełny terminarz pogrupowany na kolejki, ze wszystkimi meczami danej rundy — Twój mecz jest wyróżniony.',
-        bodyEn: 'The full schedule grouped by round, with every match in that round — your match is highlighted.',
+        crumb: 'Sezon → Terminarz',
+        crumbEn: 'Season → Schedule',
+        title: 'Terminarz',
+        titleEn: 'Schedule',
+        body: 'Pełny terminarz pogrupowany na kolejki, ze wszystkimi meczami danej rundy — Twój mecz jest wyróżniony. Filtr drużyny nad terminarzem pokazuje chronologiczną listę meczów wybranego klubu.',
+        bodyEn: 'The full schedule grouped by round, with every match in that round — your match is highlighted. The team filter above it switches to a chronological list for one chosen club.',
         actions: [],
       },
       {
@@ -255,15 +255,6 @@ export const TUTORIAL_SECTIONS = [
         titleEn: 'League leaders',
         body: 'Cztery rankingi obok siebie: bramki, asysty, bloki, rozegrane punkty — top 10 całej ligi.',
         bodyEn: 'Four leaderboards side by side: goals, assists, blocks, points played — league-wide top 10.',
-        actions: [],
-      },
-      {
-        crumb: 'Sezon → Transfery ligowe',
-        crumbEn: 'Season → League transfers',
-        title: 'Transfery ligowe',
-        titleEn: 'League transfers',
-        body: 'Ten sam rynek transferowy, ale w kontekście całej ligi — obserwuj, co robią inne kluby.',
-        bodyEn: 'The same transfer market, but league-wide — watch what other clubs are doing.',
         actions: [],
       },
       {
