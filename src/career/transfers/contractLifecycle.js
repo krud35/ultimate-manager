@@ -22,12 +22,16 @@ const CONTRACT_EXPIRY_REMINDER_THRESHOLDS = [
  * `CONTRACT_EXPIRY_REMINDER_THRESHOLDS`. Stan "już wysłane" trzyma się na
  * `contract.remindersSent` — nowy kontrakt (odnowienie/transfer) zaczyna z
  * czystym stanem, bo `buildContract` zawsze tworzy świeży obiekt.
+ * Wszyscy zawodnicy, którzy przekroczyli ten sam próg w tym samym wywołaniu,
+ * trafiają do JEDNEJ wiadomości (lista nazwisk) zamiast osobnej na każdego.
  */
 export function processContractExpiryReminders(career) {
   const world = career?.world
   const inboxMessages = []
   if (!world || !career.playerTeamId) return { inboxMessages }
   const date = career.league?.currentDate ?? null
+
+  const playersByThreshold = new Map()
 
   for (const team of worldTeamsList(world)) {
     for (const player of team.players ?? []) {
@@ -43,27 +47,39 @@ export function processContractExpiryReminders(career) {
         if (contract.remindersSent[threshold.key]) continue
         if (contract.weeksRemaining > threshold.weeks) continue
         contract.remindersSent[threshold.key] = true
-        const name = getPlayerFullName(player)
-        inboxMessages.push({
-          id: `contract-reminder-${threshold.key}-${player.id}-${date}`,
-          type: 'club_news',
-          read: false,
-          date,
-          seasonYear: career.seasonYear,
-          seasonIndex: career.seasonIndex,
-          title: `Wygasający kontrakt · ${name}`,
-          titleEn: `Expiring contract · ${name}`,
-          body: `Kontrakt zawodnika ${name} wygaśnie za mniej niż ${threshold.labelPl} (pozostało ${contract.weeksRemaining} tyg.).`,
-          bodyEn: `${name}'s contract expires in less than ${threshold.labelEn} (${contract.weeksRemaining} wks left).`,
-          payload: {
-            kind: 'contract_expiring_soon',
-            playerId: player.id,
-            threshold: threshold.key,
-            weeksRemaining: contract.weeksRemaining,
-          },
-        })
+        if (!playersByThreshold.has(threshold.key)) playersByThreshold.set(threshold.key, [])
+        playersByThreshold.get(threshold.key).push({ playerId: player.id, name: getPlayerFullName(player) })
       }
     }
+  }
+
+  for (const threshold of CONTRACT_EXPIRY_REMINDER_THRESHOLDS) {
+    const players = playersByThreshold.get(threshold.key)
+    if (!players?.length) continue
+    const names = players.map((p) => p.name).join(', ')
+    inboxMessages.push({
+      id: `contract-reminder-${threshold.key}-${date}`,
+      type: 'club_news',
+      read: false,
+      date,
+      seasonYear: career.seasonYear,
+      seasonIndex: career.seasonIndex,
+      title: `Wygasające kontrakty · za ${threshold.labelPl}`,
+      titleEn: `Expiring contracts · in ${threshold.labelEn}`,
+      body:
+        players.length === 1
+          ? `Kontrakt zawodnika ${names} wygaśnie za mniej niż ${threshold.labelPl}.`
+          : `Kontrakty następujących zawodników wygasną za mniej niż ${threshold.labelPl}: ${names}.`,
+      bodyEn:
+        players.length === 1
+          ? `${names}'s contract expires in less than ${threshold.labelEn}.`
+          : `The following players' contracts expire in less than ${threshold.labelEn}: ${names}.`,
+      payload: {
+        kind: 'contract_expiring_soon',
+        threshold: threshold.key,
+        playerIds: players.map((p) => p.playerId),
+      },
+    })
   }
   return { inboxMessages }
 }
