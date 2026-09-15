@@ -134,6 +134,7 @@ export function academyRecruitmentCost(player) { return Math.round(4000 + Math.m
 
 export function signAcademyCandidate(team, candidateId, { world = null, seasonYear = null } = {}) {
   if (!team) return { ok: false, error: 'missing_team' }
+  if (team.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
   const candidate = ensureTeamAcademyCandidates(team).find(p => p.id === candidateId)
     ?? world?.regionalYouth?.find(p => p.id === candidateId)
   if (!candidate || (candidate.offerExpires && team.managementDate > candidate.offerExpires)) return { ok: false, error: 'unavailable' }
@@ -178,6 +179,7 @@ export function ensureWorldAcademy(world) {
 export function initializeWorldAcademies(world, seasonYear) {
   ensureWorldAcademy(world)
   for (const team of worldTeamsList(world)) {
+    if (team.simulationMode === 'off') continue
     if (team.academyRosterInitialized) continue
     team.academyRosterInitialized = true
     if (team.academyPlayers.length) continue
@@ -298,6 +300,7 @@ export function runAcademyIntake(world, { seasonYear, wave = 'autumn', date = `$
   ensureYouthCohort(world, seasonYear)
   const createdByTeam = {}, created = []
   for (const team of worldTeamsList(world)) {
+    if (team.simulationMode === 'off') continue
     const key = `${seasonYear}-${wave}`
     team.academyIntakeWaves ??= []
     if (team.academyIntakeWaves.includes(key)) continue
@@ -338,6 +341,7 @@ export function sweepAgedOutAcademyPlayers(world, { playerTeamId, agePlayers = t
   const releasedToFreeAgency = []
 
   for (const team of worldTeamsList(world)) {
+    if (team.simulationMode === 'off') continue
     const pool = ensureTeamAcademy(team)
     if (agePlayers) {
       for (const p of [...pool, ...ensureTeamAcademyCandidates(team)]) p.age = (p.age ?? ACADEMY_JOIN_AGE_MIN) + 1
@@ -376,7 +380,7 @@ export function runAiAcademyPromotionPass(world, { playerTeamId, seed = 1, leagu
   let salt = (seed >>> 0) || 1
 
   for (const team of worldTeamsList(world)) {
-    if (team.id === playerTeamId) continue
+    if (team.id === playerTeamId || team.simulationMode === 'off') continue
     const pool = [...ensureTeamAcademy(team)]
     if (!pool.length) continue
 
@@ -414,6 +418,7 @@ export function runAiAcademyPromotionPass(world, { playerTeamId, seed = 1, leagu
 
 /** Awans prospekta do seniorów — podpisuje kontrakt rookie i przenosi do team.players. */
 export function promoteAcademyPlayer(team, playerId, { league = null } = {}) {
+  if (team?.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
   if (!team) return { ok: false, error: 'missing_team' }
   const pool = ensureTeamAcademy(team)
   const idx = pool.findIndex((p) => p.id === playerId)
@@ -434,7 +439,7 @@ export function promoteAcademyPlayer(team, playerId, { league = null } = {}) {
   // Pierwszy profesjonalny kontrakt — niska pensja niezależnie od realnego OVR
   // (rookie jeszcze nic nie udowodnił w seniorach, nie ma siły przetargowej gwiazdy).
   const rookieOvr = getOverallRating(player.skills)
-  const terms = { ...auto.terms, years: 1, weeklyWage: Math.round(weeklyWageFromOvr(rookieOvr) * 0.85) }
+  const terms = { ...auto.terms, years: 1, weeklyWage: Math.round(weeklyWageFromOvr(rookieOvr, team) * 0.85) }
   const signed = signPlayerContract(team, player, {
     ...terms,
     signedDate: league?.currentDate ?? null,

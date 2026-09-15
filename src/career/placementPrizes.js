@@ -9,6 +9,7 @@
 import { adjustTransferBudget } from './transfers/clubFinances.js'
 import { formatUsd } from './transfers/moneyFormat.js'
 import { standingsTable } from '../league/standings.js'
+import { clubFinancialMarket } from './financialMarkets.js'
 
 /** Premia mistrza (1. miejsce) wg poziomu piramidy. */
 const LEAGUE_PLACEMENT_BASE_BY_TIER = { 1: 3_500_000, 2: 700_000, 3: 100_000 }
@@ -26,8 +27,7 @@ function placementCurveMult(place, totalTeams) {
  */
 export function processLeaguePlacementPrizes(world, league, tier) {
   if (!world?.teamsById || !league?.standings) return []
-  const base = 2 * (LEAGUE_PLACEMENT_BASE_BY_TIER[tier] ?? 0)
-  if (!base) return []
+  const legacyBase = 2 * (LEAGUE_PLACEMENT_BASE_BY_TIER[tier] ?? 0)
 
   const table = standingsTable(league.standings)
   const total = table.length
@@ -35,6 +35,10 @@ export function processLeaguePlacementPrizes(world, league, tier) {
   table.forEach((row, i) => {
     const team = world.teamsById[row.teamId]
     if (!team) return
+    // Season rollover may already have promoted/relegated the club. Reward the
+    // competition just completed, not its new membership.
+    const market = clubFinancialMarket({ ...team, tier: tier ?? team.tier })
+    const base = market.domestic ? 7_000_000 * market.prize : legacyBase
     const place = i + 1
     const amount = Math.round((base * placementCurveMult(place, total)) / 500) * 500
     if (amount <= 0) return
@@ -112,10 +116,11 @@ function teamCupOutcome(cup, teamId) {
   for (const m of cup.matches) {
     if (m.status !== 'completed') continue
     if (m.homeTeamId !== teamId && m.awayTeamId !== teamId) continue
-    const idx = CUP_ROUND_ORDER.indexOf(m.round)
+    const round = ({ 'round-16': 'roundOf16', 'round-32': 'roundOf32', 'round-64': 'round1' })[m.round] ?? m.round
+    const idx = CUP_ROUND_ORDER.indexOf(round)
     if (idx > bestIdx) {
       bestIdx = idx
-      bestMatch = m
+      bestMatch = { ...m, round }
     }
   }
   if (!bestMatch) return null
@@ -136,7 +141,7 @@ function teamCupOutcome(cup, teamId) {
 export function applyCupPlacementPrizes(cup, teamsById) {
   if (
     !cup?.matches ||
-    !cup.pyramidCupDates ||
+    (!cup.pyramidCupDates && cup.format !== 'domestic') ||
     cup.status !== 'complete' ||
     cup.prizesAwarded ||
     !teamsById
@@ -149,10 +154,16 @@ export function applyCupPlacementPrizes(cup, teamsById) {
     if (m.homeTeamId) seenTeamIds.add(m.homeTeamId)
     if (m.awayTeamId) seenTeamIds.add(m.awayTeamId)
   }
+  // A cup rewards the same finish equally, including teams from lower divisions.
+  const markets = [...new Map([...seenTeamIds].map(id => {
+    const market = clubFinancialMarket(teamsById[id])
+    return [market.countryId, market.television]
+  })).values()]
+  const cupScale = cup.format === 'domestic' && markets.length ? markets.reduce((sum, value) => sum + value, 0) / markets.length : 1
   for (const teamId of seenTeamIds) {
     const outcome = teamCupOutcome(cup, teamId)
     if (!outcome) continue
-    const amount = 2 * CUP_ROUND_PRIZE[outcome]
+    const amount = Math.round(2 * CUP_ROUND_PRIZE[outcome] * cupScale)
     if (!amount) continue
     const team = teamsById[teamId]
     if (!team) continue
@@ -203,8 +214,8 @@ export function messageFromCupPlacementPrize(career, { date = null } = {}) {
     read: false,
     title: 'Premia pucharowa',
     titleEn: 'Cup prize money',
-    body: `Za ${CUP_OUTCOME_LABEL_PL[mine.outcome] ?? 'udział w Pucharze Piramidy'} klub otrzymuje ${formatUsd(mine.amount)}.`,
-    bodyEn: `For ${CUP_OUTCOME_LABEL_EN[mine.outcome] ?? 'the Pyramid Cup run'}, the club receives ${formatUsd(mine.amount)}.`,
+    body: career.league.cup.format === 'domestic' ? `Za udział w krajowym pucharze klub otrzymuje ${formatUsd(mine.amount)}.` : `Za ${CUP_OUTCOME_LABEL_PL[mine.outcome] ?? 'udział w Pucharze Piramidy'} klub otrzymuje ${formatUsd(mine.amount)}.`,
+    bodyEn: career.league.cup.format === 'domestic' ? `The club receives ${formatUsd(mine.amount)} for its domestic cup run.` : `For ${CUP_OUTCOME_LABEL_EN[mine.outcome] ?? 'the Pyramid Cup run'}, the club receives ${formatUsd(mine.amount)}.`,
     payload: { kind: 'cup_placement_prize', amount: mine.amount, outcome: mine.outcome },
   }
 }

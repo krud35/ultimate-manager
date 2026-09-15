@@ -9,6 +9,7 @@ import { ensureClubManagement, weeklyClubOperatingCost } from '../src/career/clu
 import { applyPostMatchStaminaWear } from '../src/matchEngine/stamina.js'
 import { setPossessionPlayerMods, clearPointPlayerMods } from '../src/matchEngine/playerMods.js'
 import { decisionNoiseAmplitude } from '../src/matchEngine/ai/statFormulas.js'
+import { staffWeeklyCosts } from '../src/career/economyBalance.js'
 const world=createWorldFromTemplate(2025),original=Object.values(world.teamsById)[0]
 let passed=0
 async function test(name,fn){await fn();console.log('OK '+name);passed++}
@@ -80,7 +81,7 @@ await test('Video has negligible load; overloaded players still receive recovery
 })
 await test('Staff migration preserves cost, hiring costs include severance, expiry and renewals work',()=>{
  const t=team();t.staff={youthCoach:1,chiefScout:2,physio:3,sportingDirector:1};delete t.staffMembers;ensureClubManagement(t,2025)
- assert.equal(staffPayroll(t),2280);const before=JSON.stringify(t.staffMembers);ensureClubStaff(t);assert.equal(JSON.stringify(t.staffMembers),before)
+ assert.equal(staffPayroll(t),staffWeeklyCosts[1]*2+staffWeeklyCosts[2]+staffWeeklyCosts[3]);const before=JSON.stringify(t.staffMembers);ensureClubStaff(t);assert.equal(JSON.stringify(t.staffMembers),before)
  t.finances.cash=100_000_000;t.finances.transferLimit=100_000_000;t.finances.transferBudget=100_000_000
  const candidate=staffMarket(t,'assistantCoach','2025-09-01')[0],cash=t.finances.cash
  assert(hireClubStaff(t,'assistantCoach',candidate.id,'2025-09-01').ok);assert.equal(t.finances.cash,cash-candidate.weeklyWage*4)

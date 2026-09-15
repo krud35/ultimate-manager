@@ -1,4 +1,9 @@
+import { applyPendingSimulationScope } from './simulationScope.js'
 import { addManagerWelcome } from './managerCareer.js'
+import { buildDomesticWorldTemplate, createDomesticSeason, finishDomesticSeason, replenishCupRepresentatives } from './domesticWorld.js'
+import { ensureWorldManagers, recordManagerResults } from './managerProfiles.js'
+import { initializeInternationalClubCups, snapshotInternationalQualification } from './internationalClubCups.js'
+import { reconcileDomesticCalendar } from '../league/domesticCalendar.js'
 import { initializeWorldAcademies } from './academy.js'
 import { evaluateBoardSeason, ensureClubManagement } from './clubManagement.js'
 import { syncCompetitionMembership } from './competitionMembership.js'
@@ -74,14 +79,14 @@ import {
 } from './clubSponsors.js'
 import { ensureTeamFacilities, ensureWorldFacilities } from './clubFacilities.js'
 import { processLeaguePlacementPrizes, messagesFromLeaguePlacementPrizes, messageFromCupPlacementPrize } from './placementPrizes.js'
-import { mergeInbox, messagesFromAcademyAgedOut } from './inbox.js'
+import { createInboxMessage, mergeInbox, messagesFromAcademyAgedOut } from './inbox.js'
 import { ensureWorldReputation } from '../models/teamReputation.js'
 import { ensureWorldFans } from '../models/teamFans.js'
 import { ensureWorldScouting } from './scouting.js'
 import { ensureWorldSponsors } from './clubSponsors.js'
 import { refreshTeamMarketValues } from './transfers/playerValue.js'
 import { ensureAiCoachProfiles } from '../matchEngine/aiCoachProfile.js'
-import { ensureCareerNationalTeams } from './nationalTeams.js'
+import { ensureCareerNationalTeams, initializeNationalPlayerPools } from './nationalTeams.js'
 import { maybeStartNationalTeamSeason } from './nationalTeamSeason.js'
 
 /** Cel łącznej liczby zawodników w lidze (senior roster, 16 drużyn) — utrzymuje pulę graczy w ryzach. */
@@ -92,10 +97,6 @@ function newId() {
     return crypto.randomUUID()
   }
   return `career-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-}
-
-function seasonLabelForYear(year) {
-  return `UFA ${year}/${String(year + 1).slice(-2)}`
 }
 
 function emptyCareerStats() {
@@ -160,13 +161,13 @@ export function createCareer(slotIndex, options) {
   // Kwoty $ zapisywane w treści wiadomości powitalnych (np. oferty sponsorskie) są
   // formatowane od razu tutaj, zanim App.jsx zdąży zsynchronizować walutę przy
   // następnym renderze — ustawiamy więc jawnie na start tworzenia kariery.
-  setMoneyCurrency('USD')
+  setMoneyCurrency(options.competition === 'domestic' ? 'EUR' : 'USD')
   const playerTeamId = options.playerTeamId
   const seasonYear = options.seasonYear ?? STARTING_SEASON_YEAR
   const rosterMode = options.rosterMode === 'random' ? 'random' : 'historical'
 
   const financeSeed = seasonYear * 1009 + slotIndex * 17 + Math.floor(Math.random() * 1000)
-  const template = buildSeasonLeagueTemplate({
+  const template = options.competition === 'domestic' ? buildDomesticWorldTemplate(options.worldConfig, seasonYear, financeSeed) : buildSeasonLeagueTemplate({
     year: seasonYear,
     rosterMode,
     seed: financeSeed,
@@ -180,6 +181,8 @@ export function createCareer(slotIndex, options) {
       tacticalIdentity: template.tacticalByTeamId?.[t.id] ?? null,
     })),
   })
+  if (options.competition === 'domestic') { world.worldConfig = template.worldConfig; world.importConflicts = template.importConflicts }
+  else if (options.worldConfig) world.worldConfig = options.worldConfig
   rollAiCoachProfilesForWorld(world, playerTeamId, financeSeed)
   initWorldPlayerStats(world, { playerTeamId })
   initWorldPlayerDevelopment(world, { playerTeamId })
@@ -202,7 +205,7 @@ export function createCareer(slotIndex, options) {
     seasonYear,
   })
 
-  const league = createLeagueSeason({
+  const league = options.competition === 'domestic' ? createDomesticSeason(world, playerTeamId, seasonYear, financeSeed) : createLeagueSeason({
     world,
     playerTeamId,
     seasonYear,
@@ -217,6 +220,9 @@ export function createCareer(slotIndex, options) {
     createdAt: now,
     updatedAt: now,
     managerName,
+    managerProfile: options.managerProfile ?? null,
+    competition: options.competition === 'domestic' ? 'domestic' : 'ufa',
+    worldConfig: world.worldConfig,
     playerTeamId,
     seasonYear,
     seasonIndex: 1,
@@ -246,6 +252,11 @@ export function createCareer(slotIndex, options) {
   })
   draftCareer.inbox = mergeInbox(draftCareer, sponsorInbox)
 
+  ensureWorldManagers(world, { managerProfile: options.managerProfile, playerTeamId, seasonYear, currentDate: league.currentDate })
+  initializeNationalPlayerPools(draftCareer)
+  maybeStartNationalTeamSeason(draftCareer, { seasonYear, calendar: league.calendar })
+  initializeInternationalClubCups(draftCareer)
+  reconcileDomesticCalendar(league)
   return writeSlot(slotIndex, addManagerWelcome(draftCareer))
 }
 
@@ -462,6 +473,9 @@ export function persistCareer(career, patch = {}) {
     world,
     league,
     homeTactics,
+    worldConfig: world?.worldConfig ?? patch.worldConfig ?? career.worldConfig,
+    managerProfile: world?.managersById?.[(patch.managerProfile ?? career.managerProfile)?.id] ?? patch.managerProfile ?? career.managerProfile,
+    internationalClubCups: league?.internationalClubCups ?? patch.internationalClubCups ?? career.internationalClubCups,
   }
 }
 
@@ -477,6 +491,11 @@ export function finalizeSeason(career) {
   league.competitionsComplete = true
 
   evaluateBoardSeason(career.world, league, career.seasonYear)
+  if (career.competition === 'domestic') {
+    snapshotInternationalQualification(career)
+    finishDomesticSeason(career)
+    recordManagerResults(career)
+  }
   const archive = buildSeasonArchive(career)
   const alreadyArchived = career.seasonHistory.some(
     (s) => s.seasonIndex === career.seasonIndex && s.seasonYear === career.seasonYear,
@@ -589,6 +608,12 @@ export function finalizeSeason(career) {
 
   // Liga Europejska: premia ligowa (lokata) + premia pucharowa (Puchar Piramidy).
   let prizeInbox = []
+  if (worldAfterCycle && career.competition === 'domestic') {
+    const leaguePrizes = [career.league, ...(career.league.otherLeagues ?? [])].flatMap(l => processLeaguePlacementPrizes(worldAfterCycle, l, l.tier))
+    prizeInbox = messagesFromLeaguePlacementPrizes(leaguePrizes, career, { date: career.league.currentDate })
+    const cupMsg = messageFromCupPlacementPrize(career)
+    if (cupMsg) prizeInbox.push(cupMsg)
+  }
   if (worldAfterCycle && career.competition === 'eucs' && career.pyramid?.tier) {
     const leaguePrizes = processLeaguePlacementPrizes(
       worldAfterCycle,
@@ -660,6 +685,8 @@ export function startNextSeason(career) {
   const nextYear = base.seasonYear + 1
   const nextIndex = base.seasonIndex + 1
   const world = base.world ?? createWorldFromTemplate(nextYear)
+  applyPendingSimulationScope(world,base.playerTeamId)
+  if (base.competition === 'domestic') replenishCupRepresentatives(world, nextYear)
 
   applyOffseasonDevelopment(world, {
     leaguePlayerStats: base.seasonHistory?.[base.seasonHistory.length - 1]?.playerStats
@@ -685,7 +712,7 @@ export function startNextSeason(career) {
 
   const team = worldTeamById(world, base.playerTeamId)
 
-  const league = createLeagueSeason({
+  const league = base.competition === 'domestic' ? createDomesticSeason(world, base.playerTeamId, nextYear, nextYear * 1000 + nextIndex) : createLeagueSeason({
     world,
     playerTeamId: base.playerTeamId,
     seasonYear: nextYear,
@@ -712,7 +739,16 @@ export function startNextSeason(career) {
     league,
     inbox: keptSponsor,
   }
+  ensureWorldManagers(world, { managerProfile: base.managerProfile, playerTeamId: base.playerTeamId, seasonYear: nextYear, currentDate: league.currentDate })
+  initializeNationalPlayerPools(draft)
+  initializeWorldAcademies(world, nextYear)
+  maybeStartNationalTeamSeason(draft, { seasonYear: nextYear, calendar: league.calendar })
+  initializeInternationalClubCups(draft, { seasonYear: nextYear })
+  reconcileDomesticCalendar(league)
+  const regionalMove = world.domesticMovements?.find(m=>m.teamId===base.playerTeamId && m.type==='regional-reassignment')
+  const regionalMessages = regionalMove ? [createInboxMessage({type:'club_news',date:league.currentDate,seasonYear:nextYear,seasonIndex:nextIndex,title:'Przydział do nowego regionu',titleEn:'New regional allocation',body:'Twój klub pozostaje na trzecim poziomie. W nowym sezonie zagra w '+league.label+'. Grupy wyrównano geograficznie do 12 klubów.',bodyEn:'Your club remains in tier 3 and will play in '+league.label+'. Regional groups have been geographically balanced to 12 clubs.',payload:{kind:'regional_reassignment',teamId:base.playerTeamId,leagueId:regionalMove.leagueId}})] : []
   const sponsorFresh = [
+    ...regionalMessages,
     ...messagesFromSponsorPayouts(seasonStartPayouts, draft, {
       kind: 'season_start',
       date: league.currentDate,

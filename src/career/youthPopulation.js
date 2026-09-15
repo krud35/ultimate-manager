@@ -66,7 +66,7 @@ export function ensureYouthCohort(world, year) {
   if (world.youthCohortVersions[year] === 2) return world.regionalYouth
   const expanding = world.youthCohortYears.includes(year)
   if (!expanding) world.youthCohortYears.push(year)
-  const teams = Object.values(world.teamsById ?? {})
+  const teams = Object.values(world.teamsById ?? {}).filter(t => t.simulationMode !== 'off')
   for (const countryId of Object.keys(ACADEMY_COUNTRIES)) {
     const local = teams.filter(t => clubYouthCountry(t) === countryId).length
     const regionalExtra = Math.round(teams.length * academyCountryStrength(countryId) / 1000)
@@ -90,7 +90,7 @@ export function ensureYouthCohort(world, year) {
 }
 
 export function discoverRegionalYouth(world, team, countryId, count, rng, { date = team.managementDate, cohortYear = null } = {}) {
-  if (!world) return []
+  if (!world || team.simulationMode === 'off') return []
   const known = new Set((team.academyCandidates ?? []).map(p => p.id))
   const pool = (world.regionalYouth ?? []).filter(p => p.academyCountry === countryId && p.age < 21 && (cohortYear == null || p.cohortYear === cohortYear) && !known.has(p.id))
   const discovered = []

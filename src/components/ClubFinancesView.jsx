@@ -3,14 +3,24 @@ import PlayerContractsPanel from './PlayerContractsPanel.jsx'
 import { clubFinanceForecast } from '../career/clubEconomy.js'
 import { ensureClubManagement } from '../career/clubManagement.js'
 import { formatUsd } from '../career/transfers/moneyFormat.js'
+import { clubFinancialMarket } from '../career/financialMarkets.js'
+import { clubMonthlyTvIncome } from '../career/economyBalance.js'
+import { ACADEMY_COUNTRIES } from '../data/academyScoutGeography.js'
 
-export default function ClubFinancesView({ team, world, seasonYear, currentDate, lang, onChange }) {
+export default function ClubFinancesView({ team, world, league, seasonYear, currentDate, lang, onChange }) {
   const en = lang === 'en'
   ensureClubManagement(team, seasonYear)
-  const f = clubFinanceForecast(team)
+  const f = clubFinanceForecast(team, { league, currentDate, world })
+  const market = clubFinancialMarket(team)
+  const country = ACADEMY_COUNTRIES[market.countryId]
   const cells = [[en ? 'Weekly operating costs' : 'Utrzymanie klubu / tydzień', f.weeklyOperations]]
   return <div className='um-section space-y-5 league-fade-in'>
     <h2 className='text-2xl font-semibold text-ufa-text'>{en ? 'Club finances' : 'Finanse klubu'}</h2>
+    {market.domestic && <div className="rounded-sm bg-ufa-bg/60 p-3 text-xs space-y-1">
+      <h3 className="font-semibold">{en ? 'Local financial market' : 'Lokalny rynek finansowy'}: {country?.[en ? 'labelEn' : 'labelPl'] ?? team.country ?? '—'} · {en ? 'Division' : 'Dywizja'} {market.tier}</h3>
+      <p>{en ? 'Monthly TV rights' : 'Prawa TV / miesiąc'}: {formatUsd(clubMonthlyTvIncome(team))}</p>
+      <p className="text-ufa-muted">{en ? 'Country and division affect transfer funding, sponsor offers, new wages and match income. Promotion and relegation change future funding; signed contracts remain binding.' : 'Kraj i dywizja wpływają na środki transferowe, oferty sponsorów, nowe płace i wpływy z meczów. Awans i spadek zmieniają przyszłe finansowanie; podpisane umowy pozostają ważne.'}</p>
+    </div>}
     <ClubFinanceSummary team={team} lang={lang} onChange={onChange} />
     <div className="grid gap-3 sm:grid-cols-2">
       {cells.map(([label, value]) => <div key={label} className="rounded-sm bg-ufa-bg/60 p-3">
@@ -20,7 +30,8 @@ export default function ClubFinancesView({ team, world, seasonYear, currentDate,
     </div>
     <div>
       <h4 className="text-sm font-semibold">{en ? '12-month cash forecast' : 'Prognoza gotówki na 12 miesięcy'}</h4>
-      <p className="my-1 text-xs text-ufa-muted">{en ? 'Current wages, operating costs, owner funding, TV and sponsors; estimated net receipts from 15 home and 15 away games. Transfers and prizes excluded.' : 'Aktualne pensje, utrzymanie, właściciel, TV i sponsorzy oraz szacunek netto 15 meczów domowych i 15 wyjazdowych. Bez transferów i nagród.'}</p>
+      <p className="my-1 text-xs text-ufa-muted">{en ? 'Current wages, operating costs, owner funding, TV and sponsors. Transfers, prizes and unconfirmed future cup rounds excluded.' : 'Aktualne pensje, utrzymanie, właściciel, TV i sponsorzy. Bez transferów, nagród i niepotwierdzonych kolejnych rund pucharowych.'}</p>
+      <p className="my-1 text-xs text-ufa-muted">{f.matchForecast ? (en ? `Confirmed upcoming matches: ${f.matchForecast.counts.home} home, ${f.matchForecast.counts.away} away, ${f.matchForecast.counts.neutral} neutral (${f.matchForecast.counts.cup} cup matches). Match income follows fixture dates. Next season's fixtures are included once scheduled.` : `Potwierdzone nadchodzące mecze: ${f.matchForecast.counts.home} u siebie, ${f.matchForecast.counts.away} na wyjeździe, ${f.matchForecast.counts.neutral} na neutralnym boisku (w tym ${f.matchForecast.counts.cup} pucharowych). Przychody przypisano do terminów spotkań. Mecze kolejnego sezonu uwzględnimy po utworzeniu terminarza.`) : (en ? 'No fixture schedule supplied: standard estimate of 15 home and 15 away games.' : 'Brak terminarza: standardowy szacunek 15 meczów domowych i 15 wyjazdowych.')}</p>
       <div className="overflow-x-auto"><table className="w-full text-xs tabular-nums"><thead><tr>{f.months.map(m => <th className="p-2" key={m.month}>+{m.month} {en ? 'mo.' : 'mies.'}</th>)}</tr></thead>
         <tbody><tr>{f.months.map(m => <td className={`p-2 whitespace-nowrap ${m.cash < 0 ? 'text-ufa-danger' : 'text-ufa-success'}`} key={m.month}>{formatUsd(m.cash)}</td>)}</tr></tbody>
       </table></div>

@@ -5,6 +5,7 @@ import { recentPlayingTime } from './matchDevelopment.js'
  *  already have one from a prior call (see refreshAiDevelopmentListings) should
  *  pass it in instead of paying for another full sort per player. */
 export function developmentListingDecision(player, team, date, ranked = null) {
+  if(team.simulationMode==='off')return null
   if(player.notForSale||player.loan||player.injury?.daysRemaining>0||(team.players?.length??0)<=16)return null
   const usage=recentPlayingTime(player,team.id,date)
   if(usage.games<4||usage.share>=.12)return null
@@ -19,7 +20,7 @@ export function refreshAiDevelopmentListings(world,{date,excludeTeamId=null}={})
   const week=Math.floor(Date.parse(date)/604800000)
   if(!Number.isFinite(week))return
   for(const team of Object.values(world?.teamsById??{})){
-    if(team.id===excludeTeamId||team.lastDevelopmentListingWeek===week)continue
+    if(team.simulationMode==='off'||team.id===excludeTeamId||team.lastDevelopmentListingWeek===week)continue
     team.lastDevelopmentListingWeek=week
     // Same ranking applies to every player on this team — sort once, not once per player.
     const ranked=[...(team.players??[])].sort((a,b)=>getOverallRating(b.skills)-getOverallRating(a.skills))

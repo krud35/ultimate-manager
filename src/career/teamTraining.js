@@ -876,6 +876,7 @@ export function processTeamTrainingsForDate(league, isoDate, options = {}) {
   // One calendar date is processed once, regardless of the stepping UI.
 
   for (const team of Object.values(teamsById)) {
+    if ((team.simulationMode === 'off' || team.simulationMode === 'transfers') && !team.detailedCupAttention) continue
     const isPlayer = team.id === playerTeamId
     const schedule = ensureTrainingSchedule(team)
     schedule.fixtureCache = trainingFixtures(league, team.id).map(f => ({ date: f.date }))
@@ -929,6 +930,7 @@ export function weeklyTeamTrainingMaintenance(league, options = {}) {
   )
 
   for (const team of Object.values(teamsById)) {
+    if (team.simulationMode === 'off' || team.simulationMode === 'transfers') continue
     const tt = ensureTeamTraining(team)
     // Natural decay of unused structure knowledge
     tt.tacticsFamiliarity = clamp((tt.tacticsFamiliarity ?? 38) - (0.35 + rng() * 0.45), 0, 100)

@@ -1,4 +1,5 @@
 import { initializeClubLiquidity } from './clubEconomy.js'
+import { ensureWorldManagers } from './managerProfiles.js'
 import { ensureClubManagement } from './clubManagement.js'
 /**
  * Świat kariery: żywe składy wszystkich drużyn.
@@ -40,7 +41,7 @@ import { ensureWorldReputation } from '../models/teamReputation.js'
 import { ensureWorldElo } from '../models/teamElo.js'
 import { ensureWorldFans } from '../models/teamFans.js'
 import { ensureWorldFacilities } from './clubFacilities.js'
-import { ensureWorldSponsors, refreshSponsorOffers } from './clubSponsors.js'
+import { ensureWorldSponsors } from './clubSponsors.js'
 import { ensureWorldScouting } from './scouting.js'
 import { ensureWorldAcademy, initializeWorldAcademies } from './academy.js'
 import { officialSeasonEndDate } from '../league/seasonCalendar.js'
@@ -81,6 +82,18 @@ function cloneTemplateTeam(team) {
     // gotowe z `materializeFullPyramidTeams` i mają `tier` od zawsze — bez tej linii
     // gubiły go akurat kluby z poziomu gracza, czyli te, które przechodzą przez szablon.
     tier: team.tier ?? null,
+    countryId: team.countryId ?? null,
+    country: team.country ?? null,
+    city: team.city ?? null,
+    coordinates: team.coordinates ? [...team.coordinates] : null,
+    parentClubId: team.parentClubId ?? null,
+    referenceResults: team.referenceResults ?? null,
+    provisionalIdentity: !!team.provisionalIdentity,
+    region: team.region ?? null,
+    domesticLeagueId: team.domesticLeagueId ?? null,
+    simulationMode: team.simulationMode ?? null,
+    backgroundSimulation: !!team.backgroundSimulation,
+    detailedCupAttention: !!team.detailedCupAttention,
     rosterShape: team.rosterShape ?? null,
     rosterCoverage: team.rosterCoverage ? { ...team.rosterCoverage, gaps: [...team.rosterCoverage.gaps] } : null,
     tacticalIdentity: team.tacticalIdentity ? structuredClone(team.tacticalIdentity) : null,
@@ -339,6 +352,7 @@ export function rehydrateCareerWorld(career) {
   ensureWorldScouting(world)
   ensureWorldAcademy(world)
   initializeWorldAcademies(world, career.seasonYear)
+  ensureWorldManagers(world, { managerProfile: career.managerProfile, playerTeamId: career.playerTeamId, seasonYear: career.seasonYear, currentDate: career.league?.currentDate })
   for (const team of worldTeamsList(world)) ensureClubManagement(team, career.seasonYear)
   ensureWorldSponsors(world, {
     seed: financeSeed,
@@ -351,6 +365,8 @@ export function rehydrateCareerWorld(career) {
   const league = career.league
     ? bindLeagueToWorld({ ...career.league }, world)
     : career.league
+  const internationalClubCups = career.internationalClubCups ?? league?.internationalClubCups
+  if (league && internationalClubCups) league.internationalClubCups = internationalClubCups
 
   if (league?.calendar && !league.calendar.officialEndDate) {
     const end = officialSeasonEndDate(league.calendar)
@@ -371,6 +387,9 @@ export function rehydrateCareerWorld(career) {
     ...career,
     world,
     league,
+    worldConfig: world.worldConfig ?? career.worldConfig,
+    internationalClubCups,
+    managerProfile: world.managersById?.[career.managerProfile?.id] ?? career.managerProfile,
     // Kadry narodowe (Fazy 1-5) — leniwa inicjalizacja/dopełnienie dla zapisów sprzed tej
     // funkcji, dokładnie ten sam wzorzec co transferLog/inbox/ultiworld poniżej.
     nationalTeams: ensureCareerNationalTeams(career),
@@ -437,10 +456,12 @@ export function careerForStorage(career) {
   const { league, world, ...rest } = career
   let leagueOut = league
   if (league) {
-    const { teamsById: _drop, otherLeagues, ...leagueRest } = league
-    leagueOut = leagueRest
+    const { otherLeagues } = league
+    leagueOut = { ...league }
+    delete leagueOut.teamsById
+    delete leagueOut.internationalClubCups
     if (Array.isArray(otherLeagues)) {
-      leagueOut.otherLeagues = otherLeagues.map(({ teamsById: _dropOl, ...otherRest }) => otherRest)
+      leagueOut.otherLeagues = otherLeagues.map(other => { const copy = { ...other }; delete copy.teamsById; return copy })
     }
   }
   return {

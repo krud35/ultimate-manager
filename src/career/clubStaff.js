@@ -1,4 +1,5 @@
 import { staffWeeklyCosts, clubReputation } from './economyBalance.js'
+import { clubWageScale } from './financialMarkets.js'
 import { ensureClubEconomy, postClubCash } from './clubEconomy.js'
 import { getTransferBudget } from './transfers/clubFinances.js'
 import { generateStaffName, isLegacyStaffName } from './staffNames.js'
@@ -18,11 +19,11 @@ export const STAFF_SPECIALTY_LABELS = {
 }
 const roleSpecialties = { physio: ['rehabilitation','prevention'], chiefScout: ['talent','recruitment'], sportingDirector: ['squad','negotiation'] }
 const hash = value => { let h=17; for(const c of String(value)) h=(Math.imul(h,31)+c.charCodeAt(0))>>>0; return h }
-function createStaff(id, role, level, year, country, excluded = []) {
+function createStaff(id, role, level, year, country, excluded = [], team = null) {
   const h=hash(id)
   return { id, role, level, name: generateStaffName(id, country, excluded), nameGenerationVersion: 2, age: 30+h%26,
     skills: Object.fromEntries(STAFF_ROLE_DEFS[role].skills.map((s,i)=>[s,Math.min(20,level*5+((h>>>i)%4))])),
-    specialty: (roleSpecialties[role] ?? STAFF_SPECIALTIES)[h % (roleSpecialties[role] ?? STAFF_SPECIALTIES).length], weeklyWage: staffWeeklyCosts[level], expiresOn: `${year+1}-07-31` }
+    specialty: (roleSpecialties[role] ?? STAFF_SPECIALTIES)[h % (roleSpecialties[role] ?? STAFF_SPECIALTIES).length], weeklyWage: Math.round(staffWeeklyCosts[level] * clubWageScale(team)), expiresOn: `${year+1}-07-31` }
 }
 /** Legacy levels remain derived compatibility fields for scouting/academy/medical systems. */
 export function ensureClubStaff(team, year = team.financeSeasonYear ?? 2025) {
@@ -31,7 +32,7 @@ export function ensureClubStaff(team, year = team.financeSeasonYear ?? 2025) {
   for(const role of CLUB_STAFF_ROLES) {
     team.staff[role] ??= 0
     const excluded = Object.values(team.staffMembers).filter(Boolean).map(p => p.name)
-    if (!(role in team.staffMembers)) team.staffMembers[role] = team.staff[role] > 0 ? createStaff(`${team.id}-${role}-legacy`,role,team.staff[role],year,team.country,excluded) : null
+    if (!(role in team.staffMembers)) team.staffMembers[role] = team.staff[role] > 0 ? createStaff(`${team.id}-${role}-legacy`,role,team.staff[role],year,team.country,excluded,team) : null
     const member = team.staffMembers[role]
     if (member && isLegacyStaffName(member)) {
       member.name = generateStaffName(member.id, team.country, excluded)
@@ -44,14 +45,18 @@ export function staffPayroll(team) {
   return Object.values(ensureClubStaff(team)).reduce((sum,p)=>sum+(p?.weeklyWage??0),0)
 }
 export function staffMarket(team, role, date) {
+  if (team?.simulationMode === 'off') return []
   if (!STAFF_ROLE_DEFS[role] || !validDate(date)) return []
   const year=Number(date.slice(0,4)), month=date.slice(0,7)
   const names = []
-  return [1,2,3].map(level => {
-    const candidate = createStaff(`${team.id}-${role}-${month}-${level}`,role,level,year,team.country,names)
+  const generated = [1,2,3].map(level => {
+    const candidate = createStaff(`${team.id}-${role}-${month}-${level}`,role,level,year,team.country,names,team)
     names.push(candidate.name)
     return { ...candidate, interested: clubReputation(team) >= (level===3?55:level===2?30:0) }
   })
+  const formerPlayers = (team.retiredStaffCandidates ?? []).filter(p => p.role === role && p.availableFrom <= date && !p.hiredTeamId)
+    .map(p => ({ ...p, interested: true }))
+  return [...formerPlayers, ...generated]
 }
 export function staffReleaseCost(member, date) {
   if(!member)return 0
@@ -70,6 +75,8 @@ export function hireClubStaff(team, role, candidateId, date, years=1) {
   postClubCash(team,-cost,'staff_recruitment',date)
   const previousWage=members[role]?.weeklyWage??0
   members[role]={...candidate,expiresOn:extendDate(date,years)}
+  const retiredCandidate=(team.retiredStaffCandidates??[]).find(p=>p.id===candidate.id)
+  if(retiredCandidate)retiredCandidate.hiredTeamId=team.id
   team.staff[role]=candidate.level
   updatePayroll(team,previousWage,candidate.weeklyWage)
   return {ok:true,cost}
@@ -94,7 +101,7 @@ export function renewClubStaff(team,role,date,years=1) {
 export function setLegacyStaffLevel(team, role, level) {
   ensureClubStaff(team)
   team.staff[role]=level
-  team.staffMembers[role]=level?createStaff(`${team.id}-${role}-${level}`,role,level,team.financeSeasonYear??2025,team.country):null
+  team.staffMembers[role]=level?createStaff(`${team.id}-${role}-${level}`,role,level,team.financeSeasonYear??2025,team.country,[],team):null
 }
 export function processStaffContracts(team,date,{ai=false}={}) {
   const notices=[]
@@ -116,7 +123,10 @@ export function staffSessionQuality(team,focuses,player=null) {
   const members=ensureClubStaff(team)
   const roles=player && (player.age??25)<=21?['youthCoach','assistantCoach']:['assistantCoach']
   if(focuses.includes('structural'))roles.push('analyst')
-  let bonus=0
+  const attributes=team.manager?.attributes
+  const relevant=player && (player.age??25)<=21 ? attributes?.youthDevelopment : attributes?.coaching
+  let bonus=attributes ? Math.max(0,((relevant??10)-5)*0.004) : 0
+  if(attributes && focuses.includes('structural'))bonus+=Math.max(0,(attributes.tactics-10)*0.003)
   for(const role of roles) {
     const p=members[role];if(!p)continue
     const skill=p.skills.coaching??p.skills.analysis??10

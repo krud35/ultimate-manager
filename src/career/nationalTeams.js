@@ -211,6 +211,12 @@ export function selectNationalSquad(world, career, countryId, options = {}) {
 
   const nameEn = country.nameEn
   const pool = []
+  if (world.worldConfig) {
+    world.nationalPlayerPools ??= {}
+    const persistent = (world.nationalPlayerPools[countryId] ?? []).filter(p => p.age < 40)
+    world.nationalPlayerPools[countryId] = persistent
+    pool.push(...persistent)
+  }
   for (const team of worldTeamsList(world)) {
     for (const p of team.players ?? []) {
       if (p.nationality === nameEn) pool.push(p)
@@ -226,9 +232,14 @@ export function selectNationalSquad(world, career, countryId, options = {}) {
   if (real.length < min) {
     const need = min - real.length
     const strength = getCountryStrength(career, countryId)
-    const rng = mulberry32(hashSeed('national-squad-fill', countryId, seasonYear ?? 0, career?.slotIndex ?? 0))
+    const rng = mulberry32(hashSeed('national-squad-fill', countryId, seasonYear ?? 0, career?.slotIndex ?? 0, world.nationalPlayerPools?.[countryId]?.length ?? 0))
     for (let i = 0; i < need; i += 1) {
-      generatedPlayers.push(createNationalTeamFillerPlayer(rng, countryId, strength, i))
+      const player = createNationalTeamFillerPlayer(rng, countryId, strength, i)
+      if (world.worldConfig) {
+        player.nationalOnly = true
+        world.nationalPlayerPools[countryId].push(player)
+      }
+      generatedPlayers.push(player)
     }
   }
 
@@ -250,6 +261,12 @@ export function selectNationalSquad(world, career, countryId, options = {}) {
   }
 }
 
+/** Persistent players from unsimulated countries remain available for national selection. */
+export function initializeNationalPlayerPools(career) {
+  if (!career.world?.worldConfig) return
+  for (const id of Object.keys(ACADEMY_COUNTRIES)) selectNationalSquad(career.world, career, id, { min: 24, seasonYear: career.seasonYear })
+}
+
 /**
  * Po zakończeniu udziału kadry w rozgrywkach (odpadnięcie w kwalifikacjach / koniec turnieju
  * — wołane z przyszłych faz kwalifikacyjnej/finałowej) dogenerowani zawodnicy trafiają na
@@ -257,6 +274,7 @@ export function selectNationalSquad(world, career, countryId, options = {}) {
  * zawodnicy w składzie nie są tu ruszani — nigdy nie opuścili swojego klubu.
  */
 export function releaseGeneratedSquadToFreeAgency(world, career, countryId) {
+  if (world.worldConfig) return { released: [] }
   const nt = ensureCareerNationalTeams(career)
   const squad = nt.squadsByCountry[countryId]
   if (!squad?.generatedPlayers?.length) return { released: [] }

@@ -22,7 +22,7 @@ export const ACADEMY_EUROPE_REGIONS = [
     id: 'northernEurope',
     labelPl: 'Europa Północna',
     labelEn: 'Northern Europe',
-    countries: ['gb', 'ie', 'dk', 'fi', 'no', 'se'],
+    countries: ['gb', 'ie', 'dk', 'fi', 'no', 'se', 'lt', 'lv', 'ee'],
   },
   {
     id: 'westernEurope',
@@ -34,7 +34,7 @@ export const ACADEMY_EUROPE_REGIONS = [
     id: 'southernEurope',
     labelPl: 'Europa Południowa',
     labelEn: 'Southern Europe',
-    countries: ['pt', 'es', 'it', 'si', 'hr', 'gr'],
+    countries: ['pt', 'es', 'it', 'si', 'hr', 'gr', 'rs'],
   },
   {
     id: 'easternEurope',
@@ -45,6 +45,11 @@ export const ACADEMY_EUROPE_REGIONS = [
 ]
 
 export const ACADEMY_COUNTRIES = {
+  lv: { continent: 'europe', labelPl: 'Łotwa', labelEn: 'Latvia', nameEn: 'Latvia', strength: 30 },
+  ee: { continent: 'europe', labelPl: 'Estonia', labelEn: 'Estonia', nameEn: 'Estonia', strength: 30 },
+  rs: { continent: 'europe', labelPl: 'Serbia', labelEn: 'Serbia', nameEn: 'Serbia', strength: 25 },
+  lt: { continent: 'europe', labelPl: 'Litwa', labelEn: 'Lithuania', nameEn: 'Lithuania', strength: 30 },
+  in: { continent: 'asia', labelPl: 'Indie', labelEn: 'India', nameEn: 'India', strength: 35 },
   nl: { continent: 'europe', labelPl: 'Holandia', labelEn: 'Netherlands', nameEn: 'Netherlands', strength: 65 },
   se: { continent: 'europe', labelPl: 'Szwecja', labelEn: 'Sweden', nameEn: 'Sweden', strength: 65 },
   gb: { continent: 'europe', labelPl: 'Wielka Brytania', labelEn: 'United Kingdom', nameEn: 'Great Britain', strength: 78 },
@@ -101,6 +106,26 @@ export const ACADEMY_COUNTRIES = {
 }
 
 export const ACADEMY_NATIONALITY_NAMES = {
+  lv: {
+    firstNames: ['Jānis', 'Pēteris', 'Andris', 'Mārtiņš', 'Kristaps', 'Edgars', 'Rihards', 'Dāvis', 'Roberts', 'Kārlis', 'Artūrs', 'Valters', 'Gustavs', 'Oskars', 'Reinis', 'Emīls'],
+    lastNames: ['Bērziņš', 'Kalniņš', 'Ozoliņš', 'Jansons', 'Liepiņš', 'Krūmiņš', 'Balodis', 'Eglītis', 'Zariņš', 'Pētersons', 'Vītols', 'Kļaviņš', 'Lapiņš', 'Siliņš', 'Leitis', 'Vilks'],
+  },
+  ee: {
+    firstNames: ['Jaan', 'Jüri', 'Mart', 'Tõnu', 'Andres', 'Kristjan', 'Rasmus', 'Karl', 'Markus', 'Siim', 'Taavi', 'Priit', 'Peeter', 'Mihkel', 'Ott', 'Kaspar'],
+    lastNames: ['Tamm', 'Saar', 'Sepp', 'Mägi', 'Kask', 'Kukk', 'Rebane', 'Ilves', 'Pärn', 'Oja', 'Karu', 'Lepp', 'Kallas', 'Kivi', 'Toom', 'Vaher'],
+  },
+  rs: {
+    firstNames: ['Nikola', 'Marko', 'Stefan', 'Luka', 'Miloš', 'Vuk', 'Dušan', 'Filip', 'Lazar', 'Aleksa', 'Nemanja', 'Uroš', 'Ivan', 'Petar', 'Bogdan', 'Milan'],
+    lastNames: ['Jovanović', 'Petrović', 'Nikolić', 'Marković', 'Đorđević', 'Stojanović', 'Ilić', 'Stanković', 'Pavlović', 'Milošević', 'Popović', 'Kostić', 'Mitrović', 'Đukić', 'Savić', 'Todorović'],
+  },
+  lt: {
+    firstNames: ['Jonas', 'Lukas', 'Mantas', 'Tomas', 'Dovydas', 'Matas', 'Rokas', 'Paulius', 'Domantas', 'Mindaugas', 'Vytautas', 'Tadas', 'Karolis', 'Justas', 'Simas', 'Arnas'],
+    lastNames: ['Kazlauskas', 'Petrauskas', 'Jankauskas', 'Stankevičius', 'Vasiliauskas', 'Žukauskas', 'Butkus', 'Paulauskas', 'Urbonas', 'Kavaliauskas', 'Balčiūnas', 'Sakalauskas', 'Valančiūnas', 'Brazaitis', 'Janulis', 'Adomaitis'],
+  },
+  in: {
+    firstNames: ['Arjun', 'Aditya', 'Rahul', 'Rohan', 'Vikram', 'Karthik', 'Arun', 'Nikhil', 'Pranav', 'Siddharth', 'Varun', 'Akash', 'Ravi', 'Surya', 'Abhay', 'Ishaan', 'Krish', 'Dev', 'Manish', 'Anand'],
+    lastNames: ['Sharma', 'Patel', 'Singh', 'Kumar', 'Gupta', 'Rao', 'Reddy', 'Nair', 'Menon', 'Iyer', 'Shah', 'Mehta', 'Desai', 'Joshi', 'Das', 'Verma', 'Kulkarni', 'Bhat', 'Chandra', 'Krishnan'],
+  },
   nl: {
     firstNames: ['Daan', 'Sem', 'Luuk', 'Bram', 'Thijs', 'Lars', 'Jesse', 'Finn', 'Niek', 'Joost', 'Pieter', 'Floris', 'Sven', 'Joris'],
     lastNames: ['De Jong', 'Jansen', 'De Vries', 'Van den Berg', 'Van Dijk', 'Bakker', 'Visser', 'Smit', 'Meijer', 'De Boer', 'Mulder', 'De Groot', 'Bos', 'Vos'],

@@ -1,4 +1,5 @@
-import { FINANCE_BALANCE_VERSION, referenceClubCosts, estimatedAnnualMatchNet, TV_MONTHLY_BY_TIER } from './economyBalance.js'
+import { FINANCE_BALANCE_VERSION, referenceClubCosts, estimatedAnnualMatchNet, matchCommercials, clubMonthlyTvIncome } from './economyBalance.js'
+import { clubFinancialMarket } from './financialMarkets.js'
 import { currentEucsTier } from './competitionMembership.js'
 
 export const ECONOMY_VERSION = 2
@@ -179,7 +180,7 @@ export function syncLoanFinancialCommitments(world) {
 
 export function annualOperatingIncome(team, { cashBasis = false } = {}) {
   const f = ensureClubEconomy(team)
-  const tv = (TV_MONTHLY_BY_TIER[currentEucsTier(team)] ?? 0) * 12
+  const tv = clubMonthlyTvIncome(team) * 12
   const sponsors = ['main', 'secondary'].reduce((sum, slot) => {
     const c = team.sponsors?.[slot]
     if (!c) return sum
@@ -189,21 +190,59 @@ export function annualOperatingIncome(team, { cashBasis = false } = {}) {
   return (f?.ownerAnnualGrant ?? 0) + tv + sponsors + estimatedAnnualMatchNet(team)
 }
 
-export function clubFinanceForecast(team) {
+/** Use only confirmed, unplayed fixtures; advancing in a cup is never assumed. */
+export function scheduledMatchForecast(team, { league, currentDate = league?.currentDate, world } = {}) {
+  if (!league || !currentDate) return null
+  const competitions = [league, ...(league.otherLeagues ?? [])]
+  const fixtures = competitions.flatMap(comp => [...(comp.fixtures ?? []), ...(comp.cup?.matches ?? [])])
+  fixtures.push(...(league.internationalClubCups?.editions ?? []).flatMap(edition => edition.fixtures ?? []))
+  const until = new Date(`${currentDate}T12:00:00Z`)
+  until.setUTCFullYear(until.getUTCFullYear() + 1)
+  const endDate = until.toISOString().slice(0, 10)
+  const seen = new Set(), matches = []
+  const counts = { home: 0, away: 0, neutral: 0, cup: 0, league: 0 }
+  for (const fixture of fixtures) {
+    const key = `${fixture.id}|${fixture.homeTeamId}|${fixture.awayTeamId}|${fixture.date}`
+    if (!fixture.id || seen.has(key)) continue
+    seen.add(key)
+    if (!fixture.homeTeamId || !fixture.awayTeamId || fixture.bye || fixture.status === 'completed' || fixture.date < currentDate || !fixture.date || fixture.date > endDate) continue
+    const isHome = fixture.homeTeamId === team.id
+    if (!isHome && fixture.awayTeamId !== team.id) continue
+    const neutral = fixture.venue === 'neutral'
+    counts[neutral ? 'neutral' : isHome ? 'home' : 'away']++
+    counts[fixture.competition === 'league' ? 'league' : 'cup']++
+    const opponent = world?.teamsById?.[isHome ? fixture.awayTeamId : fixture.homeTeamId]
+    const country = team.countryId ?? team.country, destination = opponent?.countryId ?? opponent?.country
+    const perPerson = country && destination && country !== destination ? 420 : country ? 200 : 360
+    const travel = !isHome || neutral ? 700 + (Math.min(24, Math.max(7, (team.players ?? []).length)) + 4) * perPerson * (neutral ? 1.15 : 1) : 0
+    matches.push({ id: fixture.id, date: fixture.date, net: Math.round(matchCommercials(team, { isHome, neutral }).net - travel) })
+  }
+  return { source: 'schedule', from: currentDate, to: endDate, counts, matches, net: matches.reduce((sum, m) => sum + m.net, 0) }
+}
+
+export function clubFinanceForecast(team, options = {}) {
   const f = ensureClubEconomy(team)
   clubBudgetAllocation(team)
   const weeklyWages = contractualWeeklyBill(team)
   const weeklyOperations = f.weeklyOperations ?? 0
-  const annualIncome = annualOperatingIncome(team, { cashBasis: true })
+  const matchForecast = scheduledMatchForecast(team, options)
+  const operatingIncome = annualOperatingIncome(team, { cashBasis: true })
+  const nonMatchIncome = operatingIncome - estimatedAnnualMatchNet(team)
+  const annualIncome = matchForecast ? nonMatchIncome + matchForecast.net : operatingIncome
   const annualCosts = (weeklyWages + weeklyOperations) * 52
   const commitments = (team.players ?? []).reduce((sum, p) => sum + (p.loan ? 0 :
     (p.contract?.weeklyWage ?? 0) * (p.contract?.weeksRemaining ?? 0)), 0) +
     (f.outgoingLoanLiability ?? 0) + (f.incomingLoanLiability ?? 0)
-  return { cash: f.cash, weeklyWages, weeklyOperations, annualIncome, annualCosts,
+  return { cash: f.cash, weeklyWages, weeklyOperations, annualIncome, annualCosts, matchForecast,
     projectedCash: Math.round(f.cash + annualIncome - annualCosts), commitments: Math.round(commitments),
     weeklyWageLimit: f.weeklyWageLimit, debt: Math.max(0, -f.cash),
-    months: Array.from({ length: 12 }, (_, i) => ({ month: i + 1,
-      cash: Math.round(f.cash + (annualIncome - annualCosts) * (i + 1) / 12) })) }
+    months: Array.from({ length: 12 }, (_, i) => {
+      if (!matchForecast) return { month: i + 1, cash: Math.round(f.cash + (annualIncome - annualCosts) * (i + 1) / 12) }
+      const end = new Date(`${matchForecast.from}T12:00:00Z`)
+      end.setUTCMonth(end.getUTCMonth() + i + 1)
+      const matchNet = matchForecast.matches.filter(m => m.date <= end.toISOString().slice(0, 10)).reduce((sum, m) => sum + m.net, 0)
+      return { month: i + 1, cash: Math.round(f.cash + (nonMatchIncome - annualCosts) * (i + 1) / 12 + matchNet) }
+    }) }
 }
 
 /** Stable annual funding, monthly cash payments, no annual balance reset. */
@@ -212,6 +251,8 @@ export function processMonthlyOwnerFunding(world, date) {
   if (String(date).slice(8, 10) !== '01') return
   for (const team of Object.values(world?.teamsById ?? {})) {
     const f = ensureClubEconomy(team)
+    const market = clubFinancialMarket(team)
+    const marketKey = `${market.countryId}|${market.tier}`
     if (f.balanceVersion !== FINANCE_BALANCE_VERSION) {
       f.balanceVersion = FINANCE_BALANCE_VERSION
       f.transitionPayroll = contractualWeeklyBill(team) * 52
@@ -219,6 +260,10 @@ export function processMonthlyOwnerFunding(world, date) {
       reviewClubBudgets(team, `balance-${month}`)
     }
     if (f.lastOwnerMonth >= month) continue
+    if (market.domestic && f.financialMarketKey !== marketKey) {
+      reviewClubBudgets(team, `market-${month}-${marketKey}`)
+      f.financialMarketKey = marketKey
+    }
     f.lastOwnerMonth = month
     postClubCash(team, Math.round(f.ownerAnnualGrant / 12), 'owner_funding', date)
   }

@@ -1,4 +1,7 @@
+import { backgroundMatch } from './quickMatch.js'
+import { recordFrenchPlayoffResult } from './frenchPlayoffs.js'
 import { recordPlayingStyleMatch } from '../career/playingStyleEvidence.js'
+import { prepareInternationalClubMatch, recordInternationalClubCupResult } from '../career/internationalClubCups.js'
 import { buildScoutingAnalysis, saveScoutingAnalysis } from '../matchEngine/scoutingAnalysis.js'
 import { recordMatchDevelopment } from '../career/matchDevelopment.js'
 import { teamForMatchEngine } from '../data/ufaLeagueTeams.js'
@@ -124,8 +127,10 @@ export function simulateFixtureMatch(league, fixture) {
   const forfeit = tryForfeitMatchRecord(league, fixture)
   if (forfeit) return forfeit
 
-  const home = resolveTeam(league, fixture.homeTeamId)
-  const away = resolveTeam(league, fixture.awayTeamId)
+  if(league.focusedSimulation && !fixture.internationalCupId && ![fixture.homeTeamId,fixture.awayTeamId].includes(league.playerTeamId) && [fixture.homeTeamId,fixture.awayTeamId].every(id=>!league.teamsById[id]?.detailedCupAttention)) return backgroundMatch(league,fixture)
+  const registered = fixture.internationalCupId ? prepareInternationalClubMatch({league},fixture) : null
+  const home = registered?.home ?? resolveTeam(league, fixture.homeTeamId)
+  const away = registered?.away ?? resolveTeam(league, fixture.awayTeamId)
 
   const homeTactics = tacticsForResolvedTeam(home, league)
   const awayTactics = tacticsForResolvedTeam(away, league)
@@ -148,6 +153,12 @@ export function applyMatchResultToLeague(league, matchRecord) {
   const fixture = findFixture(league, matchRecord.fixtureId)
   if (!fixture || fixture.status === 'completed') return league
 
+  if (fixture.internationalCupId) {
+    saveScoutingAnalysis(league, matchRecord)
+    recordInternationalClubCupResult({league},fixture.id,matchRecord)
+    return league
+  }
+
   saveScoutingAnalysis(league, matchRecord)
 
   fixture.status = 'completed'
@@ -156,7 +167,8 @@ export function applyMatchResultToLeague(league, matchRecord) {
   fixture.winnerTeamId = matchRecord.winner
   fixture.playedByPlayer = !!matchRecord.playedByPlayer
 
-  const isCup = (matchRecord.competition ?? fixture.competition) === 'cup'
+  const isPlayoff = !!fixture.frenchPlayoff
+  const isCup = isPlayoff || (matchRecord.competition ?? fixture.competition) === 'cup'
   recordMatchDevelopment(league, matchRecord)
   recordPlayingStyleMatch(league, matchRecord)
 
@@ -221,7 +233,7 @@ export function applyMatchResultToLeague(league, matchRecord) {
     }
   }
 
-  if (isCup && league.cup) {
+  if (isCup && !isPlayoff && league.cup) {
     advanceCupAfterMatch(league.cup, {
       ...matchRecord,
       fixtureId: matchRecord.fixtureId,
@@ -236,6 +248,7 @@ export function applyMatchResultToLeague(league, matchRecord) {
     }
   }
 
+  recordFrenchPlayoffResult(league, fixture)
   league.matchHistory.push({
     fixtureId: matchRecord.fixtureId,
     round: matchRecord.round,
@@ -245,9 +258,10 @@ export function applyMatchResultToLeague(league, matchRecord) {
     homeScore: matchRecord.homeScore,
     awayScore: matchRecord.awayScore,
     winner: matchRecord.winner,
-    competition: isCup ? 'cup' : 'league',
+    competition: isPlayoff ? 'promotion-playoff' : isCup ? 'cup' : 'league',
     boxScore: boxWithTeams,
     playedByPlayer: !!matchRecord.playedByPlayer,
+    simplified: !!matchRecord.simplified,
     completedAt: Date.now(),
     injuries: matchRecord.injuries ?? [],
   })
@@ -276,6 +290,7 @@ export function applyMatchResultToLeague(league, matchRecord) {
     forfeited: !!matchRecord.forfeited,
     date: matchRecord.date ?? league.currentDate,
     isCup,
+    neutral: fixture.venue != null ? fixture.venue === 'neutral' : isCup,
     homeWon,
     awayWon,
   })
@@ -446,8 +461,9 @@ function fixturesForPlayerRound(league) {
 
 /** Mecz gracza — pełny silnik (zachowane dla rozgrywki interaktywnej). */
 export function simulatePlayerFixtureMatch(league, fixture, tactics = {}) {
-  const home = resolveTeam(league, fixture.homeTeamId)
-  const away = resolveTeam(league, fixture.awayTeamId)
+  const registered = fixture.internationalCupId ? prepareInternationalClubMatch({league},fixture) : null
+  const home = registered?.home ?? resolveTeam(league, fixture.homeTeamId)
+  const away = registered?.away ?? resolveTeam(league, fixture.awayTeamId)
 
   const homeTactics = tactics.homeTactics ?? tacticsForResolvedTeam(home, league)
   const awayTactics = tactics.awayTactics ?? tacticsForResolvedTeam(away, league)

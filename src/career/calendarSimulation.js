@@ -1,6 +1,9 @@
 import { processPlayingStyleDevelopment } from './playingStyleDevelopment.js'
 import { playingStyleMessages } from './playingStyleMessages.js'
 import { processManagerCareer } from './managerCareer.js'
+import { scheduleSeasonalHolidays } from './seasonalAvailability.js'
+import { advanceInternationalClubCups } from './internationalClubCups.js'
+import { reconcileDomesticCalendar } from '../league/domesticCalendar.js'
 import { processClubManagement } from './clubManagement.js'
 import { processMonthlyOwnerFunding } from './clubEconomy.js'
 import {
@@ -64,6 +67,7 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
   // International match load must be recorded before club training and overnight recovery.
   if(career.world) inboxMessages.push(...advanceNationalTeamsForDate(career,career.world,trainingDate??nextLeague.currentDate))
   if (trainingDate) {
+    scheduleSeasonalHolidays({ ...career, league: nextLeague }, trainingDate)
     const training = processTeamTrainingsForDate(nextLeague, trainingDate, {
       playerTeamId: career.playerTeamId,
     })
@@ -73,6 +77,7 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
       playerTeamId: career.playerTeamId,
       date: trainingDate,
       tag: `day-${trainingDate}`,
+      nationalPlayers: Object.values(career.world?.nationalPlayerPools ?? {}).flat(),
     })
   }
   inboxMessages.push(...playingStyleMessages(processPlayingStyleDevelopment(
@@ -275,6 +280,7 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
     loanLog,
     aiTransfersLastDate,
     inbox: managed.inbox,
+    managerProfile: managed.managerProfile,
     inboxMessages,
     ultiworld: uw.ultiworld,
     pendingEventFollowUps: managed.playerTeamId !== career.playerTeamId ? [] : followUps.pendingEventFollowUps,
@@ -285,6 +291,9 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
 export function advanceCareerDay(career, { autoSimulatePlayer = false, allowRandomEvents = true } = {}) {
   const league = career.league
   const date = league.currentDate
+  const clubCupMessages = advanceInternationalClubCups(career, date, { simulatePlayer: autoSimulatePlayer })
+  if (clubCupMessages.length) career.inbox = mergeInbox(career, clubCupMessages)
+  if (league.calendar?.mode === 'domestic') reconcileDomesticCalendar(league)
   const previousLeague = { ...league, matchHistory: [...(league.matchHistory ?? [])] }
   const expired = processContractExpirations(career)
   const readyCareer = { ...career, league: previousLeague, loanLog: expired.loanLog,

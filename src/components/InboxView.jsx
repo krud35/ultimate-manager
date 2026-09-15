@@ -28,6 +28,16 @@ import { BoxScoreTable } from './BoxScoreTable'
 import ClubWelcomeMessage from './ClubWelcomeMessage.jsx'
 import { welcomeForMessage } from '../career/clubWelcome.js'
 
+// Pole kontroferty zachowuje czytelny zapis, a akcja wysyła do silnika liczbę.
+function formatOfferInput(value) {
+  const digits = String(value ?? '').replace(/\D/g, '').replace(/^0+(?=\d)/, '')
+  return digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''
+}
+
+function parseOfferInput(value) {
+  return Math.round(Number(String(value ?? '').replace(/\D/g, '')) || 0)
+}
+
 function findWorldPlayer(world, playerId) {
   return findWorldPlayerById(world, playerId).player
 }
@@ -144,9 +154,9 @@ function IncomingBidPanel({ message, career, onAction, busy }) {
   const awaiting = p.status === 'awaiting_reply'
   const active = p.status === 'pending' || p.status === 'counter'
   const [counter, setCounter] = useState(() =>
-    String(Math.round(((p.fee ?? p.askPrice ?? 0) * 1.08) / 1000) * 1000),
+    formatOfferInput(Math.round(((p.fee ?? p.askPrice ?? 0) * 1.08) / 1000) * 1000),
   )
-  const counterNum = Math.round(Number(counter) || 0)
+  const counterNum = parseOfferInput(counter)
 
   return (
     <div className="rounded-sm border border-ufa-gold/30 bg-ufa-gold/5 px-4 py-3 text-sm space-y-3">
@@ -215,12 +225,11 @@ function IncomingBidPanel({ message, career, onAction, busy }) {
             {t.counterLabelShort}
             <div className="mt-1 flex flex-wrap gap-2">
               <input
-                type="number"
-                min={0}
-                step={1000}
+                type="text"
+                inputMode="numeric"
                 value={counter}
                 disabled={busy}
-                onChange={(e) => setCounter(e.target.value)}
+                onChange={(e) => setCounter(formatOfferInput(e.target.value))}
                 className="min-w-[140px] flex-1 rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-sm text-ufa-text tabular-nums"
               />
               <button

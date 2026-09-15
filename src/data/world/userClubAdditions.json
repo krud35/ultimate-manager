@@ -1,0 +1,916 @@
+{
+  "source": "User-supplied country club screenshots, 2026-09-15",
+  "note": "Club names and cities transcribed; Finland repeated screenshot deduplicated. Singapore division suffixes omitted as requested. Scotland and Wales retain region metadata within Great Britain. Rosters generated where no local roster exists.",
+  "clubs": [
+    {
+      "name": "KFK",
+      "countryId": "dk",
+      "city": "Copenhagen"
+    },
+    {
+      "name": "Copenhagen Hucks",
+      "countryId": "dk",
+      "city": "Copenhagen"
+    },
+    {
+      "name": "Dinosaurs",
+      "countryId": "dk",
+      "city": "Aalborg"
+    },
+    {
+      "name": "AUC Mojn",
+      "countryId": "dk",
+      "city": "Aabenraa"
+    },
+    {
+      "name": "Ragnarok",
+      "countryId": "dk",
+      "city": "Copenhagen"
+    },
+    {
+      "name": "Disc Control",
+      "countryId": "dk",
+      "city": "Tørring"
+    },
+    {
+      "name": "Disquitos",
+      "countryId": "fi",
+      "city": "Oulu"
+    },
+    {
+      "name": "Polli",
+      "countryId": "fi",
+      "city": "Espoo"
+    },
+    {
+      "name": "Karhukopla",
+      "countryId": "fi",
+      "city": "Espoo"
+    },
+    {
+      "name": "LeKi",
+      "countryId": "fi",
+      "city": "Lempäälä"
+    },
+    {
+      "name": "Sipoo Odd Stars SOS",
+      "countryId": "fi",
+      "city": "Sipoo"
+    },
+    {
+      "name": "Saints",
+      "countryId": "fi",
+      "city": "Vaasa"
+    },
+    {
+      "name": "Team",
+      "countryId": "fi",
+      "city": "Helsinki"
+    },
+    {
+      "name": "Terror",
+      "countryId": "fi",
+      "city": "Turku"
+    },
+    {
+      "name": "UFO",
+      "countryId": "fi",
+      "city": "Tampere"
+    },
+    {
+      "name": "Freespeed Basel",
+      "countryId": "ch",
+      "city": "Basel"
+    },
+    {
+      "name": "Disc Club Panthers",
+      "countryId": "ch",
+      "city": "Bern"
+    },
+    {
+      "name": "Ratrac",
+      "countryId": "ch",
+      "city": "Bern"
+    },
+    {
+      "name": "Crazy Dogs",
+      "countryId": "ch",
+      "city": "Stans"
+    },
+    {
+      "name": "Budwig Ultimate",
+      "countryId": "ch",
+      "city": "Neuchâtel"
+    },
+    {
+      "name": "Fly High",
+      "countryId": "ch",
+      "city": "Lausanne"
+    },
+    {
+      "name": "Flying Angels",
+      "countryId": "ch",
+      "city": "Bern"
+    },
+    {
+      "name": "Flying Colors",
+      "countryId": "ch",
+      "city": "Oberkirch"
+    },
+    {
+      "name": "Flying Saucers",
+      "countryId": "ch",
+      "city": "Luzern"
+    },
+    {
+      "name": "Scorillaz",
+      "countryId": "ch",
+      "city": "Bern"
+    },
+    {
+      "name": "Solebang",
+      "countryId": "ch",
+      "city": "Cham"
+    },
+    {
+      "name": "Zürich Ultimate",
+      "countryId": "ch",
+      "city": "Zürich"
+    },
+    {
+      "name": "Hijack",
+      "countryId": "ch",
+      "city": "Kerns"
+    },
+    {
+      "name": "Mange-Disques",
+      "countryId": "ch",
+      "city": "Nyon"
+    },
+    {
+      "name": "Red I's",
+      "countryId": "ch",
+      "city": "Sarnen"
+    },
+    {
+      "name": "Skyhawks",
+      "countryId": "ch",
+      "city": "Winterthur"
+    },
+    {
+      "name": "Wizards",
+      "countryId": "ch",
+      "city": "Geneva"
+    },
+    {
+      "name": "Wombats",
+      "countryId": "ch",
+      "city": "Willisau"
+    },
+    {
+      "name": "Air Djewrek Ultimate",
+      "countryId": "rs",
+      "city": "Novi Sad"
+    },
+    {
+      "name": "Disko klipani",
+      "countryId": "rs",
+      "city": "Šabac"
+    },
+    {
+      "name": "Ultimate Frisbee Club WASPS",
+      "countryId": "rs",
+      "city": "Subotica"
+    },
+    {
+      "name": "Neradnički",
+      "countryId": "rs",
+      "city": "Beograd"
+    },
+    {
+      "name": "Klub letećeg diska SOKO",
+      "countryId": "rs",
+      "city": "Pančevo"
+    },
+    {
+      "name": "ČIČE",
+      "countryId": "rs",
+      "city": "Jagodina"
+    },
+    {
+      "name": "Cevap Ultimate Frisbee Club",
+      "countryId": "rs",
+      "city": "Beograd"
+    },
+    {
+      "name": "Mental Disorders",
+      "countryId": "sk",
+      "city": "Bratislava"
+    },
+    {
+      "name": "Scorpions",
+      "countryId": "sk",
+      "city": "Bratislava"
+    },
+    {
+      "name": "Discredit",
+      "countryId": "sk",
+      "city": "Bratislava"
+    },
+    {
+      "name": "Outsiterz",
+      "countryId": "sk",
+      "city": "Bratislava"
+    },
+    {
+      "name": "KEfear",
+      "countryId": "sk",
+      "city": "Košice"
+    },
+    {
+      "name": "Drop That Smile",
+      "countryId": "lt",
+      "city": "Vilnius"
+    },
+    {
+      "name": "KossMix",
+      "countryId": "lt",
+      "city": "Vilnius"
+    },
+    {
+      "name": "Marių Meškos",
+      "countryId": "lt",
+      "city": "Klaipėda"
+    },
+    {
+      "name": "Skraidantys Drambliai",
+      "countryId": "lt",
+      "city": "Kaunas"
+    },
+    {
+      "name": "Taška",
+      "countryId": "lt",
+      "city": "Zarasai"
+    },
+    {
+      "name": "Velniai",
+      "countryId": "lt",
+      "city": "Jurbarkas"
+    },
+    {
+      "name": "Vorai",
+      "countryId": "lt",
+      "city": "Vilnius"
+    },
+    {
+      "name": "Zepps",
+      "countryId": "lt",
+      "city": "Vilnius"
+    },
+    {
+      "name": "ZERO",
+      "countryId": "lt",
+      "city": "Vilnius"
+    },
+    {
+      "name": "Ah Ou Puc",
+      "countryId": "fr",
+      "city": "Paris"
+    },
+    {
+      "name": "Contact Disc Club",
+      "countryId": "fr",
+      "city": "Les Brouzils"
+    },
+    {
+      "name": "Euskadisk",
+      "countryId": "fr",
+      "city": "Biarritz"
+    },
+    {
+      "name": "Friselis",
+      "countryId": "fr",
+      "city": "Versailles"
+    },
+    {
+      "name": "Krampouz",
+      "countryId": "fr",
+      "city": "Lannion"
+    },
+    {
+      "name": "Mr Friz",
+      "countryId": "fr",
+      "city": "Rennes"
+    },
+    {
+      "name": "Frisbeurs Nantais",
+      "countryId": "fr",
+      "city": "Nantes"
+    },
+    {
+      "name": "Moustix",
+      "countryId": "fr",
+      "city": "Lyon"
+    },
+    {
+      "name": "Nantchester United",
+      "countryId": "fr",
+      "city": "Nantes"
+    },
+    {
+      "name": "Revolution'air",
+      "countryId": "fr",
+      "city": "Paris"
+    },
+    {
+      "name": "Ultimate Club Vesontio",
+      "countryId": "fr",
+      "city": "Besançon"
+    },
+    {
+      "name": "ZIGGLES",
+      "countryId": "fr",
+      "city": "Antibes"
+    },
+    {
+      "name": "Sneeekys",
+      "countryId": "gb",
+      "city": "Edinburgh",
+      "region": "Scotland"
+    },
+    {
+      "name": "Black Eagles",
+      "countryId": "gb",
+      "city": "Edinburgh",
+      "region": "Scotland"
+    },
+    {
+      "name": "Blaze",
+      "countryId": "gb",
+      "city": "Stirling",
+      "region": "Scotland"
+    },
+    {
+      "name": "Heriot-Watt",
+      "countryId": "gb",
+      "city": "Edinburgh",
+      "region": "Scotland"
+    },
+    {
+      "name": "Dark Horses",
+      "countryId": "gb",
+      "city": "Glasgow",
+      "region": "Scotland"
+    },
+    {
+      "name": "Far Flung",
+      "countryId": "gb",
+      "city": "Glasgow",
+      "region": "Scotland"
+    },
+    {
+      "name": "Glasgow Ultimate",
+      "countryId": "gb",
+      "city": "Glasgow",
+      "region": "Scotland"
+    },
+    {
+      "name": "GUXYZ",
+      "countryId": "gb",
+      "city": "Glasgow",
+      "region": "Scotland"
+    },
+    {
+      "name": "Flatball",
+      "countryId": "gb",
+      "city": "St Andrews",
+      "region": "Scotland"
+    },
+    {
+      "name": "Positive Mojo",
+      "countryId": "gb",
+      "city": "Aberdeen",
+      "region": "Scotland"
+    },
+    {
+      "name": "Ro Sham Bo",
+      "countryId": "gb",
+      "city": "Edinburgh",
+      "region": "Scotland"
+    },
+    {
+      "name": "Dundee Ultimate",
+      "countryId": "gb",
+      "city": "Dundee",
+      "region": "Scotland"
+    },
+    {
+      "name": "Ugly Ducklings Ultimate",
+      "countryId": "gb",
+      "city": "Swansea",
+      "region": "Wales"
+    },
+    {
+      "name": "R.P.M",
+      "countryId": "gb",
+      "city": "Swansea",
+      "region": "Wales"
+    },
+    {
+      "name": "Mwnci See",
+      "countryId": "gb",
+      "city": "Aberystwyth",
+      "region": "Wales"
+    },
+    {
+      "name": "Mwnci Do",
+      "countryId": "gb",
+      "city": "Aberystwyth",
+      "region": "Wales"
+    },
+    {
+      "name": "Aber Gold",
+      "countryId": "gb",
+      "city": "Aberystwyth",
+      "region": "Wales"
+    },
+    {
+      "name": "Frizee Rascals",
+      "countryId": "gb",
+      "city": "Bridgend",
+      "region": "Wales"
+    },
+    {
+      "name": "Bangor Ultimate",
+      "countryId": "gb",
+      "city": "Bangor",
+      "region": "Wales"
+    },
+    {
+      "name": "No Frills",
+      "countryId": "gb",
+      "city": "Cardiff",
+      "region": "Wales"
+    },
+    {
+      "name": "Brân Flakes",
+      "countryId": "gb",
+      "city": "Cwmbrân",
+      "region": "Wales"
+    },
+    {
+      "name": "Big Brother",
+      "countryId": "cn"
+    },
+    {
+      "name": "Beijing Bang",
+      "countryId": "cn"
+    },
+    {
+      "name": "Hangtime",
+      "countryId": "cn"
+    },
+    {
+      "name": "Air Kazak",
+      "countryId": "cn"
+    },
+    {
+      "name": "Tianjin Speed",
+      "countryId": "cn"
+    },
+    {
+      "name": "Guangzhou Storm",
+      "countryId": "cn"
+    },
+    {
+      "name": "Dalian Smurfs",
+      "countryId": "cn"
+    },
+    {
+      "name": "Ningbo UFO",
+      "countryId": "cn"
+    },
+    {
+      "name": "Shanghai Wings",
+      "countryId": "cn"
+    },
+    {
+      "name": "Shanghai HUWA",
+      "countryId": "cn"
+    },
+    {
+      "name": "Shenzhen Peng",
+      "countryId": "cn"
+    },
+    {
+      "name": "Shenzhen ZEN",
+      "countryId": "cn"
+    },
+    {
+      "name": "Qingdao FUQ",
+      "countryId": "cn"
+    },
+    {
+      "name": "Air Woo",
+      "countryId": "cn"
+    },
+    {
+      "name": "Hurricane Zhuhai",
+      "countryId": "cn"
+    },
+    {
+      "name": "Artemis Moonshot Academy",
+      "countryId": "cn",
+      "city": "Beijing"
+    },
+    {
+      "name": "Air Traffic Control",
+      "countryId": "in",
+      "city": "Bangalore"
+    },
+    {
+      "name": "Airbenders",
+      "countryId": "in",
+      "city": "Bangalore"
+    },
+    {
+      "name": "Airborne",
+      "countryId": "in",
+      "city": "Chennai"
+    },
+    {
+      "name": "Alphas",
+      "countryId": "in",
+      "city": "Auroville"
+    },
+    {
+      "name": "Ashoka Hammerheads",
+      "countryId": "in",
+      "city": "Sonepat"
+    },
+    {
+      "name": "BITS UFC",
+      "countryId": "in",
+      "city": "Goa"
+    },
+    {
+      "name": "Blitzkrieg",
+      "countryId": "in",
+      "city": "Chennai"
+    },
+    {
+      "name": "Callahans",
+      "countryId": "in",
+      "city": "Chennai"
+    },
+    {
+      "name": "Chakraa",
+      "countryId": "in",
+      "city": "Chennai"
+    },
+    {
+      "name": "Deaf and Dumb",
+      "countryId": "in",
+      "city": "Surat"
+    },
+    {
+      "name": "Disc-o-Deewane",
+      "countryId": "in",
+      "city": "Bangalore"
+    },
+    {
+      "name": "Discotech",
+      "countryId": "in",
+      "city": "Hyderabad"
+    },
+    {
+      "name": "Discreed",
+      "countryId": "in",
+      "city": "Coimbatore"
+    },
+    {
+      "name": "Dream Catchers",
+      "countryId": "in",
+      "city": "Ahmedabad"
+    },
+    {
+      "name": "Falcons",
+      "countryId": "in",
+      "city": "Bangalore"
+    },
+    {
+      "name": "FlyWild",
+      "countryId": "in",
+      "city": "Chennai"
+    },
+    {
+      "name": "Jumbish",
+      "countryId": "in",
+      "city": "Surat"
+    },
+    {
+      "name": "Learning To Fly",
+      "countryId": "in",
+      "city": "Bangalore"
+    },
+    {
+      "name": "Minions",
+      "countryId": "in",
+      "city": "Surat"
+    },
+    {
+      "name": "Night Crawlers",
+      "countryId": "in",
+      "city": "Mumbai"
+    },
+    {
+      "name": "Spinergy",
+      "countryId": "in",
+      "city": "Auroville"
+    },
+    {
+      "name": "Stall 7",
+      "countryId": "in",
+      "city": "Chennai"
+    },
+    {
+      "name": "Storm Chasers",
+      "countryId": "in",
+      "city": "Mumbai"
+    },
+    {
+      "name": "Strikers",
+      "countryId": "in",
+      "city": "Surat"
+    },
+    {
+      "name": "Thatte Idli Kaal Soup",
+      "countryId": "in",
+      "city": "Bangalore"
+    },
+    {
+      "name": "Trailblazers",
+      "countryId": "in",
+      "city": "Surat"
+    },
+    {
+      "name": "West Coast Rascals",
+      "countryId": "in",
+      "city": "Mumbai"
+    },
+    {
+      "name": "Zero Gravity",
+      "countryId": "in",
+      "city": "Surat"
+    },
+    {
+      "name": "Dragons",
+      "countryId": "ph"
+    },
+    {
+      "name": "Pirates",
+      "countryId": "ph"
+    },
+    {
+      "name": "Sunken Pleasure",
+      "countryId": "ph"
+    },
+    {
+      "name": "Rogers",
+      "countryId": "ph"
+    },
+    {
+      "name": "Sid Vicious",
+      "countryId": "ph"
+    },
+    {
+      "name": "Stags Ultimate",
+      "countryId": "ph"
+    },
+    {
+      "name": "Friday Frisbee — AUP",
+      "countryId": "ph"
+    },
+    {
+      "name": "Circuit Breakers",
+      "countryId": "ph"
+    },
+    {
+      "name": "Ateneo Ultimate",
+      "countryId": "ph"
+    },
+    {
+      "name": "Weekend Karma",
+      "countryId": "ph"
+    },
+    {
+      "name": "Admirals Ultimate",
+      "countryId": "ph"
+    },
+    {
+      "name": "Woodrose Ultimate",
+      "countryId": "ph"
+    },
+    {
+      "name": "South Luzon Ultimate",
+      "countryId": "ph"
+    },
+    {
+      "name": "Monsters",
+      "countryId": "ph"
+    },
+    {
+      "name": "Cavite Kids",
+      "countryId": "ph"
+    },
+    {
+      "name": "Pusakalz",
+      "countryId": "ph"
+    },
+    {
+      "name": "Animo Ultimate",
+      "countryId": "ph"
+    },
+    {
+      "name": "Super Bueno",
+      "countryId": "ph"
+    },
+    {
+      "name": "UP DUO",
+      "countryId": "ph"
+    },
+    {
+      "name": "Barangay Don Jose Spiders",
+      "countryId": "ph"
+    },
+    {
+      "name": "Blackfleet Ultimate",
+      "countryId": "ph"
+    },
+    {
+      "name": "Xavier Ultimate",
+      "countryId": "ph"
+    },
+    {
+      "name": "Shiok",
+      "countryId": "sg"
+    },
+    {
+      "name": "Chuckies",
+      "countryId": "sg"
+    },
+    {
+      "name": "Disc Knights",
+      "countryId": "sg"
+    },
+    {
+      "name": "Distractors",
+      "countryId": "sg"
+    },
+    {
+      "name": "Freakshow",
+      "countryId": "sg"
+    },
+    {
+      "name": "Thirsty Camels Ultimate",
+      "countryId": "sg"
+    },
+    {
+      "name": "Zero Displacement",
+      "countryId": "sg"
+    },
+    {
+      "name": "Helix",
+      "countryId": "sg"
+    },
+    {
+      "name": "Rascals",
+      "countryId": "sg"
+    },
+    {
+      "name": "Havoc",
+      "countryId": "sg"
+    },
+    {
+      "name": "Crimson Clovers",
+      "countryId": "sg"
+    },
+    {
+      "name": "Crackerjacks",
+      "countryId": "sg"
+    },
+    {
+      "name": "Appendix",
+      "countryId": "sg"
+    },
+    {
+      "name": "Fu Fighters",
+      "countryId": "sg"
+    },
+    {
+      "name": "Catch 22",
+      "countryId": "za",
+      "city": "Cape Town"
+    },
+    {
+      "name": "Chilli",
+      "countryId": "za",
+      "city": "Cape Town"
+    },
+    {
+      "name": "Gale Force",
+      "countryId": "za",
+      "city": "Port Elizabeth"
+    },
+    {
+      "name": "Ghost Ultimate Club",
+      "countryId": "za",
+      "city": "Cape Town"
+    },
+    {
+      "name": "Hammerheads",
+      "countryId": "za",
+      "city": "East London"
+    },
+    {
+      "name": "Labradors",
+      "countryId": "za",
+      "city": "Pretoria"
+    },
+    {
+      "name": "Long Donkeys",
+      "countryId": "za",
+      "city": "Pietermaritzburg"
+    },
+    {
+      "name": "Maties Ultimate",
+      "countryId": "za",
+      "city": "Stellenbosch"
+    },
+    {
+      "name": "Orange Farm",
+      "countryId": "za",
+      "city": "Johannesburg"
+    },
+    {
+      "name": "Bunnies",
+      "countryId": "za",
+      "city": "Durban"
+    },
+    {
+      "name": "Rebels",
+      "countryId": "za",
+      "city": "East London"
+    },
+    {
+      "name": "Zone Rangers",
+      "countryId": "za",
+      "city": "Johannesburg"
+    },
+    {
+      "name": "Salusa 45",
+      "countryId": "za",
+      "city": "Cape Town"
+    },
+    {
+      "name": "Skyveld",
+      "countryId": "za",
+      "city": "Johannesburg"
+    },
+    {
+      "name": "Soweto Ultimate",
+      "countryId": "za",
+      "city": "Johannesburg"
+    },
+    {
+      "name": "UCT Flying Tigers",
+      "countryId": "za",
+      "city": "Cape Town"
+    },
+    {
+      "name": "UCT Roaring Tigers",
+      "countryId": "za",
+      "city": "Cape Town"
+    },
+    {
+      "name": "Ult Ctrl Del",
+      "countryId": "za",
+      "city": "Johannesburg"
+    },
+    {
+      "name": "Ultimates",
+      "countryId": "za",
+      "city": "Polokwane"
+    },
+    {
+      "name": "Ultitude",
+      "countryId": "za",
+      "city": "Gauteng"
+    },
+    {
+      "name": "WITS Voodoo Kudus",
+      "countryId": "za",
+      "city": "Johannesburg"
+    }
+  ]
+}

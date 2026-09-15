@@ -32,7 +32,7 @@ import {
 
 function FacilityCard({ team, facilityId, budget, lang, t, busy, onUpgrade }) {
   const level = getFacilityLevel(team, facilityId)
-  const cost = facilityUpgradeCost(facilityId, level)
+  const cost = facilityUpgradeCost(facilityId, level, team)
   const canUpgrade = cost != null && budget >= cost && !busy && !team.facilityProject
   const name = facilityName(facilityId, lang)
 

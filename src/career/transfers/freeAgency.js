@@ -66,6 +66,7 @@ export function findPlayerAnywhere(world, playerId) {
  */
 export function releasePlayerToFreeAgency(team, player, world) {
   if (!team || !player || !world) return { ok: false, error: 'missing' }
+  if (team.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
   ensureWorldFreeAgents(world)
   const idx = (team.players ?? []).findIndex((p) => String(p.id) === String(player.id))
   if (idx < 0) return { ok: false, error: 'not_on_roster' }
@@ -90,6 +91,7 @@ export function signFreeAgent(career, opts) {
   const buyerId = opts.buyerTeamId ?? career.playerTeamId
   const buyer = worldTeamById(world, buyerId)
   if (!buyer) return { ok: false, error: 'Brak klubu' }
+  if (buyer.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
   if ((buyer.players?.length ?? 0) >= 32) return { ok: false, error: 'Limit 32 seniorów / Senior roster limit' }
   const faIdx = world.freeAgents.findIndex((p) => String(p.id) === String(opts.playerId))
   if (faIdx < 0) return { ok: false, error: 'Zawodnik nie jest wolnym agentem' }
@@ -153,6 +155,7 @@ export function renewPlayerContract(career, opts) {
   if (!world) return { ok: false, error: 'Brak świata kariery' }
 
   const team = worldTeamById(world, career.playerTeamId)
+  if (team?.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
   const found = findPlayerAnywhere(world, opts.playerId)
   if (!team || !found || found.freeAgent) {
     return { ok: false, error: 'Nie znaleziono zawodnika' }
@@ -255,7 +258,7 @@ export function processAiContractCycle(world, { playerTeamId = null, seed = 1, l
   let salt = seed >>> 0
 
   for (const team of worldTeamsList(world)) {
-    if (team.id === playerTeamId) continue
+    if (team.id === playerTeamId || team.simulationMode === 'off') continue
     const players = [...(team.players ?? [])]
     if (players.length === 0) continue
 
@@ -389,7 +392,7 @@ export function simulateAiFreeAgentSignings(
 
   for (const team of worldTeamsList(world).sort((a, b) => a.players.length - b.players.length)) {
     if (deals >= maxDeals) break
-    if (team.id === career.playerTeamId) continue
+    if (team.id === career.playerTeamId || team.simulationMode === 'off') continue
     if ((team.players?.length ?? 0) >= Math.min(AI_ROSTER_HARD_CAP, rosterTarget)) continue
 
     // Im dalej pod celem, tym więcej podpisań może zrobić ten klub w tym przebiegu.

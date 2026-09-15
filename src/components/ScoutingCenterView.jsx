@@ -108,11 +108,12 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
     })
     .filter(Boolean)
 
-  const leagueTeams = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
+  const leagueTeams = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId && t.simulationMode !== 'off')
 
   function handleScout(playerId, clubId) {
     const result = queueScoutMission(buyer, {
       kind: 'player',
+      world: career.world,
       targetPlayerId: playerId,
       opponentTeamId: clubId,
       date: career.league?.currentDate ?? null,

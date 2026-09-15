@@ -1,0 +1,2067 @@
+{
+  "source": "https://scores.frisbee.pl (PSGU Scores, Ultiorganizer) - ?view=playerlist&Team=<id>, Open division",
+  "division": "Open (Men's)",
+  "note": "Unique among every source in this project: the Polish federation publishes CAREER-CUMULATIVE totals, not per-event stats. `tournaments` and `games` count a player's whole recorded career since 2010, and `assists`/`goals`/`total` likewise ('Punkty' on the source = goals, 'Suma' = assists + goals). Do NOT mix these numbers with the per-event stats in eucsRealRosters.json / cucRealRosters.json without normalising by games first. The source publishes no jersey numbers and no positions on the player-list view.",
+  "teamSelection": "16 distinct clubs drawn from Mistrzostwa Polski O/W across seasons 2019-2026 (the newest squad entry per club was used). Deliberately skipped: Warsaw Mets 2 (second squad of the same club as Warsaw Mets 1) and Ravens Junior (a youth side).",
+  "note2": "Polish Open is not men-only in practice. Three women who appear on the source rosters were removed on request: Marcela Folek (2B), Zuzanna Korczycka (Boa D) and Sonia Kasińska (KrakUF Open). Squad sizes below are therefore one short of the source for those three clubs.",
+  "fetchedAt": "2026-09-15",
+  "teams": {
+    "psgu-2b": {
+      "name": "2B",
+      "club": "2obvious Bielsko-Biała",
+      "sourceId": 3503,
+      "players": [
+        {
+          "firstName": "Jakub",
+          "lastName": "Balon",
+          "tournaments": 3,
+          "games": 16,
+          "assists": 3,
+          "goals": 9,
+          "total": 12
+        },
+        {
+          "firstName": "Bartłomiej",
+          "lastName": "Bizoń",
+          "tournaments": 57,
+          "games": 334,
+          "assists": 444,
+          "goals": 305,
+          "total": 749
+        },
+        {
+          "firstName": "Marcin",
+          "lastName": "Czubienko",
+          "tournaments": 9,
+          "games": 58,
+          "assists": 21,
+          "goals": 39,
+          "total": 60
+        },
+        {
+          "firstName": "Radosław",
+          "lastName": "Dereń",
+          "tournaments": 3,
+          "games": 28,
+          "assists": 1,
+          "goals": 23,
+          "total": 24
+        },
+        {
+          "firstName": "Bartosz",
+          "lastName": "Haładus",
+          "tournaments": 33,
+          "games": 200,
+          "assists": 195,
+          "goals": 172,
+          "total": 367
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Kołodziejczyk",
+          "tournaments": 36,
+          "games": 186,
+          "assists": 311,
+          "goals": 92,
+          "total": 403
+        },
+        {
+          "firstName": "Adam",
+          "lastName": "Połącarz",
+          "tournaments": 2,
+          "games": 11,
+          "assists": 0,
+          "goals": 5,
+          "total": 5
+        },
+        {
+          "firstName": "Tomasz",
+          "lastName": "Siuciak",
+          "tournaments": 8,
+          "games": 50,
+          "assists": 8,
+          "goals": 42,
+          "total": 50
+        },
+        {
+          "firstName": "Bartłomiej",
+          "lastName": "Skowronek",
+          "tournaments": 24,
+          "games": 126,
+          "assists": 138,
+          "goals": 163,
+          "total": 301
+        },
+        {
+          "firstName": "Marek",
+          "lastName": "Wróbel",
+          "tournaments": 12,
+          "games": 80,
+          "assists": 14,
+          "goals": 64,
+          "total": 78
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Zarzecki",
+          "tournaments": 9,
+          "games": 51,
+          "assists": 10,
+          "goals": 51,
+          "total": 61
+        },
+        {
+          "firstName": "Łukasz",
+          "lastName": "Zawiła",
+          "tournaments": 8,
+          "games": 43,
+          "assists": 13,
+          "goals": 47,
+          "total": 60
+        }
+      ]
+    },
+    "psgu-boa-d": {
+      "name": "Boa D",
+      "club": "Pogoń Pyton Warszawa",
+      "sourceId": 3504,
+      "players": [
+        {
+          "firstName": "Wojciech",
+          "lastName": "Drzewicki",
+          "tournaments": 34,
+          "games": 212,
+          "assists": 213,
+          "goals": 100,
+          "total": 313
+        },
+        {
+          "firstName": "Andrzej",
+          "lastName": "Frymus",
+          "tournaments": 18,
+          "games": 130,
+          "assists": 131,
+          "goals": 254,
+          "total": 385
+        },
+        {
+          "firstName": "Rafał",
+          "lastName": "Furman",
+          "tournaments": 31,
+          "games": 205,
+          "assists": 191,
+          "goals": 137,
+          "total": 328
+        },
+        {
+          "firstName": "Anton",
+          "lastName": "Gatsko",
+          "tournaments": 17,
+          "games": 128,
+          "assists": 55,
+          "goals": 220,
+          "total": 275
+        },
+        {
+          "firstName": "Aleksander",
+          "lastName": "Geło",
+          "tournaments": 18,
+          "games": 147,
+          "assists": 71,
+          "goals": 36,
+          "total": 107
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Hołubowicz",
+          "tournaments": 38,
+          "games": 279,
+          "assists": 544,
+          "goals": 304,
+          "total": 848
+        },
+        {
+          "firstName": "Szymon",
+          "lastName": "Kaczmarczyk",
+          "tournaments": 32,
+          "games": 234,
+          "assists": 200,
+          "goals": 163,
+          "total": 363
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Pieszczek",
+          "tournaments": 6,
+          "games": 40,
+          "assists": 35,
+          "goals": 50,
+          "total": 85
+        },
+        {
+          "firstName": "Jan",
+          "lastName": "Zwolan",
+          "tournaments": 14,
+          "games": 83,
+          "assists": 20,
+          "goals": 101,
+          "total": 121
+        }
+      ]
+    },
+    "psgu-bob": {
+      "name": "BOB",
+      "club": "BOB Wrocław",
+      "sourceId": 3505,
+      "players": [
+        {
+          "firstName": "Oskar",
+          "lastName": "Boguszewski",
+          "tournaments": 30,
+          "games": 180,
+          "assists": 491,
+          "goals": 367,
+          "total": 858
+        },
+        {
+          "firstName": "Alex",
+          "lastName": "Bradshaw",
+          "tournaments": 1,
+          "games": 6,
+          "assists": 12,
+          "goals": 8,
+          "total": 20
+        },
+        {
+          "firstName": "Benedykt",
+          "lastName": "Deskur",
+          "tournaments": 31,
+          "games": 193,
+          "assists": 377,
+          "goals": 285,
+          "total": 662
+        },
+        {
+          "firstName": "Wojciech",
+          "lastName": "Jastrzębski",
+          "tournaments": 26,
+          "games": 155,
+          "assists": 393,
+          "goals": 168,
+          "total": 561
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Krotliński",
+          "tournaments": 43,
+          "games": 224,
+          "assists": 329,
+          "goals": 108,
+          "total": 437
+        },
+        {
+          "firstName": "Oskar",
+          "lastName": "Łuc",
+          "tournaments": 22,
+          "games": 139,
+          "assists": 283,
+          "goals": 306,
+          "total": 589
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Pająk",
+          "tournaments": 34,
+          "games": 169,
+          "assists": 268,
+          "goals": 136,
+          "total": 404
+        },
+        {
+          "firstName": "Krzysztof",
+          "lastName": "Rud",
+          "tournaments": 28,
+          "games": 194,
+          "assists": 330,
+          "goals": 232,
+          "total": 562
+        },
+        {
+          "firstName": "Łukasz",
+          "lastName": "Szewczyk",
+          "tournaments": 27,
+          "games": 130,
+          "assists": 60,
+          "goals": 84,
+          "total": 144
+        },
+        {
+          "firstName": "Tymon",
+          "lastName": "Włodarczyk",
+          "tournaments": 25,
+          "games": 154,
+          "assists": 236,
+          "goals": 333,
+          "total": 569
+        },
+        {
+          "firstName": "Andrzej",
+          "lastName": "Zaród",
+          "tournaments": 27,
+          "games": 140,
+          "assists": 237,
+          "goals": 212,
+          "total": 449
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Zięba",
+          "tournaments": 38,
+          "games": 227,
+          "assists": 411,
+          "goals": 261,
+          "total": 672
+        },
+        {
+          "firstName": "Krystian",
+          "lastName": "Ziółkowski",
+          "tournaments": 40,
+          "games": 291,
+          "assists": 649,
+          "goals": 291,
+          "total": 940
+        }
+      ]
+    },
+    "psgu-krakuf-open": {
+      "name": "KrakUF Open",
+      "club": "KrakUF Kraków",
+      "sourceId": 3506,
+      "players": [
+        {
+          "firstName": "Maksym",
+          "lastName": "Bocharov",
+          "tournaments": 0,
+          "games": 0,
+          "assists": 0,
+          "goals": 0,
+          "total": 0
+        },
+        {
+          "firstName": "Dawid",
+          "lastName": "Bucki",
+          "tournaments": 2,
+          "games": 9,
+          "assists": 1,
+          "goals": 2,
+          "total": 3
+        },
+        {
+          "firstName": "Mateusz",
+          "lastName": "Frowal",
+          "tournaments": 33,
+          "games": 194,
+          "assists": 142,
+          "goals": 93,
+          "total": 235
+        },
+        {
+          "firstName": "Myroslav",
+          "lastName": "Golub",
+          "tournaments": 3,
+          "games": 11,
+          "assists": 0,
+          "goals": 0,
+          "total": 0
+        },
+        {
+          "firstName": "Mikita",
+          "lastName": "Holmak",
+          "tournaments": 8,
+          "games": 58,
+          "assists": 20,
+          "goals": 70,
+          "total": 90
+        },
+        {
+          "firstName": "Kajetan",
+          "lastName": "Kaufka",
+          "tournaments": 2,
+          "games": 23,
+          "assists": 2,
+          "goals": 8,
+          "total": 10
+        },
+        {
+          "firstName": "Clément",
+          "lastName": "Legrand",
+          "tournaments": 4,
+          "games": 34,
+          "assists": 16,
+          "goals": 36,
+          "total": 52
+        },
+        {
+          "firstName": "Bartłomiej",
+          "lastName": "Michalski",
+          "tournaments": 22,
+          "games": 149,
+          "assists": 95,
+          "goals": 203,
+          "total": 298
+        },
+        {
+          "firstName": "Henadzi",
+          "lastName": "Mudreuski",
+          "tournaments": 3,
+          "games": 18,
+          "assists": 20,
+          "goals": 21,
+          "total": 41
+        },
+        {
+          "firstName": "Chris",
+          "lastName": "Prosser",
+          "tournaments": 44,
+          "games": 214,
+          "assists": 474,
+          "goals": 197,
+          "total": 671
+        },
+        {
+          "firstName": "Vladyslav",
+          "lastName": "Rachek",
+          "tournaments": 19,
+          "games": 115,
+          "assists": 71,
+          "goals": 85,
+          "total": 156
+        }
+      ]
+    },
+    "psgu-ravens": {
+      "name": "Ravens",
+      "club": "Panthers Wrocław",
+      "sourceId": 3508,
+      "players": [
+        {
+          "firstName": "Jakub",
+          "lastName": "Bołba",
+          "tournaments": 23,
+          "games": 120,
+          "assists": 95,
+          "goals": 101,
+          "total": 196
+        },
+        {
+          "firstName": "Filip",
+          "lastName": "Dobranowski",
+          "tournaments": 53,
+          "games": 268,
+          "assists": 623,
+          "goals": 244,
+          "total": 867
+        },
+        {
+          "firstName": "Łukasz",
+          "lastName": "Dobranowski",
+          "tournaments": 49,
+          "games": 244,
+          "assists": 462,
+          "goals": 121,
+          "total": 583
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Dunecki",
+          "tournaments": 21,
+          "games": 111,
+          "assists": 116,
+          "goals": 133,
+          "total": 249
+        },
+        {
+          "firstName": "Bruno",
+          "lastName": "Jamuła",
+          "tournaments": 27,
+          "games": 126,
+          "assists": 146,
+          "goals": 163,
+          "total": 309
+        },
+        {
+          "firstName": "Bartosz",
+          "lastName": "Kierecki",
+          "tournaments": 26,
+          "games": 137,
+          "assists": 160,
+          "goals": 160,
+          "total": 320
+        },
+        {
+          "firstName": "Stanisław",
+          "lastName": "Krysiak",
+          "tournaments": 32,
+          "games": 194,
+          "assists": 353,
+          "goals": 174,
+          "total": 527
+        },
+        {
+          "firstName": "Szymon",
+          "lastName": "Magiera",
+          "tournaments": 34,
+          "games": 201,
+          "assists": 229,
+          "goals": 217,
+          "total": 446
+        },
+        {
+          "firstName": "Karol",
+          "lastName": "Olszewski",
+          "tournaments": 16,
+          "games": 96,
+          "assists": 68,
+          "goals": 79,
+          "total": 147
+        },
+        {
+          "firstName": "Paweł",
+          "lastName": "Rak",
+          "tournaments": 11,
+          "games": 35,
+          "assists": 6,
+          "goals": 23,
+          "total": 29
+        },
+        {
+          "firstName": "Damian",
+          "lastName": "Rosiak",
+          "tournaments": 22,
+          "games": 119,
+          "assists": 261,
+          "goals": 105,
+          "total": 366
+        },
+        {
+          "firstName": "Antoni",
+          "lastName": "Włodarczyk",
+          "tournaments": 17,
+          "games": 94,
+          "assists": 16,
+          "goals": 57,
+          "total": 73
+        },
+        {
+          "firstName": "Tomasz",
+          "lastName": "Zatoń",
+          "tournaments": 60,
+          "games": 351,
+          "assists": 537,
+          "goals": 516,
+          "total": 1053
+        }
+      ]
+    },
+    "psgu-sky-this": {
+      "name": "Sky This",
+      "club": "Sky This Warszawa",
+      "sourceId": 3509,
+      "players": [
+        {
+          "firstName": "Antoni",
+          "lastName": "Bobrowski",
+          "tournaments": 3,
+          "games": 29,
+          "assists": 22,
+          "goals": 31,
+          "total": 53
+        },
+        {
+          "firstName": "Yahor",
+          "lastName": "Bychenok",
+          "tournaments": 4,
+          "games": 30,
+          "assists": 29,
+          "goals": 31,
+          "total": 60
+        },
+        {
+          "firstName": "Mateusz",
+          "lastName": "Dyda",
+          "tournaments": 52,
+          "games": 371,
+          "assists": 666,
+          "goals": 287,
+          "total": 953
+        },
+        {
+          "firstName": "Fryderyk",
+          "lastName": "Gzowski",
+          "tournaments": 5,
+          "games": 29,
+          "assists": 10,
+          "goals": 28,
+          "total": 38
+        },
+        {
+          "firstName": "Piotr",
+          "lastName": "Kuszewski",
+          "tournaments": 83,
+          "games": 678,
+          "assists": 1309,
+          "goals": 628,
+          "total": 1937
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Litwiński",
+          "tournaments": 48,
+          "games": 331,
+          "assists": 554,
+          "goals": 355,
+          "total": 909
+        },
+        {
+          "firstName": "Antoni",
+          "lastName": "Mazan",
+          "tournaments": 6,
+          "games": 29,
+          "assists": 20,
+          "goals": 31,
+          "total": 51
+        },
+        {
+          "firstName": "Tytus",
+          "lastName": "Mazan",
+          "tournaments": 7,
+          "games": 39,
+          "assists": 46,
+          "goals": 24,
+          "total": 70
+        },
+        {
+          "firstName": "Zygmunt",
+          "lastName": "Święcicki",
+          "tournaments": 4,
+          "games": 26,
+          "assists": 9,
+          "goals": 27,
+          "total": 36
+        }
+      ]
+    },
+    "psgu-warsaw-mets": {
+      "name": "Warsaw Mets 1",
+      "club": "AKS Zły Warszawa",
+      "sourceId": 3510,
+      "players": [
+        {
+          "firstName": "Andrii",
+          "lastName": "Chulii",
+          "tournaments": 10,
+          "games": 82,
+          "assists": 142,
+          "goals": 117,
+          "total": 259
+        },
+        {
+          "firstName": "Jan",
+          "lastName": "Ciepielewski",
+          "tournaments": 38,
+          "games": 251,
+          "assists": 258,
+          "goals": 118,
+          "total": 376
+        },
+        {
+          "firstName": "Stanisław",
+          "lastName": "Gerus",
+          "tournaments": 21,
+          "games": 117,
+          "assists": 72,
+          "goals": 76,
+          "total": 148
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Kapuściński",
+          "tournaments": 32,
+          "games": 216,
+          "assists": 129,
+          "goals": 129,
+          "total": 258
+        },
+        {
+          "firstName": "Ernest",
+          "lastName": "Małkiewicz",
+          "tournaments": 8,
+          "games": 58,
+          "assists": 5,
+          "goals": 16,
+          "total": 21
+        },
+        {
+          "firstName": "Filip",
+          "lastName": "Matusewicz",
+          "tournaments": 14,
+          "games": 105,
+          "assists": 93,
+          "goals": 165,
+          "total": 258
+        },
+        {
+          "firstName": "Kacper",
+          "lastName": "Reszke",
+          "tournaments": 23,
+          "games": 159,
+          "assists": 73,
+          "goals": 163,
+          "total": 236
+        },
+        {
+          "firstName": "Jan",
+          "lastName": "Wroniszewski",
+          "tournaments": 14,
+          "games": 89,
+          "assists": 63,
+          "goals": 117,
+          "total": 180
+        },
+        {
+          "firstName": "Krzysztof",
+          "lastName": "Zając",
+          "tournaments": 89,
+          "games": 659,
+          "assists": 1299,
+          "goals": 1650,
+          "total": 2949
+        },
+        {
+          "firstName": "Stanisław",
+          "lastName": "Zakrzewski",
+          "tournaments": 28,
+          "games": 198,
+          "assists": 296,
+          "goals": 248,
+          "total": 544
+        }
+      ]
+    },
+    "psgu-aksavage": {
+      "name": "AKSavage",
+      "club": "Savage Ultimate Dopiewo",
+      "sourceId": 3399,
+      "players": [
+        {
+          "firstName": "Mateusz",
+          "lastName": "Bąk",
+          "tournaments": 38,
+          "games": 221,
+          "assists": 80,
+          "goals": 306,
+          "total": 386
+        },
+        {
+          "firstName": "Wojciech",
+          "lastName": "Bogdanów",
+          "tournaments": 28,
+          "games": 184,
+          "assists": 149,
+          "goals": 224,
+          "total": 373
+        },
+        {
+          "firstName": "Kacper",
+          "lastName": "Fryszczyn",
+          "tournaments": 49,
+          "games": 382,
+          "assists": 399,
+          "goals": 358,
+          "total": 757
+        },
+        {
+          "firstName": "Mateusz",
+          "lastName": "Gibki",
+          "tournaments": 59,
+          "games": 332,
+          "assists": 1222,
+          "goals": 286,
+          "total": 1508
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Kaczmarek",
+          "tournaments": 49,
+          "games": 274,
+          "assists": 254,
+          "goals": 600,
+          "total": 854
+        },
+        {
+          "firstName": "Stanisław",
+          "lastName": "Kopeć",
+          "tournaments": 23,
+          "games": 143,
+          "assists": 44,
+          "goals": 143,
+          "total": 187
+        },
+        {
+          "firstName": "Adam",
+          "lastName": "Łepak",
+          "tournaments": 73,
+          "games": 432,
+          "assists": 576,
+          "goals": 403,
+          "total": 979
+        },
+        {
+          "firstName": "Jan",
+          "lastName": "Madej",
+          "tournaments": 90,
+          "games": 697,
+          "assists": 1269,
+          "goals": 379,
+          "total": 1648
+        },
+        {
+          "firstName": "Sebastian",
+          "lastName": "Mańczak",
+          "tournaments": 26,
+          "games": 136,
+          "assists": 63,
+          "goals": 68,
+          "total": 131
+        },
+        {
+          "firstName": "Antoni",
+          "lastName": "Mirecki",
+          "tournaments": 23,
+          "games": 120,
+          "assists": 43,
+          "goals": 183,
+          "total": 226
+        },
+        {
+          "firstName": "Jędrzej",
+          "lastName": "Nowak",
+          "tournaments": 29,
+          "games": 143,
+          "assists": 110,
+          "goals": 207,
+          "total": 317
+        },
+        {
+          "firstName": "Ksawery",
+          "lastName": "Olewski",
+          "tournaments": 22,
+          "games": 119,
+          "assists": 12,
+          "goals": 45,
+          "total": 57
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Romanowski",
+          "tournaments": 20,
+          "games": 116,
+          "assists": 62,
+          "goals": 113,
+          "total": 175
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Schiller",
+          "tournaments": 57,
+          "games": 304,
+          "assists": 345,
+          "goals": 280,
+          "total": 625
+        },
+        {
+          "firstName": "Konstanty",
+          "lastName": "Święcicki",
+          "tournaments": 80,
+          "games": 597,
+          "assists": 677,
+          "goals": 668,
+          "total": 1345
+        }
+      ]
+    },
+    "psgu-polish-devils": {
+      "name": "Polish Devils",
+      "club": "Polish Devils",
+      "sourceId": 3404,
+      "players": [
+        {
+          "firstName": "Christopher",
+          "lastName": "Ćwikliński",
+          "tournaments": 12,
+          "games": 60,
+          "assists": 30,
+          "goals": 52,
+          "total": 82
+        },
+        {
+          "firstName": "Mikołaj",
+          "lastName": "Folaron-Pamuła",
+          "tournaments": 32,
+          "games": 188,
+          "assists": 243,
+          "goals": 327,
+          "total": 570
+        },
+        {
+          "firstName": "Piotr",
+          "lastName": "Jarząbek",
+          "tournaments": 6,
+          "games": 30,
+          "assists": 1,
+          "goals": 11,
+          "total": 12
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Kiciński",
+          "tournaments": 5,
+          "games": 23,
+          "assists": 4,
+          "goals": 9,
+          "total": 13
+        },
+        {
+          "firstName": "Dominik",
+          "lastName": "Korzniakow",
+          "tournaments": 14,
+          "games": 76,
+          "assists": 101,
+          "goals": 75,
+          "total": 176
+        },
+        {
+          "firstName": "Daniel",
+          "lastName": "Kuhfeldt",
+          "tournaments": 25,
+          "games": 145,
+          "assists": 155,
+          "goals": 26,
+          "total": 181
+        },
+        {
+          "firstName": "Jędrzej",
+          "lastName": "Maciaszczyk",
+          "tournaments": 3,
+          "games": 14,
+          "assists": 0,
+          "goals": 3,
+          "total": 3
+        },
+        {
+          "firstName": "Andrzej",
+          "lastName": "Nicieja",
+          "tournaments": 2,
+          "games": 9,
+          "assists": 2,
+          "goals": 1,
+          "total": 3
+        },
+        {
+          "firstName": "Dariusz",
+          "lastName": "Nowakowski",
+          "tournaments": 7,
+          "games": 32,
+          "assists": 4,
+          "goals": 6,
+          "total": 10
+        },
+        {
+          "firstName": "Tymoteusz",
+          "lastName": "Palka",
+          "tournaments": 14,
+          "games": 100,
+          "assists": 12,
+          "goals": 55,
+          "total": 67
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Stroiński",
+          "tournaments": 3,
+          "games": 21,
+          "assists": 3,
+          "goals": 17,
+          "total": 20
+        },
+        {
+          "firstName": "Robbie",
+          "lastName": "Sweeney",
+          "tournaments": 3,
+          "games": 15,
+          "assists": 6,
+          "goals": 10,
+          "total": 16
+        }
+      ]
+    },
+    "psgu-rjp-open": {
+      "name": "RJP Open",
+      "club": "RJP Warszawa",
+      "sourceId": 3401,
+      "players": [
+        {
+          "firstName": "Oleg",
+          "lastName": "Baibuz",
+          "tournaments": 38,
+          "games": 293,
+          "assists": 398,
+          "goals": 402,
+          "total": 800
+        },
+        {
+          "firstName": "Antoni",
+          "lastName": "Baran",
+          "tournaments": 5,
+          "games": 27,
+          "assists": 2,
+          "goals": 31,
+          "total": 33
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Kaługa",
+          "tournaments": 26,
+          "games": 213,
+          "assists": 263,
+          "goals": 274,
+          "total": 537
+        },
+        {
+          "firstName": "Ruslan",
+          "lastName": "Komarovskyi",
+          "tournaments": 30,
+          "games": 202,
+          "assists": 278,
+          "goals": 254,
+          "total": 532
+        },
+        {
+          "firstName": "Mateusz",
+          "lastName": "Krasowski",
+          "tournaments": 26,
+          "games": 201,
+          "assists": 133,
+          "goals": 386,
+          "total": 519
+        },
+        {
+          "firstName": "Eugene",
+          "lastName": "Marchukevich",
+          "tournaments": 12,
+          "games": 63,
+          "assists": 57,
+          "goals": 59,
+          "total": 116
+        },
+        {
+          "firstName": "Tomasz",
+          "lastName": "Mierzejewski",
+          "tournaments": 24,
+          "games": 164,
+          "assists": 134,
+          "goals": 149,
+          "total": 283
+        },
+        {
+          "firstName": "Tomasz",
+          "lastName": "Pastuszka",
+          "tournaments": 13,
+          "games": 105,
+          "assists": 14,
+          "goals": 136,
+          "total": 150
+        },
+        {
+          "firstName": "Piotr",
+          "lastName": "Pieniążek",
+          "tournaments": 52,
+          "games": 322,
+          "assists": 449,
+          "goals": 216,
+          "total": 665
+        },
+        {
+          "firstName": "Szymon",
+          "lastName": "Poznański",
+          "tournaments": 40,
+          "games": 232,
+          "assists": 239,
+          "goals": 204,
+          "total": 443
+        },
+        {
+          "firstName": "Kamil",
+          "lastName": "Ratajczyk",
+          "tournaments": 49,
+          "games": 320,
+          "assists": 503,
+          "goals": 350,
+          "total": 853
+        },
+        {
+          "firstName": "Maksym",
+          "lastName": "Repetylo",
+          "tournaments": 10,
+          "games": 76,
+          "assists": 11,
+          "goals": 84,
+          "total": 95
+        },
+        {
+          "firstName": "Alex",
+          "lastName": "Tarasenko",
+          "tournaments": 31,
+          "games": 227,
+          "assists": 267,
+          "goals": 162,
+          "total": 429
+        },
+        {
+          "firstName": "Adam",
+          "lastName": "Tomczyk",
+          "tournaments": 94,
+          "games": 697,
+          "assists": 2952,
+          "goals": 653,
+          "total": 3605
+        }
+      ]
+    },
+    "psgu-uprising": {
+      "name": "Uprising",
+      "club": "Uprising Poznań",
+      "sourceId": 3403,
+      "players": [
+        {
+          "firstName": "Michał",
+          "lastName": "Badura",
+          "tournaments": 25,
+          "games": 129,
+          "assists": 116,
+          "goals": 43,
+          "total": 159
+        },
+        {
+          "firstName": "Dominik",
+          "lastName": "Dobranowski",
+          "tournaments": 41,
+          "games": 223,
+          "assists": 284,
+          "goals": 97,
+          "total": 381
+        },
+        {
+          "firstName": "Kamil",
+          "lastName": "Filip",
+          "tournaments": 57,
+          "games": 317,
+          "assists": 528,
+          "goals": 486,
+          "total": 1014
+        },
+        {
+          "firstName": "Jan",
+          "lastName": "Gliwa",
+          "tournaments": 52,
+          "games": 287,
+          "assists": 300,
+          "goals": 425,
+          "total": 725
+        },
+        {
+          "firstName": "Edgar",
+          "lastName": "Junda",
+          "tournaments": 33,
+          "games": 162,
+          "assists": 195,
+          "goals": 191,
+          "total": 386
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Kołek",
+          "tournaments": 20,
+          "games": 107,
+          "assists": 116,
+          "goals": 176,
+          "total": 292
+        },
+        {
+          "firstName": "Filip",
+          "lastName": "Kudliński",
+          "tournaments": 51,
+          "games": 311,
+          "assists": 250,
+          "goals": 389,
+          "total": 639
+        },
+        {
+          "firstName": "Adam",
+          "lastName": "Maciejewski",
+          "tournaments": 47,
+          "games": 256,
+          "assists": 525,
+          "goals": 184,
+          "total": 709
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Orkan-Łęcki",
+          "tournaments": 69,
+          "games": 550,
+          "assists": 395,
+          "goals": 959,
+          "total": 1354
+        },
+        {
+          "firstName": "Dawid",
+          "lastName": "Robalewski",
+          "tournaments": 49,
+          "games": 340,
+          "assists": 129,
+          "goals": 329,
+          "total": 458
+        },
+        {
+          "firstName": "Tymon",
+          "lastName": "Serocki",
+          "tournaments": 47,
+          "games": 231,
+          "assists": 517,
+          "goals": 268,
+          "total": 785
+        },
+        {
+          "firstName": "Marcin",
+          "lastName": "Skorupski",
+          "tournaments": 53,
+          "games": 324,
+          "assists": 403,
+          "goals": 266,
+          "total": 669
+        },
+        {
+          "firstName": "Leonard",
+          "lastName": "Sobiak",
+          "tournaments": 33,
+          "games": 190,
+          "assists": 106,
+          "goals": 165,
+          "total": 271
+        },
+        {
+          "firstName": "Adrian",
+          "lastName": "Sosna",
+          "tournaments": 43,
+          "games": 246,
+          "assists": 321,
+          "goals": 433,
+          "total": 754
+        },
+        {
+          "firstName": "Remigiusz",
+          "lastName": "Szymura",
+          "tournaments": 53,
+          "games": 275,
+          "assists": 501,
+          "goals": 266,
+          "total": 767
+        },
+        {
+          "firstName": "Mikołaj",
+          "lastName": "Tomczuk",
+          "tournaments": 30,
+          "games": 157,
+          "assists": 160,
+          "goals": 88,
+          "total": 248
+        },
+        {
+          "firstName": "Mateusz",
+          "lastName": "Wieszczyński",
+          "tournaments": 49,
+          "games": 382,
+          "assists": 912,
+          "goals": 641,
+          "total": 1553
+        },
+        {
+          "firstName": "Piotr",
+          "lastName": "Wrzaszcz",
+          "tournaments": 59,
+          "games": 419,
+          "assists": 1072,
+          "goals": 252,
+          "total": 1324
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Zygmunt",
+          "tournaments": 77,
+          "games": 428,
+          "assists": 603,
+          "goals": 330,
+          "total": 933
+        }
+      ]
+    },
+    "psgu-atre-pyton": {
+      "name": "ATRE Pyton",
+      "club": "ATRE Indians Czarnków",
+      "sourceId": 3248,
+      "players": [
+        {
+          "firstName": "Andrzej",
+          "lastName": "Bobiński",
+          "tournaments": 41,
+          "games": 311,
+          "assists": 238,
+          "goals": 294,
+          "total": 532
+        },
+        {
+          "firstName": "Karol",
+          "lastName": "Filipiuk",
+          "tournaments": 9,
+          "games": 46,
+          "assists": 27,
+          "goals": 11,
+          "total": 38
+        },
+        {
+          "firstName": "Artur",
+          "lastName": "Geremek",
+          "tournaments": 15,
+          "games": 76,
+          "assists": 34,
+          "goals": 19,
+          "total": 53
+        },
+        {
+          "firstName": "Hubert",
+          "lastName": "Geremek",
+          "tournaments": 19,
+          "games": 84,
+          "assists": 55,
+          "goals": 40,
+          "total": 95
+        },
+        {
+          "firstName": "Gracjan",
+          "lastName": "Głowacki",
+          "tournaments": 18,
+          "games": 81,
+          "assists": 136,
+          "goals": 73,
+          "total": 209
+        },
+        {
+          "firstName": "Paweł",
+          "lastName": "Gorajski",
+          "tournaments": 13,
+          "games": 55,
+          "assists": 66,
+          "goals": 63,
+          "total": 129
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Kamyk",
+          "tournaments": 1,
+          "games": 5,
+          "assists": 0,
+          "goals": 1,
+          "total": 1
+        },
+        {
+          "firstName": "Mirosław",
+          "lastName": "Maliszewski",
+          "tournaments": 30,
+          "games": 220,
+          "assists": 514,
+          "goals": 108,
+          "total": 622
+        },
+        {
+          "firstName": "Aleks",
+          "lastName": "Nitka",
+          "tournaments": 25,
+          "games": 121,
+          "assists": 123,
+          "goals": 54,
+          "total": 177
+        },
+        {
+          "firstName": "Grzegorz",
+          "lastName": "Polanowski",
+          "tournaments": 20,
+          "games": 95,
+          "assists": 72,
+          "goals": 55,
+          "total": 127
+        },
+        {
+          "firstName": "Marcel",
+          "lastName": "Rączka",
+          "tournaments": 4,
+          "games": 26,
+          "assists": 31,
+          "goals": 34,
+          "total": 65
+        },
+        {
+          "firstName": "Ievgen",
+          "lastName": "Shevchuk",
+          "tournaments": 8,
+          "games": 35,
+          "assists": 8,
+          "goals": 41,
+          "total": 49
+        },
+        {
+          "firstName": "Bartosz",
+          "lastName": "Tarkowski",
+          "tournaments": 10,
+          "games": 43,
+          "assists": 8,
+          "goals": 27,
+          "total": 35
+        },
+        {
+          "firstName": "Stanisław",
+          "lastName": "Traczyk",
+          "tournaments": 21,
+          "games": 98,
+          "assists": 104,
+          "goals": 108,
+          "total": 212
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Woyke",
+          "tournaments": 31,
+          "games": 194,
+          "assists": 156,
+          "goals": 105,
+          "total": 261
+        },
+        {
+          "firstName": "Adam",
+          "lastName": "Wylegała",
+          "tournaments": 13,
+          "games": 75,
+          "assists": 63,
+          "goals": 63,
+          "total": 126
+        }
+      ]
+    },
+    "psgu-flow": {
+      "name": "Flow",
+      "club": "KS Flow Wrocław",
+      "sourceId": 3249,
+      "players": [
+        {
+          "firstName": "Sergii",
+          "lastName": "Anufriiev",
+          "tournaments": 37,
+          "games": 205,
+          "assists": 161,
+          "goals": 175,
+          "total": 336
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Chodukiewicz",
+          "tournaments": 10,
+          "games": 79,
+          "assists": 31,
+          "goals": 49,
+          "total": 80
+        },
+        {
+          "firstName": "Mateusz",
+          "lastName": "Czublun",
+          "tournaments": 8,
+          "games": 55,
+          "assists": 9,
+          "goals": 53,
+          "total": 62
+        },
+        {
+          "firstName": "Rafał",
+          "lastName": "Kałużny",
+          "tournaments": 17,
+          "games": 102,
+          "assists": 95,
+          "goals": 84,
+          "total": 179
+        },
+        {
+          "firstName": "Tomasz",
+          "lastName": "Klin",
+          "tournaments": 15,
+          "games": 97,
+          "assists": 39,
+          "goals": 111,
+          "total": 150
+        },
+        {
+          "firstName": "Jan",
+          "lastName": "Kubis",
+          "tournaments": 20,
+          "games": 137,
+          "assists": 109,
+          "goals": 105,
+          "total": 214
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Leśniak",
+          "tournaments": 7,
+          "games": 48,
+          "assists": 17,
+          "goals": 22,
+          "total": 39
+        },
+        {
+          "firstName": "Antoni",
+          "lastName": "Majewski",
+          "tournaments": 3,
+          "games": 11,
+          "assists": 2,
+          "goals": 4,
+          "total": 6
+        },
+        {
+          "firstName": "Paweł",
+          "lastName": "Milanowicz",
+          "tournaments": 55,
+          "games": 286,
+          "assists": 588,
+          "goals": 320,
+          "total": 908
+        },
+        {
+          "firstName": "Bartosz",
+          "lastName": "Pietraś",
+          "tournaments": 11,
+          "games": 82,
+          "assists": 28,
+          "goals": 100,
+          "total": 128
+        },
+        {
+          "firstName": "Krzysztof",
+          "lastName": "Przybyś",
+          "tournaments": 25,
+          "games": 144,
+          "assists": 62,
+          "goals": 131,
+          "total": 193
+        },
+        {
+          "firstName": "Geoff",
+          "lastName": "Schwartz",
+          "tournaments": 22,
+          "games": 109,
+          "assists": 160,
+          "goals": 43,
+          "total": 203
+        },
+        {
+          "firstName": "Mateusz",
+          "lastName": "Skorupa",
+          "tournaments": 33,
+          "games": 197,
+          "assists": 254,
+          "goals": 117,
+          "total": 371
+        },
+        {
+          "firstName": "Piotr",
+          "lastName": "Wyciechowski",
+          "tournaments": 19,
+          "games": 111,
+          "assists": 155,
+          "goals": 72,
+          "total": 227
+        }
+      ]
+    },
+    "psgu-north": {
+      "name": "North",
+      "club": "North Gdańsk",
+      "sourceId": 3064,
+      "players": [
+        {
+          "firstName": "Tomasz",
+          "lastName": "Bartniczak",
+          "tournaments": 34,
+          "games": 194,
+          "assists": 121,
+          "goals": 245,
+          "total": 366
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Dłuziński",
+          "tournaments": 30,
+          "games": 197,
+          "assists": 255,
+          "goals": 60,
+          "total": 315
+        },
+        {
+          "firstName": "Marek",
+          "lastName": "Dubrawa",
+          "tournaments": 28,
+          "games": 187,
+          "assists": 34,
+          "goals": 27,
+          "total": 61
+        },
+        {
+          "firstName": "Anton",
+          "lastName": "Karpinskyi",
+          "tournaments": 12,
+          "games": 78,
+          "assists": 231,
+          "goals": 84,
+          "total": 315
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Kozłowski",
+          "tournaments": 41,
+          "games": 274,
+          "assists": 650,
+          "goals": 149,
+          "total": 799
+        },
+        {
+          "firstName": "Scott",
+          "lastName": "Little",
+          "tournaments": 16,
+          "games": 99,
+          "assists": 55,
+          "goals": 30,
+          "total": 85
+        },
+        {
+          "firstName": "Kamil",
+          "lastName": "Merchelski",
+          "tournaments": 48,
+          "games": 327,
+          "assists": 313,
+          "goals": 657,
+          "total": 970
+        },
+        {
+          "firstName": "Cezary",
+          "lastName": "Przybyła",
+          "tournaments": 7,
+          "games": 45,
+          "assists": 4,
+          "goals": 13,
+          "total": 17
+        },
+        {
+          "firstName": "Piotr",
+          "lastName": "Przybyła",
+          "tournaments": 39,
+          "games": 256,
+          "assists": 601,
+          "goals": 100,
+          "total": 701
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Pustołka",
+          "tournaments": 33,
+          "games": 191,
+          "assists": 285,
+          "goals": 159,
+          "total": 444
+        },
+        {
+          "firstName": "Jakob",
+          "lastName": "Riemer",
+          "tournaments": 6,
+          "games": 36,
+          "assists": 2,
+          "goals": 20,
+          "total": 22
+        },
+        {
+          "firstName": "Arkadiusz",
+          "lastName": "Rosiński",
+          "tournaments": 31,
+          "games": 228,
+          "assists": 212,
+          "goals": 167,
+          "total": 379
+        },
+        {
+          "firstName": "Gustaw",
+          "lastName": "Rzyman",
+          "tournaments": 13,
+          "games": 82,
+          "assists": 15,
+          "goals": 72,
+          "total": 87
+        },
+        {
+          "firstName": "Bartłomiej",
+          "lastName": "Skopiński",
+          "tournaments": 50,
+          "games": 381,
+          "assists": 738,
+          "goals": 301,
+          "total": 1039
+        },
+        {
+          "firstName": "Bartłomiej",
+          "lastName": "Smolarek",
+          "tournaments": 36,
+          "games": 244,
+          "assists": 203,
+          "goals": 95,
+          "total": 298
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Smużewski",
+          "tournaments": 3,
+          "games": 12,
+          "assists": 5,
+          "goals": 1,
+          "total": 6
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Stawiszyński",
+          "tournaments": 21,
+          "games": 136,
+          "assists": 90,
+          "goals": 77,
+          "total": 167
+        },
+        {
+          "firstName": "Tom",
+          "lastName": "Stefaniak",
+          "tournaments": 3,
+          "games": 18,
+          "assists": 6,
+          "goals": 21,
+          "total": 27
+        },
+        {
+          "firstName": "Leonid",
+          "lastName": "Vyplavin",
+          "tournaments": 1,
+          "games": 5,
+          "assists": 1,
+          "goals": 1,
+          "total": 2
+        }
+      ]
+    },
+    "psgu-zubry": {
+      "name": "Żubry",
+      "club": "4hands Warszawa",
+      "sourceId": 3073,
+      "players": [
+        {
+          "firstName": "Kacper",
+          "lastName": "Bem",
+          "tournaments": 13,
+          "games": 68,
+          "assists": 22,
+          "goals": 70,
+          "total": 92
+        },
+        {
+          "firstName": "Stanisław",
+          "lastName": "Glinka",
+          "tournaments": 42,
+          "games": 329,
+          "assists": 494,
+          "goals": 600,
+          "total": 1094
+        },
+        {
+          "firstName": "Piotr",
+          "lastName": "Janik",
+          "tournaments": 34,
+          "games": 262,
+          "assists": 198,
+          "goals": 300,
+          "total": 498
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Kryciński",
+          "tournaments": 49,
+          "games": 369,
+          "assists": 521,
+          "goals": 254,
+          "total": 775
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Kucharczyk",
+          "tournaments": 69,
+          "games": 506,
+          "assists": 515,
+          "goals": 525,
+          "total": 1040
+        },
+        {
+          "firstName": "Przemysław",
+          "lastName": "Kuczyński",
+          "tournaments": 44,
+          "games": 388,
+          "assists": 299,
+          "goals": 330,
+          "total": 629
+        },
+        {
+          "firstName": "Radosław",
+          "lastName": "Lenczewski",
+          "tournaments": 61,
+          "games": 420,
+          "assists": 739,
+          "goals": 525,
+          "total": 1264
+        },
+        {
+          "firstName": "Julian",
+          "lastName": "Liwszic",
+          "tournaments": 65,
+          "games": 479,
+          "assists": 930,
+          "goals": 192,
+          "total": 1122
+        },
+        {
+          "firstName": "Mikołaj",
+          "lastName": "Maślanka",
+          "tournaments": 73,
+          "games": 533,
+          "assists": 668,
+          "goals": 568,
+          "total": 1236
+        },
+        {
+          "firstName": "Antoni",
+          "lastName": "Moroz",
+          "tournaments": 53,
+          "games": 387,
+          "assists": 202,
+          "goals": 204,
+          "total": 406
+        },
+        {
+          "firstName": "Rafał",
+          "lastName": "Nguyen Viet",
+          "tournaments": 32,
+          "games": 245,
+          "assists": 180,
+          "goals": 142,
+          "total": 322
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Siennicki",
+          "tournaments": 37,
+          "games": 301,
+          "assists": 309,
+          "goals": 338,
+          "total": 647
+        },
+        {
+          "firstName": "Maciej",
+          "lastName": "Urbański",
+          "tournaments": 7,
+          "games": 62,
+          "assists": 11,
+          "goals": 44,
+          "total": 55
+        },
+        {
+          "firstName": "Paweł",
+          "lastName": "Zarzycki",
+          "tournaments": 38,
+          "games": 319,
+          "assists": 110,
+          "goals": 242,
+          "total": 352
+        }
+      ]
+    },
+    "psgu-uprising-origins": {
+      "name": "Uprising Origins",
+      "club": "Uprising Poznań",
+      "sourceId": 3254,
+      "players": [
+        {
+          "firstName": "Jan",
+          "lastName": "Bednarski",
+          "tournaments": 59,
+          "games": 338,
+          "assists": 243,
+          "goals": 424,
+          "total": 667
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Dauenhauer",
+          "tournaments": 23,
+          "games": 167,
+          "assists": 106,
+          "goals": 183,
+          "total": 289
+        },
+        {
+          "firstName": "Andrzej",
+          "lastName": "Dyśko",
+          "tournaments": 42,
+          "games": 316,
+          "assists": 319,
+          "goals": 199,
+          "total": 518
+        },
+        {
+          "firstName": "Dawid",
+          "lastName": "Grzebyta",
+          "tournaments": 53,
+          "games": 309,
+          "assists": 433,
+          "goals": 57,
+          "total": 490
+        },
+        {
+          "firstName": "Adam",
+          "lastName": "Kłosowicz",
+          "tournaments": 16,
+          "games": 89,
+          "assists": 100,
+          "goals": 47,
+          "total": 147
+        },
+        {
+          "firstName": "Jan",
+          "lastName": "Musiał",
+          "tournaments": 49,
+          "games": 284,
+          "assists": 551,
+          "goals": 348,
+          "total": 899
+        },
+        {
+          "firstName": "Michał",
+          "lastName": "Muszyński",
+          "tournaments": 45,
+          "games": 213,
+          "assists": 437,
+          "goals": 54,
+          "total": 491
+        },
+        {
+          "firstName": "Marcin",
+          "lastName": "Okonek",
+          "tournaments": 17,
+          "games": 108,
+          "assists": 17,
+          "goals": 91,
+          "total": 108
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Paszek",
+          "tournaments": 34,
+          "games": 175,
+          "assists": 70,
+          "goals": 141,
+          "total": 211
+        },
+        {
+          "firstName": "Jan",
+          "lastName": "Pepliński",
+          "tournaments": 30,
+          "games": 134,
+          "assists": 56,
+          "goals": 191,
+          "total": 247
+        },
+        {
+          "firstName": "Kuba",
+          "lastName": "Piasecki",
+          "tournaments": 23,
+          "games": 174,
+          "assists": 108,
+          "goals": 81,
+          "total": 189
+        },
+        {
+          "firstName": "Jędrzej",
+          "lastName": "Reczuch",
+          "tournaments": 19,
+          "games": 96,
+          "assists": 32,
+          "goals": 79,
+          "total": 111
+        },
+        {
+          "firstName": "Łukasz",
+          "lastName": "Skibiński",
+          "tournaments": 4,
+          "games": 21,
+          "assists": 10,
+          "goals": 3,
+          "total": 13
+        },
+        {
+          "firstName": "Sławomir",
+          "lastName": "Stankowski",
+          "tournaments": 45,
+          "games": 272,
+          "assists": 269,
+          "goals": 208,
+          "total": 477
+        },
+        {
+          "firstName": "Jakub",
+          "lastName": "Stencel",
+          "tournaments": 30,
+          "games": 141,
+          "assists": 87,
+          "goals": 67,
+          "total": 154
+        },
+        {
+          "firstName": "Witold",
+          "lastName": "Zaborowski",
+          "tournaments": 47,
+          "games": 258,
+          "assists": 390,
+          "goals": 399,
+          "total": 789
+        }
+      ]
+    }
+  },
+  "note3": "Squads were taken from different seasons, so some players appeared on two or three clubs at once. Duplicates were resolved by keeping each player at his most recent club (2026 > 2025 > 2024 > 2023) and removing the older entries - 31 removals across 30 duplicated names. Squad sizes are therefore smaller than the source for the older-season clubs."
+}

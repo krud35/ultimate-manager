@@ -10,16 +10,13 @@
 
 import { adjustTransferBudget } from './transfers/clubFinances.js'
 import { formatUsd } from './transfers/moneyFormat.js'
-import { currentEucsTier } from './competitionMembership.js'
-import { TV_MONTHLY_BY_TIER } from './economyBalance.js'
+import { TV_MONTHLY_BY_TIER, clubMonthlyTvIncome } from './economyBalance.js'
 
 /** Miesięczna kwota wg poziomu piramidy (EUR w kontekście Ligi Europejskiej). */
 export const TV_MONEY_MONTHLY_BY_TIER = TV_MONTHLY_BY_TIER
 
 function tvMonthlyAmountFor(team) {
-  const tier = currentEucsTier(team)
-  if (!tier) return 0
-  return TV_MONEY_MONTHLY_BY_TIER[tier] ?? 0
+  return clubMonthlyTvIncome(team)
 }
 
 /**

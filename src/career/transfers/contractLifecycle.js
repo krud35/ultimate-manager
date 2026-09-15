@@ -34,6 +34,7 @@ export function processContractExpiryReminders(career) {
   const playersByThreshold = new Map()
 
   for (const team of worldTeamsList(world)) {
+    if (team.simulationMode === 'off') continue
     for (const player of team.players ?? []) {
       const contract = player.contract
       if (!contract || !(contract.weeksRemaining > 0)) continue
@@ -88,7 +89,7 @@ export function processContractExpiryReminders(career) {
 export function processContractExpirations(career, { renewAhead = false } = {}) {
   const world = career?.world
   if (!world) return { inboxMessages: [], loanLog: career?.loanLog ?? [] }
-  const teams = worldTeamsList(world)
+  const teams = worldTeamsList(world).filter(team => team.simulationMode !== 'off')
   const maxRemainingWeeks = renewAhead ? 4 : 0
   if (teams.some(t => t.id !== career.playerTeamId && (t.players ?? []).some(
     p => p.contract && p.contract.weeksRemaining <= maxRemainingWeeks && !p.loan,

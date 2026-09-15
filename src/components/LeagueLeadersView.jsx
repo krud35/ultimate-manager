@@ -104,6 +104,7 @@ export default function LeagueLeadersView({ league, career, onCareerUpdate }) {
     if (!viewerTeam || !profileTeam) return { ok: false, error: 'no_team' }
     const result = queueScoutMission(viewerTeam, {
       kind: 'player',
+      world: career?.world,
       targetPlayerId: playerId,
       opponentTeamId: profileTeam.id,
       date: career?.league?.currentDate ?? null,

@@ -1,4 +1,5 @@
 import { clubFinancialPower } from './economyBalance.js'
+import { clubFinancialMarket } from './financialMarkets.js'
 /**
  * Sponsorzy klubu: slot główny + drugi, oferty z różnymi modelami wypłat.
  * Oferta 1 (upfront) sumarycznie < 2 (sezonowa) < 3 (miesięczna).
@@ -90,12 +91,12 @@ export const SPONSOR_INCOME_BOOST = 3
  * Roczna baza zależna od reputacji i slotu.
  * Main ≈ 1.65× secondary.
  */
-export function sponsorAnnualBase(reputation, slot = 'main') {
+export function sponsorAnnualBase(reputation, slot = 'main', team = null) {
   const rep = Math.max(15, Math.min(99, Math.round(reputation ?? 55)))
   // Exponential commercial reach: established clubs command larger deals.
   const core = 500_000 * clubFinancialPower({ reputation: rep }) * SPONSOR_INCOME_BOOST
   const mult = slot === 'main' ? 1 : 0.55
-  return roundMoney(core * mult)
+  return roundMoney(core * mult * clubFinancialMarket(team).sponsorship)
 }
 
 /**
@@ -250,7 +251,7 @@ function rollBonus(rng, annualBase) {
 export function generateSponsorOffers(team, slot, options = {}) {
   ensureTeamReputation(team)
   const rep = getTeamReputation(team)
-  const annual = sponsorAnnualBase(rep, slot)
+  const annual = sponsorAnnualBase(rep, slot, team)
   const seasonYear = options.seasonYear ?? 2025
   const rng = createRng(
     hashString(

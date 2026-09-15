@@ -65,6 +65,7 @@ import {
   mergeInbox,
 } from '../career'
 import PlayerTraitChips from '../components/PlayerTraitChips'
+import ManagerProfilePanel from '../components/ManagerProfilePanel.jsx'
 import PlayerProfileModal from '../components/PlayerProfileModal'
 import NegotiateModal from '../components/NegotiateModal'
 import LoanTermsModal from '../components/LoanTermsModal'
@@ -162,6 +163,7 @@ function ScoutingSection({ career, onChange, playerTeam, opponentTeam, opponentT
     if (kind === 'player' && !targetPlayerId) return
     setBusy(true)
     const result = queueScoutMission(playerTeam, {
+      world: career?.world,
       kind,
       opponentTeamId,
       targetPlayerId: kind === 'player' ? targetPlayerId : null,
@@ -322,7 +324,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
   const [loanRow, setLoanRow] = useState(null)
   const tt = transfersStrings(lang)
 
-  const team = seasonState?.teamsById?.[teamId]
+  const team = career?.world?.teamsById?.[teamId] ?? seasonState?.teamsById?.[teamId]
   const standing = seasonState?.standings?.[teamId]
   const rank = teamStandingsRank(seasonState, teamId)
   const ratings = useMemo(() => teamOffenseDefenseRatings(team), [team])
@@ -496,6 +498,8 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
         )}
         <span className="text-xs text-ufa-muted uppercase tracking-wide">{t.profileTitle}</span>
       </div>
+
+      <ManagerProfilePanel manager={career?.world?.managersById?.[team.managerId] ?? team.manager} team={team} />
 
       {/* Header */}
       <section
@@ -865,6 +869,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
           onScoutPlayer={(playerId) => {
             const result = queueScoutMission(playerTeam, {
               kind: 'player',
+              world: career?.world,
               targetPlayerId: playerId,
               opponentTeamId: teamId,
               date: career?.league?.currentDate ?? null,

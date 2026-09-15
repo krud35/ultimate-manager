@@ -7,6 +7,7 @@ import { getPlayerFullName } from '../data/mockPlayers.js'
 import { worldTeamsList } from './worldState.js'
 import { clearPlayerContractOnExit } from './transfers/playerContracts.js'
 import { PLAYER_STATUS, ensureWorldFreeAgents } from './transfers/freeAgency.js'
+import { createPostPlayingCareer } from './managerProfiles.js'
 
 /**
  * Bazowa szansa emerytury wg wieku.
@@ -81,6 +82,7 @@ export function processSeasonRetirements(career, options = {}) {
       player.retiredAt = career.league?.currentDate ?? null
       player.retiredSeasonYear = career.seasonYear ?? null
       world.retiredPlayers.push(player)
+      createPostPlayingCareer(world, player, team, player.retiredAt ?? `${career.seasonYear}-07-31`)
       retired.push({
         player,
         teamId: team.id,
@@ -95,8 +97,8 @@ export function processSeasonRetirements(career, options = {}) {
           type: 'club_news',
           title: `Emerytura · ${name}`,
           titleEn: `Retirement · ${name}`,
-          body: `${name} (lat ${age}) zakończył karierę i opuszcza klub. Statystyki pozostają w all-time.`,
-          bodyEn: `${name} (age ${age}) has retired and left the club. Stats remain on the all-time boards.`,
+          body: `${name} (lat ${age}) zakończył karierę i opuszcza klub. Statystyki pozostają w all-time.${player.postPlayingCareer.path === 'manager' ? ' Rozpoczyna poszukiwanie pracy jako manager.' : player.postPlayingCareer.path === 'staff' ? ' Szuka pracy w sztabie szkoleniowym.' : ''}`,
+          bodyEn: `${name} (age ${age}) has retired and left the club. Stats remain on the all-time boards.${player.postPlayingCareer.path === 'manager' ? ' Now looking for a management job.' : player.postPlayingCareer.path === 'staff' ? ' Now looking for a coaching staff job.' : ''}`,
           date: career.league?.currentDate ?? null,
           read: false,
           payload: {

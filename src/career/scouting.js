@@ -1,4 +1,4 @@
-import { ensureYouthCohort, discoverRegionalYouth } from './youthPopulation.js'
+import { ensureYouthCohort, discoverRegionalYouth, clubYouthCountry } from './youthPopulation.js'
 /**
  * Scouting: znajomość (0–100) drużyn przeciwnych i pojedynczych zawodników (w tym
  * wolnych agentów). Wzorowane na clubFacilities.js — obiekt klubowy `scoutingDept`
@@ -562,6 +562,9 @@ export function queueScoutMission(
   if (!team || !SCOUT_MISSION_KINDS.includes(kind)) {
     return { ok: false, error: 'invalid_kind' }
   }
+  if (team.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
+  if (kind === 'player' && world && worldTeamById(world, findPlayerTeamId(world,targetPlayerId))?.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
+  if (kind === 'academyProspect' && world?.worldConfig && !worldTeamsList(world).some(t => t.simulationMode !== 'off' && clubYouthCountry(t) === countryId)) return { ok: false, error: 'league_disabled' }
   if ((kind === 'tactics' || kind === 'keyPlayers') && !opponentTeamId) {
     return { ok: false, error: 'missing_opponent' }
   }
@@ -600,7 +603,7 @@ export function queueScoutMission(
   if (kind === 'playerSearch') {
     const pool = [
       ...worldTeamsList(world)
-        .filter((t) => t.id !== team.id)
+        .filter((t) => t.id !== team.id && t.simulationMode !== 'off')
         .flatMap((t) => t.players ?? []),
       ...(world?.freeAgents ?? []),
     ]

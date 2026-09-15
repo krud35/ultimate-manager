@@ -1,0 +1,13 @@
+{
+  "source": "Clubs supplied by the user; rosters generated when unavailable locally.",
+  "clubs": [
+    { "countryId": "lv", "name": "Salaspils" },
+    { "countryId": "lv", "name": "Ventspils FK" },
+    { "countryId": "lv", "name": "Valmiera" },
+    { "countryId": "lv", "name": "Ogre" },
+    { "countryId": "ee", "name": "Ultimate Saku" },
+    { "countryId": "ee", "name": "Tartu Turbulence" },
+    { "countryId": "ee", "name": "Tallinna Frisbeeklubi" },
+    { "countryId": "ee", "name": "Freeflyers" }
+  ]
+}

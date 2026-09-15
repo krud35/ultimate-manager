@@ -147,7 +147,7 @@ export const AI_MARKET_LOAN_EVALUATION_LIMIT = 80
 const RETRY_DELAY_DAYS = 3
 
 function createMarketContext(career, date) {
-  const teams = worldTeamsList(career.world).filter(t => t.id !== career.playerTeamId)
+  const teams = worldTeamsList(career.world).filter(t => t.id !== career.playerTeamId && t.simulationMode !== 'off')
   for (const t of teams) if (!t.squadPlan) buildSquadPlan(t)
   const ratings = new Map()
   const rankMaps = new Map()

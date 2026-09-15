@@ -3,6 +3,7 @@ import { CLUB_STRATEGY_DEFS } from './clubObjectives.js'
 import { currentEucsTier } from './competitionMembership.js'
 import { rebalanceAiBudget } from './clubEconomy.js'
 import { staffWeeklyCosts, facilityWeeklyCost } from './economyBalance.js'
+import { clubFinancialMarket } from './financialMarkets.js'
 import { getCategoryOverall } from '../models/playerStats.js'
 import { getFacilityLevel, FACILITY_IDS, FACILITY_DEFS, upgradeFacility } from './clubFacilities.js'
 import { ensureClubEconomy, clubFinanceForecast, postClubCash, clubCash, contractualWeeklyBill } from './clubEconomy.js'
@@ -36,7 +37,7 @@ export function ensureClubManagement(team, year = 2025) {
 export function setClubStaff(team, role, level) {
   ensureClubManagement(team)
   if (!STAFF_ROLES.includes(role) || ![0, 1, 2, 3].includes(level)) return { ok: false, error: 'invalid_staff' }
-  const cost = level > team.staff[role] ? STAFF_WEEKLY_COST[level] * 4 : 0
+  const cost = level > team.staff[role] ? Math.round(STAFF_WEEKLY_COST[level] * clubFinancialMarket(team).wages) * 4 : 0
   if (cost > 0 && getTransferBudget(team) < cost) return { ok: false, error: 'insufficient_funds' }
   postClubCash(team, -cost, 'staff_recruitment', team.managementDate)
   setLegacyStaffLevel(team, role, level)
@@ -74,14 +75,14 @@ export function weeklyClubOperatingCost(team) {
   const staff = staffPayroll(team)
   const facilities = FACILITY_IDS.reduce((sum, id) => sum + facilityWeeklyCost(id, getFacilityLevel(team, id)), 0)
   const academy = (team.academyPlayers?.length ?? 0) * 80
-  return staff + facilities + academy
+  return Math.round(staff + (facilities + academy) * clubFinancialMarket(team).prices)
 }
 
 export function processClubManagement(career, date, { weekTick = false } = {}) {
   const messages = []
   const world = career.world
   if (!world) return { inboxMessages: messages, transferLog: career.transferLog ?? [] }
-  const teams = Object.values(world.teamsById)
+  const teams = Object.values(world.teamsById).filter(team => team.simulationMode !== 'off')
   refreshAiDevelopmentListings(world, { date, excludeTeamId: career.playerTeamId })
   const monthly = date.slice(8, 10) === '01' && !(world.lastManagementCycleMonth >= date.slice(0, 7))
   if (monthly) ensureYouthCohort(world, career.seasonYear)
@@ -142,7 +143,7 @@ export function processClubManagement(career, date, { weekTick = false } = {}) {
       const offer = offers.find(o => o.paymentModel === (preferUpfront ? 'upfront' : 'monthly')) ?? offers[0]
       if (offer) signSponsorOffer(team, slot, offer.id, { seasonYear: career.seasonYear, date, quiet: true })
     }
-    const forecast = clubFinanceForecast(team)
+    const forecast = clubFinanceForecast(team, { league: career.league, currentDate: date, world: career.world })
     // A club with a short squad rebuilds first; extra upkeep must not consume its payroll capacity.
     if (team.players.length >= 24 && forecast.annualIncome - forecast.annualCosts > 50_000 && forecast.cash > forecast.annualCosts * 1.4 && forecast.projectedCash > forecast.annualCosts * 1.2 && !team.facilityProject) {
       const priority = team.clubStrategy === 'development' ? ['academy', 'trainingCenter', 'scoutingDept'] : ['trainingCenter', 'medicalCenter', 'fanShop']

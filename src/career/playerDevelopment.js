@@ -29,7 +29,7 @@ import {
 import { addDays, formatISODate, parseISODate } from '../league/seasonCalendar.js'
 import { MATCH_STAMINA_CONFIG, matchStaminaCeiling } from '../matchEngine/stamina.js'
 import { medicalRecoveryMult } from './clubFacilities.js'
-import { recoverPlayerDay, ensurePlayerWorkload } from '../models/playerWorkload.js'
+import { addPlayerLoad, recoverPlayerDay, ensurePlayerWorkload } from '../models/playerWorkload.js'
 
 function worldTeamsList(world) {
   if (!world?.teamsById) return []
@@ -447,8 +447,18 @@ export function applyDailyDevelopment(league, options = {}) {
 
   for (const team of Object.values(teamsById)) {
     const isPlayer = team.id === playerTeamId
+    const compactBackground = team.backgroundSimulation && !team.detailedCupAttention
+    const weekday = isoDate ? parseISODate(isoDate).getDay() : -1
 
     for (const player of team.players ?? []) {
+      if (compactBackground && weekday !== 2) {
+        const workload=ensurePlayerWorkload(player)
+        if(isoDate && workload.lastRecoveryDate >= isoDate) continue
+        if([1,4].includes(weekday) && !(workload.pendingMatch>0) && !(player.injury?.daysRemaining>0) && (player.developmentFatigue??0)<50 && !(isoDate >= (player.holidayFrom??"9999") && isoDate<=player.holidayUntil)) addPlayerLoad(player,6)
+        recoverPlayerDay(player,isoDate??league.currentDate)
+        tickPlayerInjury(player,{restBonus:player.trainingFocus==='rest'})
+        continue
+      }
       ensurePlayerDevelopment(player, {
         leaguePlayerStats: league.playerStats,
       })
@@ -462,8 +472,15 @@ export function applyDailyDevelopment(league, options = {}) {
       }
 
       const before = getOverallRating(player.skills)
+      // Transfer-only leagues use one compact weekly growth roll. Daily recovery
+      // remains shared so transfers retain genuine recent match fatigue.
+      if ((team.simulationMode === 'transfers' || compactBackground) && isoDate && parseISODate(isoDate).getDay() === 2
+        && !(player.injury?.daysRemaining > 0) && !(workload.pendingMatch > 0)
+        && (player.developmentFatigue ?? 0) < 50 && !(isoDate >= (player.holidayFrom ?? '9999') && isoDate <= player.holidayUntil)) {
+        applyAcademyDailyGrowth(player, 1, rng)
+      }
       if ((player.age ?? 0) >= 30) {
-        applyAgingDecline(player, 0.22 * dayScale, rng)
+        applyAgingDecline(player, 0.22 * dayScale * (compactBackground ? 7 : 1), rng)
       }
 
       recoverPlayerDay(player, isoDate ?? league.currentDate, medicalRecoveryMult(team))
@@ -493,6 +510,9 @@ export function applyDailyDevelopment(league, options = {}) {
     }
   }
 
+  for (const player of options.nationalPlayers ?? []) {
+    if (recoverPlayerDay(player, isoDate ?? league.currentDate)) tickPlayerInjury(player, { restBonus: true })
+  }
   return { league, changes }
 }
 
@@ -582,6 +602,7 @@ export function ageWorldPlayersOneYear(world) {
     team.players ?? [], team.academyPlayers ?? [], team.academyCandidates ?? [],
   ])
   pools.push(world.freeAgents ?? [])
+  pools.push(...Object.values(world.nationalPlayerPools ?? {}))
   for (const player of pools.flat()) {
     if (player.observationOnly || seen.has(String(player.id))) continue
     seen.add(String(player.id))
@@ -618,7 +639,7 @@ export function applyOffseasonDevelopment(world, options = {}) {
       if (!options.skipAiPlans && team.id !== options.playerTeamId) {
         player.trainingFocus = pickAiTrainingFocus(player, rng)
       }
-      const weeks = 3 + Math.floor(rng() * 2)
+      const weeks = world.worldConfig ? 0 : 3 + Math.floor(rng() * 2)
       for (let w = 0; w < weeks; w += 1) {
         if ((player.age ?? 0) >= 30) applyAgingDecline(player, 0.55, rng)
         applyOffseasonCampGrowth(player, rng)
@@ -639,9 +660,11 @@ export function applyOffseasonDevelopment(world, options = {}) {
         )
       }
 
-      player.developmentFatigue = clamp((player.developmentFatigue ?? 0) * 0.25, 0, 40)
-      player.matchStamina = matchStaminaCeiling(player)
-      shortenInjuryForOffseason(player)
+      if (!world.worldConfig) {
+        player.developmentFatigue = clamp((player.developmentFatigue ?? 0) * 0.25, 0, 40)
+        player.matchStamina = matchStaminaCeiling(player)
+        shortenInjuryForOffseason(player)
+      }
       if (player.trainingFocus === 'rest') player.trainingFocus = 'balanced'
     }
   }

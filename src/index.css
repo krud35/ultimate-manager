@@ -1,6 +1,13 @@
 @import 'tailwindcss';
 @import './ui/design-system.css';
 
+.career-choice[aria-pressed='true'],
+.career-choice[data-selected='true'] {
+  border-color: var(--um-accent);
+  box-shadow: 0 0 0 2px var(--um-accent);
+  background-color: color-mix(in srgb, var(--um-accent) 12%, var(--um-panel));
+}
+
 @theme {
   --color-ufa-bg: var(--um-bg);
   --color-ufa-panel: var(--um-panel);

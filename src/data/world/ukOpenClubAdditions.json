@@ -1,0 +1,9 @@
+{
+  "sources": ["https://www.ukultimate.com/find-ultimate", "https://www.ukultimate.com/news/uku-d2-nats-2025-winners", "https://lemmings.playultimate.co.uk/get-involved/lemmings-2025"],
+  "verifiedAt": "2026-09-15",
+  "note": "Directory entries matched to Open teams in UKU Division 2 Nationals 2025. No usable roster found in these sources; the game generates players.",
+  "clubs": [
+    { "name": "Cambridge Ultimate", "countryId": "gb", "city": "Cambridge", "directoryName": "camdisc", "website": "https://camdisc.org" },
+    { "name": "Leamington Lemmings", "countryId": "gb", "city": "Leamington", "website": "https://lemmings.playultimate.co.uk/get-involved/lemmings-2025" }
+  ]
+}

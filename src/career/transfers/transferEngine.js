@@ -166,6 +166,7 @@ export function listTransferMarket(world, buyerTeamId) {
   const rows = []
   for (const team of worldTeamsList(world)) {
     if (team.id === buyerTeamId) continue
+    if (team.simulationMode === 'off') continue
     refreshTeamMarketValues(team)
     const policy = getTransferPolicy(team)
     // Jeden sort na klub — inaczej każdy zawodnik sortowałby cały skład dwa razy
@@ -245,7 +246,6 @@ export function listTransferMarketWithFreeAgents(world, buyerTeamId) {
       freeAgent: true,
       loanListed: false,
       listed: false,
-      loanListed: false,
     })
   }
   return [...faRows, ...clubRows].sort(
@@ -263,9 +263,11 @@ export function listTransferMarketWithFreeAgents(world, buyerTeamId) {
  * @returns {object|null} `null` gdy zawodnik jest w drużynie kupującego albo nie istnieje
  */
 export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
+  if (worldTeamById(world,buyerTeamId)?.simulationMode === 'off') return null
   ensureWorldFinances(world)
   const found = findPlayerInWorld(world, playerId)
   if (found) {
+    if (found.team.simulationMode === 'off') return null
     if (found.team.id === buyerTeamId) return null
     if (found.player.loan) return null
     refreshTeamMarketValues(found.team)
@@ -293,7 +295,6 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
       loanListed: !!player.loanListed,
       contractRemaining: getContractRemainingCost(player.contract),
       listed: !!player.transferListed,
-      loanListed: !!player.loanListed,
     }
   }
   const freeAgent = (world?.freeAgents ?? []).find((p) => String(p.id) === String(playerId))
@@ -320,7 +321,6 @@ export function buildTransferRowForPlayer(world, buyerTeamId, playerId) {
     contractRemaining: 0,
     freeAgent: true,
     listed: false,
-    loanListed: false,
   }
 }
 
@@ -354,6 +354,7 @@ export function completeTransferBetweenClubs(career, opts) {
   const buyer = worldTeamById(world, buyerId)
   const found = findPlayerInWorld(world, opts.playerId)
   if (!buyer || !found) return { ok: false, error: 'Nie znaleziono drużyny/zawodnika' }
+  if (buyer.simulationMode === 'off' || found.team.simulationMode === 'off') return { ok: false, error: 'Liga wyłączona / League disabled' }
   if (found.team.id === buyerId) {
     return { ok: false, error: 'Zawodnik już jest w klubie kupującego' }
   }
@@ -515,6 +516,7 @@ export function negotiateTransfer(career, opts) {
 
   const found = findPlayerInWorld(world, opts.playerId)
   if (!found) return { ok: false, error: 'Nie znaleziono zawodnika' }
+  if (buyer.simulationMode === 'off' || found.team.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
   if (found.team.id === buyerId) {
     return { ok: false, error: 'Ten zawodnik już jest w Twoim klubie' }
   }
@@ -623,6 +625,7 @@ export function negotiatePlayerContract(career, opts) {
   const buyer = worldTeamById(world, career.playerTeamId)
   const found = findPlayerInWorld(world, opts.playerId)
   if (!buyer || !found) return { ok: false, error: 'Nie znaleziono drużyny/zawodnika' }
+  if (buyer.simulationMode === 'off' || found.team.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
   if (found.team.id === career.playerTeamId) {
     return { ok: false, error: 'Ten zawodnik już jest w Twoim klubie' }
   }
@@ -698,6 +701,7 @@ export function acceptCounterOffer(career, { playerId, counterAmount }) {
 
   const found = findPlayerInWorld(career.world, playerId)
   if (!found) return { ok: false, error: 'Zawodnik niedostępny' }
+  if (buyer.simulationMode === 'off' || found.team.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
 
   const policy = getTransferPolicy(found.team)
   const rank = playerOvrRank(found.team.players, found.player.id)
@@ -781,6 +785,7 @@ export function acceptIncomingBid(career, opts) {
 
   const buyer = worldTeamById(world, opts.buyerTeamId)
   if (!buyer) return { ok: false, error: 'Nie znaleziono klubu kupującego' }
+  if (buyer.simulationMode === 'off' || found.team.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
 
   const fee = Math.max(0, Math.round(Number(opts.fee) || 0))
   if (fee <= 0) return { ok: false, error: 'Nieprawidłowa kwota oferty' }
@@ -830,6 +835,7 @@ export function respondToIncomingBid(career, opts) {
   const found = findPlayerInWorld(world, opts.playerId)
 
   if (!seller || !buyer) return { ok: false, error: 'Nie znaleziono drużyny' }
+  if (seller.simulationMode === 'off' || buyer.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
   if (!found || found.team.id !== career.playerTeamId) {
     return { ok: false, error: 'Zawodnik nie jest już w Twoim składzie' }
   }

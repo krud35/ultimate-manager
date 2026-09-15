@@ -92,6 +92,10 @@ import CupView from './components/CupView'
 import TeamProfileView from './ui/TeamProfileView.jsx'
 import CareerSelectScreen from './components/CareerSelectScreen'
 import NewCareerScreen from './components/NewCareerScreen'
+import MainMenuScreen from './components/MainMenuScreen.jsx'
+import DomesticLeaguesView from './components/DomesticLeaguesView.jsx'
+import InternationalCupsView from './components/InternationalCupsView.jsx'
+import { prepareInternationalClubMatch } from './career/internationalClubCups.js'
 import TrainingView from './components/TrainingView'
 import ClubBoardView from './components/ClubBoardView'
 import StaffManagementPanel from './components/StaffManagementPanel.jsx'
@@ -166,7 +170,7 @@ const NAV_CATEGORIES = [
     labelEn: 'Season',
     items: [
       { id: 'standings', labelPl: 'Tabela ligowa', labelEn: 'Standings' },
-      { id: 'pyramid', labelPl: 'Piramida', labelEn: 'Pyramid' },
+      { id: 'pyramid', labelPl: 'Ligi', labelEn: 'Leagues' },
       { id: 'league-schedule', labelPl: 'Terminarz', labelEn: 'Schedule' },
       { id: 'leaders', labelPl: 'Liderzy', labelEn: 'Leaders' },
       { id: 'cup', labelPl: 'Puchar', labelEn: 'Cup' },
@@ -182,7 +186,7 @@ const NAV_CATEGORIES = [
     id: 'international',
     labelPl: 'Reprezentacje',
     labelEn: 'International',
-    items: [{ id: 'international', labelPl: 'Reprezentacje', labelEn: 'International' }],
+    items: [{ id: 'international', labelPl: 'Reprezentacje', labelEn: 'International' }, { id: 'international-clubs', labelPl: 'Puchary klubowe', labelEn: 'Club cups' }],
   },
   {
     id: 'other',
@@ -425,7 +429,8 @@ function friendlySaveErrorMessage(err, lang) {
 export default function App() {
   const { lang: uiLang, setLang: setUiLang } = useUiLang()
   const tShell = shellStrings(uiLang)
-  const [screen, setScreen] = useState('slots') // slots | new | play
+  const [screen, setScreen] = useState('menu') // menu | slots | new | play
+  const [slotSelectionMode, setSlotSelectionMode] = useState('load')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), [])
   const [slots, setSlots] = useState(() => listSlots())
@@ -434,7 +439,7 @@ export default function App() {
   // Liga Europejska (EUCS) rozlicza się w EUR, UFA w USD — moduł-singleton
   // (`career/transfers/moneyFormat.js`) więc synchronizacja musi wyprzedzić render
   // formatUsd() poniżej; stąd wywołanie wprost w ciele komponentu, nie w useEffect.
-  setMoneyCurrency(career?.competition === 'eucs' ? 'EUR' : 'USD')
+  setMoneyCurrency(['eucs', 'domestic'].includes(career?.competition) ? 'EUR' : 'USD')
   const [creatingCareer, setCreatingCareer] = useState(false)
   const [careerCreateError, setCareerCreateError] = useState('')
   const [appError, setAppError] = useState('')
@@ -527,13 +532,17 @@ export default function App() {
 
   const matchTeams = useMemo(() => {
     if (!leagueFixture || !league) return { home: null, away: null }
+    if (leagueFixture.competition === 'international-club') {
+      const prepared = prepareInternationalClubMatch(career, leagueFixture)
+      if (prepared) return { home: teamForMatchEngine(prepared.home), away: teamForMatchEngine(prepared.away) }
+    }
     const home = teamFromLeague(league, leagueFixture.homeTeamId)
     const away = teamFromLeague(league, leagueFixture.awayTeamId)
     return {
       home: home ? teamForMatchEngine(home) : null,
       away: away ? teamForMatchEngine(away) : null,
     }
-  }, [league, leagueFixture])
+  }, [league, leagueFixture, career])
 
   const seasonState = useMemo(
     () => (league ? buildSeasonStateFromLeague(league) : null),
@@ -1447,6 +1456,8 @@ export default function App() {
       rosterMode,
       selectedTeamIds,
       competition,
+      managerProfile,
+      worldConfig,
     }) => {
       if (creatingCareer) return
       setCreatingCareer(true)
@@ -1463,6 +1474,8 @@ export default function App() {
           rosterMode,
           selectedTeamIds,
           competition,
+          managerProfile,
+          worldConfig,
         })
         setCareer(created)
         setPendingSlot(null)
@@ -1506,14 +1519,19 @@ export default function App() {
     }
     setCareer(null)
     setLeagueFixture(null)
-    setScreen('slots')
+    setScreen('menu')
   }, [career, refreshSlots, tShell.savingExit])
+
+  if (screen === 'menu') return <MainMenuScreen lang={uiLang} onLangChange={setUiLang} hasSaves={slots.some(Boolean)}
+    onNew={() => { setSlotSelectionMode('new'); setScreen('slots') }} onLoad={() => { setSlotSelectionMode('load'); setScreen('slots') }} />
 
   if (screen === 'slots') {
     return (
       <>
         <div className="relative z-10 min-h-screen">
           <CareerSelectScreen
+            onBack={() => setScreen('menu')}
+            selectionMode={slotSelectionMode}
             slots={slots}
             lang={uiLang}
             onLangChange={setUiLang}
@@ -1536,7 +1554,7 @@ export default function App() {
             onCancel={() => {
               if (creatingCareer) return
               setPendingSlot(null)
-              setScreen('slots')
+              setScreen('menu')
             }}
             onCreate={handleCreateCareer}
             submitting={creatingCareer}
@@ -1730,8 +1748,9 @@ export default function App() {
         )}
 
         {activeTab === 'pyramid' && (
-          <PyramidStandingsView career={career} onTeamSelect={openTeamProfile} />
+          career.competition === 'domestic' ? <DomesticLeaguesView career={career} lang={uiLang} onTeamSelect={openTeamProfile} onScopeChange={pendingSimulationConfig => syncCareer(persistCareer(career, {world:{...career.world,pendingSimulationConfig}}), {save:true})} /> : <PyramidStandingsView career={career} onTeamSelect={openTeamProfile} />
         )}
+        {activeTab === 'international-clubs' && <InternationalCupsView career={career} lang={uiLang} onTeamClick={openTeamProfile} />}
 
         {activeTab === 'cup' && (
           <CupView league={league} onPlayFixture={handlePlayFixture} />
@@ -1814,7 +1833,7 @@ export default function App() {
         )}
 
         {activeTab === 'club-finances' && userTeam && (
-          <ClubFinancesView key={userTeam.id} team={userTeam} world={career.world} seasonYear={career.seasonYear} currentDate={career.league.currentDate} lang={uiLang} onChange={handleClubBoardChange} />
+          <ClubFinancesView key={userTeam.id} team={userTeam} world={career.world} league={career.league} seasonYear={career.seasonYear} currentDate={career.league.currentDate} lang={uiLang} onChange={handleClubBoardChange} />
         )}
 
         {activeTab === 'academy' && (

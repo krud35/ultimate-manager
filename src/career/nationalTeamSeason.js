@@ -346,6 +346,7 @@ export function nationalTeamFixturesOnDate(nt, dateIso) {
 /** Hak dzienny (patrz App.jsx: computeCalendarDayStep) — kwalifikacje i finały nigdy nie są
  * aktywne jednocześnie, więc wołanie obu jest tanie (druga funkcja i tak od razu zwraca []). */
 export function advanceNationalTeamsForDate(career, world, dateIso) {
+  if (world?.worldConfig?.international?.nationals === false) return []
   return [
     ...advanceQualifyingCycle(career, world, dateIso),
     ...advanceTournamentFinalsCycle(career, world, dateIso),
@@ -355,6 +356,7 @@ export function advanceNationalTeamsForDate(career, world, dateIso) {
 /** Hak sezonowy (patrz careerModel.js: createEucsCareer / startNextSeasonEucs) —
  * idempotentny: bezpieczny do wywołania więcej niż raz dla tego samego sezonu/cyklu. */
 export function maybeStartNationalTeamSeason(career, { seasonYear, calendar }) {
+  if (career.world?.worldConfig?.international?.nationals === false) return
   const nt = ensureCareerNationalTeams(career)
   const next = nt.nextTournament
   if (!next) return

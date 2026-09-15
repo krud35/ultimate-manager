@@ -1,559 +1,111 @@
-import { useEffect, useMemo, useState } from 'react'
-import {
-  HISTORICAL_YEARS,
-  LEAGUE_TEAM_SLOTS,
-  buildRawLeagueTeams,
-  getYearMeta,
-  selectRealTeamsForYear,
-} from '../data/seasonLeagueBuilder'
-import { EUCS_TIERS, eucsTeamsForTier } from '../data/eucsLeagueTeams'
-import { careerFlowStrings } from '../ui/strings/careerFlow'
-import { resolveTeamName } from '../ui/locale'
-import TeamStartPreviewModal, {
-  buildTeamStartPreview,
-} from './TeamStartPreviewModal'
-import EucsTeamPreviewModal from './EucsTeamPreviewModal'
+import { focusedLimit } from '../data/focusedWorld.js'
+import WorldCountryChoice from './WorldCountryChoice'
+import { useMemo, useState } from 'react'
+import { ACADEMY_COUNTRIES } from '../data/academyScoutGeography'
+import { DOMESTIC_CONTINENTS, DOMESTIC_LEAGUES, REGIONAL_LEAGUES, defaultWorldConfig, estimateWorldCost, normalizeWorldConfig } from '../data/domesticLeagues'
+import { MANAGER_ATTRIBUTES, MANAGER_BACKGROUND_QUESTIONS, MANAGER_PLAYING_BACKGROUNDS, createManagerProfile, managerClubFit } from '../career/managerProfiles'
+import { AI_COACH_ARCHETYPES } from '../matchEngine/aiCoachProfile.js'
+import UfaCareerSetup from './UfaCareerSetup'
+import SelectionIndicator from './SelectionIndicator'
 
-export default function NewCareerScreen({
-  slotIndex,
-  lang,
-  onCancel,
-  onCreate,
-  submitting = false,
-  externalError = '',
-}) {
-  const t = careerFlowStrings(lang)
-  const years = HISTORICAL_YEARS.length ? HISTORICAL_YEARS : [2025]
-  const defaultYear = years.includes(2025) ? 2025 : years[years.length - 1]
+const input = 'mt-2 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text outline-none focus:border-ufa-accent'
+const panel = 'rounded-sm border border-ufa-border bg-ufa-panel p-4'
+const cups = { nationals: ['Reprezentacje', 'National teams'], europe: ['Europejska Champions League', 'European Champions League'], paucc: ['PAUCC — Ameryki', 'PAUCC — Americas'], aoucc: ['AOUCC — Azja i Oceania', 'AOUCC — Asia and Oceania'], wucc: ['WUCC — mistrzostwa świata klubów', 'WUCC — World club championships'] }
 
-  const [managerName, setManagerName] = useState('')
-  const [competition, setCompetition] = useState('ufa')
-  const [eucsTeamId, setEucsTeamId] = useState('')
-  const [eucsPreviewTeamId, setEucsPreviewTeamId] = useState(null)
-  const [eucsPreviewAnchorTop, setEucsPreviewAnchorTop] = useState(null)
-  const eucsTiers = useMemo(
-    () => EUCS_TIERS.map((tier) => ({ tier, teams: eucsTeamsForTier(tier) })),
-    [],
-  )
-  const eucsPreviewTeam = useMemo(() => {
-    if (!eucsPreviewTeamId) return null
-    for (const { teams } of eucsTiers) {
-      const found = teams.find((tm) => tm.id === eucsPreviewTeamId)
-      if (found) return found
-    }
-    return null
-  }, [eucsPreviewTeamId, eucsTiers])
-  const [rosterMode, setRosterMode] = useState('historical')
-  const [seasonYear, setSeasonYear] = useState(defaultYear)
-  const [selectedTeamIds, setSelectedTeamIds] = useState(() =>
-    selectRealTeamsForYear(defaultYear).map((team) => team.id),
-  )
+function Attributes({ profile, lang }) {
+  return <div className={panel}><h3 className="font-semibold text-ufa-text">{lang === 'en' ? 'Your strengths' : 'Twoje umiejętności'}</h3><dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">{Object.entries(profile.attributes).map(([key, value]) => <div key={key} className="flex justify-between gap-3 text-sm"><dt className="text-ufa-muted">{MANAGER_ATTRIBUTES[key]?.[lang] ?? key}</dt><dd className="font-semibold text-ufa-accent">{value}/20</dd></div>)}</dl></div>
+}
+
+function ClubFit({ team, profile, lang }) {
+  if (!team) return null
+  const preview = { ...team }
+  const fit = managerClubFit(profile, preview)
+  const style = id => { const archetype = AI_COACH_ARCHETYPES.find(a => a.id === id); return (lang === 'en' ? archetype?.labelEn : archetype?.label) ?? id }
+  return <div className={panel}><h3 className="font-semibold text-ufa-text">{team.name} · {lang === 'en' ? 'Club expectations' : 'Oczekiwania klubu'}</h3><div className="mt-3 grid gap-3 text-sm text-ufa-muted sm:grid-cols-2"><p>{lang === 'en' ? 'Board' : 'Zarząd'}: {style(preview.boardPreferences.styleId)}<br />{lang === 'en' ? 'Manager fit' : 'Dopasowanie managera'}: {fit.board}/100</p><p>{lang === 'en' ? 'Fans' : 'Kibice'}: {style(preview.fanPreferences.styleId)}<br />{lang === 'en' ? 'Manager fit' : 'Dopasowanie managera'}: {fit.fans}/100</p></div></div>
+}
+
+export default function NewCareerScreen({ slotIndex, lang = 'pl', onCancel, onCreate, submitting = false, externalError = '' }) {
+  const en = lang === 'en'
+  const tr = (pl, english) => en ? english : pl
+  const [step, setStep] = useState(0)
+  const [identity, setIdentity] = useState({ firstName: '', lastName: '', nationality: 'pl', age: 30, formerPlayer: 'amateur', styleId: 'balanced_pro' })
+  const [answers, setAnswers] = useState({})
+  const [skipBackground, setSkipBackground] = useState(false)
+  const [competition, setCompetition] = useState('domestic')
+  const [worldConfig, setWorldConfig] = useState(() => normalizeWorldConfig({...defaultWorldConfig(),simulationModel:'focused',mainCountryId:'pl',additionalCountryIds:[]}))
   const [playerTeamId, setPlayerTeamId] = useState('')
-  const [swapOutId, setSwapOutId] = useState(null)
-  const [previewTeamId, setPreviewTeamId] = useState(null)
+  const [ufaOptions, setUfaOptions] = useState(null)
+  const [clubSearch, setClubSearch] = useState('')
   const [error, setError] = useState('')
+  const profile = useMemo(() => createManagerProfile({ ...identity, answers: skipBackground ? {} : answers }), [identity, answers, skipBackground])
+  const cost = useMemo(() => estimateWorldCost(worldConfig), [worldConfig])
+  const effectiveConfig = useMemo(() => normalizeWorldConfig(worldConfig), [worldConfig])
+  const playable = DOMESTIC_LEAGUES.filter(league => effectiveConfig.leagues[league.id] === 'playable' && !league.hidden && (effectiveConfig.simulationModel !== 'focused' || league.countryId === effectiveConfig.mainCountryId))
+  const activeLeagueCount = DOMESTIC_LEAGUES.filter(league => effectiveConfig.leagues[league.id] === 'playable').length
+  const selectedLeague = playable.find(league => league.teams.some(team => team.id === playerTeamId))
+  const selectedTeam = selectedLeague?.teams.find(team => team.id === playerTeamId)
+  const managerName = `${identity.firstName.trim()} ${identity.lastName.trim()}`.trim()
+  const titles = en ? ['Your manager', 'Game mode', 'Your world', 'Choose a club', 'Review career'] : ['Twój manager', 'Tryb gry', 'Twój świat', 'Wybierz klub', 'Podsumowanie']
+  const country = id => REGIONAL_LEAGUES[id]?.[en ? 'labelEn' : 'labelPl'] ?? ACADEMY_COUNTRIES[id]?.[en ? 'labelEn' : 'labelPl'] ?? id
+  const international = Object.entries(cups).filter(([id]) => competition !== 'ufa' || id === 'nationals')
 
-  const defaultIds = useMemo(
-    () => selectRealTeamsForYear(seasonYear).map((team) => team.id),
-    [seasonYear],
-  )
-
-  useEffect(() => {
-    setSelectedTeamIds(defaultIds)
-    setSwapOutId(null)
-    setPreviewTeamId(null)
-  }, [defaultIds])
-
-  const yearMeta = useMemo(() => getYearMeta(seasonYear), [seasonYear])
-  const leaguePreview = useMemo(() => {
-    try {
-      return buildRawLeagueTeams(seasonYear, { selectedTeamIds })
-    } catch {
-      return {
-        teams: [],
-        realTeamCount: 0,
-        fictionalCount: 0,
-        benchTeams: [],
-        selectedTeamIds: [],
-        allSeasonTeams: [],
-      }
-    }
-  }, [seasonYear, selectedTeamIds])
-
-  const teams = leaguePreview.teams ?? []
-  const benchTeams = leaguePreview.benchTeams ?? []
-  const canSwap = benchTeams.length > 0
-
-  useEffect(() => {
-    if (!teams.length) {
-      setPlayerTeamId('')
-      return
-    }
-    setPlayerTeamId((prev) =>
-      teams.some((team) => team.id === prev) ? prev : teams[0].id,
-    )
-  }, [teams])
-
-  const selected = useMemo(
-    () => teams.find((team) => team.id === playerTeamId) ?? null,
-    [teams, playerTeamId],
-  )
-
-  const previewSource = useMemo(() => {
-    if (!previewTeamId) return null
-    return (
-      teams.find((team) => team.id === previewTeamId) ??
-      benchTeams.find((team) => team.id === previewTeamId) ??
-      (leaguePreview.allSeasonTeams ?? []).find((team) => team.id === previewTeamId) ??
-      null
-    )
-  }, [previewTeamId, teams, benchTeams, leaguePreview.allSeasonTeams])
-
-  const teamPreview = useMemo(() => {
-    if (!previewSource) return null
-    return buildTeamStartPreview(previewSource, {
-      rosterMode,
-      seasonYear,
-    })
-  }, [previewSource, rosterMode, seasonYear])
-
-  const fictionalFill = leaguePreview.fictionalCount ?? 0
-  const yearShort = String(seasonYear + 1).slice(-2)
-  const seasonRealCount = yearMeta?.realTeamCount ?? leaguePreview.realTeamCount ?? 0
-
-  function handleSwap(outId, inId) {
-    if (!outId || !inId) return
-    setSelectedTeamIds((prev) => {
-      if (prev.includes(inId)) return prev
-      if (prev.includes(outId)) {
-        return prev.map((id) => (id === outId ? inId : id))
-      }
-      return [...prev, inId].slice(0, LEAGUE_TEAM_SLOTS)
-    })
-    if (playerTeamId === outId) setPlayerTeamId(inId)
-    setSwapOutId(null)
+  function advance() {
+    if (step === 0 && (!identity.firstName.trim() || !identity.lastName.trim() || !Number.isFinite(identity.age) || identity.age < 18 || identity.age > 80)) return setError(tr('Podaj imię, nazwisko i wiek od 18 do 80 lat.', 'Enter your first and last name and an age between 18 and 80.'))
+    if (step === 0 && !skipBackground && MANAGER_BACKGROUND_QUESTIONS.some(q => !answers[q.id])) return setError(tr('Odpowiedz na wszystkie pytania lub wybierz pominięcie pytań o przeszłość.', 'Answer each background question or choose to skip them.'))
+    if (step === 2 && competition === 'domestic' && !playable.length) return setError(tr('Wybierz co najmniej jeden grywalny kraj.', 'Select at least one playable country.'))
+    if (step === 3 && competition === 'domestic' && !selectedTeam) return setError(tr('Wybierz klub z grywalnej ligi.', 'Choose a club from a playable league.'))
+    setError(''); setStep(value => Math.min(4, value + 1))
   }
-
-  function handleSubmit(e) {
-    e.preventDefault()
+  function submit() {
     if (submitting) return
-    const name = managerName.trim()
-    if (!name) {
-      setError(t.errManager)
-      return
-    }
-
-    if (competition === 'eucs') {
-      if (!eucsTeamId) {
-        setError(t.errTeam)
-        return
-      }
-      setError('')
-      onCreate({
-        slotIndex,
-        managerName: name,
-        playerTeamId: eucsTeamId,
-        competition: 'eucs',
-      })
-      return
-    }
-
-    if (!playerTeamId) {
-      setError(t.errTeam)
-      return
-    }
-    setError('')
-    onCreate({
-      slotIndex,
-      managerName: name,
-      playerTeamId,
-      seasonYear,
-      rosterMode,
-      selectedTeamIds,
-      competition: 'ufa',
-    })
+    if (competition === 'domestic' && !selectedTeam || competition === 'ufa' && !ufaOptions) return setStep(3)
+    onCreate({ ...(competition === 'ufa' ? ufaOptions : { playerTeamId, seasonYear: 2026 }), slotIndex, competition, managerName, managerProfile: profile, worldConfig: effectiveConfig })
   }
 
-  function recordHint(team) {
-    if (team.isFictional || team.wins == null || team.losses == null) return null
-    return `${team.wins}–${team.losses}`
-  }
+  return <main className="mx-auto min-h-screen max-w-5xl px-4 py-8 sm:px-6 league-fade-in">
+    <button type="button" onClick={onCancel} disabled={submitting} className="mb-5 text-sm text-ufa-muted hover:text-ufa-accent">← {tr('Menu główne', 'Main menu')}</button>
+    <p className="um-eyebrow">{tr('Nowa kariera · Zapis', 'New career · Save slot')} {slotIndex + 1}</p>
+    <h1 className="um-page-title text-ufa-text">{titles[step]}</h1>
+    <ol aria-label={tr('Etapy tworzenia kariery', 'Career creation steps')} className="my-6 flex flex-wrap gap-2">{titles.map((title, i) => <li key={title} aria-current={step === i ? 'step' : undefined} className={`rounded px-3 py-2 text-xs ${i === step ? 'bg-ufa-accent text-ufa-on-accent' : 'bg-ufa-panel text-ufa-muted'}`}>{i + 1}. {title}</li>)}</ol>
 
-  return (
-    <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-10 sm:px-6 league-fade-in">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="mb-6 self-start text-sm text-ufa-muted hover:text-ufa-accent"
-      >
-        {t.newBack}
-      </button>
+    {step === 0 && <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {[['firstName', tr('Imię', 'First name')], ['lastName', tr('Nazwisko', 'Last name')]].map(([key, label]) => <label key={key} className="text-sm text-ufa-text">{label}<input className={input} autoComplete={key === 'firstName' ? 'given-name' : 'family-name'} value={identity[key]} maxLength={40} onChange={e => setIdentity({ ...identity, [key]: e.target.value })} /></label>)}
+        <label className="text-sm text-ufa-text">{tr('Narodowość', 'Nationality')}<select className={input} value={identity.nationality} onChange={e => setIdentity({ ...identity, nationality: e.target.value })}>{Object.keys(ACADEMY_COUNTRIES).sort((a, b) => country(a).localeCompare(country(b), lang)).map(id => <option key={id} value={id}>{country(id)}</option>)}</select></label>
+        <label className="text-sm text-ufa-text">{tr('Wiek', 'Age')}<input className={input} type="number" min="18" max="80" value={identity.age} onChange={e => setIdentity({ ...identity, age: e.target.value === '' ? '' : Number(e.target.value) })} /></label>
+      </div>
+      <fieldset className={panel}><legend className="px-1 font-semibold text-ufa-text">{tr('Czy grałeś przed rozpoczęciem kariery trenerskiej?', 'Did you play before coaching?')}</legend><div className="flex flex-wrap gap-4">{MANAGER_PLAYING_BACKGROUNDS.map(o => <label key={o.id} className="flex items-center gap-2 text-sm text-ufa-text"><input type="radio" name="playing-background" checked={identity.formerPlayer === o.id} onChange={() => setIdentity({ ...identity, formerPlayer: o.id })} />{o[lang]}</label>)}</div></fieldset>
+      <p className="text-sm text-ufa-muted">{tr('Opowiedz swoją historię. Każdy wybór rozwija inne mocne strony — nie ma jednej najlepszej odpowiedzi.', 'Build your story. Each choice shapes different strengths; there is no perfect answer.')}</p>
+      <label className="flex items-center gap-3 text-sm text-ufa-text"><input type="checkbox" checked={skipBackground} onChange={e => { setSkipBackground(e.target.checked); setError('') }} />{tr('Pomiń pytania o przeszłość', 'Skip background questions')}</label>
+      {skipBackground && <p className="text-sm text-ufa-muted">{tr('Umiejętności wynikają z wybranej przeszłości zawodniczej, bez modyfikatorów z quizu.', 'Your attributes use your selected playing background, without quiz modifiers.')}</p>}
+      {!skipBackground && MANAGER_BACKGROUND_QUESTIONS.map((q, i) => <fieldset key={q.id} className={panel}><legend className="px-1 font-semibold text-ufa-text">{i + 1}. {identity.formerPlayer === 'none' ? (q[en ? 'nonPlayerEn' : 'nonPlayerPl'] ?? q[lang]) : q[lang]}</legend><div className="mt-2 grid gap-3 sm:grid-cols-2">{q.options.map(o => <label key={o.id} className={`flex cursor-pointer items-start gap-3 rounded border p-3 text-sm text-ufa-text ${answers[q.id] === o.id ? 'border-ufa-accent bg-ufa-accent/10' : 'border-ufa-border'}`}><input type="radio" name={`background-${q.id}`} checked={answers[q.id] === o.id} onChange={() => setAnswers({ ...answers, [q.id]: o.id })} className="mt-1" />{o[lang]}</label>)}</div></fieldset>)}
+      <Attributes profile={profile} lang={lang} />
+      <label className="block text-sm text-ufa-text">{tr('Preferowany styl prowadzenia zespołu', 'Preferred coaching style')}<select className={input} value={identity.styleId} onChange={e => setIdentity({ ...identity, styleId: e.target.value })}>{AI_COACH_ARCHETYPES.map(a => <option key={a.id} value={a.id}>{en ? a.labelEn : a.label}</option>)}</select></label>
+    </div>}
 
-      <h1 className="um-page-title text-ufa-text">{t.newTitle(slotIndex + 1)}</h1>
-      <p className="mt-2 text-sm text-ufa-muted">
-        {competition === 'eucs' ? t.eucsIntro : t.newIntro(seasonYear, yearShort)}
-      </p>
+    {step === 1 && <div className="grid gap-4 sm:grid-cols-2">{[['domestic', tr('Ligi krajowe', 'Domestic leagues'), tr('Świat lig krajowych, krajowych pucharów i rozgrywek międzynarodowych.', 'Build a world of national leagues, domestic cups and international competitions.')], ['ufa', 'UFA', tr('Oddzielna liga północnoamerykańska z historycznymi sezonami i ustawieniami składów.', 'A separate North American league with historical seasons and roster settings.')]].map(([id, title, description]) => <button type="button" key={id} aria-pressed={competition === id} onClick={() => setCompetition(id)} className={`${panel} career-choice text-left ${competition === id ? 'border-ufa-accent bg-ufa-accent/10' : ''}`}><span className="mb-3 flex justify-end"><SelectionIndicator selected={competition === id} lang={lang} /></span><h2 className="text-xl font-semibold text-ufa-text">{title}</h2><p className="mt-3 text-sm text-ufa-muted">{description}</p></button>)}</div>}
 
-      {competition === 'ufa' && (
-        <div className="mt-4 rounded-sm border border-ufa-border bg-ufa-panel px-4 py-3 text-sm text-ufa-muted">
-          {t.leagueSlotsInfo}
-        </div>
-      )}
+    {step === 2 && <div className="space-y-5">
+      {competition === 'domestic' && <>
+        <div className={panel} aria-live="polite"><h2 className="font-semibold text-ufa-text">{tr('Liga główna', 'Main league')}: {country(effectiveConfig.mainCountryId)} · + {effectiveConfig.additionalCountryIds.length}/{focusedLimit(effectiveConfig)} {tr('dodatkowe aktywne', 'additional active')}</h2><p className="mt-2 text-sm text-ufa-muted">{tr('Liga główna i dodatkowe ligi umożliwiają transfery oraz zmianę klubu. Pozostałe ligi zachowują wyniki i zawodników w tle. Francja zmniejsza limit dodatkowych lig do trzech.', 'The main and additional active leagues allow transfers and changing clubs. Other leagues retain results and players in the background. France reduces the additional league limit to three.')}</p><p className="mt-3 font-semibold text-ufa-accent">{tr('Szacowane obciążenie', 'Estimated load')}: {{ low: tr('niskie', 'low'), medium: tr('średnie', 'medium'), high: tr('wysokie', 'high') }[cost.load]} · {cost.relativeSpeed}% {tr('względnej szybkości', 'relative speed')}</p><p className="mt-1 text-sm text-ufa-muted">{activeLeagueCount} {tr('grywalnych lig', 'playable leagues')} · {DOMESTIC_LEAGUES.filter(l => effectiveConfig.leagues[l.id] === 'background').length} {tr('lig w tle', 'background leagues')} · {cost.clubs} {tr('klubów', 'clubs')} · {cost.players} {tr('zawodników', 'players')}</p><p className="mt-2 text-xs text-ufa-muted">{tr('Wskaźnik porównawczy, bez pomiaru czasu na tym urządzeniu. Niższy poziom wymaga wszystkich wyższych lig. Grupy regionalne włączane są razem. Awanse i spadki obejmują też ligi tła. Liga Twojego klubu zawsze pozostaje aktywna.', 'A relative estimate, without timing this device. Lower tiers require all higher tiers. Regional groups are enabled together. Promotion and relegation include background tiers. Your club’s league always stays active.')}</p></div>
+        <p className="text-sm text-ufa-muted">{tr('Reprezentacje działają normalnie. Kluby uczestniczące w pucharach międzynarodowych korzystają z dokładniejszej symulacji na czas udziału.', 'National teams operate normally. Clubs in international cups receive detailed simulation during their participation.')}</p>
+        <div className="space-y-6">{DOMESTIC_CONTINENTS.map(continent => <section key={continent.id} aria-labelledby={`continent-${continent.id}`}><h2 id={`continent-${continent.id}`} className="mb-3 text-lg font-semibold text-ufa-text">{continent[en ? "labelEn" : "labelPl"]}</h2><div className="space-y-2">{[...continent.countries].sort((a, b) => a[en ? "labelEn" : "labelPl"].localeCompare(b[en ? "labelEn" : "labelPl"], lang)).map(c => <WorldCountryChoice key={c.id} country={c} config={worldConfig} lang={lang} onChange={next=>{setWorldConfig(next);setPlayerTeamId("")}} />)}</div></section>)}</div>
+        <p className="text-xs text-ufa-muted">{tr('Sierpień–maj · Liga: piątek–poniedziałek · Puchary: wtorek–czwartek · Turnieje międzynarodowe: połowa czerwca–połowa lipca. Okna transferowe bez zmian.', 'August–May · League: Friday–Monday · Cups: Tuesday–Thursday · International tournaments: mid-June–mid-July. Transfer windows unchanged.')}</p>
+      </>}
+      <fieldset className={panel}><legend className="px-1 font-semibold text-ufa-text">{tr('Rozgrywki międzynarodowe', 'International competitions')}</legend><div className="grid gap-3 sm:grid-cols-2">{international.map(([id, labels]) => <label key={id} className="flex items-center gap-3 text-sm text-ufa-text"><input type="checkbox" checked={worldConfig.international[id]} onChange={e => setWorldConfig({ ...worldConfig, international: { ...worldConfig.international, [id]: e.target.checked } })} />{labels[en ? 1 : 0]}</label>)}</div></fieldset>
+      {competition === 'ufa' && <p className="text-sm text-ufa-muted">{tr('UFA zachowuje własny terminarz. Kluby UFA nie uczestniczą w pucharach klubowych świata lig krajowych.', 'UFA keeps its own calendar. Domestic-world club cups do not include UFA teams.')}</p>}
+    </div>}
 
-      <fieldset className="mt-6">
-        <legend className="text-sm font-medium text-ufa-text">{t.competitionLabel}</legend>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {[
-            { id: 'ufa', title: t.competitionUfa, desc: t.competitionUfaDesc },
-            { id: 'eucs', title: t.competitionEucs, desc: t.competitionEucsDesc },
-          ].map((opt) => {
-            const active = competition === opt.id
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => setCompetition(opt.id)}
-                className={`rounded-sm border p-4 text-left transition-all ${
-                  active
-                    ? 'border-ufa-accent bg-ufa-accent/10  '
-                    : 'border-ufa-border bg-ufa-panel hover:bg-ufa-panel-hover'
-                }`}
-              >
-                <p className="font-semibold text-ufa-text">{opt.title}</p>
-                <p className="mt-1 text-xs text-ufa-muted">{opt.desc}</p>
-              </button>
-            )
-          })}
-        </div>
-      </fieldset>
+    {step === 3 && competition === 'domestic' && <div className="space-y-5"><label className="block text-sm text-ufa-text">{tr('Znajdź klub', 'Find a club')}<input className={input} value={clubSearch} onChange={e => setClubSearch(e.target.value)} /></label>{playable.map(l => <section key={l.id}><h2 className="mb-3 font-semibold text-ufa-text">{l.name} · {country(l.countryId)}</h2><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{l.teams.filter(team => team.name.toLocaleLowerCase().includes(clubSearch.toLocaleLowerCase())).map(team => <button type="button" key={team.id} aria-pressed={playerTeamId === team.id} onClick={() => setPlayerTeamId(team.id)} className={`${panel} career-choice text-left ${playerTeamId === team.id ? 'border-ufa-accent bg-ufa-accent/10' : ''}`}><span className="mb-3 flex justify-end"><SelectionIndicator selected={playerTeamId === team.id} lang={lang} /></span><span className="font-semibold text-ufa-text">{team.name}</span><span className="mt-2 block text-xs text-ufa-muted">{country(l.countryId)} · {tr('Poziom', 'Tier')} {l.tier}</span></button>)}</div></section>)}</div>}
+    {step === 3 && competition === 'domestic' && <div className="mt-5"><ClubFit team={selectedTeam} profile={profile} lang={lang} /></div>}
+    {competition === 'ufa' && <div hidden={step !== 3}><UfaCareerSetup slotIndex={slotIndex} lang={lang} embedded initialManagerName={managerName} onCancel={() => setStep(2)} onCreate={options => { setUfaOptions(options); setError(''); setStep(4) }} /></div>}
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-8">
-        <label className="block">
-          <span className="text-sm font-medium text-ufa-text">{t.managerName}</span>
-          <input
-            type="text"
-            value={managerName}
-            onChange={(e) => setManagerName(e.target.value)}
-            maxLength={32}
-            placeholder={t.managerPlaceholder}
-            className="mt-2 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text outline-none focus:border-ufa-accent"
-          />
-        </label>
-
-        {competition === 'eucs' ? (
-          <fieldset>
-            <legend className="text-sm font-medium text-ufa-text">{t.eucsPickTeam}</legend>
-            <div className="mt-3 space-y-6">
-              {eucsTiers.map(({ tier, teams }) => (
-                <div key={tier}>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ufa-muted">
-                    {t.eucsTierLabel(tier)}
-                  </p>
-                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                    {teams.map((team) => {
-                      const active = team.id === eucsTeamId
-                      return (
-                        <div
-                          key={team.id}
-                          className={`rounded-sm border p-4 transition-all ${
-                            active
-                              ? 'border-ufa-accent bg-ufa-accent/10  '
-                              : 'border-ufa-border bg-ufa-panel'
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setEucsTeamId(team.id)}
-                            className="w-full text-left"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span
-                                className="flex h-10 w-10 items-center justify-center rounded-sm text-xs font-bold text-white"
-                                style={{ backgroundColor: team.primaryColor }}
-                              >
-                                {team.shortName}
-                              </span>
-                              <div className="min-w-0">
-                                <p className="font-semibold text-ufa-text truncate">{team.name}</p>
-                              </div>
-                            </div>
-                          </button>
-                          <div className="mt-3">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                setEucsPreviewAnchorTop(e.currentTarget.getBoundingClientRect().top)
-                                setEucsPreviewTeamId(team.id)
-                              }}
-                              className="w-full rounded-md border border-ufa-border px-2 py-1.5 text-xs font-medium text-ufa-accent hover:bg-ufa-accent/10"
-                            >
-                              {t.previewProfile}
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </fieldset>
-        ) : (
-        <>
-        <fieldset>
-          <legend className="text-sm font-medium text-ufa-text">{t.rosterMode}</legend>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {[
-              {
-                id: 'historical',
-                title: t.rosterHistorical,
-                desc: t.rosterHistoricalDesc,
-              },
-              {
-                id: 'random',
-                title: t.rosterRandom,
-                desc: t.rosterRandomDesc,
-              },
-            ].map((opt) => {
-              const active = rosterMode === opt.id
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setRosterMode(opt.id)}
-                  className={`rounded-sm border p-4 text-left transition-all ${
-                    active
-                      ? 'border-ufa-accent bg-ufa-accent/10  '
-                      : 'border-ufa-border bg-ufa-panel hover:bg-ufa-panel-hover'
-                  }`}
-                >
-                  <p className="font-semibold text-ufa-text">{opt.title}</p>
-                  <p className="mt-1 text-xs text-ufa-muted">{opt.desc}</p>
-                </button>
-              )
-            })}
-          </div>
-        </fieldset>
-
-        <label className="block">
-          <span className="text-sm font-medium text-ufa-text">{t.startYear}</span>
-          <select
-            value={seasonYear}
-            onChange={(e) => setSeasonYear(Number(e.target.value))}
-            className="mt-2 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text outline-none focus:border-ufa-accent"
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}/{String(y + 1).slice(-2)}
-                {getYearMeta(y)?.realTeamCount != null
-                  ? ` · ${getYearMeta(y).realTeamCount} ${t.realTeamsShort}`
-                  : ''}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {yearMeta?.note ? (
-          <p className="text-xs text-ufa-muted -mt-4">{yearMeta.note}</p>
-        ) : null}
-
-        {fictionalFill > 0 && (
-          <div className="rounded-sm border border-ufa-gold/40 bg-ufa-gold/10 px-4 py-3 text-sm text-ufa-text">
-            <p className="font-semibold text-ufa-gold">{t.fictionalFillTitle}</p>
-            <p className="mt-1 text-xs text-ufa-muted">
-              {t.fictionalFillBody(seasonRealCount, fictionalFill, LEAGUE_TEAM_SLOTS)}
-            </p>
-          </div>
-        )}
-
-        <fieldset>
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <legend className="text-sm font-medium text-ufa-text">
-              {t.activeLeague} · {t.team}
-            </legend>
-            {canSwap && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedTeamIds(defaultIds)
-                  setSwapOutId(null)
-                }}
-                className="text-xs text-ufa-muted hover:text-ufa-accent"
-              >
-                {t.resetLeague}
-              </button>
-            )}
-          </div>
-
-          {canSwap && (
-            <p className="mt-2 text-xs text-ufa-muted">{t.benchHint(benchTeams.length)}</p>
-          )}
-
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {teams.map((team) => {
-              const active = team.id === playerTeamId
-              const swapping = swapOutId === team.id
-              const rec = recordHint(team)
-              return (
-                <div
-                  key={team.id}
-                  className={`rounded-sm border p-4 transition-all ${
-                    active
-                      ? 'border-ufa-accent bg-ufa-accent/10  '
-                      : swapping
-                        ? 'border-ufa-gold/50 bg-ufa-gold/5'
-                        : 'border-ufa-border bg-ufa-panel'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setPlayerTeamId(team.id)}
-                    className="w-full text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="flex h-10 w-10 items-center justify-center rounded-sm text-xs font-bold text-white"
-                        style={{ backgroundColor: team.primaryColor }}
-                      >
-                        {team.shortName}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-ufa-text truncate">
-                          {resolveTeamName(team, lang)}
-                        </p>
-                        <p className="text-xs text-ufa-muted">
-                          {t.rosterCount(team.players?.length ?? 0)}
-                          {rec ? ` · ${rec}` : ''}
-                          {team.isFictional ? ` · ${t.fictionalBadge}` : ''}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewTeamId(team.id)}
-                      className="flex-1 rounded-md border border-ufa-border px-2 py-1.5 text-xs font-medium text-ufa-accent hover:bg-ufa-accent/10"
-                    >
-                      {t.previewProfile}
-                    </button>
-                    {canSwap && (
-                      <button
-                        type="button"
-                        onClick={() => setSwapOutId(swapping ? null : team.id)}
-                        className="flex-1 rounded-md border border-ufa-border px-2 py-1.5 text-xs font-medium text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text"
-                      >
-                        {swapping ? t.swapCancel : t.swap}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </fieldset>
-
-        {swapOutId && canSwap && (
-          <div className="rounded-sm border border-ufa-gold/40 bg-ufa-panel p-4  ">
-            <p className="text-sm font-semibold text-ufa-text">{t.swapPick}</p>
-            <p className="mt-1 text-xs text-ufa-muted">{t.benchTitle}</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 max-h-64 overflow-y-auto">
-              {benchTeams.map((team) => (
-                <div
-                  key={team.id}
-                  className="flex items-center gap-1 rounded-sm border border-ufa-border bg-ufa-bg"
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleSwap(swapOutId, team.id)}
-                    className="min-w-0 flex-1 px-3 py-2 text-left text-sm hover:bg-ufa-accent/10"
-                  >
-                    <span className="font-medium text-ufa-text">
-                      {resolveTeamName(team, lang)}
-                    </span>
-                    <span className="ml-2 text-xs text-ufa-muted">
-                      {recordHint(team) ?? t.rosterCount(team.players?.length ?? 0)}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewTeamId(team.id)}
-                    className="shrink-0 px-2 py-2 text-xs text-ufa-accent hover:underline"
-                    title={t.previewProfile}
-                  >
-                    {t.previewProfile}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {selected && (
-          <p className="text-sm text-ufa-muted">
-            {t.startWithBefore}
-            <span className="font-medium text-ufa-text">{resolveTeamName(selected, lang)}</span>
-            {t.startWithAfter(seasonYear)}
-            {rosterMode === 'random' ? ` ${t.startRandomHint}` : ` ${t.startHistoricalHint}`}{' '}
-            <button
-              type="button"
-              onClick={() => setPreviewTeamId(selected.id)}
-              className="text-ufa-accent hover:underline"
-            >
-              {t.previewProfile} →
-            </button>
-          </p>
-        )}
-        </>
-        )}
-
-        {error && <p className="text-sm text-ufa-danger">{error}</p>}
-        {externalError && <p className="text-sm text-ufa-danger">{externalError}</p>}
-
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-md bg-ufa-accent px-5 py-2.5 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-50"
-          >
-            {submitting ? t.startingCareer : t.startCareer}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={submitting}
-            className="rounded-md border border-ufa-border px-5 py-2.5 text-sm text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text disabled:opacity-50"
-          >
-            {t.cancel}
-          </button>
-        </div>
-      </form>
-
-      {teamPreview && (
-        <TeamStartPreviewModal
-          preview={teamPreview}
-          lang={lang}
-          labels={t}
-          onClose={() => setPreviewTeamId(null)}
-          onSelect={(id) => {
-            setPlayerTeamId(id)
-            setPreviewTeamId(null)
-          }}
-        />
-      )}
-
-      {eucsPreviewTeam && (
-        <EucsTeamPreviewModal
-          team={eucsPreviewTeam}
-          t={t}
-          anchorTop={eucsPreviewAnchorTop}
-          onClose={() => setEucsPreviewTeamId(null)}
-          onSelect={(id) => {
-            setEucsTeamId(id)
-            setEucsPreviewTeamId(null)
-          }}
-        />
-      )}
+    {step === 4 && <div className="space-y-5"><div className={panel}><h2 className="text-xl font-semibold text-ufa-text">{managerName}</h2><p className="mt-2 text-sm text-ufa-muted">{country(identity.nationality)} · {identity.age} {tr('lat', 'years old')}</p><p className="mt-4 text-lg text-ufa-text">{competition === 'domestic' ? selectedTeam?.name : (ufaOptions?.playerTeamName ?? ufaOptions?.playerTeamId)}</p><p className="mt-1 text-sm text-ufa-muted">{competition === 'domestic' ? `${selectedLeague?.name} · 2026/27` : `UFA · ${ufaOptions?.seasonYear}`}</p>{competition === 'domestic' && <p className="mt-3 text-sm text-ufa-muted">{activeLeagueCount} {tr('grywalnych lig · Krajowe puchary aktywne', 'playable leagues · Domestic cups included')}</p>}<p className="mt-3 text-sm text-ufa-muted">{tr('Rozgrywki międzynarodowe', 'International competitions')}: {international.filter(([id]) => worldConfig.international[id]).map(([, labels]) => labels[en ? 1 : 0]).join(', ') || tr('Wyłączone', 'Disabled')}</p></div><Attributes profile={profile} lang={lang} /><p className="text-sm text-ufa-muted">{tr('Świat zostanie wygenerowany po rozpoczęciu gry. Dodatkowe aktywne ligi możesz zmienić na następny sezon.', 'Your world will be generated when you start. You can change additional active leagues for the next season.')}</p></div>}
+    {(error || externalError) && <p role="alert" className="mt-5 text-sm text-ufa-danger">{error || externalError}</p>}
+    <div className="mt-8 flex flex-wrap gap-3">
+      {step > 0 && <button type="button" disabled={submitting} className="um-button" onClick={() => { setError(''); setStep(step - 1) }}>{tr('Wstecz', 'Back')}</button>}
+      {step < 4 && !(step === 3 && competition === 'ufa') && <button type="button" className="um-button um-button--primary" onClick={advance}>{tr('Dalej', 'Continue')}</button>}
+      {step === 4 && <button type="button" className="um-button um-button--primary disabled:opacity-50" disabled={submitting} onClick={submit}>{submitting ? tr('Tworzenie świata…', 'Creating your world…') : tr('Rozpocznij grę', 'Start game')}</button>}
     </div>
-  )
+  </main>
 }

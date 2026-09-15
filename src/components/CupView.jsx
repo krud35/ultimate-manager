@@ -11,7 +11,16 @@ const PYRAMID_ROUND_ORDER = ['round1', 'roundOf32', 'roundOf16', 'quarterfinal',
 const CENTERED_ROUNDS = new Set(['semi', 'final', 'semifinal'])
 
 function roundOrderFor(cup) {
+  if (cup?.format === 'domestic') return [...new Set([...(cup.matches ?? [])].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '')).map(m => m.round))]
   return cup?.pyramidCupDates ? PYRAMID_ROUND_ORDER : UFA_ROUND_ORDER
+}
+
+function stringsForCup(lang, cup) {
+  const t = leagueViewsStrings(lang)
+  if (cup?.format !== 'domestic') return t
+  return { ...t, cupTitle: lang === 'en' ? 'Domestic Cup' : 'Puchar krajowy',
+    cupIntro: lang === 'en' ? 'Knockout rounds throughout the season · Tuesday–Thursday · One match per round, with a neutral final.' : 'Rundy pucharowe przez cały sezon · wtorek–czwartek · Jeden mecz w rundzie, finał na neutralnym boisku.',
+    cupRound: { ...t.cupRound, ...Object.fromEntries((cup.matches ?? []).filter(m => m.round?.startsWith('round-')).map(m => [m.round, `${lang === 'en' ? 'Round of' : 'Runda'} ${m.round.slice(6)}`])) } }
 }
 
 function shortName(name) {
@@ -85,7 +94,7 @@ function BracketMatchCard({ match, names, playerTeamId, onPlayFixture, currentDa
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <span className="text-[11px] uppercase tracking-wide text-ufa-muted">
           {t.cupRound[match.round] ?? match.round}
-          <span className="ml-1.5 text-ufa-gold">N</span>
+          {match.venue === 'neutral' && <span className="ml-1.5 text-ufa-gold">N</span>}
         </span>
         {match.date && (
           <span className="tabular-nums text-ufa-muted">{match.date.slice(5)}</span>
@@ -244,7 +253,7 @@ function ResultsView({ league, names, onPlayFixture, t }) {
                 {m.homeTeamId ? names[m.homeTeamId] : 'TBD'}
                 {' vs '}
                 {m.awayTeamId ? names[m.awayTeamId] : 'TBD'}
-                <span className="ml-2 text-[11px] font-semibold text-ufa-gold">N</span>
+                {m.venue === 'neutral' && <span className="ml-2 text-[11px] font-semibold text-ufa-gold">N</span>}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -314,7 +323,7 @@ function CupStatsView({ league, names, t }) {
 
 export function CupTile({ league, onNavigate }) {
   const { lang } = useUiLang()
-  const t = leagueViewsStrings(lang)
+  const t = stringsForCup(lang, league.cup)
   const names = teamNameMapAll(league, lang)
   const cup = league.cup
   const phase = detectSeasonPhase(league)
@@ -385,7 +394,7 @@ export function CupTile({ league, onNavigate }) {
 
 export default function CupView({ league, onPlayFixture = null }) {
   const { lang } = useUiLang()
-  const t = leagueViewsStrings(lang)
+  const t = stringsForCup(lang, league.cup)
   const tabs = [
     { id: 'bracket', label: t.tabBracket },
     { id: 'results', label: t.tabResults },

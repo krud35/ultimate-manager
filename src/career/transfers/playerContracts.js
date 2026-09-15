@@ -1,4 +1,5 @@
 import { referenceWeeklyWage } from '../economyBalance.js'
+import { clubWageScale } from '../financialMarkets.js'
 import { ensureClubEconomy, postClubCash, clubCash, canAffordContract, syncLoanFinancialCommitments, contractualWeeklyBill } from '../clubEconomy.js'
 /**
  * Kontrakty finansowe zawodników: długość, pensja tygodniowa, bonusy, obietnice.
@@ -145,9 +146,9 @@ function clamp(n, lo, hi) {
  * Bazowa tygodniówka z OVR (USD):
  * 65→~2800, 70→~5400, 75→~10400, 80→20000, 85→~38500, 90→~74100.
  */
-export function weeklyWageFromOvr(ovr) {
+export function weeklyWageFromOvr(ovr, team = null) {
   const x = Math.max(50, Math.min(99, Number(ovr) || 50))
-  return referenceWeeklyWage(x)
+  return referenceWeeklyWage(x) * clubWageScale(team)
 }
 
 /** Zaokrąglenie pensji do sensownych kwot. */
@@ -203,7 +204,7 @@ export function rollContractYears(player, rng) {
  * @param {object} player
  * @param {ReturnType<typeof createRng>} rng
  */
-export function rollWeeklyWage(player, rng) {
+export function rollWeeklyWage(player, rng, team = null) {
   const ovr = getOverallRating(player?.skills)
   const pot = Number.isFinite(player?.potential) ? player.potential : ovr
   const room = Math.max(0, pot - ovr)
@@ -216,7 +217,7 @@ export function rollWeeklyWage(player, rng) {
   else if (age >= 32) mult -= 0.08
   else if (age >= 30) mult -= 0.04
 
-  return roundWage(weeklyWageFromOvr(ovr) * mult)
+  return roundWage(weeklyWageFromOvr(ovr, team) * mult)
 }
 
 /**
@@ -309,10 +310,10 @@ function normalizePromise(p) {
  * tygodni od sezonowo wyrównanego `weeksTotal` (to przesunęłoby faktyczny koniec
  * kontraktu z powrotem w środek sezonu).
  */
-export function rollPlayerContract(player, seedBase = 0, seasonYear = null) {
+export function rollPlayerContract(player, seedBase = 0, seasonYear = null, team = null) {
   const rng = createRng(hashString(`${seedBase}|contract|${player?.id ?? '?'}`))
   const originalYears = rollContractYears(player, rng)
-  const weeklyWage = rollWeeklyWage(player, rng)
+  const weeklyWage = rollWeeklyWage(player, rng, team)
   const consumedFrac = rng.float() * 0.4
   const remainingYears = Math.max(1, Math.round(originalYears * (1 - consumedFrac)))
   return buildContract(player, {
@@ -358,7 +359,7 @@ export function ensurePlayerContract(player, options = {}) {
     }
     return player
   }
-  player.contract = rollPlayerContract(player, options.seed ?? 0, options.seasonYear ?? null)
+  player.contract = rollPlayerContract(player, options.seed ?? 0, options.seasonYear ?? null, options.team)
   return player
 }
 
@@ -395,7 +396,7 @@ export function ensureWorldContracts(world, options = {}) {
 
   for (const team of worldTeamsList(world)) {
     for (const player of team.players ?? []) {
-      ensurePlayerContract(player, { seed, force: !!options.force, seasonYear })
+      ensurePlayerContract(player, { seed, force: !!options.force, seasonYear, team })
     }
     if (syncBudgets) {
       syncTeamSalaryBudget(team, { seed, forceInit: !!options.force })
@@ -427,6 +428,7 @@ export function releaseContractFunds() { return 0 }
 
 export function signPlayerContract(team, player, terms) {
   if (!team || !player) return { ok: false, error: 'Brak drużyny/zawodnika' }
+  if (team.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
   const contract = buildContract(player, terms)
   const affordability = canAffordContract(team, player, contract.weeklyWage, { date: terms.signedDate ?? team.managementDate, weeksRemaining: contract.weeksRemaining })
   if (!affordability.ok) return affordability
@@ -458,6 +460,7 @@ export function processWeeklyWages(world, { date = null } = {}) {
   const loanShareByTeam = new Map()
 
   for (const team of worldTeamsList(world)) {
+    if (team.simulationMode === 'off') continue
     ensureClubEconomy(team)
     for (const player of team.players ?? []) {
       const c = player.contract
@@ -486,6 +489,7 @@ export function processWeeklyWages(world, { date = null } = {}) {
   let paid = 0
   let teams = 0
   for (const team of worldTeamsList(world)) {
+    if (team.simulationMode === 'off') continue
     if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
     if (date) team.finances.lastPayrollDate = date
     const weekBill = (ownBillByTeam.get(team.id) ?? 0) + (loanShareByTeam.get(team.id) ?? 0)
@@ -608,6 +612,7 @@ export function processSeasonEndContractObligations(world, options = {}) {
   const cupChampionTeamId = league?.cup?.championTeamId ?? null
 
   for (const team of worldTeamsList(world)) {
+    if (team.simulationMode === 'off') continue
     const standing = league?.standings?.[team.id]
     const teamGames = Math.max(0, (standing?.wins ?? 0) + (standing?.losses ?? 0))
     const teamPlace = placeByTeam[team.id] ?? null

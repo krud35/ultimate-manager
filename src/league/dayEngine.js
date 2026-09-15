@@ -1,4 +1,7 @@
+import { updateCupAttention } from '../career/simulationScope.js'
+import { prepareFrenchPlayoffs } from './frenchPlayoffs.js'
 import { recordMatchDevelopment } from '../career/matchDevelopment.js'
+import { completeInternationalClubSeason } from '../career/internationalClubCups.js'
 import { saveScoutingAnalysis } from '../matchEngine/scoutingAnalysis.js'
 /**
  * Silnik dnia kalendarza: mecze AI, blokada na mecz gracza, faza sezonu.
@@ -56,6 +59,7 @@ export function detectSeasonPhase(league, date = league.currentDate) {
   if (!cal || !date) return league.phase ?? 'fall'
 
   const iso = toIso(date)
+  if (cal.mode === 'domestic') return iso > cal.endDate ? 'offseason' : iso < `${cal.seasonYear + 1}-01-01` ? 'fall' : 'spring'
   const d = parseISODate(iso)
   const start = parseISODate(cal.startDate)
   const end = parseISODate(cal.endDate)
@@ -107,6 +111,7 @@ export function getPlayerFixtureOnDate(league, date) {
 
 /** Po domknięciu jesieni — drabinka pucharu. */
 export function maybeInitializeCup(league) {
+  if (league?.calendar?.mode === 'domestic') return league
   if (!league || league.cup) return league
 
   const fallFixtures = (league.fixtures ?? []).filter(
@@ -172,7 +177,7 @@ export function maybeInitializeCup(league) {
 export function syncLeagueRoundFromDate(league) {
   const today = league.currentDate
   const upcoming = (league.fixtures ?? [])
-    .filter((f) => f.competition !== 'cup' && f.date && f.date >= today)
+    .filter((f) => !f.frenchPlayoff && f.competition !== 'cup' && f.date && f.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date) || (a.round ?? 0) - (b.round ?? 0))
   if (upcoming[0]?.round) league.currentRound = upcoming[0].round
   return league
@@ -188,7 +193,8 @@ export function areCompetitionsComplete(league) {
     .filter((f) => f.competition !== 'cup')
     .every((f) => f.status === 'completed')
   const cupDone = !league.cup || league.cup.status === 'complete'
-  return leagueDone && cupDone
+  const othersDone = league.calendar?.mode !== 'domestic' || (league.otherLeagues ?? []).every(l => l.fixtures.every(f => f.status === 'completed') && (!l.cup || l.cup.status === 'complete'))
+  return leagueDone && cupDone && othersDone && (!league.frenchPlayoffs || league.frenchPlayoffs.status === "complete") && completeInternationalClubSeason({ league })
 }
 
 /** Oficjalny koniec sezonu kariery (31 lipca) — można przejść do kolejnego. */
@@ -213,6 +219,7 @@ export function getLeagueChampionTeamId(league) {
  * nierozstrzygnięty czeka na decyzję gracza (Obejrzyj / Zignoruj) zamiast rozstrzygać się
  * po cichu jak każdy inny mecz AI. Pierwsze napotkanie oznacza go jako `'pending'`. */
 function isWatchablePendingFinal(fixture) {
+  if (fixture.domesticCup) return false
   if (fixture.competition !== 'cup' || fixture.round !== 'final') return false
   if (fixture.watchDecision === 'ignored') return false
   fixture.watchDecision = fixture.watchDecision ?? 'pending'
@@ -223,7 +230,7 @@ export function simulateFixturesOnDate(league, date, options = {}) {
   const includePlayer = !!options.includePlayer
   const fixtures = getFixturesOnDate(league, date).filter(
     (f) =>
-      isPending(f) &&
+      isPending(f) && f.competition !== 'international-club' &&
       (includePlayer || !isPlayerInFixture(league, f)) &&
       f.homeTeamId &&
       f.awayTeamId &&
@@ -347,6 +354,7 @@ export function applyCupMatchResult(league, fixture, record) {
     forfeited: !!record.forfeited,
     date: record.date ?? league.currentDate,
     isCup: true,
+    neutral: fixture.venue != null ? fixture.venue === 'neutral' : true,
     homeWon,
     awayWon,
   })
@@ -361,6 +369,8 @@ function findFixtureInLeague(league, fixtureId) {
  * @returns {{ league: object, blocked: boolean, playerFixture?: object|null, weekTick?: boolean, autoSimulatedPlayer?: boolean }}
  */
 export function advanceCalendarDay(league, options = {}) {
+  updateCupAttention(league,league.currentDate)
+  prepareFrenchPlayoffs(league)
   if (!league.currentDate) {
     return { league, blocked: false, weekTick: false }
   }

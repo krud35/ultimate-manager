@@ -75,6 +75,8 @@ export function resolveTrainingDay(team, date, league = null) {
   })
 }
 export function playerSessionPlan(player, plan, team) {
+  if (player.holidayUntil && plan.date >= (player.holidayFrom ?? '') && plan.date <= player.holidayUntil) return { multiplier: 0, type: 'rest', load: 0, reason: 'holiday' }
+  if (player.nationalCampFrom && plan.date >= player.nationalCampFrom && plan.date <= player.nationalCampUntil) return { multiplier: 0, type: 'rest', load: 0, reason: 'nationalTeam' }
   const s = ensureTrainingSchedule(team)
   const participation = trainingParticipation(player, plan.date, s)
   const role = String(player.position ?? '').toLowerCase()

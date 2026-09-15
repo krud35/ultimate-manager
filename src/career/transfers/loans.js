@@ -145,8 +145,9 @@ export function startLoan(career, {
     return { ok: false, error: 'Okno transferowe jest zamknięte' }
   }
 
-  const parentTeam = worldTeamById(world, parentTeamId)
+    const parentTeam = worldTeamById(world, parentTeamId)
   const destinationTeam = worldTeamById(world, destinationTeamId)
+  if (parentTeam?.simulationMode === 'off' || destinationTeam?.simulationMode === 'off') return { ok: false, error: 'Liga wyłączona / League disabled' }
   if (!parentTeam || !destinationTeam) return { ok: false, error: 'Nie znaleziono drużyny' }
   if (parentTeam.id === destinationTeam.id) {
     return { ok: false, error: 'Zawodnik już jest w tym klubie' }

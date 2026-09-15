@@ -753,6 +753,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
           const clubId = findPlayerTeamId(career.world, playerId)
           const result = queueScoutMission(buyer, {
             kind: 'player',
+            world: career.world,
             targetPlayerId: playerId,
             opponentTeamId: clubId,
             date: career.league?.currentDate ?? null,

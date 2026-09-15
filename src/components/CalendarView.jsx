@@ -245,6 +245,7 @@ function FixtureChip({ fixture, names, league, compact = false, onPlay }) {
             />
           )}
         </span>
+        {fixture.frenchPlayoff && <span className="shrink-0 text-ufa-accent">{lang === 'en' ? 'Playoff' : 'Baraż'}</span>}
         {fixture.competition === 'cup' && (
           <span className="shrink-0 text-ufa-gold">P</span>
         )}
@@ -445,7 +446,7 @@ function MonthView({ league, names, team, anchorIso, selectedDay, onSelectDay })
                 {playerOnes.slice(0, 2).map((f) => (
                   <p key={f.id} className="truncate text-[11px] leading-tight text-ufa-accent font-medium">
                     {playerFixtureCompactLabel(f, league, names)}
-                    {f.competition === 'cup' ? ' · P' : ''}
+                    {f.frenchPlayoff ? (lang === 'en' ? ' · Playoff' : ' · Baraż') : f.competition === 'cup' ? ' · P' : ''}
                   </p>
                 ))}
                 {fixtures.length > 0 && playerOnes.length === 0 && (
@@ -713,7 +714,7 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
         .filter((p) => p.cupWeeks)
         .map((p) => (
           <div key={`${p.id}-weeks`} className="rounded-sm border border-ufa-border bg-ufa-panel p-4">
-            <h3 className="text-xl font-semibold text-ufa-text mb-3">{t.januaryCupSchedule}</h3>
+            <h3 className="text-xl font-semibold text-ufa-text mb-3">{league.calendar?.mode === 'domestic' ? (lang === 'en' ? 'Domestic cup schedule' : 'Terminarz pucharu krajowego') : t.januaryCupSchedule}</h3>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {p.cupWeeks.map((w) => (
                 <div
@@ -809,7 +810,7 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
                   <div>
                     <p className="text-[11px] text-ufa-muted tabular-nums">
                       {f.date}
-                      {f.competition === 'cup' ? t.cupShort : f.round != null ? t.roundShort(f.round) : ''}
+                      {f.frenchPlayoff ? (lang === 'en' ? 'Playoff' : 'Baraż') : f.competition === 'cup' ? t.cupShort : f.round != null ? t.roundShort(f.round) : ''}
                       {isToday ? ` · ${t.today}` : ''}
                     </p>
                     <p className="text-ufa-text mt-0.5 flex flex-wrap items-center">

@@ -1,4 +1,5 @@
 import { clubFinancialPower } from '../economyBalance.js'
+import { clubFinancialMarket } from '../financialMarkets.js'
 import { ensureClubEconomy, clubCash, postClubCash, reviewClubBudgets, availableClubCash, clubBudgetAllocation, setClubBudgetAllocation } from '../clubEconomy.js'
 /**
  * Budżety transferowe i polityka transferowa klubów.
@@ -76,6 +77,8 @@ export const TRANSFER_POLICY_PRESETS = [
 const EUCS_TIER_BUDGET_MULT = { 1: 1.8, 2: 0.75, 3: 0.25 }
 
 function eucsBudgetMultFor(team) {
+  const market = clubFinancialMarket(team)
+  if (market.domestic) return market.investment
   const tier = currentEucsTier(team)
   return tier ? (EUCS_TIER_BUDGET_MULT[tier] ?? 1) : 1
 }

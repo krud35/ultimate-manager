@@ -91,6 +91,7 @@ const INBOX_MAX = 80
 // club_news payload.kind values that are pure FYI (money/routine notices) — never
 // worth interrupting the "simulate until something needs attention" loop for.
 const SILENT_CLUB_NEWS_KINDS = new Set([
+  'regional_reassignment',
   'sponsor_payout',
   'sponsor_expired',
   'sponsor_expiring_soon',
@@ -897,7 +898,7 @@ export function generateIncomingTransferOffers(career, { date = null } = {}) {
   if (playerTeam.players.some((p) => p.transferListed)) dayChance *= TRANSFER_LIST_DAY_CHANCE_MULT
   if (rng() > dayChance) return []
 
-  const aiTeams = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
+  const aiTeams = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId && t.simulationMode !== 'off')
   if (!aiTeams.length) return []
 
   const blocked = pendingBidPlayerIds(career.inbox)
@@ -1050,7 +1051,7 @@ export function generateIncomingLoanOffers(career, { date = null } = {}) {
 
   if (rng() > (playerTeam.players.some(p => p.loanListed && !p.loan) ? 0.15 : 0.05)) return []
 
-  const aiTeams = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
+  const aiTeams = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId && t.simulationMode !== 'off')
   if (!aiTeams.length) return []
 
   const blocked = pendingBidPlayerIds(career.inbox)

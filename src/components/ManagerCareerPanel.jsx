@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useUiLang } from '../ui/UiLangContext'
 import { ensureManagerCareer, managerJobOffers, leaveManagerJob, acceptManagerJob } from '../career/managerCareer.js'
 import { CLUB_STRATEGY_DEFS } from '../career/clubObjectives.js'
+import ManagerProfilePanel from './ManagerProfilePanel.jsx'
 
 export default function ManagerCareerPanel({career,onUpdate,onWait}) {
  const {lang}=useUiLang(),en=lang==='en',m=ensureManagerCareer(career)
@@ -11,13 +12,14 @@ export default function ManagerCareerPanel({career,onUpdate,onWait}) {
  return <section className="space-y-4 um-section text-ufa-text">
   <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-2xl font-semibold">{en?'Manager career':'Kariera trenera'}</h2><span>{career.league.currentDate}</span></div>
   <p>{career.managerName} · {en?'Reputation':'Reputacja'}: <strong>{Math.round(m.reputation)}/100</strong> · {m.status==='employed'?(career.world.teamsById[career.playerTeamId]?.name):(en?'Unemployed':'Bez klubu')}</p>
+  <ManagerProfilePanel manager={career.managerProfile} team={career.world.teamsById[career.playerTeamId]} />
   <p className="text-xs text-ufa-muted">{en?'Results earned during your appointments determine your reputation. Clubs recruit according to their needs and level.':'Reputacja zależy od wyników osiągniętych podczas Twojej pracy. Kluby rekrutują zgodnie ze swoją sytuacją i poziomem rozgrywek.'}</p>
   {!!m.warnings.length&&<p className="rounded-sm border border-red-500 p-3 text-ufa-danger">{en?'Board warnings':'Ostrzeżenia zarządu'}: {m.warnings.length}/2 · {m.warnings.at(-1).date}</p>}
   {m.status==='employed'?<button type="button" className="rounded border border-red-500/50 px-3 py-2 text-sm" onClick={()=>setConfirm('resign')}>{en?'Resign from club':'Odejdź z klubu'}</button>:<button type="button" disabled={busy||!!confirm} className="rounded bg-ufa-accent px-3 py-2 text-sm text-ufa-on-accent disabled:opacity-40" onClick={async()=>{setBusy(true);try{await onWait?.()}catch{setError(en?'Could not advance the calendar.':'Nie udało się przesunąć kalendarza.')}finally{setBusy(false)}}}>{busy?(en?'Simulating…':'Symulacja…'):(en?'Continue job search (7 days)':'Kontynuuj poszukiwania (7 dni)')}</button>}
   <h3 className="font-semibold">{en?'Available job offers':'Dostępne oferty pracy'}</h3>
   {offers.length===0&&<p className="text-sm text-ufa-muted">{en?'No suitable vacancies. New offers are reviewed each month.':'Brak odpowiednich wakatów. Nowe oferty są sprawdzane co miesiąc.'}</p>}
   <div className="grid gap-3 md:grid-cols-2">{offers.map(o=><div key={o.id} className="rounded-sm border border-ufa-border p-3">
-   <h4 className="font-semibold">{o.name} · {o.tier?`${en?'League':'Liga'} ${o.tier}`:'UFA'}</h4>
+   <h4 className="font-semibold">{o.name} · {o.leagueLabel??(o.tier?`${en?'League':'Liga'} ${o.tier}`:'UFA')}</h4>
    <p className="mt-1 text-xs text-ufa-muted">{CLUB_STRATEGY_DEFS[career.world.teamsById[o.teamId].clubStrategy]?.[en?'en':'pl']} · {en?'Minimum reputation':'Wymagana reputacja'}: {o.required}</p>
    <p className="my-2 text-xs">{o.reason==='rebuild'?(en?'Club looking to rebuild.':'Klub szuka trenera do odbudowy.'):(en?'Board dissatisfied with results.':'Zarząd niezadowolony z wyników.')}</p>
    <button type="button" disabled={busy} className="rounded border border-ufa-accent px-3 py-2 text-sm" onClick={()=>setConfirm(o.id)}>{en?'Accept offer':'Przyjmij ofertę'}</button>

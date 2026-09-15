@@ -82,7 +82,7 @@ export function computePlayerContractDemands({
   league = null,
   renew = false,
 }) {
-  ensurePlayerContract(player)
+  ensurePlayerContract(player, { team: sellerTeam ?? buyerTeam })
   ensurePlayerMorale(player)
   ensurePlayerTraits(player)
   if (sellerTeam) ensureTeamReputation(sellerTeam)
@@ -93,7 +93,8 @@ export function computePlayerContractDemands({
   const pot = Number.isFinite(player?.potential) ? player.potential : ovr
   const morale = getPlayerMorale(player)
   // Anchor expectations to the current market; repeated renewals must not compound forever.
-  const currentWage = roundWage(Math.min(player.contract?.weeklyWage ?? weeklyWageFromOvr(ovr), weeklyWageFromOvr(ovr) * 1.25))
+  const marketWage = weeklyWageFromOvr(ovr, buyerTeam)
+  const currentWage = roundWage(Math.min(player.contract?.weeklyWage ?? marketWage, Math.max(marketWage, weeklyWageFromOvr(ovr, sellerTeam ?? buyerTeam)) * 1.25))
   const sellerRep = getTeamReputation(sellerTeam)
   const buyerRep = getTeamReputation(buyerTeam)
   const teamCount =
@@ -148,7 +149,7 @@ export function computePlayerContractDemands({
   const minWeeklyWage = roundWage(
     Math.max(
       renew ? currentWage * 1.02 : currentWage * 0.92,
-      weeklyWageFromOvr(ovr) * 0.85,
+      marketWage * 0.85,
     ) * demandMult,
   )
 

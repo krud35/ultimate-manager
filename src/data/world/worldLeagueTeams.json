@@ -1,0 +1,284 @@
+{
+  "division": "Open (Men's)",
+  "note": "Team lists only - these leagues have NO player rosters available. Sources publish standings and club names but either no rosters at all, or rosters with names hidden behind a privacy setting (Netherlands, Ireland). Rosters for a handful of individual clubs here do exist in WUCC 2026 / WMUCC 2026 / Windmill 2026 and are flagged per club with `rosterAvailableVia`. Everything else needs procedural squad generation.",
+  "fetchedAt": "2026-09-15",
+  "leagues": {
+    "italy": {
+      "country": "Italy",
+      "source": "flyingdisc.it / FIGeST - Campionati Italiani Ultimate 2025, Serie A/B/C schedule sheets",
+      "structure": "Two tiers of 16. Tier 1 = all of Serie A (12) plus the four best of Serie B, which includes both clubs actually promoted. Tier 2 = the remaining eight of Serie B plus the eight best of Serie C (One Tribe U17 was skipped as a youth side). Italy's real pyramid has three divisions with promotion and relegation, so the source order is preserved inside each tier.",
+      "tiers": {
+        "1": [
+          {"name":"BFD La Fotta","city":"Bologna","rosterAvailableVia":"WUCC 2026"},
+          {"name":"Cotarica Grandes","city":"Rimini","rosterAvailableVia":"WUCC 2026"},
+          {"name":"BFD Zero51","city":"Bologna"},
+          {"name":"One Tribe","city":"Bologna"},
+          {"name":"BFD Redbulls","city":"Bologna"},
+          {"name":"CUS Padova Barbastreji","city":"Padova"},
+          {"name":"AUT BeeFree","city":"Torino"},
+          {"name":"Cotarica Runners","city":"Rimini"},
+          {"name":"DiscoBolo","city":"Bologna"},
+          {"name":"360 Milano","city":"Milano"},
+          {"name":"Spaccamadoni","city":"Pesaro e Urbino"},
+          {"name":"BFD Supreme","city":"Bologna"},
+          {"name":"UFO","city":"Trento","note":"Serie B champion, promoted to Serie A"},
+          {"name":"Metacarpi","city":"Modena","note":"promoted to Serie A"},
+          {"name":"Donkey Divers","city":"Milano"},
+          {"name":"One Tribe Next Gen","city":"Bologna"}
+        ],
+        "2": [
+          {"name":"RAMS Blue","city":"Modena"},
+          {"name":"Frasba dal Lac","city":"Como"},
+          {"name":"Kiss - Ultimate Cremona","city":"Cremona"},
+          {"name":"Canieporci","city":"Bologna"},
+          {"name":"CUS Bergamo Ultimate","city":"Bergamo"},
+          {"name":"Marsoni - Corpo Libero","city":"Rimini"},
+          {"name":"BFD NextGen","city":"Bologna","note":"relegated to Serie C"},
+          {"name":"BID Roma","city":"Roma","note":"relegated to Serie C"},
+          {"name":"Frisbaobab","city":"Vicenza"},
+          {"name":"Gremlins","city":"Rimini"},
+          {"name":"Discover - CUS Verona","city":"Verona"},
+          {"name":"Voladora","city":"Parma"},
+          {"name":"DiscoBolo Rookies","city":"Bologna"},
+          {"name":"DiscoDisc","city":null},
+          {"name":"CUS Brescia","city":"Brescia"},
+          {"name":"AUT Buzz","city":"Torino"}
+        ]
+      }
+    },
+    "australia": {
+      "country": "Australia",
+      "source": "nationals.ultimatefrisbee.org.au + nationalsdivii.ultimatefrisbee.org.au - Australian Ultimate Championships 2025/2026",
+      "structure": "Tier 1 = AUC Division I (12 teams, includes New Zealand entries). Tier 2 = the 20 best of AUC Division II, which has 27 Open teams in total. The Div II standings list Melbourne as the venue for every team, so city data there is unreliable and omitted.",
+      "tiers": {
+        "1": [
+          {"name":"Ellipsis Men","city":"Melbourne"},
+          {"name":"Sunder Slice","city":null},
+          {"name":"Wildcats","city":"Wellington","note":"New Zealand entry"},
+          {"name":"Fyshwick United","city":null},
+          {"name":"Melbourne Juggernaut","city":"Melbourne"},
+          {"name":"Hot Chilly","city":"Melbourne"},
+          {"name":"Sunder Dice","city":"Ivanhoe East"},
+          {"name":"Mammoth","city":"Brisbane"},
+          {"name":"Manly Mullets","city":"Manly"},
+          {"name":"Sublime Ultimate Club I","city":"Carlisle"},
+          {"name":"Newcastle I-Beam","city":"Newcastle"},
+          {"name":"Outbreak Mountain","city":"Adelaide"}
+        ],
+        "2": [
+          {"name":"Geelong Mudlarks"},{"name":"Extinction"},{"name":"Equinox"},{"name":"Quoll"},
+          {"name":"Melbourne Carnage"},{"name":"Fyshwick Unit"},{"name":"Tom's Tim Tams"},
+          {"name":"Outbreak Apocalypse"},{"name":"Craigieburn Pelicans"},{"name":"Stout"},
+          {"name":"Manly Moes"},{"name":"Hills Ironbark"},{"name":"Phat Chilly"},{"name":"AWUF"},
+          {"name":"Sublime Ultimate DII"},{"name":"NSU Borealis"},{"name":"SWU Claw"},
+          {"name":"Fresh Chilly"},{"name":"Zephyr"},{"name":"Newcastle U-Beam"}
+        ]
+      }
+    },
+    "netherlands": {
+      "country": "Netherlands",
+      "source": "nfbultimatecompetitie.nl - NFB 7v7 Mixed & 5v5 Open Competitie 2025, Open standings",
+      "formatWarning": "The Dutch Open competition is played 5v5, not 7v7. Squad sizes and match model differ from every other league in this dataset.",
+      "rosterNote": "Rosters exist on the source but nearly every player name is hidden by a per-user privacy setting, so only a handful are readable.",
+      "tiers": { "1": [
+        {"name":"Flying High","city":"Tilburg"},
+        {"name":"Vertigo 1","city":"Eindhoven"},
+        {"name":"Ufo open 1","city":"Utrecht","rosterAvailableVia":"WUCC 2026 (UFO)"},
+        {"name":"Airborn 2","city":"Arnhem"},
+        {"name":"Disc Devils Twente 1","city":"Enschede"},
+        {"name":"Force Elektro Open 1","city":"Delft"},
+        {"name":"Ultimaas 1","city":"Maastricht"},
+        {"name":"Gronical Dizziness open 1","city":"Groningen"},
+        {"name":"Force Elektro Open 2","city":"Delft"},
+        {"name":"Veenendaal Tijgers","city":"Veenendaal"},
+        {"name":"NUTS","city":"Amsterdam"},
+        {"name":"WAF","city":null},
+        {"name":"FrisBEE Woerden 1","city":"Woerden"},
+        {"name":"AUC Open 1","city":"Amsterdam"},
+        {"name":"Ultimus Prime 1","city":"The Hague"},
+        {"name":"Quick Ultimate 1","city":"Nijmegen"}
+      ]}
+    },
+    "czechia": {
+      "country": "Czech Republic",
+      "source": "vysledky.frisbee.cz (ČAUF) - Open 1./2./3. Liga plus the three regional qualifiers (Praha, Jihozápad, Morava)",
+      "structure": "Czechia runs a genuine 3-tier Open pyramid feeding off regional qualifiers. The 16 clubs below are the distinct senior clubs across all tiers; B-teams (BUFU B, Terrible Monkeys B, Prague Devils B) were folded into their parent club.",
+      "tiers": { "1": [
+        {"name":"Terrible Monkeys","tier":"1. Liga","rosterAvailableVia":"EUCS"},
+        {"name":"Chlupatá Žába","tier":"1. Liga"},
+        {"name":"F.U.J.","tier":"1. Liga","rosterAvailableVia":"EUCS"},
+        {"name":"3SB","tier":"Kvali / WUCC","rosterAvailableVia":"EUCS + WUCC 2026"},
+        {"name":"PeaceEgg","tier":"Kvali"},
+        {"name":"Prague Devils","tier":"1. Liga"},
+        {"name":"Poletíme","tier":"2. Liga"},
+        {"name":"Chupacabras","tier":"2. Liga"},
+        {"name":"Sokol Křemže","tier":"2. Liga"},
+        {"name":"Kachny Příbram","tier":"2. Liga"},
+        {"name":"BUFU","tier":"2. Liga"},
+        {"name":"Left Overs","tier":"2. Liga"},
+        {"name":"Atrofované Ruce","tier":"Kvali"},
+        {"name":"Rainbow Banana","tier":"Kvali"},
+        {"name":"Rakety Žižkoff","tier":"3. Liga"},
+        {"name":"Sunset","tier":"3. Liga"}
+      ]}
+    },
+    "germany": {
+      "country": "Germany",
+      "source": "scores.frisbeesportverband.de (DFV, Ultiorganizer) - 1. Liga Open, Outdoor 2026",
+      "structure": "Germany also runs 2. Liga Nord/Süd and 3. Liga (Nord, Süd-West, Süd-Ost), so a second and third tier could be added later; only the 16-team top flight is captured here.",
+      "tiers": { "1": [
+        {"name":"Wall City","rosterAvailableVia":"EUCS + WUCC 2026"},
+        {"name":"Bad Skid","rosterAvailableVia":"EUCS + WUCC 2026 + WMUCC 2026"},
+        {"name":"Hardfisch","rosterAvailableVia":"WMUCC 2026"},
+        {"name":"Heidees","rosterAvailableVia":"EUCS"},
+        {"name":"M.U.C."},
+        {"name":"Late Game"},
+        {"name":"Frizzly Bears"},
+        {"name":"BORA"},
+        {"name":"7Schwaben"},
+        {"name":"Disckick","rosterAvailableVia":"Windmill 2026"},
+        {"name":"Ars Ludendi","rosterAvailableVia":"WMUCC 2026"},
+        {"name":"bff"},
+        {"name":"Werfwölfe","rosterAvailableVia":"Windmill 2026"},
+        {"name":"Frühsport 02"},
+        {"name":"Hard2fisch"},
+        {"name":"Sturm und Drang I"}
+      ]}
+    },
+    "japan": {
+      "country": "Japan",
+      "source": "JFDA - 文部科学大臣杯第50回全日本アルティメット選手権大会 (50th All Japan Ultimate Championship), Open division final standings",
+      "structure": "Single national championship of 16 teams fed by regional qualifiers (Kanto A/B/C, Chubu, Kansai/Chushikoku, Kyushu/Okinawa, Hokkaido/Tohoku and a seeded group). Regional league results are not published. Listed in final placing order.",
+      "tiers": { "1": [
+        {"name":"NomadicTribe","rosterAvailableVia":"WUCC 2026"},
+        {"name":"Osaka Spirits","nameLocal":"大阪スピリッツ","rosterAvailableVia":"WUCC 2026"},
+        {"name":"Technicolor","rosterAvailableVia":"WUCC 2026"},
+        {"name":"GONA"},
+        {"name":"Bunka Shutter Buzz Bullets","nameLocal":"文化シヤッターバズバレッツ"},
+        {"name":"Rascals"},
+        {"name":"Bulldogs"},
+        {"name":"CLOWN"},
+        {"name":"Kwansei Gakuin ARROWS","nameLocal":"関西学院大学ARROWS","note":"university side"},
+        {"name":"Bustar"},
+        {"name":"Trigger","nameLocal":"トリガー"},
+        {"name":"JANDLUX","rosterAvailableVia":"WUCC 2026 (mixed)"},
+        {"name":"Sophia University Freaks","nameLocal":"上智大学フリークス","note":"university side"},
+        {"name":"Nippon Sport Science University BARBARIANS","nameLocal":"日本体育大学BARBARIANS","note":"university side"},
+        {"name":"Hakata Hackers","nameLocal":"博多ハッカーズ"},
+        {"name":"WINO"}
+      ]}
+    },
+    "newZealand": {
+      "country": "New Zealand",
+      "source": "NZUC Division 1 Open (team list supplied by the user; nzuc.ultimatecentral.com is behind a bot check)",
+      "note": "A Division 2 almost certainly exists (the source URL is explicitly 'division-1') but its team list was not obtained.",
+      "tiers": { "1": [
+        {"name":"CRONUT"},{"name":"Groot"},{"name":"Hammertron"},{"name":"OaF Dunedin"},
+        {"name":"Ōtākaro","rosterAvailableVia":"WUCC 2026"},
+        {"name":"Rocket Auckland"},
+        {"name":"Wildcats","rosterAvailableVia":"WUCC 2026"},
+        {"name":"Bear Foot"},{"name":"Exiles"},{"name":"Heavy Machinery"},{"name":"Hive"},
+        {"name":"PIANO"},{"name":"Summer Fling"},{"name":"Wizard Wands"},{"name":"Euphoria"},
+        {"name":"WaF Nelson"}
+      ]}
+    },
+    "brazil": {
+      "country": "Brazil",
+      "source": "ultimatebrasil.com.br club directory",
+      "warning": "Weakest source in this file. The CBBU (Campeonato Brasileiro) page is an empty stub last updated in 2019, so there are no standings, no results and no tier order - these are simply the 16 clubs listed in the national directory.",
+      "tiers": { "1": [
+        {"name":"Callithrix"},{"name":"Crocos"},{"name":"Cusco Voador"},{"name":"Dragões"},
+        {"name":"Elektras"},{"name":"Frisbravus"},{"name":"Los Pragas"},
+        {"name":"NGF - Nova Geração Frisbee"},{"name":"Nipônika"},{"name":"Revolution"},
+        {"name":"Soulfrisbee"},{"name":"Strix"},{"name":"Sunday Ultimate Brasília"},
+        {"name":"UAI Guarás"},{"name":"UP! - Ultimate Players"},{"name":"Ventopanas"}
+      ]}
+    },
+    "ireland": {
+      "country": "Ireland",
+      "source": "irishultimate.com - Men's All Ireland Ultimate Championships, Div. 1 + Div. 2 (17 teams total)",
+      "incomplete": "Division 2 has 9 teams at the source but only 6 were readable, so the last two entries below are INVENTED to fill the league to 16 - they carry `generated: true` and are not real clubs.",
+      "rosterNote": "Rosters exist but player names are hidden by the same privacy setting as the Dutch source.",
+      "tiers": { "1": [
+        {"name":"Ranelagh","division":"Div. 1","rosterAvailableVia":"EUCS + WUCC 2026"},
+        {"name":"XVI Ultimate","division":"Div. 1","rosterAvailableVia":"EUCS + WUCC 2026 + Windmill 2026"},
+        {"name":"PELT Ultimate","division":"Div. 1","city":"Limerick","rosterAvailableVia":"WMUCC 2026"},
+        {"name":"Ballincollig Ultimate","division":"Div. 1","city":"Ballincollig"},
+        {"name":"Rebel Ultimate","division":"Div. 1","city":"Cork"},
+        {"name":"Ranelagh 2","division":"Div. 1"},
+        {"name":"Dublin Gravity","division":"Div. 1","city":"Dublin"},
+        {"name":"PELT 2","division":"Div. 1","city":"Limerick"},
+        {"name":"Tribe Ultimate","division":"Div. 2"},
+        {"name":"Rebel 2","division":"Div. 2","city":"Cork"},
+        {"name":"Uproar","division":"Div. 2"},
+        {"name":"AntiGravity","division":"Div. 2","city":"Dublin"},
+        {"name":"Ballincollig 2","division":"Div. 2"},
+        {"name":"PELT 3","division":"Div. 2","city":"Limerick"},
+        {"name":"Broc","division":"Div. 2","city":"Dublin","generated":true},
+        {"name":"Sligo Sirocco","division":"Div. 2","city":"Sligo","generated":true}
+      ]}
+    },
+    "iberia": {
+      "country": "Spain + Portugal",
+      "source": "fedv.es (Campeonatos de España de Ultimate, 1ª División Open, seasons 23-24 and 24-25) + Portuguese clubs supplied by the user",
+      "structure": "Merged Iberian league - Spain alone yields about 13 clubs across seasons, so three Portuguese clubs were added to reach 16.",
+      "tiers": { "1": [
+        {"name":"Quijotes+Dulcineas Ultimate Madrid","city":"Madrid","country":"Spain","rosterAvailableVia":"EUCS + WUCC 2026"},
+        {"name":"Disckatus Ultimate Madrid","city":"Madrid","country":"Spain","rosterAvailableVia":"WMUCC 2026"},
+        {"name":"Inmortales Madrid","city":"Madrid","country":"Spain"},
+        {"name":"Krakens Ultimate Barcelona","city":"Barcelona","country":"Spain"},
+        {"name":"Sharks","city":"Barcelona","country":"Spain","rosterAvailableVia":"WUCC 2026 (women)"},
+        {"name":"Esperit Ultimate Sabadell","city":"Sabadell","country":"Spain"},
+        {"name":"Murciélagos Ultimate Valencia","city":"Valencia","country":"Spain"},
+        {"name":"Diskolaris Getxo","city":"Getxo","country":"Spain"},
+        {"name":"Guayota","city":"Santa Cruz de Tenerife","country":"Spain","rosterAvailableVia":"WUCC 2026 (mixed)"},
+        {"name":"Corocotta Ultimate Cantabria","city":"Santander","country":"Spain"},
+        {"name":"DiscTintos Ultimate Logroño","city":"Logroño","country":"Spain"},
+        {"name":"Zierzo Ultimate ZgZ","city":"Zaragoza","country":"Spain"},
+        {"name":"Bárbaros y Vikingas","city":"Alicante","country":"Spain"},
+        {"name":"Gambozinos","country":"Portugal"},
+        {"name":"DiscOver","country":"Portugal"},
+        {"name":"LFO","country":"Portugal"}
+      ]}
+    },
+    "colombia": {
+      "country": "Colombia",
+      "source": "Team list supplied by the user; fecodv.ultimatecentral.com (Torneo Nacional Interclubes FECODV 2025, 46 teams across all divisions) is behind a bot check",
+      "incomplete": "The user supplied 14 real clubs; the last two entries are INVENTED to fill the league to 16 and carry `generated: true`. Their names follow the naming style of the real Colombian scene (indigenous and local-culture words, as in Makawua, Urutau, Xaquima).",
+      "tiers": { "1": [
+        {"name":"Aire"},{"name":"Comunidad del Oso"},{"name":"Discountry"},
+        {"name":"Euforio","rosterAvailableVia":"WUCC 2026 (Euforia)"},
+        {"name":"Evolution"},{"name":"Fenix"},{"name":"Flota Chancle"},{"name":"Instinto"},
+        {"name":"Makawua","rosterAvailableVia":"WUCC 2026"},
+        {"name":"Mamoots"},{"name":"Raza"},{"name":"Uro"},
+        {"name":"Urutau","rosterAvailableVia":"WMUCC 2026"},
+        {"name":"Xaquima"},
+        {"name":"Tayrona","generated":true},
+        {"name":"Cumbia","generated":true}
+      ]}
+    },
+    "alpineNordic": {
+      "country": "Switzerland / Austria / Finland / Hungary",
+      "source": "ultimate-scores.ch + ultie.org (ÖStm-O-F 2025) + ultimate.fi/pelikone + app.mrksz.hu (NB1)",
+      "structure": "Cross-border league of 16 clubs from four small federations, none of which alone has enough Open clubs for a 16-team division: Switzerland 6, Austria 3, Finland 4, Hungary 3. Austria and Finland entries exclude clubs already covered by the EUCS dataset; the two weakest NB1 sides (DEAC and Biafly, both 3 wins) were dropped to land on 16.",
+      "tiers": { "1": [
+        {"name":"Freespeed","city":"Basel","country":"Switzerland","rosterAvailableVia":"EUCS + WUCC 2026 + Windmill 2026"},
+        {"name":"Panthers Bern","city":"Bern","country":"Switzerland","rosterAvailableVia":"EUCS"},
+        {"name":"Flying Angels Bern","city":"Bern","country":"Switzerland","rosterAvailableVia":"EUCS"},
+        {"name":"Jurassic Pack","city":"Lausanne","country":"Switzerland","rosterAvailableVia":"Windmill 2026"},
+        {"name":"ZU","city":"Zürich","country":"Switzerland"},
+        {"name":"Ratrac Bern Ultimate","city":"Bern","country":"Switzerland","rosterAvailableVia":"EUCS"},
+        {"name":"Echo","city":"Vienna","country":"Austria","rosterAvailableVia":"EUCS + WUCC 2026 + Windmill 2026"},
+        {"name":"Catchup Open","city":"Graz","country":"Austria","rosterAvailableVia":"EUCS + WUCC 2026 + Windmill 2026"},
+        {"name":"Mosquitos","city":"Klosterneuburg","country":"Austria","rosterAvailableVia":"WUCC 2026 (mixed)"},
+        {"name":"Helsinki Ultimate Empire","country":"Finland"},
+        {"name":"Helsinki Ultimate Rebels","country":"Finland"},
+        {"name":"LeKi","country":"Finland"},
+        {"name":"Muu Suomi","country":"Finland"},
+        {"name":"OUT","country":"Hungary"},
+        {"name":"Fehérvár Lionz","country":"Hungary"},
+        {"name":"UP&FLY","country":"Hungary"}
+      ]}
+    }
+  }
+}

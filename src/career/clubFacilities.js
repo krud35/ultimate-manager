@@ -1,4 +1,5 @@
 import { matchCommercials } from './economyBalance.js'
+import { clubFinancialMarket } from './financialMarkets.js'
 import { eucsTeamCountry } from '../data/eucsLeagueTeams.js'
 import { addDays, formatISODate } from '../league/seasonCalendar.js'
 /**
@@ -420,7 +421,7 @@ export function facilityLevelDelta(level) {
  * Koszt ulepszenia z `level` → `level+1` (USD).
  * Lekko drożej na wyższych poziomach.
  */
-export function facilityUpgradeCost(facilityId, level) {
+export function facilityUpgradeCost(facilityId, level, team = null) {
   const lv = clampLevel(level)
   if (lv >= FACILITY_LEVEL_MAX) return null
   const tier = {
@@ -432,7 +433,7 @@ export function facilityUpgradeCost(facilityId, level) {
     scoutingDept: 1.0,
     academy: 1.05,
   }[facilityId] ?? 1
-  const raw = 480_000 * tier * 1.60 ** (lv - 1)
+  const raw = 480_000 * tier * 1.60 ** (lv - 1) * clubFinancialMarket(team).prices
   return Math.round(raw / 1000) * 1000
 }
 
@@ -574,7 +575,8 @@ export function medicalRecoveryMult(team) {
   const delta = facilityLevelDelta(getFacilityLevel(team, 'medicalCenter'))
   const physio=team.staffMembers?.physio
   const expertise=physio ? (physio.skills.recovery-7)*0.005+(physio.specialty==='rehabilitation'?0.015:0) : 0
-  return Math.max(0.75, Math.min(1.35, 1 + delta * 0.06 + ((team.staff?.physio ?? 1) - 1) * 0.04 + expertise))
+  const planning = Math.max(0, ((team.manager?.attributes?.workloadPlanning ?? 10) - 10) * 0.004)
+  return Math.max(0.75, Math.min(1.35, 1 + delta * 0.06 + ((team.staff?.physio ?? 1) - 1) * 0.04 + expertise + planning))
 }
 
 /** Lekka zmiana morale po treningu (dla obecnych). */
@@ -618,7 +620,8 @@ export function applyFanShopAfterMatch(team, options = {}) {
 
 export function computeTravelCost(team, { opponent = null, neutral = false, rng = Math.random } = {}) {
   const squad = Math.min(24, Math.max(7, (team.players ?? []).length)) + 4
-  const homeCountry = eucsTeamCountry(team.id), destination = opponent && eucsTeamCountry(opponent.id)
+  const homeCountry = team.countryId ?? team.country ?? eucsTeamCountry(team.id)
+  const destination = opponent && (opponent.countryId ?? opponent.country ?? eucsTeamCountry(opponent.id))
   const international = homeCountry && destination && homeCountry !== destination
   const base = international ? 420 : homeCountry ? 200 : 360
   const perPerson = Math.round(base * (0.9 + rng() * 0.2) * (neutral ? 1.15 : 1))
@@ -635,7 +638,7 @@ export function applyTravelCostAfterMatch(team, options = {}) {
   return travel
 }
 
-export function applyPostMatchFinances(homeTeam, awayTeam, { isCup = false, homeWon = false, awayWon = false, rng = Math.random, matchId = null, date = null, forfeited = false } = {}) {
+export function applyPostMatchFinances(homeTeam, awayTeam, { isCup = false, neutral = isCup, homeWon = false, awayWon = false, rng = Math.random, matchId = null, date = null, forfeited = false } = {}) {
   if (forfeited) return
   for (const [team, opponent, isHome, won] of [[homeTeam, awayTeam, true, homeWon], [awayTeam, homeTeam, false, awayWon]]) {
     if (!team) continue
@@ -645,13 +648,13 @@ export function applyPostMatchFinances(homeTeam, awayTeam, { isCup = false, home
     const key = matchId == null ? null : `${season}|${matchId}`
     if (key && team.facilities.settledMatches?.includes(key)) continue
     if (date) team.managementDate = date
-    applyFanShopAfterMatch(team, { won, isHome, neutral: isCup })
-    const sale = matchCommercials(team, { won, isHome, neutral: isCup })
+    applyFanShopAfterMatch(team, { won, isHome, neutral })
+    const sale = matchCommercials(team, { won, isHome, neutral })
     if (isHome) {
       adjustTransferBudget(team, sale.tickets, 'match_tickets')
       adjustTransferBudget(team, -sale.matchCosts, 'match_operations')
     }
-    const travel = !isHome || isCup ? applyTravelCostAfterMatch(team, { opponent, neutral: isCup, rng }).amount : 0
+    const travel = !isHome || neutral ? applyTravelCostAfterMatch(team, { opponent, neutral, rng }).amount : 0
     team.facilities.lastMatchFinance = { ...sale, travel, date, net: sale.net - travel }
     if (key) team.facilities.settledMatches = [...(team.facilities.settledMatches ?? []), key].slice(-160)
   }
@@ -672,7 +675,7 @@ export function upgradeFacility(team, facilityId, { date = team?.managementDate 
   if (level >= FACILITY_LEVEL_MAX) {
     return { ok: false, error: 'max_level', level }
   }
-  const cost = facilityUpgradeCost(facilityId, level)
+  const cost = facilityUpgradeCost(facilityId, level, team)
   const budget = getTransferBudget(team)
   if (cost == null || budget < cost) {
     return { ok: false, error: 'insufficient_funds', cost, level, remainingBudget: budget }

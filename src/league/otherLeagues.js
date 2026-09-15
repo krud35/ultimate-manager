@@ -20,6 +20,7 @@ import { createStandings } from './standings.js'
 import { createLeaguePlayerStats } from './leagueStats.js'
 import { assignDatesToLeagueFixtures } from './seasonCalendar.js'
 import { simulateFixtureMatch, applyMatchResultToLeague } from './leagueEngine.js'
+import { backgroundMatch } from './quickMatch.js'
 
 /**
  * @param {{ id: string, label: string, teamIds: string[], calendar: object, simSeedBase: number }} options
@@ -66,12 +67,16 @@ export function advanceOtherLeagueToDate(otherLeague, teamsById, dateIso) {
   // każdym wywołaniu (tanie, zawsze aktualne) zamiast raz przy tworzeniu, żeby przeżyć
   // `structuredClone`/przeładowanie zapisu bez ręcznej re-hydratacji.
   otherLeague.teamsById = teamsById
+  otherLeague.currentDate = dateIso
 
   const due = otherLeague.fixtures.filter(
     (f) => f.status !== 'completed' && f.date && f.date <= dateIso && f.homeTeamId && f.awayTeamId,
   )
   for (const fixture of due) {
-    const record = simulateFixtureMatch(otherLeague, fixture)
+    const focusedQuick=otherLeague.focusedSimulation && [fixture.homeTeamId,fixture.awayTeamId].every(id=>!teamsById[id]?.detailedCupAttention)
+    const simplified = focusedQuick || otherLeague.mode === 'transfers' && (fixture.competition !== 'cup'
+      || [fixture.homeTeamId, fixture.awayTeamId].every(id => teamsById[id]?.simulationMode !== 'playable'))
+    const record = simplified ? backgroundMatch(otherLeague, fixture) : simulateFixtureMatch(otherLeague, fixture)
     applyMatchResultToLeague(otherLeague, record)
   }
 

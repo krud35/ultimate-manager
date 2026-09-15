@@ -6,7 +6,7 @@ import { displaySeasonLabel, formatUiDate } from '../ui/locale'
 import { LangSwitch } from '../ui/LangSwitch'
 import { careerFlowStrings } from '../ui/strings/careerFlow'
 
-function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete }) {
+function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete, selectionMode }) {
   const summary = slotSummary(career)
   const team =
     (summary?.playerTeamId && career?.world?.teamsById?.[summary.playerTeamId]) ||
@@ -20,13 +20,13 @@ function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete }) {
         </p>
         <h3 className="mt-3 text-lg font-semibold text-ufa-text">{t.emptyTitle}</h3>
         <p className="mt-1 flex-1 text-sm text-ufa-muted">{t.emptyHint}</p>
-        <button
+        {selectionMode !== 'load' && <button
           type="button"
           onClick={() => onNew(slotIndex)}
           className="um-button um-button--primary mt-5"
         >
           {t.newCareer}
-        </button>
+        </button>}
       </article>
     )
   }
@@ -62,6 +62,7 @@ function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete }) {
         {team?.name ?? summary.playerTeamId}
       </p>
       <p className="mt-2 text-sm text-ufa-muted">{seasonLine}</p>
+      <p className="mt-1 text-xs text-ufa-muted">{career?.competition === 'domestic' ? (lang === 'en' ? 'Domestic leagues' : 'Ligi krajowe') : career?.competition === 'eucs' ? 'EUCS' : 'UFA'}{career?.league?.currentDate ? ` · ${formatUiDate(career.league.currentDate, lang)}` : ''}</p>
       <p className="text-sm text-ufa-muted">
         {t.record(summary.wins, summary.losses)}
         {summary.seasonsPlayed > 0 ? ` · ${t.seasonsCompleted(summary.seasonsPlayed)}` : ''}
@@ -71,13 +72,13 @@ function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete }) {
       </p>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <button
+        {selectionMode !== 'new' && <button
           type="button"
           onClick={() => onLoad(slotIndex)}
           className="um-button um-button--primary"
         >
           {t.load}
-        </button>
+        </button>}
         <button
           type="button"
           onClick={() => onDelete(slotIndex)}
@@ -90,13 +91,15 @@ function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete }) {
   )
 }
 
-export default function CareerSelectScreen({ slots, lang, onLangChange, onNew, onLoad, onDelete }) {
+export default function CareerSelectScreen({ slots, lang, onLangChange, onNew, onLoad, onDelete, onBack, selectionMode }) {
   const list = Array.from({ length: SLOT_COUNT }, (_, i) => slots?.[i] ?? null)
   const t = careerFlowStrings(lang)
 
   return (
     <div className="um-career-start">
       <div className="um-career-top"><Wordmark /><div className="flex flex-wrap items-center gap-4"><LangSwitch lang={lang} onChange={onLangChange} /><ThemeControl /></div></div>
+      {onBack && <button type="button" className="mt-5 self-start text-sm text-ufa-muted hover:text-ufa-accent" onClick={onBack}>← {lang === 'en' ? 'Main menu' : 'Menu główne'}</button>}
+      {selectionMode && <h2 className="mt-6 text-xl font-semibold text-ufa-text">{selectionMode === 'new' ? (lang === 'en' ? 'Choose an empty save slot' : 'Wybierz wolne miejsce na zapis') : (lang === 'en' ? 'Load game' : 'Wczytaj grę')}</h2>}
       <header className="um-career-intro"><p className="um-eyebrow">{lang === 'en' ? 'Your club. Your decisions.' : 'Twój klub. Twoje decyzje.'}</p><h1>{lang === 'en' ? <>Every season.<br />Every point.</> : <>Każdy sezon.<br />Każdy punkt.</>}</h1><p>{t.selectSubtitle(SLOT_COUNT)}</p></header>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -110,6 +113,7 @@ export default function CareerSelectScreen({ slots, lang, onLangChange, onNew, o
             onNew={onNew}
             onLoad={onLoad}
             onDelete={onDelete}
+            selectionMode={selectionMode}
           />
         ))}
       </div>

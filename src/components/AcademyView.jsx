@@ -99,6 +99,7 @@ export default function AcademyView({ career, onCareerUpdate }) {
     setActionError(null)
     const result = queueScoutMission(team, {
       kind: 'player',
+      world: career.world,
       targetPlayerId: candidateId,
       date: career.league?.currentDate ?? null,
     })
