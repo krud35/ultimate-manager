@@ -1,3 +1,6 @@
+import { offenseLineSlotsForAttackStyle } from '../offenseLineSlots.js'
+import { resolvePlayerSubRole } from '../playerSubRoles.js'
+import { assignActiveCutters } from './activeCutters.js'
 import { observeStyleTick, recordStyleEvidence, instructionContext } from '../styleEvidence.js'
 import { throwingFakePhase } from './traitBehavior.js'
 import {
@@ -632,7 +635,7 @@ function shadeMarkBesideOffense(off, forceSide, attackSign) {
   }
 }
 
-function layoutToAgents(layout, teamId, rosterLineup = [], tactics = null) {
+function layoutToAgents(layout, teamId, rosterLineup = [], tactics = null, attackStyle = null) {
   return layout.map((p, stackIndex) => {
     const rosterPlayer = rosterLineup.find((r) => r.id === p.id) ?? p
     const base = {
@@ -649,8 +652,9 @@ function layoutToAgents(layout, teamId, rosterLineup = [], tactics = null) {
       isThrower: p.fieldRole === 'thrower',
       markTargetId: p.markTargetId ?? null,
     }
-    const subRole = subRoleForAgent(base, tactics)
-    const preferDump = subRole === HANDLER_SUB_ROLES.RESET
+    const slot = offenseLineSlotsForAttackStyle(attackStyle)[rosterLineup.findIndex(r => r.id === p.id)]
+    const subRole = resolvePlayerSubRole(tactics, p.id, slot) ?? subRoleForAgent(base, tactics)
+    const preferDump = subRole === HANDLER_SUB_ROLES.RESET || subRole === HANDLER_SUB_ROLES.PRIMARY
     return {
       ...base,
       subRole,
@@ -710,6 +714,7 @@ function snapshotFrame(ms, offenseAgents, defenseAgents, throwerId, disc = null,
       vz: a.vz ?? 0,
       role: a.isThrower ? 'thrower' : a.fieldRole ?? 'stack',
       cutterState: a.state,
+      isActive: a.isActive === true,
       ...(THROW_SCAN_DIAGNOSTICS.observe ? { audit: { targetX: a.targetX, targetY: a.targetY, isDump: a.isDump, stateMs: a.stateMs } } : {}),
       layout: a.layout ?? false,
       diving: a.diving ?? false,
@@ -890,6 +895,7 @@ export function runContinuousThrowSimulation({
     possessionTeam,
     offenseLineup,
     offenseTeam?.tactics,
+    attackStyle,
   ).map((a) => {
     const seed = seedStates?.get(a.id)
     // Po turnoverze seed ma starą rolę — nie bierz pozycji z przeciwnika.
@@ -1564,9 +1570,10 @@ export function runContinuousThrowSimulation({
       flight.elapsedMs += SIM_TICK_MS
     } else {
       const throwerPos = { x: discX, y: discY }
+      assignActiveCutters(offenseAgents, maxConcurrentCutters(attackStyle), ms, postCatchReorg)
       const activeCutterCount = offenseAgents.filter(
         (a) =>
-          !a.isThrower &&
+          !a.isThrower && !a.isDump &&
           (a.state === CUTTER_STATE.ACTIVE_CUT || a.state === CUTTER_STATE.INITIATING_CUT),
       ).length
 

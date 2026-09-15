@@ -707,6 +707,16 @@ export function tickCutterBrain(agent, tickCtx) {
       isDump,
     )
 
+  // Reserve a stable formation slot before any offer or reorganization branch.
+  if (agent.isActive === false && !isDump && !flightIsForMe) {
+    const slot = agent.structureSlot ?? structuralTarget()
+    const distance = Math.hypot(slot.x - agent.x, slot.y - agent.y)
+    const moved = integrateAgentMotion(agent, slot.x, slot.y,
+      distance < 0.6 ? 0 : repositionSpeedMps(agent.player ?? agent, distance), dtSec, true, 'offense')
+    return { ...agent, ...moved, structureSlot: slot, state: CUTTER_STATE.WAITING,
+      stateMs: 0, targetX: slot.x, targetY: slot.y, continuationCut: false, forceClearout: false }
+  }
+
   const distToDisc = Math.hypot(
     agent.x - (throwerPos?.x ?? disc.x),
     agent.y - (throwerPos?.y ?? disc.y),

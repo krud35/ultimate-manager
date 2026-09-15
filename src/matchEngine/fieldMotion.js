@@ -1947,6 +1947,27 @@ export function buildFieldActionClip(
     lineups.awayLineupIds,
   )
   const ev = pointEvents[stepIndex]
+  const pullEvent = ev?.type === 'pull' ? ev
+    : ev?.type === 'point_start' && pointEvents[stepIndex + 1]?.type === 'pull' ? pointEvents[stepIndex + 1]
+      : ev?.type === 'possession' && pointEvents[stepIndex - 1]?.type === 'pull' ? pointEvents[stepIndex - 1] : null
+  if (pullEvent?.motionTrace?.frames?.length) {
+    const original = pullEvent.motionTrace
+    const frozen = ev.type === 'point_start' ? original.frames[0] : original.frames.at(-1)
+    const trace = ev.type === 'pull' ? original : { ...original, totalMs: 100, throwMs: 100, flightMs: 0,
+      frames: [{ ...frozen, ms: 0 }, { ...frozen, ms: 100 }] }
+    const first = trace.frames[0], last = trace.frames.at(-1)
+    const roster = [...(homeTeam?.players ?? []), ...(awayTeam?.players ?? [])]
+    const tacticalAll = last.players.map(p => ({ ...p, fieldRole: p.role,
+      label: String(roster.find(r => r.id === p.id)?.jersey ?? '') }))
+    const tracks = Object.fromEntries(tacticalAll.map(p => [p.id, { ...p, defaultMotion: 'stack',
+      keyframes: trace.frames.map(f => ({ ...f.players.find(a => a.id === p.id), ms: f.ms, ease: 'linear' })) }]))
+    return { kind: 'pull', tacticalAll, tracks, motionTrace: trace,
+      totalDurationMs: trace.totalMs, setupMs: trace.throwMs, releaseMs: 0,
+      flightMs: trace.totalMs - trace.throwMs, repositionMs: 0,
+      stallStart: 0, stallEnd: 0, throwerId: pullEvent.pullerId, receiverId: pullEvent.receiverId,
+      discFromX: first.disc.x, discFromY: first.disc.y, discToX: last.disc.x, discToY: last.disc.y,
+      throwSuccess: false, cameraDiscX: last.disc.x, actionLabel: ev.type === 'point_start' ? 'Pull' : 'Pull — ' + pullEvent.outcome }
+  }
   if (ev?.type === 'throw_attempt') {
     return buildThrowActionClip(
       pointEvents,
@@ -2319,7 +2340,7 @@ export function sampleFieldActionClip(clip, elapsedMs) {
   const tracedState = clip.motionTrace?.preservePositions
     ? sampleStateFromMotionTrace(clip.motionTrace, t, setupMs + releaseMs + flightMs)
     : null
-  if (tracedState?.disc && (phase !== 'flight' || tracedState.disc.state === DISC_STATE.ON_GROUND)) {
+  if (tracedState?.disc && (clip.kind === 'pull' || phase !== 'flight' || tracedState.disc.state === DISC_STATE.ON_GROUND)) {
     discX = tracedState.disc.x
     discY = tracedState.disc.y
     discZ = tracedState.disc.z ?? 0

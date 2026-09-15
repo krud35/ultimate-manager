@@ -4,6 +4,7 @@ import { rawAttribute } from './attributeAliases.js'
  */
 export const DETAILED_ATTRIBUTES = {
   throwing: {
+    pulling: { label: 'Pulling', from: ['huck', 'backhand'] },
     power: { label: 'Throwing power', from: ['huck', 'backhand'] },
     touch: { label: 'Touch', from: ['backhand', 'forehand'] },
     releaseControl: { label: 'Release control', from: ['forehand', 'hammer'] },
@@ -29,6 +30,7 @@ export const DETAILED_ATTRIBUTES = {
 }
 
 export const ATTRIBUTE_HELP_PL = {
+  pulling: ['Pullowanie', 'Długość, czas lotu i celność pulla; priorytetem jest lądowanie w boisku.'],
   routeCraft: ['Technika cutu', 'Dobór kąta, zwodu i trasy otwierającej podanie.'],
   resetMovement: ['Ruch resetowy', 'Wybór momentu i miejsca bezpiecznej oferty handlera.'],
   matchupReading: ['Czytanie krycia', 'Rozpoznawanie kierunku ruchu i zamiaru krytego zawodnika.'],

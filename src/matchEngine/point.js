@@ -1,3 +1,4 @@
+import { simulatePull } from './pull.js'
 import { recordStyleThrow, captureStyleInstructions } from './styleEvidence.js'
 import { isClutchPoint } from './ai/traitBehavior.js'
 import { getTraitMods } from '../models/playerTraits.js'
@@ -159,6 +160,12 @@ export function simulatePoint({
       teamId === 'home' ? homePointRole : awayPointRole,
     )
   const pointLineups = buildPointLineups(homeTeamOnPoint, awayTeamOnPoint, attackTeamId)
+  const pull = simulatePull({ offenseLineup: pointLineups[attackTeamId], defenseLineup: pointLineups[pullTeam],
+    possessionTeam: geo(attackTeamId), offenseTactics: teamById(attackTeamId).tactics,
+    defenseTactics: teamById(pullTeam).tactics, attackStyle: stylesForTeam(attackTeamId).attackStyle,
+    defenseStyle: stylesForTeam(pullTeam).defenseStyle, rng, wind, collectFrames: true })
+  discPosition = pull.discPosition
+
 
   const homeLineupIds = pointLineups.home.map((p) => p.id)
   const awayLineupIds = pointLineups.away.map((p) => p.id)
@@ -186,6 +193,7 @@ export function simulatePoint({
     createEvent(EVENT.PULL, {
       team: pullTeam,
       teamName: teamById(pullTeam).name,
+      ...pull, receiver: undefined, endStates: undefined,
     }),
   )
   events.push(
@@ -193,7 +201,7 @@ export function simulatePoint({
       team: possession,
       teamName: teamById(possession).name,
       discPosition,
-      discYMeters: fieldCenterY(),
+      discYMeters: pull.discYMeters,
     }),
   )
 
@@ -203,16 +211,16 @@ export function simulatePoint({
   let lastScoringReceiverId = null
   let personMatchups = null
   /** Zawodnik z dyskiem; po udanym rzucie = odbiorca. Po turnoverze / pullu — null (pierwszy rzut losowany). */
-  let discHolder = null
+  let discHolder = pull.receiver
   /** Czas posiadania jest niezależny od legalnego liczenia markera. */
   let holdMs = 0
   let stallClock = { markerId: null, elapsedMs: 0 }
   let pickupPending = false
   let stallCount = 0
-  let discYMeters = fieldCenterY()
+  let discYMeters = pull.discYMeters
   /** Pozycje ofensywy między rzutami (po złapaniu — bez snapu do stacka). */
   /** Stan zawodników z końca poprzedniego rzutu — zapewnia płynne przejście między rzutami. */
-  let liveAgentStates = null
+  let liveAgentStates = pull.endStates
   /** Po dump/reset (+0m) — wymuszone głębokie cięcia w następnej symulacji setupu. */
   let postResetClearout = false
   /** Ile podań z rzędu nie dało postępu — podbija agresję mimo zerowania stalla. */
@@ -264,6 +272,9 @@ export function simulatePoint({
     syncLineupStaminaFromMaps(stamina, offenseLineup, possession)
     syncLineupStaminaFromMaps(stamina, defenseLineup, defSide)
   }
+
+  applyThrowStaminaFromTrace(pull.motionTrace, null, pointLineups[attackTeamId], pointLineups[pullTeam],
+    stamina ? cloneStaminaMaps(stamina) : null)
 
   function setupPersonMatchupsForPossession() {
     personMatchups = null
@@ -1227,6 +1238,12 @@ export function simulatePointFast({
       teamId === 'home' ? homePointRole : awayPointRole,
     )
   const pointLineups = buildPointLineups(homeTeamOnPoint, awayTeamOnPoint, attackTeamId)
+  const pull = simulatePull({ offenseLineup: pointLineups[attackTeamId], defenseLineup: pointLineups[pullTeam],
+    possessionTeam: attackTeamId, offenseTactics: teamById(attackTeamId).tactics,
+    defenseTactics: teamById(pullTeam).tactics, attackStyle: stylesForTeam(attackTeamId).attackStyle,
+    defenseStyle: stylesForTeam(pullTeam).defenseStyle, rng, wind, collectFrames: false })
+  discPosition = pull.discPosition
+
 
   events.push(
     createEvent(EVENT.POINT_START, {
@@ -1240,7 +1257,8 @@ export function simulatePointFast({
       fastMode: true,
     }),
   )
-  events.push(createEvent(EVENT.PULL, { team: pullTeam, teamName: teamById(pullTeam).name }))
+  events.push(createEvent(EVENT.PULL, { team: pullTeam, teamName: teamById(pullTeam).name,
+    ...pull, receiver: undefined, endStates: undefined }))
   events.push(
     createEvent(EVENT.POSSESSION, {
       team: possession,
@@ -1259,7 +1277,7 @@ export function simulatePointFast({
    * rzut na nowo losowano throwera od zera (pickThrower na argmax po skillu), więc
    * dysk teleportował się do najlepszego handlera niezależnie od tego, kto go
    * faktycznie złapał — jeden zawodnik zgarniał prawie wszystkie asysty w meczu. */
-  let discHolder = null
+  let discHolder = pull.receiver
 
   function defendingTeamId() {
     return possession === 'home' ? 'away' : 'home'
@@ -1288,7 +1306,7 @@ export function simulatePointFast({
   setupPersonMatchupsForPossession()
 
   let discYMeters = fieldCenterY()
-  let estimatedDurationMs = 0
+  let estimatedDurationMs = pull.motionTrace.totalMs
   let transitionPasses = 0
   const geoSideFor = side => pointIndex % 2 === 0 ? (side === 'home' ? 'away' : 'home') : side
 

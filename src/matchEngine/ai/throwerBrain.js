@@ -787,6 +787,11 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
       agent.state === CUTTER_STATE.INITIATING_CUT ||
       agent.continuationCut === true
     const speed = Math.hypot(agent.vx ?? 0, agent.vy ?? 0)
+    if ((!isDump && agent.isActive === false) ||
+      (!isContinuationCut && Math.abs(catchPt.y - (throwerPos?.y ?? disc.y)) > 16)) {
+      reject(agent, 'inactive_or_crossfield_stationary')
+      continue
+    }
 
     if (continuationWindow && !isDump && !isContinuationCut && speed < 0.35) {
       reject(agent, 'stationary_continuation')
@@ -865,6 +870,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     // pasma w scripts/engine-parity.mjs). Pełny silnik wypuszczał dysk przy medianie
     // stallu 2, więc bonus zarezerwowany dla tier medium/high praktycznie nigdy nie
     // działał i resety stanowiły 1,4% rzutów — atak grał wyłącznie do przodu.
+    if (agent.subRole === 'primary_handler' && distFromThrower <= 18) score += 16
     if (isDump) score += tier === 'high' || tier === 'medium' ? 18 : 14
     if (tier === 'low' && situation.separation < 4) score *= 0.55
     if (tier === 'high') score += 8
