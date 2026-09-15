@@ -5,7 +5,7 @@ import { postTransferCash, canAffordContract } from '../clubEconomy.js'
 
 import { getOverallRating } from '../../models/playerStats.js'
 import { getPlayerFullName } from '../../data/mockPlayers.js'
-import { getPlayerMorale, ensurePlayerMorale, MORALE_MIN, MORALE_MAX } from '../../models/playerMorale.js'
+import { getPlayerMorale, ensurePlayerMorale, MORALE_DEFAULT, MORALE_MIN, MORALE_MAX } from '../../models/playerMorale.js'
 import { worldTeamById, worldTeamsList } from '../worldState.js'
 import {
   adjustTransferBudget,
@@ -447,6 +447,8 @@ export function completeTransferBetweenClubs(career, opts) {
     return { ok: false, error: signed.error ?? 'Nie udało się podpisać kontraktu' }
   }
 
+  // Nowy klub to świeży start; reset dopiero po udanym podpisaniu kontraktu.
+  moved.morale = MORALE_DEFAULT
   moved.lastTransferDate = career.league?.currentDate ?? null
   moved.loanListed = false
   moved.transferListed = false
