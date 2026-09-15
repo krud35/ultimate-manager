@@ -43,13 +43,17 @@ const DEFAULT_SUB = 50
 const SUB_STAT_MIN = 60
 const SUB_STAT_MAX = 95
 
-/** Zakresy podstatystyk per kategoria (revamp atr-v5). */
+/**
+ * Wspólny zakres wszystkich podstatystyk.  Nie różnicujemy go między
+ * kategoriami: zarówno rzutowe, fizyczne, mentalne, ofensywne, jak i
+ * defensywne atrybuty są losowane od 65 do 95.
+ */
 export const CATEGORY_STAT_RANGES = {
-  physical: { min: 70, max: 95 },
+  physical: { min: 65, max: 95 },
   mental: { min: 65, max: 95 },
-  throwing: { min: 60, max: 95 },
-  offensive: { min: 70, max: 95 },
-  defensive: { min: 70, max: 95 },
+  throwing: { min: 65, max: 95 },
+  offensive: { min: 65, max: 95 },
+  defensive: { min: 65, max: 95 },
 }
 
 /** Bump → regeneracja skills przy wczytaniu kariery / szablonu. */
@@ -69,7 +73,7 @@ const ARCHETYPE_SPECIALTY_WEIGHT = 0.5
 const ROLL_WEIGHT_HISTORICAL = 0.22
 const TIER_WEIGHT_HISTORICAL = 0.78
 
-export const SKILLS_GEN_VERSION = 6
+export const SKILLS_GEN_VERSION = 7
 
 /** Docelowy rozkład OVR: bulk / solid / elite. */
 const OVR_BULK_MIN = 72

@@ -3,13 +3,16 @@ import assert from 'node:assert/strict'
 import { buildEucsLeagueTemplate } from '../src/data/eucsLeagueTeams.js'
 import { EUCS_ROSTER_BALANCE, eucsResultAdjustment } from '../src/data/eucsRosterBalance.js'
 import { rollRandomSkillsForRoster, applyRandomOvrBands } from '../src/data/randomRosterSkills.js'
-import { PLAYER_STAT_CATEGORIES, categoryStatRange, getOverallRating, normalizePlayerSkills,
+import { PLAYER_STAT_CATEGORIES, CATEGORY_STAT_RANGES, categoryStatRange, getOverallRating, normalizePlayerSkills,
   scaleSkillsToTargetOvr, clampOverallTarget } from '../src/models/playerStats.js'
 import { createCareer } from '../src/career/careerModel.js'
 import { initWorldPlayerStats } from '../src/career/worldState.js'
 import { loadSaveStore, saveCareerNow } from '../src/career/saveStore.js'
 
 const mean = xs => xs.reduce((s, x) => s + x, 0) / xs.length
+for (const [category, range] of Object.entries(CATEGORY_STAT_RANGES)) {
+  assert.deepEqual(range, { min: 65, max: 95 }, `${category} uses the common generated-stat range`)
+}
 function checkSkills(skills) {
   for (const [cat, keys] of Object.entries(PLAYER_STAT_CATEGORIES)) {
     const { min, max } = categoryStatRange(cat)
