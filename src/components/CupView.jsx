@@ -32,8 +32,8 @@ function seedLabel(match, side) {
 
 function LeaderColumn({ title, rows, valueKey, teamNames, emptyLabel }) {
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20">
-      <h3 className="font-semibold text-ufa-text text-sm mb-3">{title}</h3>
+    <div className="rounded-sm border border-ufa-border bg-ufa-panel p-4  ">
+      <h3 className="font-semibold text-ufa-text text-xl mb-3">{title}</h3>
       {rows.length === 0 ? (
         <p className="text-xs text-ufa-muted">{emptyLabel}</p>
       ) : (
@@ -74,7 +74,7 @@ function BracketMatchCard({ match, names, playerTeamId, onPlayFixture, currentDa
 
   return (
     <div
-      className={`rounded-lg border px-3 py-2 text-xs ${
+      className={`rounded-sm border px-3 py-2 text-xs ${
         isYours
           ? 'border-ufa-gold/50 bg-ufa-gold/10'
           : done
@@ -83,7 +83,7 @@ function BracketMatchCard({ match, names, playerTeamId, onPlayFixture, currentDa
       }`}
     >
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <span className="text-[10px] uppercase tracking-wide text-ufa-muted">
+        <span className="text-[11px] uppercase tracking-wide text-ufa-muted">
           {t.cupRound[match.round] ?? match.round}
           <span className="ml-1.5 text-ufa-gold">N</span>
         </span>
@@ -102,7 +102,7 @@ function BracketMatchCard({ match, names, playerTeamId, onPlayFixture, currentDa
         >
           <span className="truncate flex items-center gap-1.5 min-w-0">
             {homeSeed != null && (
-              <span className="tabular-nums text-[10px] text-ufa-gold/80 w-4 shrink-0">
+              <span className="tabular-nums text-[11px] text-ufa-gold/80 w-4 shrink-0">
                 {homeSeed}
               </span>
             )}
@@ -123,7 +123,7 @@ function BracketMatchCard({ match, names, playerTeamId, onPlayFixture, currentDa
         >
           <span className="truncate flex items-center gap-1.5 min-w-0">
             {awaySeed != null && (
-              <span className="tabular-nums text-[10px] text-ufa-gold/80 w-4 shrink-0">
+              <span className="tabular-nums text-[11px] text-ufa-gold/80 w-4 shrink-0">
                 {awaySeed}
               </span>
             )}
@@ -141,7 +141,7 @@ function BracketMatchCard({ match, names, playerTeamId, onPlayFixture, currentDa
         <button
           type="button"
           onClick={() => onPlayFixture(match)}
-          className="mt-2 w-full rounded-md bg-ufa-gold/90 px-2 py-1 text-[11px] font-semibold text-ufa-bg hover:opacity-90"
+          className="mt-2 w-full rounded-md bg-ufa-gold/90 px-2 py-1 text-[11px] font-semibold text-ufa-on-accent hover:opacity-90"
         >
           {t.play}
         </button>
@@ -229,14 +229,14 @@ function ResultsView({ league, names, onPlayFixture, t }) {
         return (
           <li
             key={m.id}
-            className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-sm ${
+            className={`flex flex-wrap items-center justify-between gap-2 rounded-sm border px-3 py-2.5 text-sm ${
               isYours
                 ? 'border-ufa-gold/40 bg-ufa-gold/5'
                 : 'border-ufa-border bg-ufa-bg/50'
             }`}
           >
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+              <p className="text-[11px] uppercase tracking-wide text-ufa-muted">
                 {t.cupRound[m.round] ?? m.round}
                 {m.date ? ` · ${m.date}` : ''}
               </p>
@@ -244,7 +244,7 @@ function ResultsView({ league, names, onPlayFixture, t }) {
                 {m.homeTeamId ? names[m.homeTeamId] : 'TBD'}
                 {' vs '}
                 {m.awayTeamId ? names[m.awayTeamId] : 'TBD'}
-                <span className="ml-2 text-[10px] font-semibold text-ufa-gold">N</span>
+                <span className="ml-2 text-[11px] font-semibold text-ufa-gold">N</span>
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -338,7 +338,7 @@ export function CupTile({ league, onNavigate }) {
     <button
       type="button"
       onClick={() => onNavigate('cup')}
-      className="w-full rounded-xl border border-ufa-gold/30 bg-ufa-panel p-4 text-left shadow-lg shadow-black/20 transition hover:border-ufa-gold/60 hover:bg-ufa-panel-hover/40"
+      className="w-full rounded-sm border border-ufa-gold/30 bg-ufa-panel p-4 text-left   transition hover:border-ufa-gold/60 hover:bg-ufa-panel-hover/40"
     >
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -378,7 +378,7 @@ export function CupTile({ league, onNavigate }) {
         <p className="mt-2 text-xs text-ufa-muted">{t.bracketHint}</p>
       )}
 
-      <p className="mt-3 text-[10px] text-ufa-muted">{t.cupFooter}</p>
+      <p className="mt-3 text-[11px] text-ufa-muted">{t.cupFooter}</p>
     </button>
   )
 }
@@ -407,10 +407,10 @@ export default function CupView({ league, onPlayFixture = null }) {
 
   return (
     <div className="space-y-6 league-fade-in">
-      <div className="rounded-xl border border-ufa-gold/25 bg-ufa-panel p-6 shadow-xl shadow-black/30">
+      <div className="rounded-sm border border-ufa-gold/25 bg-ufa-panel p-6  ">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-ufa-text">{cupTitle}</h2>
+            <h2 className="text-2xl font-semibold text-ufa-text">{cupTitle}</h2>
             <p className="mt-1 text-sm text-ufa-muted">{cupIntro}</p>
             {champion && (
               <p className="mt-2 text-sm text-ufa-gold font-medium">
@@ -420,7 +420,7 @@ export default function CupView({ league, onPlayFixture = null }) {
             {!cup && <p className="mt-2 text-sm text-ufa-muted">{t.cupNotStarted}</p>}
           </div>
           {cup && (
-            <div className="flex gap-1 rounded-lg bg-ufa-bg p-1 ring-1 ring-ufa-border self-start">
+            <div className="flex gap-1 rounded-sm bg-ufa-bg p-1 ring-1 ring-ufa-border self-start">
               {tabs.map((item) => (
                 <button
                   key={item.id}
@@ -428,7 +428,7 @@ export default function CupView({ league, onPlayFixture = null }) {
                   onClick={() => setTab(item.id)}
                   className={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
                     tab === item.id
-                      ? 'bg-ufa-gold text-ufa-bg shadow-md'
+                      ? 'bg-ufa-gold text-ufa-on-accent '
                       : 'text-ufa-muted hover:text-ufa-text'
                   }`}
                 >
@@ -441,13 +441,13 @@ export default function CupView({ league, onPlayFixture = null }) {
       </div>
 
       {cup && tab === 'bracket' && (
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-xl shadow-black/20">
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-4  ">
           <BracketView league={league} names={names} onPlayFixture={onPlayFixture} t={t} />
         </div>
       )}
 
       {cup && tab === 'results' && (
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-xl shadow-black/20">
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-4  ">
           <ResultsView league={league} names={names} onPlayFixture={onPlayFixture} t={t} />
         </div>
       )}
@@ -455,7 +455,7 @@ export default function CupView({ league, onPlayFixture = null }) {
       {cup && tab === 'stats' && <CupStatsView league={league} names={names} t={t} />}
 
       {!cup && (
-        <div className="rounded-xl border border-dashed border-ufa-border bg-ufa-panel/50 p-8 text-center">
+        <div className="rounded-sm border border-dashed border-ufa-border bg-ufa-panel p-8 text-center">
           <p className="text-sm text-ufa-muted max-w-md mx-auto">{t.cupEmptyBody}</p>
         </div>
       )}

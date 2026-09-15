@@ -71,7 +71,7 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
         aria-label={t.close}
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-lg max-h-[min(92vh,100%)] overflow-y-auto rounded-t-xl sm:rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-2xl">
+      <div className="relative z-10 w-full max-w-lg max-h-[min(92vh,100%)] overflow-y-auto rounded-t-xl sm:rounded-sm border border-ufa-border bg-ufa-panel p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-wide text-ufa-muted">{t.negotiateTitle}</p>
@@ -92,12 +92,12 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
-            <p className="text-[10px] uppercase text-ufa-muted">{t.value}</p>
+          <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2">
+            <p className="text-[11px] uppercase text-ufa-muted">{t.value}</p>
             <p className="font-semibold tabular-nums text-ufa-text">{formatUsd(row.marketValue)}</p>
           </div>
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
-            <p className="text-[10px] uppercase text-ufa-muted">{t.years}</p>
+          <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2">
+            <p className="text-[11px] uppercase text-ufa-muted">{t.years}</p>
             <p className="font-semibold tabular-nums text-ufa-text">
               {isFa ? 'FA' : row.contractYears ?? '—'}
             </p>
@@ -137,17 +137,17 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
               />
             </label>
             <p className="text-xs text-ufa-muted tabular-nums">{formatUsd(preview.totalCost)}</p>
-            {faOverBudget && <p className="text-xs text-red-400">{t.overBudgetContract}</p>}
+            {faOverBudget && <p className="text-xs text-ufa-danger">{t.overBudgetContract}</p>}
 
             <div>
-              <p className="text-[10px] uppercase text-ufa-muted mb-1">{t.bonuses}</p>
+              <p className="text-[11px] uppercase text-ufa-muted mb-1">{t.bonuses}</p>
               <div className="flex flex-wrap gap-1.5">
                 {CONTRACT_BONUS_DEFS.map((b) => (
                   <button
                     key={b.id}
                     type="button"
                     onClick={() => toggleSet(setSelectedBonuses, b.id)}
-                    className={`rounded px-2 py-1 text-[10px] ring-1 ${
+                    className={`rounded px-2 py-1 text-[11px] ring-1 ${
                       selectedBonuses.has(b.id)
                         ? 'bg-ufa-gold/20 text-ufa-gold ring-ufa-gold/40'
                         : 'bg-ufa-bg text-ufa-muted ring-ufa-border'
@@ -159,14 +159,14 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
               </div>
             </div>
             <div>
-              <p className="text-[10px] uppercase text-ufa-muted mb-1">{t.promises}</p>
+              <p className="text-[11px] uppercase text-ufa-muted mb-1">{t.promises}</p>
               <div className="flex flex-wrap gap-1.5">
                 {CONTRACT_PROMISE_DEFS.map((pr) => (
                   <button
                     key={pr.id}
                     type="button"
                     onClick={() => toggleSet(setSelectedPromises, pr.id)}
-                    className={`rounded px-2 py-1 text-[10px] ring-1 ${
+                    className={`rounded px-2 py-1 text-[11px] ring-1 ${
                       selectedPromises.has(pr.id)
                         ? 'bg-ufa-accent/20 text-ufa-accent ring-ufa-accent/40'
                         : 'bg-ufa-bg text-ufa-muted ring-ufa-border'
@@ -189,7 +189,7 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
                   promises: promisesPayload,
                 })
               }
-              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
             >
               {t.sendOffer}
             </button>
@@ -212,13 +212,13 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
                   className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text tabular-nums"
                 />
               </label>
-              {overBudget && <p className="text-xs text-red-400">{t.overBudget}</p>}
+              {overBudget && <p className="text-xs text-ufa-danger">{t.overBudget}</p>}
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   disabled={overBudget || offerNum <= 0 || budget <= 0}
                   onClick={() => onSubmitOffer(offerNum)}
-                  className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                  className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
                 >
                   {t.sendOffer}
                 </button>

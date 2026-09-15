@@ -25,14 +25,14 @@ export default function RoundResultsView({ league, fixture, playerTeamId, onCont
 
   return (
     <div className="space-y-4 league-fade-in">
-      <div className="rounded-xl border border-ufa-accent/35 bg-ufa-panel p-5 text-center shadow-xl shadow-black/30">
+      <div className="rounded-sm border border-ufa-accent/35 bg-ufa-panel p-5 text-center  ">
         <p className="text-xs font-semibold uppercase tracking-wide text-ufa-accent">
           {t.roundResultsTitle}
         </p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel  ">
           <p className="border-b border-ufa-border px-4 py-3 text-sm font-semibold text-ufa-text">
             {t.roundResultsFixtures}
           </p>
@@ -59,7 +59,7 @@ export default function RoundResultsView({ league, fixture, playerTeamId, onCont
           </ul>
         </div>
 
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel  ">
           <p className="border-b border-ufa-border px-4 py-3 text-sm font-semibold text-ufa-text">
             {t.roundResultsStandings}
           </p>
@@ -93,7 +93,7 @@ export default function RoundResultsView({ league, fixture, playerTeamId, onCont
         <button
           type="button"
           onClick={onContinue}
-          className="rounded-md bg-ufa-accent px-6 py-2.5 text-sm font-semibold text-ufa-bg shadow-md hover:opacity-90"
+          className="rounded-md bg-ufa-accent px-6 py-2.5 text-sm font-semibold text-ufa-on-accent  hover:opacity-90"
         >
           {t.roundResultsContinue}
         </button>

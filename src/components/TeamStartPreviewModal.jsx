@@ -95,8 +95,8 @@ export function buildTeamStartPreview(rawTeam, { rosterMode = 'historical', seas
 
 function AvgPill({ label, value }) {
   return (
-    <div className="rounded-lg border border-ufa-border bg-ufa-bg/60 px-3 py-2 text-center">
-      <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{label}</p>
+    <div className="rounded-sm border border-ufa-border bg-ufa-bg/60 px-3 py-2 text-center">
+      <p className="text-[11px] uppercase tracking-wide text-ufa-muted">{label}</p>
       <p className="text-lg font-semibold tabular-nums text-ufa-text">{value}</p>
     </div>
   )
@@ -139,17 +139,17 @@ export default function TeamStartPreviewModal({
         aria-label={labels.previewClose}
         onClick={onClose}
       />
-      <div className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-t-xl sm:rounded-xl border border-ufa-border bg-ufa-panel shadow-2xl">
+      <div className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-t-xl sm:rounded-sm border border-ufa-border bg-ufa-panel shadow-2xl">
         <div className="flex items-start justify-between gap-3 border-b border-ufa-border px-5 py-4">
           <div className="flex items-center gap-3 min-w-0">
             <span
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-xs font-bold text-white"
               style={{ backgroundColor: team.primaryColor }}
             >
               {team.shortName}
             </span>
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-ufa-text truncate">{title}</h2>
+              <h2 className="text-2xl font-semibold text-ufa-text truncate">{title}</h2>
               <p className="text-xs text-ufa-muted">
                 {labels.rosterCount(preview.players.length)}
                 {team.isFictional ? ` · ${labels.fictionalBadge}` : ''}
@@ -187,9 +187,9 @@ export default function TeamStartPreviewModal({
             <h3 className="text-xs font-semibold uppercase tracking-wide text-ufa-muted mb-2">
               {labels.previewRoster}
             </h3>
-            <div className="overflow-x-auto rounded-lg border border-ufa-border">
+            <div className="overflow-x-auto rounded-sm border border-ufa-border">
               <table className="w-full min-w-[520px] text-left text-sm">
-                <thead className="text-[10px] uppercase tracking-wide text-ufa-muted bg-ufa-bg/60">
+                <thead className="text-[11px] uppercase tracking-wide text-ufa-muted bg-ufa-bg/60">
                   <tr className="border-b border-ufa-border">
                     <th className="px-2 py-2 font-medium">#</th>
                     <th className="px-2 py-2 font-medium">{labels.previewPlayer}</th>
@@ -277,7 +277,7 @@ export default function TeamStartPreviewModal({
             <button
               type="button"
               onClick={() => onSelect(team.id)}
-              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90"
             >
               {labels.previewSelect}
             </button>

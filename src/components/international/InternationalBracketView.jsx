@@ -31,12 +31,12 @@ function BracketMatchCard({ match, lang, t }) {
   const done = match.status === 'completed'
   return (
     <div
-      className={`rounded-lg border px-3 py-2 text-xs ${
+      className={`rounded-sm border px-3 py-2 text-xs ${
         done ? 'border-ufa-border bg-ufa-bg/60' : 'border-ufa-border/70 bg-ufa-bg/40'
       }`}
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <span className="text-[10px] uppercase tracking-wide text-ufa-muted">
+        <span className="text-[11px] uppercase tracking-wide text-ufa-muted">
           {t.round[match.round] ?? match.round}
         </span>
         {match.date && <span className="tabular-nums text-ufa-muted">{match.date.slice(5)}</span>}
@@ -93,7 +93,7 @@ export default function InternationalBracketView({ finals, t, lang }) {
               ))}
               {round === 'final' && bronze && (
                 <div className="mt-2 border-t border-ufa-border pt-3">
-                  <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">
+                  <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-ufa-muted">
                     {t.bronzeMatch}
                   </p>
                   <BracketMatchCard match={bronze} lang={lang} t={t} />

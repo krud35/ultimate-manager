@@ -13,8 +13,9 @@ import { createRng } from '../matchEngine/rng.js'
 import { applyOffseasonCampGrowth } from './playerDevelopment.js'
 import { simulateAiFreeAgentSignings } from './transfers/freeAgency.js'
 import { SPONSOR_SLOTS, refreshSponsorOffers, signSponsorOffer } from './clubSponsors.js'
+import { CLUB_STAFF_ROLES, ensureClubStaff, staffPayroll, setLegacyStaffLevel, processStaffContracts, staffMarket, hireClubStaff } from './clubStaff.js'
 
-export const STAFF_ROLES = ['youthCoach', 'chiefScout', 'physio', 'sportingDirector']
+export const STAFF_ROLES = CLUB_STAFF_ROLES
 export const STAFF_WEEKLY_COST = staffWeeklyCosts
 export const CLUB_STRATEGIES = Object.keys(CLUB_STRATEGY_DEFS)
 function seed(value) { let n = 17; for (const c of String(value)) n = Math.imul(n, 31) + c.charCodeAt(0); return n >>> 0 }
@@ -22,7 +23,7 @@ function seed(value) { let n = 17; for (const c of String(value)) n = Math.imul(
 export function ensureClubManagement(team, year = 2025) {
   if (!team) return
   team.financeSeasonYear ??= year
-  team.staff ??= Object.fromEntries(STAFF_ROLES.map(role => [role, 1]))
+  ensureClubStaff(team, year)
   const tier = currentEucsTier(team)
   const strategies = CLUB_STRATEGIES.filter(strategy => strategy === 'promotion' ? tier > 1 : strategy === 'survival' ? !!tier : true)
   team.clubStrategy ??= strategies[seed(team.id) % strategies.length]
@@ -38,7 +39,7 @@ export function setClubStaff(team, role, level) {
   const cost = level > team.staff[role] ? STAFF_WEEKLY_COST[level] * 4 : 0
   if (cost > 0 && getTransferBudget(team) < cost) return { ok: false, error: 'insufficient_funds' }
   postClubCash(team, -cost, 'staff_recruitment', team.managementDate)
-  team.staff[role] = level
+  setLegacyStaffLevel(team, role, level)
   ensureClubEconomy(team).weeklyOperations = weeklyClubOperatingCost(team)
   return { ok: true }
 }
@@ -70,7 +71,7 @@ export function buildSquadPlan(team) {
 }
 
 export function weeklyClubOperatingCost(team) {
-  const staff = STAFF_ROLES.reduce((sum, role) => sum + STAFF_WEEKLY_COST[team.staff?.[role] ?? 1], 0)
+  const staff = staffPayroll(team)
   const facilities = FACILITY_IDS.reduce((sum, id) => sum + facilityWeeklyCost(id, getFacilityLevel(team, id)), 0)
   const academy = (team.academyPlayers?.length ?? 0) * 80
   return staff + facilities + academy
@@ -99,6 +100,9 @@ export function processClubManagement(career, date, { weekTick = false } = {}) {
     ensureClubManagement(team, career.seasonYear)
     ensureClubEconomy(team)
     team.managementDate = date
+    for (const notice of processStaffContracts(team,date,{ai:team.id !== career.playerTeamId})) {
+      if(team.id === career.playerTeamId) messages.push({id:`staff-${notice.role}-${date}`,date,read:false,type:'club_news',title:notice.expired?'Koniec umowy ze sztabem':'Wygasająca umowa sztabu',titleEn:notice.expired?'Staff contract expired':'Staff contract expiring',body:`${notice.name}: ${notice.expired?'stanowisko jest wolne.':'umowa kończy się w ciągu 30 dni.'}`,bodyEn:`${notice.name}: ${notice.expired?'the position is now vacant.':'contract ends within 30 days.'}`})
+    }
     team.financeSeasonYear = career.seasonYear
     team.academyCandidates = (team.academyCandidates ?? []).filter(p => !p.offerExpires || p.offerExpires >= date)
     const project = team.facilityProject
@@ -145,7 +149,10 @@ export function processClubManagement(career, date, { weekTick = false } = {}) {
       const facility = priority.sort((a, b) => getFacilityLevel(team, a) - getFacilityLevel(team, b))[0]
       if (getTransferBudget(team) > 150_000) upgradeFacility(team, facility, { date })
       const role = team.clubStrategy === 'development' ? 'youthCoach' : 'sportingDirector'
-      if (forecast.projectedCash > 500_000 && team.staff[role] < 3) setClubStaff(team, role, team.staff[role] + 1)
+      if (forecast.projectedCash > 500_000 && team.staff[role] < 3) {
+        const candidate=staffMarket(team,role,date).find(p=>p.level===team.staff[role]+1)
+        if(candidate)hireClubStaff(team,role,candidate.id,date)
+      }
     }
     const rng = createRng(seed(`${team.id}|youth-scout|${date}`))
     if ((team.academyPlayers?.length ?? 0) < academyCapacity(team)) {

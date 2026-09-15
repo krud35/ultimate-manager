@@ -29,7 +29,7 @@ export default function RandomEventModal({ message, lang, onChoose }) {
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/60 px-4 backdrop-blur-[2px]">
       <div className="w-full max-w-md rounded-md border border-ufa-border bg-ufa-panel p-6 shadow-2xl shadow-black/50 league-fade-in">
-        <span className="rounded border border-violet-400/40 bg-violet-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-300">
+        <span className="rounded border border-violet-400/40 bg-violet-400/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ufa-special">
           {lang === UI_LANG.EN ? 'Decision needed' : 'Wymagana decyzja'}
         </span>
         <h3 className="mt-3 text-lg font-semibold text-ufa-text">
@@ -39,7 +39,7 @@ export default function RandomEventModal({ message, lang, onChoose }) {
           {pickCopy(displayMessage, 'body', lang)}
         </p>
         {error && (
-          <p role="alert" className="mt-3 text-sm text-red-300">
+          <p role="alert" className="mt-3 text-sm text-ufa-danger">
             {lang === UI_LANG.EN ? error.errorEn : error.error}
           </p>
         )}
@@ -52,7 +52,7 @@ export default function RandomEventModal({ message, lang, onChoose }) {
                 const result = onChoose?.(message.id, choice.id)
                 if (result?.ok === false) setError(result)
               }}
-              className="rounded-lg border border-violet-400/35 bg-violet-400/5 px-4 py-3 text-left transition-colors hover:border-violet-400/60 hover:bg-violet-400/10"
+              className="rounded-sm border border-violet-400/35 bg-violet-400/5 px-4 py-3 text-left transition-colors hover:border-violet-400/60 hover:bg-violet-400/10"
             >
               <span className="block text-sm font-medium text-ufa-text">
                 {pickLabel(choice, lang) || choice.label}

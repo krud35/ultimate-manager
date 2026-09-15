@@ -560,7 +560,7 @@ export function stadiumHomeRatingMult(team) {
 /** Mnożnik jakości sesji treningowej. */
 export function trainingCenterQualityMult(team) {
   const delta = facilityLevelDelta(getFacilityLevel(team, 'trainingCenter'))
-  return (1 + delta * 0.028) * (1 + ((team.staff?.sportingDirector ?? 1) - 1) * 0.015)
+  return 1 + delta * 0.028
 }
 
 /** Mnożnik szansy kontuzji (1 = baseline; wyższy poziom → mniejsza szansa). */
@@ -572,7 +572,9 @@ export function medicalInjuryChanceMult(team) {
 /** Mnożnik dziennej regeneracji staminy meczowej (1 = baseline; wyższy poziom → szybszy powrót do formy). */
 export function medicalRecoveryMult(team) {
   const delta = facilityLevelDelta(getFacilityLevel(team, 'medicalCenter'))
-  return Math.max(0.75, Math.min(1.35, 1 + delta * 0.06 + ((team.staff?.physio ?? 1) - 1) * 0.04))
+  const physio=team.staffMembers?.physio
+  const expertise=physio ? (physio.skills.recovery-7)*0.005+(physio.specialty==='rehabilitation'?0.015:0) : 0
+  return Math.max(0.75, Math.min(1.35, 1 + delta * 0.06 + ((team.staff?.physio ?? 1) - 1) * 0.04 + expertise))
 }
 
 /** Lekka zmiana morale po treningu (dla obecnych). */

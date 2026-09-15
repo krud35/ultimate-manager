@@ -1,10 +1,10 @@
 import { useUiLang } from '../ui/UiLangContext'
 import { pickLabel, formatContractRemaining } from '../ui/locale'
 import { rosterStrings } from '../ui/strings/roster'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { UFA_LEAGUE_TEAMS } from '../data/ufaLeagueTeams.js'
 import { getPlayerFullName, getOverallRating } from '../data/mockPlayers'
-import { MAIN_CATEGORY_SORT_KEYS, readCategorySkill } from '../models/playerStats.js'
+import { readCategorySkill } from '../models/playerStats.js'
 import { demoHomeTeam } from '../data/demoMatchTeams'
 import StaminaBar, { getStaminaForPlayer } from './StaminaBar'
 import { SkillBar, sortPlayers, ThrowingHandBadge } from './TeamRosterPanel'
@@ -40,27 +40,6 @@ const PAGE_SIZE_OPTIONS = [
   { id: 50, label: '50' },
   { id: 100, label: '100' },
   { id: 'all', labelPl: 'Wszyscy', labelEn: 'All' },
-]
-
-const SORT_OPTIONS = [
-  ...MAIN_CATEGORY_SORT_KEYS,
-  { id: 'goals', label: 'G' },
-  { id: 'assists', label: 'A' },
-  { id: 'blocks', label: 'B' },
-  { id: 'pointsPlayed', label: 'PP' },
-  { id: 'form', labelPl: 'Forma', labelEn: 'Form' },
-  { id: 'morale', label: 'Morale' },
-  { id: 'stamina', label: 'Stamina' },
-  { id: 'salary', labelPl: 'Pensja', labelEn: 'Salary' },
-  { id: 'contractRemaining', labelPl: 'Kontrakt', labelEn: 'Contract' },
-]
-
-const MAIN_COLUMNS = [
-  { id: 'throwing', label: 'Throwing' },
-  { id: 'physical', label: 'Physical' },
-  { id: 'mental', label: 'Mental' },
-  { id: 'offensive', label: 'Offensive' },
-  { id: 'defensive', label: 'Defensive' },
 ]
 
 function rosterStaminaSide(player, matchStamina, focusTeamName, teamNameOf) {
@@ -107,6 +86,7 @@ export default function RosterView({
   }, [leagueTeams])
 
   const [teamFilter, setTeamFilter] = useState(focusTeamName)
+  const [view, setView] = useState('overview')
   const [sortKey, setSortKey] = useState('ovr')
   const [sortDir, setSortDir] = useState('desc')
   const [profilePlayer, setProfilePlayer] = useState(null)
@@ -127,20 +107,24 @@ export default function RosterView({
     if (clubOnly) return [{ id: focusTeamName, label: focusTeamName }]
     const names = leagueTeams.map((t) => t.name).sort()
     return [{ id: 'all', label: t.allTeams }, ...names.map((t) => ({ id: t, label: t }))]
-  }, [leagueTeams, clubOnly, focusTeamName])
+  }, [leagueTeams, clubOnly, focusTeamName, t.allTeams])
 
   const filtered = useMemo(() => {
     if (effectiveFilter === 'all') return allPlayers
     return allPlayers.filter((p) => teamNameOf(p) === effectiveFilter)
   }, [effectiveFilter, allPlayers, teamNameOf])
 
-  const getSt = (p) => {
+  const getSt = useCallback((p) => {
     const side = rosterStaminaSide(p, matchStamina, focusTeamName, teamNameOf)
     return side ? getStaminaForPlayer(matchStamina[side], p.id) : 100
-  }
+  }, [matchStamina, focusTeamName, teamNameOf])
 
   const rows = useMemo(() => {
     const sorted = sortPlayers(filtered, sortKey, sortDir, getSt)
+    if (['age', 'value', 'freshness'].includes(sortKey)) {
+      const value = p => sortKey === 'age' ? p.age ?? 0 : sortKey === 'value' ? getPlayerMarketValue(p) : currentMatchStamina(p)
+      return [...sorted].sort((a, b) => (value(a) - value(b)) * (sortDir === 'asc' ? 1 : -1))
+    }
     if (sortKey === 'form') {
       const dir = sortDir === 'asc' ? 1 : -1
       return [...sorted].sort((a, b) => {
@@ -171,7 +155,7 @@ export default function RosterView({
       if (va !== vb) return (va - vb) * dir
       return getPlayerFullName(a).localeCompare(getPlayerFullName(b))
     })
-  }, [filtered, sortKey, sortDir, matchStamina, leaguePlayerStats, teamNameOf])
+  }, [filtered, sortKey, sortDir, getSt, leaguePlayerStats])
 
   const visibleRows = useMemo(() => {
     if (pageSize === 'all') return rows
@@ -188,234 +172,63 @@ export default function RosterView({
     }
   }
 
+  const views = [
+    { id: 'overview', label: lang === 'en' ? 'Overview' : 'Przegląd' },
+    { id: 'attributes', label: lang === 'en' ? 'Attributes' : 'Atrybuty' },
+    { id: 'statistics', label: lang === 'en' ? 'Statistics' : 'Statystyki' },
+    { id: 'contracts', label: lang === 'en' ? 'Contracts' : 'Kontrakty' },
+  ]
+  const columnsByView = {
+    overview: [['age', t.age], ['ovr', 'OVR'], ['form', t.form], ['morale', t.morale], ['freshness', t.matchFreshnessCol], ['traits', t.traits]],
+    attributes: [['ovr', 'OVR'], ['hand', t.hand], ['throwing', lang === 'en' ? 'Throwing' : 'Rzuty'], ['physical', lang === 'en' ? 'Physical' : 'Fizyczne'], ['mental', lang === 'en' ? 'Mental' : 'Mentalne'], ['offensive', lang === 'en' ? 'Offense' : 'Atak'], ['defensive', lang === 'en' ? 'Defense' : 'Obrona']],
+    statistics: [['ovr', 'OVR'], ['goals', 'G'], ['assists', 'A'], ['blocks', 'B'], ['pointsPlayed', 'PP']],
+    contracts: [['age', t.age], ['ovr', 'OVR'], ['value', t.value], ['salary', t.salary], ['contractRemaining', t.contractRemaining]],
+  }
+  const columns = [...columnsByView[view], ...(showStamina ? [['stamina', 'Stamina']] : [])]
+  const sortable = columns.filter(([key]) => !['traits', 'hand'].includes(key))
+  function renderCell(player, key) {
+    switch (key) {
+      case 'age': return player.age ?? '—'
+      case 'ovr': return <span className="um-rating">{getOverallRating(player.skills)}</span>
+      case 'hand': return <ThrowingHandBadge player={player} />
+      case 'form': return <span className={formToneClass(getPlayerForm(player))}>{formLabel(getPlayerForm(player), lang)}</span>
+      case 'morale': return <span className={moraleToneClass(getPlayerMorale(player))}>{moraleLabel(getPlayerMorale(player), lang)}</span>
+      case 'freshness': return <span className={fatigueBandToneClass(100 - currentMatchStamina(player))}>{fatigueBandLabel(100 - currentMatchStamina(player), lang)}</span>
+      case 'traits': return <PlayerTraitChips player={player} max={2} />
+      case 'value': return formatUsdCompact(getPlayerMarketValue(player))
+      case 'salary': return player.contract?.weeklyWage ? t.salaryWeeklyShort(formatUsd(player.contract.weeklyWage)) : t.noContract
+      case 'contractRemaining': return player.contract?.weeksRemaining != null ? formatContractRemaining(player.contract.weeksRemaining, lang) : t.noContract
+      case 'stamina': return <StaminaBar stamina={getSt(player)} />
+      case 'goals': case 'assists': case 'blocks': case 'pointsPlayed': return seasonStatsForPlayer(leaguePlayerStats, player)[key] ?? 0
+      default: return <SkillBar value={readCategorySkill(player.skills, key)} />
+    }
+  }
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
-        <div className="border-b border-ufa-border px-6 py-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-ufa-text">
-              {clubOnly ? t.clubTitle : t.leagueTitle}
-            </h2>
-            <p className="mt-1 text-sm text-ufa-muted">
-              {clubOnly
-                ? `${focusTeamName} · ${t.playerCount(filtered.length)}`
-                : t.leagueHint(allPlayers.length)}
-              {showStamina ? t.matchStamina : ''}
-              {' · '}
-              {t.clubHint}
-            </p>
-          </div>
-          {!clubOnly && (
-          <div className="flex flex-wrap gap-2">
-            {teamFilters.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setTeamFilter(f.id)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium ${
-                  teamFilter === f.id
-                    ? 'bg-ufa-accent text-ufa-bg'
-                    : 'bg-ufa-bg text-ufa-muted ring-1 ring-ufa-border hover:text-ufa-text'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-          )}
+      <section>
+        <header className="um-page-heading"><p className="um-eyebrow">{focusTeamName} / {t.playerCount(filtered.length)}</p><h1 className="um-page-title">{clubOnly ? t.clubTitle : t.leagueTitle}</h1><p className="text-sm text-ufa-muted">{clubOnly ? t.clubHint : t.leagueHint(allPlayers.length)}</p></header>
+        <div className="um-tabs" aria-label={lang === 'en' ? 'Roster view' : 'Widok składu'}>{views.map(item => <button type="button" key={item.id} aria-pressed={view === item.id} onClick={() => { setView(item.id); setSortKey('ovr'); setSortDir('desc') }}>{item.label}</button>)}</div>
+        <div className="um-table-toolbar">
+          {!clubOnly && <label className="flex items-center gap-2 text-sm">{t.team}<select className="rounded-sm border border-ufa-border bg-ufa-panel px-3 py-2" value={teamFilter} onChange={event => setTeamFilter(event.target.value)}>{teamFilters.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</select></label>}
+          <label className="flex items-center gap-2 text-sm text-ufa-muted">{t.show}<select className="rounded-sm border border-ufa-border bg-ufa-panel px-3 py-2 text-ufa-text" value={String(pageSize)} onChange={event => setPageSize(event.target.value === 'all' ? 'all' : Number(event.target.value))}>{PAGE_SIZE_OPTIONS.map(option => <option key={option.id} value={option.id}>{pickLabel(option, lang)}</option>)}</select></label>
+          <span className="text-xs text-ufa-muted">{t.ofTotal(visibleRows.length, rows.length)}</span>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2 px-6 py-3 border-b border-ufa-border/80 bg-ufa-bg/40">
-          <span className="text-xs text-ufa-muted uppercase tracking-wide">{t.sort}</span>
-          {SORT_OPTIONS.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => onSort(opt.id)}
-              className={`rounded px-2 py-1 text-xs font-medium ${
-                sortKey === opt.id
-                  ? 'bg-ufa-accent/15 text-ufa-accent ring-1 ring-ufa-accent/30'
-                  : 'text-ufa-muted hover:text-ufa-text'
-              }`}
-            >
-              {pickLabel(opt, lang)}
-              {sortKey === opt.id ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-            </button>
-          ))}
-          <span className="mx-1 hidden h-4 w-px bg-ufa-border sm:inline" aria-hidden />
-          <label className="flex items-center gap-2 text-xs text-ufa-muted">
-            <span className="uppercase tracking-wide">{t.show}</span>
-            <select
-              value={String(pageSize)}
-              onChange={(e) => {
-                const v = e.target.value
-                setPageSize(v === 'all' ? 'all' : Number(v))
-              }}
-              className="rounded-md border border-ufa-border bg-ufa-panel px-2 py-1 text-xs font-medium text-ufa-text"
-            >
-              {PAGE_SIZE_OPTIONS.map((opt) => (
-                <option key={String(opt.id)} value={String(opt.id)}>
-                  {pickLabel(opt, lang)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <span className="text-xs text-ufa-muted tabular-nums">
-            {visibleRows.length === rows.length
-              ? t.playerCount(rows.length)
-              : t.ofTotal(visibleRows.length, rows.length)}
-          </span>
+        {view === 'overview' && <div className="um-mobile-roster">
+          <div className="flex items-center justify-between gap-3 border-b border-ufa-border pb-2"><label className="flex items-center gap-2 text-xs text-ufa-muted">{t.sort}<select className="border border-ufa-border bg-ufa-panel p-2 text-ufa-text" value={sortKey} onChange={e => onSort(e.target.value)}>{[['name', t.player], ...sortable].map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><button className="um-button" type="button" onClick={() => onSort(sortKey)} aria-label={lang === 'en' ? 'Reverse sort order' : 'Odwróć kolejność'}>{sortDir === 'desc' ? '↓' : '↑'}</button></div>
+          {visibleRows.map(player => <button className="um-roster-mobile-row" type="button" key={player.id} onClick={() => setProfilePlayer(player)}><span><strong>{getPlayerFullName(player)}</strong><small>{player.age ?? '—'} · {isPlayerInjured(player) ? injuryStatusLabel(player, lang) : fatigueBandLabel(100 - currentMatchStamina(player), lang)}{!clubOnly ? ' · ' + teamNameOf(player) : ''}</small>{player.transferListed && <small>{t.transferListedBadge}</small>}{player.loan && <small>{t.loanedInBadge(teamNameById.get(player.loan.parentTeamId) ?? player.loan.parentTeamId)}</small>}</span><span className="um-rating">{getOverallRating(player.skills)}</span><span aria-hidden="true">›</span></button>)}
+        </div>}
+        <div className={view === 'overview' ? 'um-table-wrap um-table-overview' : 'um-table-wrap'}>
+          <table className="um-roster-table"><thead><tr>
+            <th aria-sort={sortKey === 'name' ? sortDir === 'asc' ? 'ascending' : 'descending' : 'none'}><button type="button" onClick={() => onSort('name')}>{t.player} {sortKey === 'name' ? sortDir === 'asc' ? '↑' : '↓' : '↕'}</button></th>
+            {!clubOnly && <th>{t.team}</th>}
+            {columns.map(([key, label]) => <th key={key} aria-sort={sortKey === key ? sortDir === 'asc' ? 'ascending' : 'descending' : undefined}>{['traits', 'hand'].includes(key) ? label : <button type="button" onClick={() => onSort(key)}>{label} {sortKey === key ? sortDir === 'asc' ? '↑' : '↓' : '↕'}</button>}</th>)}
+          </tr></thead><tbody>{visibleRows.map(player => {
+            ensurePlayerMorale(player); ensurePlayerForm(player); ensurePlayerInjury(player)
+            return <tr key={player.id}><td><button type="button" className="um-link text-left font-semibold" onClick={() => setProfilePlayer(player)}>{getPlayerFullName(player)} ↗</button>{isPlayerInjured(player) && <p className="text-xs text-ufa-danger">{injuryStatusLabel(player, lang)}</p>}{clubOnly && player.transferListed && <p className="text-xs text-ufa-gold">{t.transferListedBadge}</p>}{clubOnly && player.loan && <p className="text-xs text-ufa-muted">{t.loanedInBadge(teamNameById.get(player.loan.parentTeamId) ?? player.loan.parentTeamId)}</p>}</td>{!clubOnly && <td className="text-ufa-muted">{teamNameOf(player)}</td>}{columns.map(([key]) => <td key={key} className={['ovr','age','value','salary','contractRemaining','goals','assists','blocks','pointsPlayed'].includes(key) ? 'text-right' : ''}>{renderCell(player, key)}</td>)}</tr>
+          })}</tbody></table>
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1280px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-ufa-border bg-ufa-bg/80 text-xs uppercase tracking-wider text-ufa-muted">
-                <th className="px-4 py-3 font-medium">{t.player}</th>
-                {!clubOnly && (
-                  <th className="px-3 py-3 font-medium">{t.team}</th>
-                )}
-                <th className="px-3 py-3 font-medium">{t.age}</th>
-                <th className="px-3 py-3 font-medium">{t.hand}</th>
-                <th className="px-3 py-3 font-medium">OVR</th>
-                <th className="px-3 py-3 font-medium">{t.value}</th>
-                <th className="px-3 py-3 font-medium">{t.salary}</th>
-                <th className="px-3 py-3 font-medium">{t.contractRemaining}</th>
-                <th className="px-3 py-3 font-medium">{t.form}</th>
-                <th className="px-3 py-3 font-medium">{t.morale}</th>
-                <th className="px-3 py-3 font-medium">{t.matchFreshnessCol}</th>
-                <th className="px-3 py-3 font-medium min-w-[140px]">{t.traits}</th>
-                {MAIN_COLUMNS.map((col) => (
-                  <th key={col.id} className="px-3 py-3 font-medium">
-                    {col.label}
-                  </th>
-                ))}
-                {showStamina && (
-                  <th className="px-3 py-3 font-medium min-w-[100px]">Stamina</th>
-                )}
-                <th className="px-3 py-3 font-medium text-center">G</th>
-                <th className="px-3 py-3 font-medium text-center">A</th>
-                <th className="px-3 py-3 font-medium text-center">B</th>
-                <th className="px-3 py-3 font-medium text-center" title={t.pointsPlayed}>
-                  PP
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ufa-border">
-              {visibleRows.map((player) => {
-                const ovr = getOverallRating(player.skills)
-                const { skills } = player
-                const s = seasonStatsForPlayer(leaguePlayerStats, player)
-                const stamina = getSt(player)
-                ensurePlayerMorale(player)
-                ensurePlayerForm(player)
-                ensurePlayerInjury(player)
-                const morale = getPlayerMorale(player)
-                const form = getPlayerForm(player)
-                const matchFreshness = Math.round(currentMatchStamina(player))
-                const injured = isPlayerInjured(player)
-                return (
-                  <tr key={player.id} className="transition-colors hover:bg-ufa-panel-hover">
-                    <td className="px-4 py-3 font-medium whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => setProfilePlayer(player)}
-                        className="text-ufa-accent hover:underline text-left"
-                      >
-                        {getPlayerFullName(player)}
-                      </button>
-                      {clubOnly && player.transferListed ? (
-                        <span className="ml-1.5 rounded bg-ufa-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
-                          {t.transferListedBadge}
-                        </span>
-                      ) : null}
-                      {clubOnly && player.loan ? (
-                        <span className="ml-1.5 rounded bg-ufa-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
-                          {t.loanedInBadge(
-                            teamNameById.get(player.loan.parentTeamId) ?? player.loan.parentTeamId,
-                          )}
-                        </span>
-                      ) : null}
-                      {injured ? (
-                        <p
-                          className="mt-0.5 text-[11px] font-semibold text-red-400"
-                          title={injuryStatusLabel(player, lang)}
-                        >
-                          {injuryStatusLabel(player, lang)}
-                        </p>
-                      ) : null}
-                    </td>
-                    {!clubOnly && (
-                      <td className="px-3 py-3 text-ufa-muted whitespace-nowrap">
-                        {teamNameOf(player)}
-                      </td>
-                    )}
-                    <td className="px-3 py-3 tabular-nums text-ufa-muted">
-                      {player.age ?? '—'}
-                    </td>
-                    <td className="px-3 py-3">
-                      <ThrowingHandBadge player={player} />
-                    </td>
-                    <td className="px-3 py-3">
-                      <span
-                        className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md text-xs font-bold ${
-                          ovr >= 85
-                            ? 'bg-ufa-accent/20 text-ufa-accent'
-                            : 'bg-slate-700/50 text-slate-200'
-                        }`}
-                      >
-                        {ovr}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 tabular-nums text-ufa-gold font-medium">
-                      {formatUsdCompact(getPlayerMarketValue(player))}
-                    </td>
-                    <td className="px-3 py-3 tabular-nums text-ufa-muted">
-                      {player.contract?.weeklyWage
-                        ? t.salaryWeeklyShort(formatUsd(player.contract.weeklyWage))
-                        : t.noContract}
-                    </td>
-                    <td className="px-3 py-3 tabular-nums text-ufa-muted">
-                      {player.contract?.weeksRemaining != null
-                        ? formatContractRemaining(player.contract.weeksRemaining, lang)
-                        : t.noContract}
-                    </td>
-                    <td className={`px-3 py-3 font-semibold ${formToneClass(form)}`}>
-                      {formLabel(form, lang)}
-                    </td>
-                    <td className={`px-3 py-3 font-semibold ${moraleToneClass(morale)}`}>
-                      {moraleLabel(morale, lang)}
-                    </td>
-                    <td
-                      className={`px-3 py-3 font-semibold ${fatigueBandToneClass(100 - matchFreshness)}`}
-                      title={`${matchFreshness}/100`}
-                    >
-                      {fatigueBandLabel(100 - matchFreshness, lang)}
-                    </td>
-                    <td className="px-3 py-3 max-w-[200px]">
-                      <PlayerTraitChips player={player} max={2} />
-                    </td>
-                    {MAIN_COLUMNS.map((col) => (
-                      <td key={col.id} className="px-3 py-3">
-                        <SkillBar value={readCategorySkill(skills, col.id)} />
-                      </td>
-                    ))}
-                    {showStamina && (
-                      <td className="px-3 py-3">
-                        <StaminaBar stamina={stamina} />
-                      </td>
-                    )}
-                    <td className="px-3 py-3 text-center tabular-nums">{s.goals}</td>
-                    <td className="px-3 py-3 text-center tabular-nums">{s.assists}</td>
-                    <td className="px-3 py-3 text-center tabular-nums">{s.blocks}</td>
-                    <td className="px-3 py-3 text-center tabular-nums">{s.pointsPlayed}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        {rows.length === 0 && <p className="py-8 text-ufa-muted">{lang === 'en' ? 'No players to display.' : 'Brak zawodników do wyświetlenia.'}</p>}
+      </section>
       <PlayerProfileModal
         player={profilePlayer}
         onClose={() => setProfilePlayer(null)}
@@ -460,10 +273,10 @@ export default function RosterView({
       )}
       {loanFlash && (
         <div
-          className={`fixed bottom-4 right-4 z-50 rounded-md px-4 py-2 text-sm shadow-lg ${
+          className={`fixed bottom-4 right-4 z-50 rounded-md px-4 py-2 text-sm  ${
             loanFlash.type === 'ok'
-              ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/40'
-              : 'bg-red-500/15 text-red-400 ring-1 ring-red-500/40'
+              ? 'bg-emerald-500/15 text-ufa-success ring-1 ring-emerald-500/40'
+              : 'bg-red-500/15 text-ufa-danger ring-1 ring-red-500/40'
           }`}
         >
           {loanFlash.text}

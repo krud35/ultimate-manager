@@ -69,10 +69,10 @@ export function moraleLabel(morale = MORALE_DEFAULT, lang = 'pl') {
 
 export function moraleToneClass(morale = MORALE_DEFAULT) {
   const m = clampMorale(morale)
-  if (m >= 75) return 'text-emerald-400'
+  if (m >= 75) return 'text-ufa-success'
   if (m >= 60) return 'text-ufa-gold'
-  if (m >= 45) return 'text-amber-400'
-  return 'text-red-400'
+  if (m >= 45) return 'text-ufa-gold'
+  return 'text-ufa-danger'
 }
 
 /** 0 = rezerwowy poziomu, 1 = lider / pewny starter w składzie. */

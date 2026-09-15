@@ -21,12 +21,13 @@ import {
   ensureTeamTraining,
   sessionQualityLabel,
 } from '../career/teamTraining.js'
+import { SESSION_DEFS } from '../career/trainingSchedule.js'
 
 const PHASE_COLOR = {
-  fall: 'bg-amber-500/20 text-amber-200 border-amber-500/30',
+  fall: 'bg-amber-500/20 text-ufa-gold border-amber-500/30',
   cup: 'bg-ufa-gold/20 text-ufa-gold border-ufa-gold/30',
-  spring: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/30',
-  offseason: 'bg-slate-500/20 text-slate-300 border-slate-500/30',
+  spring: 'bg-emerald-500/20 text-ufa-success border-emerald-500/30',
+  offseason: 'bg-slate-500/20 text-ufa-text border-ufa-border/30',
 }
 
 function weekdayShortMonFirst(lang) {
@@ -107,15 +108,15 @@ function VenueTag({ fixture, playerTeamId, className = '' }) {
   if (!marker) return null
   const tone =
     marker === 'H'
-      ? 'text-emerald-300/90'
+      ? 'text-ufa-success/90'
       : marker === 'A'
-        ? 'text-sky-300/90'
+        ? 'text-ufa-info/90'
         : 'text-ufa-gold'
   const title =
     marker === 'H' ? t.venueHome : marker === 'A' ? t.venueAway : t.venueNeutral
   return (
     <span
-      className={`inline-flex min-w-[1.1rem] justify-center rounded border border-current/25 px-0.5 text-[9px] font-semibold tabular-nums ${tone} ${className}`}
+      className={`inline-flex min-w-[1.1rem] justify-center rounded border border-current/25 px-0.5 text-[11px] font-semibold tabular-nums ${tone} ${className}`}
       title={title}
     >
       {marker}
@@ -141,18 +142,18 @@ function TrainingChip({ training, compact = false }) {
 
   return (
     <div
-      className={`rounded border px-1.5 py-1 text-[10px] leading-tight border-sky-500/40 bg-sky-500/10 ${
+      className={`rounded border px-1.5 py-1 text-[11px] leading-tight border-sky-500/40 bg-sky-500/10 ${
         done ? 'opacity-80' : ''
       }`}
     >
       <div className="flex items-start justify-between gap-1">
-        <span className="font-semibold text-sky-200">
+        <span className="font-semibold text-ufa-info">
           {compact ? t.training : `${t.training} · ${kind}`}
         </span>
-        {done && <span className="text-sky-300/80 shrink-0">✓</span>}
+        {done && <span className="text-ufa-info/80 shrink-0">✓</span>}
       </div>
       <p className="mt-0.5 text-ufa-text">
-        {compact ? (
+        {training.type ? SESSION_DEFS[training.type]?.[lang === UI_LANG.EN ? 'en' : 'pl'] : compact ? (
           <>
             {labelA.slice(0, 8)}
             {labelA.length > 8 ? '…' : ''}
@@ -207,7 +208,7 @@ function FixtureChip({ fixture, names, league, compact = false, onPlay }) {
 
   return (
     <div
-      className={`rounded border px-1.5 py-1 text-[10px] leading-tight ${
+      className={`rounded border px-1.5 py-1 text-[11px] leading-tight ${
         yours
           ? 'border-ufa-accent/50 bg-ufa-accent/15 text-ufa-text'
           : 'border-ufa-border/70 bg-ufa-bg/60 text-ufa-muted'
@@ -278,7 +279,7 @@ function ViewToggle({ view, onChange }) {
     { id: 'season', label: t.views.season },
   ]
   return (
-    <div className="inline-flex rounded-lg border border-ufa-border bg-ufa-bg/80 p-0.5">
+    <div className="inline-flex rounded-sm border border-ufa-border bg-ufa-bg/80 p-0.5">
       {views.map((v) => (
         <button
           key={v.id}
@@ -309,7 +310,7 @@ function WeekView({ league, names, team, anchorIso, selectedDay, onSelectDay, on
     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-7">
       {days.map((iso, i) => {
         const fixtures = getFixturesOnDate(league, iso)
-        const trainings = getTeamTrainingsOnDate(team, iso)
+        const trainings = getTeamTrainingsOnDate(team, iso, league)
         const isToday = iso === today
         const isSelected = iso === selectedDay
         const phase = detectSeasonPhase(league, iso)
@@ -326,7 +327,7 @@ function WeekView({ league, names, team, anchorIso, selectedDay, onSelectDay, on
                 onSelectDay?.(iso)
               }
             }}
-            className={`flex flex-col rounded-xl border bg-ufa-panel min-h-[140px] overflow-hidden text-left transition hover:bg-ufa-panel-hover/40 cursor-pointer ${
+            className={`flex flex-col rounded-sm border bg-ufa-panel min-h-[140px] overflow-hidden text-left transition hover:bg-ufa-panel-hover/40 cursor-pointer ${
               isSelected
                 ? 'border-ufa-accent ring-1 ring-ufa-accent/40'
                 : isToday
@@ -335,20 +336,20 @@ function WeekView({ league, names, team, anchorIso, selectedDay, onSelectDay, on
             }`}
           >
             <div className="border-b border-ufa-border/60 px-2.5 py-2 w-full">
-              <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+              <p className="text-[11px] uppercase tracking-wide text-ufa-muted">
                 {weekdayShortMonFirst(lang)[i]}
               </p>
               <p className={`text-sm font-semibold tabular-nums ${isToday || isSelected ? 'text-ufa-accent' : 'text-ufa-text'}`}>
                 {iso.slice(5).replace('-', '.')}
-                {isToday && <span className="ml-1 text-[10px] font-normal">({t.today})</span>}
+                {isToday && <span className="ml-1 text-[11px] font-normal">({t.today})</span>}
               </p>
-              <p className={`mt-1 inline-block rounded border px-1.5 py-0.5 text-[9px] ${PHASE_COLOR[phase] ?? PHASE_COLOR.offseason}`}>
+              <p className={`mt-1 inline-block rounded border px-1.5 py-0.5 text-[11px] ${PHASE_COLOR[phase] ?? PHASE_COLOR.offseason}`}>
                 {c.phases[phase] ?? phase}
               </p>
             </div>
             <div className="flex-1 space-y-1.5 p-2 w-full">
               {empty ? (
-                <p className="text-[10px] text-ufa-muted">{t.noEvents}</p>
+                <p className="text-[11px] text-ufa-muted">{t.noEvents}</p>
               ) : (
                 <>
                   {trainings.map((t) => (
@@ -377,7 +378,6 @@ function WeekView({ league, names, team, anchorIso, selectedDay, onSelectDay, on
 function MonthView({ league, names, team, anchorIso, selectedDay, onSelectDay }) {
   const { lang } = useUiLang()
   const t = calendarStrings(lang)
-  const c = commonStrings(lang)
   const monthStart = startOfMonth(anchorIso)
   const gridStart = mondayOfWeek(monthStart)
   const cells = Array.from({ length: 42 }, (_, i) => formatISODate(addDays(gridStart, i)))
@@ -390,7 +390,7 @@ function MonthView({ league, names, team, anchorIso, selectedDay, onSelectDay })
     <div>
       <div className="grid grid-cols-7 gap-1 mb-1">
         {weekdayShortMonFirst(lang).map((d) => (
-          <div key={d} className="text-center text-[10px] uppercase tracking-wide text-ufa-muted py-1">
+          <div key={d} className="text-center text-[11px] uppercase tracking-wide text-ufa-muted py-1">
             {d}
           </div>
         ))}
@@ -400,7 +400,7 @@ function MonthView({ league, names, team, anchorIso, selectedDay, onSelectDay })
           const d = parseISODate(iso)
           const inMonth = d.getMonth() === month && d.getFullYear() === year
           const fixtures = byDate.get(iso) ?? []
-          const trainings = getTeamTrainingsOnDate(team, iso)
+          const trainings = getTeamTrainingsOnDate(team, iso, league)
           const playerOnes = fixtures.filter((f) => isPlayerFixture(league, f))
           const isToday = iso === today
           const isSelected = iso === selectedDay
@@ -409,7 +409,7 @@ function MonthView({ league, names, team, anchorIso, selectedDay, onSelectDay })
               key={iso}
               type="button"
               onClick={() => onSelectDay?.(iso)}
-              className={`min-h-[72px] sm:min-h-[88px] rounded-lg border p-1.5 text-left transition hover:bg-ufa-panel-hover/60 ${
+              className={`min-h-[72px] sm:min-h-[88px] rounded-sm border p-1.5 text-left transition hover:bg-ufa-panel-hover/60 ${
                 isSelected
                   ? 'border-ufa-accent ring-1 ring-ufa-accent/40 bg-ufa-accent/10'
                   : isToday
@@ -438,23 +438,23 @@ function MonthView({ league, names, team, anchorIso, selectedDay, onSelectDay })
               </div>
               <div className="mt-1 space-y-0.5 hidden sm:block">
                 {trainings.slice(0, 1).map((tr) => (
-                  <p key={tr.id} className="truncate text-[9px] leading-tight text-sky-300 font-medium">
+                  <p key={tr.id} className="truncate text-[11px] leading-tight text-ufa-info font-medium">
                     {t.trainingChip(intensityLabel(tr.intensity, lang))}
                   </p>
                 ))}
                 {playerOnes.slice(0, 2).map((f) => (
-                  <p key={f.id} className="truncate text-[9px] leading-tight text-ufa-accent font-medium">
+                  <p key={f.id} className="truncate text-[11px] leading-tight text-ufa-accent font-medium">
                     {playerFixtureCompactLabel(f, league, names)}
                     {f.competition === 'cup' ? ' · P' : ''}
                   </p>
                 ))}
                 {fixtures.length > 0 && playerOnes.length === 0 && (
-                  <p className="truncate text-[9px] text-ufa-muted">
+                  <p className="truncate text-[11px] text-ufa-muted">
                     {t.matchCount(fixtures.length)}
                   </p>
                 )}
                 {fixtures.length > playerOnes.length && playerOnes.length > 0 && (
-                  <p className="truncate text-[9px] text-ufa-muted">
+                  <p className="truncate text-[11px] text-ufa-muted">
                     {t.otherMatchCount(fixtures.length - playerOnes.length)}
                   </p>
                 )}
@@ -501,7 +501,7 @@ function DayPeek({ league, names, team, iso, onPlay, onSimulateUntilDate }) {
   const c = commonStrings(lang)
   if (!iso) return null
   const fixtures = getFixturesOnDate(league, iso)
-  const trainings = getTeamTrainingsOnDate(team, iso)
+  const trainings = getTeamTrainingsOnDate(team, iso, league)
   const isFuture = iso > league.currentDate
   const isToday = iso === league.currentDate
   const playerMatchesAhead = isFuture ? countPendingPlayerMatchesBefore(league, iso) : 0
@@ -522,13 +522,13 @@ function DayPeek({ league, names, team, iso, onPlay, onSimulateUntilDate }) {
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-ufa-border bg-ufa-panel p-4">
+    <div className="mt-4 rounded-sm border border-ufa-border bg-ufa-panel p-4">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
         <div>
-          <h3 className="text-sm font-semibold text-ufa-text">
+          <h3 className="text-xl font-semibold text-ufa-text">
             {t.eventsTitle(iso, isToday ? ` · ${t.today}` : '')}
           </h3>
-          <p className="mt-0.5 text-[10px] text-ufa-muted">
+          <p className="mt-0.5 text-[11px] text-ufa-muted">
             {c.phases[phase] ?? phase}
           </p>
         </div>
@@ -536,7 +536,7 @@ function DayPeek({ league, names, team, iso, onPlay, onSimulateUntilDate }) {
           <button
             type="button"
             onClick={handleSimulate}
-            className="rounded-md bg-ufa-accent px-4 py-2 text-xs font-semibold text-ufa-bg hover:opacity-90"
+            className="rounded-md bg-ufa-accent px-4 py-2 text-xs font-semibold text-ufa-on-accent hover:opacity-90"
           >
             {t.simToDay}
           </button>
@@ -548,7 +548,7 @@ function DayPeek({ league, names, team, iso, onPlay, onSimulateUntilDate }) {
         <div className="space-y-3">
           {trainings.length > 0 && (
             <div>
-              <p className="text-[10px] uppercase tracking-wide text-sky-300/90 mb-1.5">{t.trainingsSection}</p>
+              <p className="text-[11px] uppercase tracking-wide text-ufa-info/90 mb-1.5">{t.trainingsSection}</p>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {trainings.map((t) => (
                   <TrainingChip key={t.id} training={t} />
@@ -558,7 +558,7 @@ function DayPeek({ league, names, team, iso, onPlay, onSimulateUntilDate }) {
           )}
           {fixtures.length > 0 && (
             <div>
-              <p className="text-[10px] uppercase tracking-wide text-ufa-muted mb-1.5">{t.fixturesSection}</p>
+              <p className="text-[11px] uppercase tracking-wide text-ufa-muted mb-1.5">{t.fixturesSection}</p>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {fixtures.map((f) => (
                   <FixtureChip
@@ -689,7 +689,7 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
         {phases.map((p) => (
           <div
             key={p.id}
-            className={`rounded-xl border p-4 ${p.color} ${
+            className={`rounded-sm border p-4 ${p.color} ${
               currentPhase === p.id ? 'ring-1 ring-ufa-accent/40' : ''
             }`}
           >
@@ -703,7 +703,7 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
               </p>
             )}
             {currentPhase === p.id && (
-              <p className="mt-2 text-[10px] uppercase tracking-wide font-semibold">{t.currentPhase}</p>
+              <p className="mt-2 text-[11px] uppercase tracking-wide font-semibold">{t.currentPhase}</p>
             )}
           </div>
         ))}
@@ -712,16 +712,16 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
       {phases
         .filter((p) => p.cupWeeks)
         .map((p) => (
-          <div key={`${p.id}-weeks`} className="rounded-xl border border-ufa-border bg-ufa-panel p-4">
-            <h3 className="text-sm font-semibold text-ufa-text mb-3">{t.januaryCupSchedule}</h3>
+          <div key={`${p.id}-weeks`} className="rounded-sm border border-ufa-border bg-ufa-panel p-4">
+            <h3 className="text-xl font-semibold text-ufa-text mb-3">{t.januaryCupSchedule}</h3>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {p.cupWeeks.map((w) => (
                 <div
                   key={w.label + (w.range?.start ?? '')}
-                  className="rounded-lg border border-ufa-border/70 bg-ufa-bg/50 px-3 py-2"
+                  className="rounded-sm border border-ufa-border/70 bg-ufa-bg/50 px-3 py-2"
                 >
                   <p className="text-xs font-medium text-ufa-text">{w.label}</p>
-                  <p className="text-[10px] text-ufa-muted tabular-nums mt-0.5">
+                  <p className="text-[11px] text-ufa-muted tabular-nums mt-0.5">
                     {w.range?.start} – {w.range?.end}
                   </p>
                 </div>
@@ -730,9 +730,9 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
           </div>
         ))}
 
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel overflow-hidden">
+      <div className="rounded-sm border border-ufa-border bg-ufa-panel overflow-hidden">
         <div className="border-b border-ufa-border px-5 py-3 flex items-center justify-between gap-2">
-          <h3 className="font-semibold text-ufa-text text-sm">{t.planTeamTraining}</h3>
+          <h3 className="font-semibold text-ufa-text text-xl">{t.planTeamTraining}</h3>
           <span className="text-xs text-ufa-muted">
             {t.weeklyOneOffCounts(weeklyPlan.length, upcomingOneOff.length)}
           </span>
@@ -748,9 +748,9 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
                 {weeklyPlan.map((s) => (
                   <div
                     key={s.id}
-                    className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs"
+                    className="rounded-sm border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs"
                   >
-                    <p className="font-medium text-sky-200">
+                    <p className="font-medium text-ufa-info">
                       {weekdayLabel(s.weekday, lang)}
                     </p>
                     <p className="text-ufa-text mt-0.5">
@@ -771,7 +771,7 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
                     className="flex flex-wrap items-center justify-between gap-2 text-sm border-t border-ufa-border/50 pt-2"
                   >
                     <span>
-                      <span className="tabular-nums text-sky-300 font-medium">{s.date}</span>
+                      <span className="tabular-nums text-ufa-info font-medium">{s.date}</span>
                       <span className="text-ufa-muted mx-2">·</span>
                       <span className="text-ufa-text">
                         {focusLabel(s.focuses[0], lang)} + {focusLabel(s.focuses[1], lang)}
@@ -786,9 +786,9 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
         )}
       </div>
 
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel overflow-hidden">
+      <div className="rounded-sm border border-ufa-border bg-ufa-panel overflow-hidden">
         <div className="border-b border-ufa-border px-5 py-3 flex items-center justify-between gap-2">
-          <h3 className="font-semibold text-ufa-text text-sm">{t.yourSeasonFixtures}</h3>
+          <h3 className="font-semibold text-ufa-text text-xl">{t.yourSeasonFixtures}</h3>
           <span className="text-xs text-ufa-muted">{t.matchCount(playerFixtures.length)}</span>
         </div>
         {playerFixtures.length === 0 ? (
@@ -807,7 +807,7 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
                   }`}
                 >
                   <div>
-                    <p className="text-[10px] text-ufa-muted tabular-nums">
+                    <p className="text-[11px] text-ufa-muted tabular-nums">
                       {f.date}
                       {f.competition === 'cup' ? t.cupShort : f.round != null ? t.roundShort(f.round) : ''}
                       {isToday ? ` · ${t.today}` : ''}
@@ -823,7 +823,7 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
                       <VenueTag
                         fixture={f}
                         playerTeamId={league.playerTeamId}
-                        className="ml-2 text-[10px] min-w-[1.35rem] px-1"
+                        className="ml-2 text-[11px] min-w-[1.35rem] px-1"
                       />
                     </p>
                   </div>
@@ -850,7 +850,7 @@ function SeasonView({ league, names, team, onPlay, onSimulateUntilDate }) {
                       <button
                         type="button"
                         onClick={() => onPlay(f)}
-                        className="rounded-md bg-ufa-accent px-3 py-1 text-xs font-semibold text-ufa-bg hover:opacity-90"
+                        className="rounded-md bg-ufa-accent px-3 py-1 text-xs font-semibold text-ufa-on-accent hover:opacity-90"
                       >
                         {t.play}
                       </button>
@@ -892,8 +892,8 @@ function SeasonMonthStrip({ league, team, byDate, start, end }) {
   }, [start, end])
 
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4">
-      <h3 className="text-sm font-semibold text-ufa-text mb-3">{t.seasonMap}</h3>
+    <div className="rounded-sm border border-ufa-border bg-ufa-panel p-4">
+      <h3 className="text-xl font-semibold text-ufa-text mb-3">{t.seasonMap}</h3>
       <div className="flex flex-wrap gap-3">
         {months.map((m) => {
           const y = m.getFullYear()
@@ -902,13 +902,13 @@ function SeasonMonthStrip({ league, team, byDate, start, end }) {
           const label = m.toLocaleDateString(lang === UI_LANG.EN ? 'en-US' : 'pl-PL', { month: 'short', year: '2-digit' })
           return (
             <div key={`${y}-${mo}`} className="min-w-[100px]">
-              <p className="text-[10px] uppercase text-ufa-muted mb-1 capitalize">{label}</p>
+              <p className="text-[11px] uppercase text-ufa-muted mb-1 capitalize">{label}</p>
               <div className="flex flex-wrap gap-0.5" style={{ width: 84 }}>
                 {Array.from({ length: daysInMonth }, (_, i) => {
                   const iso = formatISODate(new Date(y, mo, i + 1))
                   const fixtures = byDate.get(iso) ?? []
                   const yours = fixtures.some((f) => isPlayerFixture(league, f))
-                  const hasTraining = getTeamTrainingsOnDate(team, iso).length > 0
+                  const hasTraining = getTeamTrainingsOnDate(team, iso, league).length > 0
                   const hasAny = fixtures.length > 0
                   const isToday = iso === league.currentDate
                   return (
@@ -934,7 +934,7 @@ function SeasonMonthStrip({ league, team, byDate, start, end }) {
           )
         })}
       </div>
-      <div className="mt-3 flex flex-wrap gap-4 text-[10px] text-ufa-muted">
+      <div className="mt-3 flex flex-wrap gap-4 text-[11px] text-ufa-muted">
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-[2px] bg-ufa-accent" /> {t.yourMatch}
         </span>
@@ -1007,27 +1007,27 @@ export default function CalendarView({ league, onPlayFixture, onSimulateUntilDat
       .slice(0, 3)
   }, [league])
 
-  const upcomingTrainings = useMemo(() => {
+  const upcomingTrainings = (() => {
     if (!team || !league.currentDate) return []
     const out = []
     const cursor = parseISODate(league.currentDate)
     for (let i = 0; i < 21 && out.length < 3; i += 1) {
       const iso = formatISODate(addDays(cursor, i))
-      for (const t of getTeamTrainingsOnDate(team, iso)) {
+      for (const t of getTeamTrainingsOnDate(team, iso, league)) {
         if (t.completed) continue
         out.push({ ...t, date: iso })
         if (out.length >= 3) break
       }
     }
     return out
-  }, [team, league.currentDate, team?.teamTraining])
+  })()
 
   return (
     <div className="space-y-6 league-fade-in">
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-xl shadow-black/30">
+      <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5  ">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-ufa-text">{t.calendarTitle}</h2>
+            <h2 className="text-2xl font-semibold text-ufa-text">{t.calendarTitle}</h2>
             <p className="mt-1 text-sm text-ufa-muted">
               {displaySeasonLabel(league.seasonLabel, lang)} · {t.today} {league.currentDate} ·{' '}
               <span className="text-ufa-text">{c.phases[phase] ?? phase}</span>
@@ -1043,6 +1043,7 @@ export default function CalendarView({ league, onPlayFixture, onSimulateUntilDat
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
+              aria-label={lang === 'en' ? 'Previous period' : 'Poprzedni okres'}
               onClick={() => shift(-1)}
               className="rounded-md border border-ufa-border px-3 py-1.5 text-sm text-ufa-text hover:bg-ufa-panel-hover"
             >
@@ -1057,6 +1058,7 @@ export default function CalendarView({ league, onPlayFixture, onSimulateUntilDat
             </button>
             <button
               type="button"
+              aria-label={lang === 'en' ? 'Next period' : 'Następny okres'}
               onClick={() => shift(1)}
               className="rounded-md border border-ufa-border px-3 py-1.5 text-sm text-ufa-text hover:bg-ufa-panel-hover"
             >
@@ -1079,12 +1081,12 @@ export default function CalendarView({ league, onPlayFixture, onSimulateUntilDat
                   setAnchorIso(tr.date)
                   setSelectedDay(tr.date)
                 }}
-                className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-xs text-left hover:bg-sky-500/20"
+                className="rounded-sm border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-xs text-left hover:bg-sky-500/20"
               >
-                <span className="text-sky-300 font-semibold tabular-nums">{tr.date}</span>
+                <span className="text-ufa-info font-semibold tabular-nums">{tr.date}</span>
                 <span className="text-ufa-muted mx-1.5">·</span>
                 <span className="text-ufa-text">
-                  {t.trainingChip(focusLabel(tr.focuses?.[0], lang))}
+                  {t.trainingChip(SESSION_DEFS[tr.type]?.[lang === UI_LANG.EN ? 'en' : 'pl'] ?? focusLabel(tr.focuses?.[0], lang))}
                 </span>
               </button>
             ))}
@@ -1097,7 +1099,7 @@ export default function CalendarView({ league, onPlayFixture, onSimulateUntilDat
                   setAnchorIso(f.date)
                   setSelectedDay(f.date)
                 }}
-                className="rounded-lg border border-ufa-accent/40 bg-ufa-accent/10 px-3 py-1.5 text-xs text-left hover:bg-ufa-accent/20"
+                className="rounded-sm border border-ufa-accent/40 bg-ufa-accent/10 px-3 py-1.5 text-xs text-left hover:bg-ufa-accent/20"
               >
                 <span className="text-ufa-accent font-semibold tabular-nums">{f.date}</span>
                 <span className="text-ufa-muted mx-1.5">·</span>
@@ -1200,7 +1202,7 @@ export function CalendarTile({ league, onNavigate }) {
     <button
       type="button"
       onClick={() => onNavigate('calendar')}
-      className="w-full rounded-xl border border-ufa-border bg-ufa-panel p-4 text-left shadow-lg shadow-black/20 transition hover:border-ufa-accent/40 hover:bg-ufa-panel-hover/40"
+      className="w-full rounded-sm border border-ufa-border bg-ufa-panel p-4 text-left   transition hover:border-ufa-accent/40 hover:bg-ufa-panel-hover/40"
     >
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -1232,7 +1234,7 @@ export function CalendarTile({ league, onNavigate }) {
           ))
         )}
       </div>
-      <p className="mt-3 text-[10px] text-ufa-muted">
+      <p className="mt-3 text-[11px] text-ufa-muted">
         {t.viewsHint}
       </p>
     </button>

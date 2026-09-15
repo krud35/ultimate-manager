@@ -45,7 +45,7 @@ function TierGroup({ title, players, reactionsById, lang }) {
   if (!players.length) return null
   return (
     <div>
-      <p className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">
+      <p className="px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-ufa-muted">
         {title}
       </p>
       <ul className="divide-y divide-ufa-border/40">
@@ -108,13 +108,13 @@ export default function DressingRoomView({
 
   return (
     <div className="space-y-4 league-fade-in">
-      <div className="rounded-xl border border-ufa-accent/35 bg-ufa-panel p-5 text-center shadow-xl shadow-black/30">
+      <div className="rounded-sm border border-ufa-accent/35 bg-ufa-panel p-5 text-center  ">
         <p className="text-xs font-semibold uppercase tracking-wide text-ufa-accent">{title}</p>
         {mode === 'pre' ? <p className="mt-1 text-sm text-ufa-muted">{t.preHint}</p> : null}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel  ">
           <p className="border-b border-ufa-border px-4 py-3 text-sm font-semibold text-ufa-text">
             {t.reactionsTitle}
           </p>
@@ -131,7 +131,7 @@ export default function DressingRoomView({
           </div>
         </div>
 
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-xl shadow-black/30">
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-4  ">
           {!pickedStatement ? (
             <>
               <p className="mb-3 text-sm font-semibold text-ufa-text">{t.pickStatement}</p>
@@ -162,7 +162,7 @@ export default function DressingRoomView({
               <button
                 type="button"
                 onClick={onContinue}
-                className="mt-4 w-full rounded-md bg-ufa-accent px-4 py-2.5 text-sm font-semibold text-ufa-bg shadow-md hover:opacity-90"
+                className="mt-4 w-full rounded-md bg-ufa-accent px-4 py-2.5 text-sm font-semibold text-ufa-on-accent  hover:opacity-90"
               >
                 {mode === 'pre' ? t.kickoffLabel : t.continueLabel}
               </button>

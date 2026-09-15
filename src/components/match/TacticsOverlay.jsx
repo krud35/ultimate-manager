@@ -32,8 +32,8 @@ export default function TacticsOverlay({ open, onClose, children }) {
         aria-label={t.close}
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-4xl max-h-[min(92vh,100%)] overflow-auto rounded-t-xl sm:rounded-xl border border-ufa-border bg-ufa-bg shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-ufa-border bg-ufa-panel/95 px-4 py-3 backdrop-blur">
+      <div className="relative z-10 w-full max-w-4xl max-h-[min(92vh,100%)] overflow-auto rounded-t-xl sm:rounded-sm border border-ufa-border bg-ufa-bg shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-ufa-border bg-ufa-panel px-4 py-3 backdrop-blur">
           <p className="text-sm font-semibold text-ufa-text">{t.tacticsAndSubs}</p>
           <button
             type="button"

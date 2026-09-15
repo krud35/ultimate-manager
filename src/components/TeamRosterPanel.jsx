@@ -25,10 +25,10 @@ function ThrowingHandBadge({ player }) {
   return (
     <span
       title={title}
-      className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide ring-1 ${
+      className={`inline-flex rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide ring-1 ${
         isLeft
-          ? 'bg-violet-500/15 text-violet-300 ring-violet-500/35'
-          : 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/35'
+          ? 'bg-violet-500/15 text-ufa-special ring-violet-500/35'
+          : 'bg-emerald-500/15 text-ufa-success ring-emerald-500/35'
       }`}
     >
       {throwingHandShortLabel(hand)}
@@ -48,7 +48,7 @@ function LineMembershipBadges({ playerId, offenseLineIds = null, defenseLineIds 
       {onO ? (
         <span
           title={lang === 'en' ? 'On O-Line' : 'W O-Line'}
-          className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide bg-sky-500/20 text-sky-200 ring-1 ring-sky-500/40"
+          className="inline-flex rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide bg-sky-500/20 text-ufa-info ring-1 ring-sky-500/40"
         >
           O-Line
         </span>
@@ -56,7 +56,7 @@ function LineMembershipBadges({ playerId, offenseLineIds = null, defenseLineIds 
       {onD ? (
         <span
           title={lang === 'en' ? 'On D-Line' : 'W D-Line'}
-          className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide bg-orange-500/20 text-orange-200 ring-1 ring-orange-500/40"
+          className="inline-flex rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide bg-orange-500/20 text-ufa-gold ring-1 ring-orange-500/40"
         >
           D-Line
         </span>
@@ -74,7 +74,7 @@ function PositionBadge({ position }) {
   return (
     <span
       title={raw}
-      className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide ring-1 bg-ufa-border/40 text-ufa-muted ring-ufa-border/60"
+      className="inline-flex rounded px-1.5 py-0.5 text-[11px] font-semibold tracking-wide ring-1 bg-ufa-border/40 text-ufa-muted ring-ufa-border/60"
     >
       {raw.slice(0, 3)}
     </span>
@@ -212,7 +212,7 @@ export default function TeamRosterPanel({
 
   return (
     <>
-      <div className="rounded-lg border border-ufa-border bg-ufa-bg/40 overflow-hidden">
+      <div className="rounded-sm border border-ufa-border bg-ufa-bg/40 overflow-hidden">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -232,7 +232,7 @@ export default function TeamRosterPanel({
           <div
             className={`border-t border-ufa-border ${compact ? 'max-h-64' : 'max-h-96'} overflow-auto`}
           >
-            <div className="flex flex-wrap gap-2 px-3 py-2 border-b border-ufa-border/60 bg-ufa-panel/30">
+            <div className="flex flex-wrap gap-2 px-3 py-2 border-b border-ufa-border/60 bg-ufa-panel">
               <span className="text-xs text-ufa-muted self-center">{t.sortBy}</span>
               {SKILL_SORT_KEYS.map((k) => (
                 <button
@@ -301,7 +301,7 @@ export default function TeamRosterPanel({
                     {onLineLabel ? (
                       <span
                         title={canSwap ? t.swapPositions : onLineLabel}
-                        className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide bg-amber-500/20 text-amber-200 ring-1 ring-amber-500/45"
+                        className="inline-flex rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide bg-amber-500/20 text-ufa-gold ring-1 ring-amber-500/45"
                       >
                         {onLineLabel}
                       </span>

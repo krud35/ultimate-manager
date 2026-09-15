@@ -48,10 +48,10 @@ export function formLabel(form = FORM_DEFAULT, lang = 'pl') {
 
 export function formToneClass(form = FORM_DEFAULT) {
   const m = clampForm(form)
-  if (m >= 75) return 'text-emerald-400'
+  if (m >= 75) return 'text-ufa-success'
   if (m >= 60) return 'text-ufa-gold'
-  if (m >= 45) return 'text-amber-400'
-  return 'text-red-400'
+  if (m >= 45) return 'text-ufa-gold'
+  return 'text-ufa-danger'
 }
 
 function boxRowForPlayer(boxScore, playerId) {

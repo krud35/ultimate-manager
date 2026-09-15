@@ -37,14 +37,14 @@ function WindowBanner({ windowState }) {
   const t = transfersStrings(lang)
   if (windowState.open) {
     return (
-      <div className="rounded-lg border border-ufa-accent/40 bg-ufa-accent/10 px-4 py-3">
+      <div className="rounded-sm border border-ufa-accent/40 bg-ufa-accent/10 px-4 py-3">
         <p className="text-sm font-semibold text-ufa-accent">{pickLabel(windowState, lang)}</p>
         <p className="mt-0.5 text-xs text-ufa-muted">{t.windowOpenHint}</p>
       </div>
     )
   }
   return (
-    <div className="rounded-lg border border-ufa-border bg-ufa-bg/60 px-4 py-3">
+    <div className="rounded-sm border border-ufa-border bg-ufa-bg/60 px-4 py-3">
       <p className="text-sm font-semibold text-ufa-text">{t.windowClosed}</p>
       <p className="mt-0.5 text-xs text-ufa-muted">{t.windowClosedHint}</p>
       <p className="mt-1 text-xs text-ufa-muted">{lang === 'en' ? 'Free agents can sign throughout the year.' : 'Wolnych zawodników można zatrudniać przez cały rok.'}</p>
@@ -248,10 +248,10 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
 
   return (
     <div className="space-y-6 league-fade-in">
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+      <div className="um-section  ">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-ufa-text">
+            <h2 className="text-2xl font-semibold text-ufa-text">
               {isClub ? t.clubTitle : t.leagueTitle}
             </h2>
             <p className="mt-1 text-sm text-ufa-muted">
@@ -273,7 +273,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
               flash.type === 'ok'
                 ? 'text-ufa-accent'
                 : flash.type === 'error'
-                  ? 'text-red-400'
+                  ? 'text-ufa-danger'
                   : 'text-ufa-gold'
             }`}
           >
@@ -283,8 +283,8 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
       </div>
 
       {isClub && myListed.length > 0 && (
-        <section className="rounded-xl border border-ufa-border bg-ufa-panel p-4 sm:p-6 shadow-xl shadow-black/30">
-          <h3 className="text-sm font-semibold text-ufa-text">{t.myListedTitle}</h3>
+        <section className="um-section  ">
+          <h3 className="text-xl font-semibold text-ufa-text">{t.myListedTitle}</h3>
           <ul className="mt-3 space-y-2">
             {myListed.map((p) => {
               const ovr = getOverallRating(p.skills)
@@ -313,19 +313,19 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
         </section>
       )}
 
-      {isClub && <section className="rounded-xl border border-ufa-border bg-ufa-panel p-4">
-        <h3 className="text-sm font-semibold text-ufa-text">{lang === 'en' ? 'Loan list' : 'Lista wypożyczeń'}</h3>
+      {isClub && <section className="um-section">
+        <h3 className="text-xl font-semibold text-ufa-text">{lang === 'en' ? 'Loan list' : 'Lista wypożyczeń'}</h3>
         <p className="mt-1 text-xs text-ufa-muted">{lang === 'en' ? 'Manage availability in the player profile. Listed players attract more loan offers.' : 'Zarządzaj dostępnością w profilu zawodnika. Wystawieni gracze przyciągają więcej ofert wypożyczenia.'}</p>
         <ul className="mt-3 space-y-2">{(buyer?.players ?? []).filter(p => p.loanListed).map(p => <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-ufa-border p-2 text-sm">
-          <span>{getPlayerFullName(p)}</span><button type="button" className="text-sky-300" onClick={() => { setPlayerLoanListed(buyer, p.id, false); setListedRefreshTick(n => n + 1); onCareerUpdate({ world: career.world }) }}>{lang === 'en' ? 'Remove' : 'Zdejmij'}</button>
+          <span>{getPlayerFullName(p)}</span><button type="button" className="text-ufa-info" onClick={() => { setPlayerLoanListed(buyer, p.id, false); setListedRefreshTick(n => n + 1); onCareerUpdate({ world: career.world }) }}>{lang === 'en' ? 'Remove' : 'Zdejmij'}</button>
         </li>)}</ul>
         {!(buyer?.players ?? []).some(p => p.loanListed) && <p className="mt-2 text-xs text-ufa-muted">{lang === 'en' ? 'No players listed for loan.' : 'Brak zawodników na liście wypożyczeń.'}</p>}
       </section>}
       {isClub && (loansOut.length > 0 || loansIn.length > 0) && (
-        <section className="rounded-xl border border-ufa-border bg-ufa-panel p-4 sm:p-6 shadow-xl shadow-black/30 space-y-4">
+        <section className="um-section   space-y-4">
           {loansOut.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-ufa-text">{t.myLoansOutTitle}</h3>
+              <h3 className="text-xl font-semibold text-ufa-text">{t.myLoansOutTitle}</h3>
               <ul className="mt-3 space-y-2">
                 {loansOut.map((l) => (
                   <li
@@ -346,7 +346,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
           )}
           {loansIn.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-ufa-text">{t.myLoansInTitle}</h3>
+              <h3 className="text-xl font-semibold text-ufa-text">{t.myLoansInTitle}</h3>
               <ul className="mt-3 space-y-2">
                 {loansIn.map((l) => (
                   <li
@@ -388,9 +388,9 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
       )}
 
       <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 sm:p-6 shadow-xl shadow-black/30">
+        <div className="um-section  ">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-            <h3 className="text-sm font-semibold text-ufa-text">{t.marketTitle}</h3>
+            <h3 className="text-xl font-semibold text-ufa-text">{t.marketTitle}</h3>
             <div className="flex flex-wrap gap-2">
               <input
                 type="search"
@@ -476,15 +476,15 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                           {row.name}
                         </button>
                         {row.rank === 0 && (
-                          <span className="text-[10px] text-ufa-gold">★ #1</span>
+                          <span className="text-[11px] text-ufa-gold">★ #1</span>
                         )}
                         {row.listed && (
-                          <span className="rounded bg-ufa-gold/15 px-1.5 py-0.5 text-[10px] font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
+                          <span className="rounded bg-ufa-gold/15 px-1.5 py-0.5 text-[11px] font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
                             {t.transferListedBadge}
                           </span>
                         )}
                         {row.loanListed && (
-                          <span className="rounded bg-sky-400/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300 ring-1 ring-sky-400/40">
+                          <span className="rounded bg-sky-400/15 px-1.5 py-0.5 text-[11px] font-semibold text-ufa-info ring-1 ring-sky-400/40">
                             {t.loanListedBadge}
                           </span>
                         )}
@@ -571,8 +571,8 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
         </div>
 
         <aside className="space-y-4">
-          <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-xl shadow-black/30">
-            <h3 className="text-sm font-semibold text-ufa-text">{t.yourRosterValues}</h3>
+          <div className="um-section  ">
+            <h3 className="text-xl font-semibold text-ufa-text">{t.yourRosterValues}</h3>
             <ul className="mt-3 max-h-80 space-y-2 overflow-y-auto text-sm">
               {ownRoster.map((p) => {
                 const ovr = getOverallRating(p.skills)
@@ -602,17 +602,17 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
       </div>
 
       {/* {t.history} */}
-      <section className="rounded-xl border border-ufa-border bg-ufa-panel p-4 sm:p-6 shadow-xl shadow-black/30">
+      <section className="um-section  ">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-ufa-text">{t.history}</h3>
+            <h3 className="text-xl font-semibold text-ufa-text">{t.history}</h3>
             <p className="mt-0.5 text-xs text-ufa-muted">
               {isClub
                 ? t.yourDeals(log.length)
                 : t.allDeals(log.length)}
             </p>
           </div>
-          <div className="flex flex-wrap gap-1 rounded-lg bg-ufa-bg p-1 ring-1 ring-ufa-border">
+          <div className="flex flex-wrap gap-1 rounded-sm bg-ufa-bg p-1 ring-1 ring-ufa-border">
             {(isClub
               ? [
                   { id: 'mine', label: t.historyMine },
@@ -631,7 +631,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                 onClick={() => setHistoryFilter(f.id)}
                 className={`rounded-md px-3 py-1.5 text-xs font-medium ${
                   historyFilter === f.id
-                    ? 'bg-ufa-accent text-ufa-bg'
+                    ? 'bg-ufa-accent text-ufa-on-accent'
                     : 'text-ufa-muted hover:text-ufa-text'
                 }`}
               >
@@ -685,11 +685,11 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                   </td>
                   <td className="px-2 py-2.5">
                     {e.involvesPlayer ? (
-                      <span className="rounded bg-ufa-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-ufa-accent ring-1 ring-ufa-accent/30">
+                      <span className="rounded bg-ufa-accent/15 px-1.5 py-0.5 text-[11px] font-semibold text-ufa-accent ring-1 ring-ufa-accent/30">
                         {t.you}
                       </span>
                     ) : (
-                      <span className="rounded bg-ufa-bg px-1.5 py-0.5 text-[10px] text-ufa-muted ring-1 ring-ufa-border">
+                      <span className="rounded bg-ufa-bg px-1.5 py-0.5 text-[11px] text-ufa-muted ring-1 ring-ufa-border">
                         {t.historyAi}
                       </span>
                     )}

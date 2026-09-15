@@ -1,5 +1,6 @@
 /** Parametry zmęczenia — strojenie bez zmiany logiki sesji. */
 import { getSubStat } from '../models/playerStats.js'
+import { addPlayerLoad } from '../models/playerWorkload.js'
 import { getTraitMods } from '../models/playerTraits.js'
 import { playerMatchMods } from './playerModsRegistry.js'
 import {
@@ -270,14 +271,8 @@ export function applyPostMatchStaminaWear(player) {
     (MATCH_STAMINA_CONFIG.perPointDrainMax - MATCH_STAMINA_CONFIG.perPointDrainMin) * enduranceT
   const drain = Math.round(pointsPlayed * perPointCost)
 
-  const current = currentMatchStamina(player)
-  player.matchStamina = clampStamina(current - drain)
-
-  const fatigueGain = drain * MATCH_STAMINA_CONFIG.fatigueContributionMult
-  player.developmentFatigue = Math.max(
-    0,
-    Math.min(100, (player.developmentFatigue ?? 0) + fatigueGain),
-  )
+  player.matchStamina = currentMatchStamina(player)
+  addPlayerLoad(player, drain, { match: true, sharpness: Math.min(12, pointsPlayed * 0.65) })
 }
 
 export function getStamina(staminaMap, playerId) {

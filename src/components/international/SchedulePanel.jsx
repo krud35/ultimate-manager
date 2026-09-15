@@ -9,10 +9,10 @@ function FixtureRow({ fixture, t, lang, roundLabel }) {
     ? academyCountryLabel(countryIdFromPseudoTeamId(fixture.awayTeamId), lang)
     : null
   return (
-    <li className="flex items-center justify-between gap-3 rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2 text-sm">
+    <li className="flex items-center justify-between gap-3 rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2 text-sm">
       <div className="min-w-0 flex-1">
         {roundLabel && (
-          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{roundLabel}</p>
+          <p className="text-[11px] uppercase tracking-wide text-ufa-muted">{roundLabel}</p>
         )}
         <p className="truncate text-ufa-text">
           {homeName} {awayName ? `vs ${awayName}` : <span className="text-ufa-muted">— {t.waiting}</span>}
@@ -62,7 +62,7 @@ export default function SchedulePanel({ career, t, lang }) {
 
   if (!qualifying && !finals) {
     return (
-      <div className="rounded-xl border border-dashed border-ufa-border bg-ufa-panel/50 p-8 text-center">
+      <div className="rounded-sm border border-dashed border-ufa-border bg-ufa-panel p-8 text-center">
         <p className="text-sm text-ufa-muted">{t.scheduleEmpty}</p>
       </div>
     )
@@ -72,13 +72,13 @@ export default function SchedulePanel({ career, t, lang }) {
     <div className="space-y-6">
       {qualifying && (
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-ufa-text">
+          <h3 className="text-xl font-semibold text-ufa-text">
             {t.qualifyingTitle(t.kind[qualifying.kind] ?? qualifying.kind, qualifying.year)}
           </h3>
           {qualifying.campaigns.map((campaign, i) => (
             <div
               key={campaign.zoneContinentId ?? `campaign-${i}`}
-              className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20 space-y-4"
+              className="rounded-sm border border-ufa-border bg-ufa-panel p-4   space-y-4"
             >
               <p className="text-sm font-semibold text-ufa-text">
                 {campaign.zoneContinentId ? academyContinentLabel(campaign.zoneContinentId, lang) : t.kind.euro}
@@ -103,10 +103,10 @@ export default function SchedulePanel({ career, t, lang }) {
 
       {finals && (
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-ufa-text">
+          <h3 className="text-xl font-semibold text-ufa-text">
             {t.finalsTitle(t.kind[finals.kind] ?? finals.kind, finals.year)}
           </h3>
-          <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20 space-y-4">
+          <div className="rounded-sm border border-ufa-border bg-ufa-panel p-4   space-y-4">
             <Section
               title={t.scheduleFinalsGroupHeader}
               fixtures={finals.fixtures ?? []}

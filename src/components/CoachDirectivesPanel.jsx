@@ -74,19 +74,19 @@ function CoachSlider({ directiveKey, value, onChange, compact }) {
       className={
         compact
           ? 'space-y-1 rounded-md border border-ufa-border/50 bg-ufa-bg/40 px-2.5 py-2'
-          : 'space-y-2 rounded-lg border border-ufa-border/60 bg-ufa-bg/30 px-3 py-3'
+          : 'space-y-2 rounded-sm border border-ufa-border/60 bg-ufa-bg/30 px-3 py-3'
       }
     >
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-xs font-semibold text-ufa-text">{pickLabel(meta, lang)}</p>
         {kind === 'scale' && (
-          <span className="text-[10px] tabular-nums text-ufa-muted">
+          <span className="text-[11px] tabular-nums text-ufa-muted">
             {Number(value).toFixed(2)}
           </span>
         )}
       </div>
       {kind === 'scale' && (
-        <div className="flex items-center justify-between gap-2 text-[10px] text-ufa-muted">
+        <div className="flex items-center justify-between gap-2 text-[11px] text-ufa-muted">
           <span className="truncate">{pole('left')}</span>
           <span className="shrink-0 opacity-70">{pole('center')}</span>
           <span className="truncate text-right">{pole('right')}</span>
@@ -232,13 +232,13 @@ function CoachSummaryChips({ directives }) {
       {chips.slice(0, 5).map((c) => (
         <span
           key={c.id}
-          className="rounded bg-ufa-bg/70 px-1.5 py-0.5 text-[10px] text-ufa-muted ring-1 ring-ufa-border/60"
+          className="rounded bg-ufa-bg/70 px-1.5 py-0.5 text-[11px] text-ufa-muted ring-1 ring-ufa-border/60"
         >
           {c.label}
         </span>
       ))}
       {chips.length > 5 && (
-        <span className="text-[10px] text-ufa-muted">+{chips.length - 5}</span>
+        <span className="text-[11px] text-ufa-muted">+{chips.length - 5}</span>
       )}
     </div>
   )
@@ -293,16 +293,16 @@ export default function CoachDirectivesPanel({
 
   const lineLabel = isD ? 'D-Line' : 'O-Line'
   const lineAccent = isD
-    ? 'bg-orange-500/15 text-orange-300'
-    : 'bg-sky-500/15 text-sky-300'
+    ? 'bg-orange-500/15 text-ufa-gold'
+    : 'bg-sky-500/15 text-ufa-info'
 
   return (
     <section
       ref={rootRef}
       className={
         compact
-          ? 'rounded-lg border border-ufa-border/80 bg-ufa-bg/30'
-          : 'rounded-xl border border-ufa-border bg-ufa-panel shadow-lg shadow-black/15'
+          ? 'rounded-sm border border-ufa-border/80 bg-ufa-bg/30'
+          : 'rounded-sm border border-ufa-border bg-ufa-panel  '
       }
     >
       <button
@@ -315,9 +315,9 @@ export default function CoachDirectivesPanel({
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold text-ufa-text">{t.coachTitle}</h3>
+            <h3 className="text-xl font-semibold text-ufa-text">{t.coachTitle}</h3>
             <span
-              className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${lineAccent}`}
+              className={`rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${lineAccent}`}
             >
               {lineLabel}
             </span>

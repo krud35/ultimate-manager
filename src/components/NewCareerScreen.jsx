@@ -189,13 +189,13 @@ export default function NewCareerScreen({
         {t.newBack}
       </button>
 
-      <h1 className="text-2xl font-bold text-ufa-text">{t.newTitle(slotIndex + 1)}</h1>
+      <h1 className="um-page-title text-ufa-text">{t.newTitle(slotIndex + 1)}</h1>
       <p className="mt-2 text-sm text-ufa-muted">
         {competition === 'eucs' ? t.eucsIntro : t.newIntro(seasonYear, yearShort)}
       </p>
 
       {competition === 'ufa' && (
-        <div className="mt-4 rounded-xl border border-ufa-border bg-ufa-panel px-4 py-3 text-sm text-ufa-muted">
+        <div className="mt-4 rounded-sm border border-ufa-border bg-ufa-panel px-4 py-3 text-sm text-ufa-muted">
           {t.leagueSlotsInfo}
         </div>
       )}
@@ -213,9 +213,9 @@ export default function NewCareerScreen({
                 key={opt.id}
                 type="button"
                 onClick={() => setCompetition(opt.id)}
-                className={`rounded-xl border p-4 text-left transition-all ${
+                className={`rounded-sm border p-4 text-left transition-all ${
                   active
-                    ? 'border-ufa-accent bg-ufa-accent/10 shadow-md shadow-ufa-accent/10'
+                    ? 'border-ufa-accent bg-ufa-accent/10  '
                     : 'border-ufa-border bg-ufa-panel hover:bg-ufa-panel-hover'
                 }`}
               >
@@ -255,9 +255,9 @@ export default function NewCareerScreen({
                       return (
                         <div
                           key={team.id}
-                          className={`rounded-xl border p-4 transition-all ${
+                          className={`rounded-sm border p-4 transition-all ${
                             active
-                              ? 'border-ufa-accent bg-ufa-accent/10 shadow-md shadow-ufa-accent/10'
+                              ? 'border-ufa-accent bg-ufa-accent/10  '
                               : 'border-ufa-border bg-ufa-panel'
                           }`}
                         >
@@ -268,7 +268,7 @@ export default function NewCareerScreen({
                           >
                             <div className="flex items-center gap-3">
                               <span
-                                className="flex h-10 w-10 items-center justify-center rounded-lg text-xs font-bold text-white"
+                                className="flex h-10 w-10 items-center justify-center rounded-sm text-xs font-bold text-white"
                                 style={{ backgroundColor: team.primaryColor }}
                               >
                                 {team.shortName}
@@ -321,9 +321,9 @@ export default function NewCareerScreen({
                   key={opt.id}
                   type="button"
                   onClick={() => setRosterMode(opt.id)}
-                  className={`rounded-xl border p-4 text-left transition-all ${
+                  className={`rounded-sm border p-4 text-left transition-all ${
                     active
-                      ? 'border-ufa-accent bg-ufa-accent/10 shadow-md shadow-ufa-accent/10'
+                      ? 'border-ufa-accent bg-ufa-accent/10  '
                       : 'border-ufa-border bg-ufa-panel hover:bg-ufa-panel-hover'
                   }`}
                 >
@@ -358,7 +358,7 @@ export default function NewCareerScreen({
         ) : null}
 
         {fictionalFill > 0 && (
-          <div className="rounded-xl border border-ufa-gold/40 bg-ufa-gold/10 px-4 py-3 text-sm text-ufa-text">
+          <div className="rounded-sm border border-ufa-gold/40 bg-ufa-gold/10 px-4 py-3 text-sm text-ufa-text">
             <p className="font-semibold text-ufa-gold">{t.fictionalFillTitle}</p>
             <p className="mt-1 text-xs text-ufa-muted">
               {t.fictionalFillBody(seasonRealCount, fictionalFill, LEAGUE_TEAM_SLOTS)}
@@ -397,9 +397,9 @@ export default function NewCareerScreen({
               return (
                 <div
                   key={team.id}
-                  className={`rounded-xl border p-4 transition-all ${
+                  className={`rounded-sm border p-4 transition-all ${
                     active
-                      ? 'border-ufa-accent bg-ufa-accent/10 shadow-md shadow-ufa-accent/10'
+                      ? 'border-ufa-accent bg-ufa-accent/10  '
                       : swapping
                         ? 'border-ufa-gold/50 bg-ufa-gold/5'
                         : 'border-ufa-border bg-ufa-panel'
@@ -412,7 +412,7 @@ export default function NewCareerScreen({
                   >
                     <div className="flex items-center gap-3">
                       <span
-                        className="flex h-10 w-10 items-center justify-center rounded-lg text-xs font-bold text-white"
+                        className="flex h-10 w-10 items-center justify-center rounded-sm text-xs font-bold text-white"
                         style={{ backgroundColor: team.primaryColor }}
                       >
                         {team.shortName}
@@ -454,14 +454,14 @@ export default function NewCareerScreen({
         </fieldset>
 
         {swapOutId && canSwap && (
-          <div className="rounded-xl border border-ufa-gold/40 bg-ufa-panel p-4 shadow-lg shadow-black/20">
+          <div className="rounded-sm border border-ufa-gold/40 bg-ufa-panel p-4  ">
             <p className="text-sm font-semibold text-ufa-text">{t.swapPick}</p>
             <p className="mt-1 text-xs text-ufa-muted">{t.benchTitle}</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2 max-h-64 overflow-y-auto">
               {benchTeams.map((team) => (
                 <div
                   key={team.id}
-                  className="flex items-center gap-1 rounded-lg border border-ufa-border bg-ufa-bg"
+                  className="flex items-center gap-1 rounded-sm border border-ufa-border bg-ufa-bg"
                 >
                   <button
                     type="button"
@@ -507,14 +507,14 @@ export default function NewCareerScreen({
         </>
         )}
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        {externalError && <p className="text-sm text-red-400">{externalError}</p>}
+        {error && <p className="text-sm text-ufa-danger">{error}</p>}
+        {externalError && <p className="text-sm text-ufa-danger">{externalError}</p>}
 
         <div className="flex flex-wrap gap-3">
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-ufa-accent px-5 py-2.5 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-50"
+            className="rounded-md bg-ufa-accent px-5 py-2.5 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-50"
           >
             {submitting ? t.startingCareer : t.startCareer}
           </button>

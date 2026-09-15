@@ -64,7 +64,7 @@ function ScoutReportPanel({ message, career }) {
             return (
               <li
                 key={r.playerId}
-                className="flex items-center justify-between gap-2 rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2 text-sm"
+                className="flex items-center justify-between gap-2 rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2 text-sm"
               >
                 <span className="text-ufa-text">{getPlayerFullName(player)}</span>
                 <span className={`text-xs font-semibold ${attributeBandToneClass(ovr)}`}>
@@ -116,17 +116,17 @@ function enrichRandomEventMessage(message) {
 function typeBadgeClass(type) {
   switch (type) {
     case INBOX_TYPES.TRAINING_REPORT:
-      return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+      return 'border-emerald-500/40 bg-emerald-500/10 text-ufa-success'
     case INBOX_TYPES.TRANSFER_OFFER:
       return 'border-ufa-gold/40 bg-ufa-gold/10 text-ufa-gold'
     case INBOX_TYPES.MATCH_ANALYSIS:
       return 'border-ufa-accent/40 bg-ufa-accent/10 text-ufa-accent'
     case INBOX_TYPES.RANDOM_EVENT:
-      return 'border-violet-400/40 bg-violet-400/10 text-violet-300'
+      return 'border-violet-400/40 bg-violet-400/10 text-ufa-special'
     case INBOX_TYPES.INJURY:
-      return 'border-red-400/40 bg-red-500/10 text-red-300'
+      return 'border-red-400/40 bg-red-500/10 text-ufa-danger'
     case INBOX_TYPES.CLUB_NEWS:
-      return 'border-sky-400/40 bg-sky-400/10 text-sky-300'
+      return 'border-sky-400/40 bg-sky-400/10 text-ufa-info'
     case INBOX_TYPES.SCOUT_REPORT:
       return 'border-teal-400/40 bg-teal-400/10 text-teal-300'
     case INBOX_TYPES.WATCHABLE_FINAL:
@@ -149,9 +149,9 @@ function IncomingBidPanel({ message, career, onAction, busy }) {
   const counterNum = Math.round(Number(counter) || 0)
 
   return (
-    <div className="rounded-lg border border-ufa-gold/30 bg-ufa-gold/5 px-4 py-3 text-sm space-y-3">
+    <div className="rounded-sm border border-ufa-gold/30 bg-ufa-gold/5 px-4 py-3 text-sm space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded border border-ufa-gold/40 px-2 py-0.5 text-[10px] font-semibold uppercase text-ufa-gold">
+        <span className="rounded border border-ufa-gold/40 px-2 py-0.5 text-[11px] font-semibold uppercase text-ufa-gold">
           {t.offerStatus[p.status] ?? p.status}
         </span>
         {awaiting && p.replyDate ? (
@@ -200,7 +200,7 @@ function IncomingBidPanel({ message, career, onAction, busy }) {
               type="button"
               disabled={busy}
               onClick={() => onAction({ action: 'accept', messageId: message.id })}
-              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
             >
               {`${t.accept} ${formatUsd(p.fee)}`}
             </button>
@@ -233,7 +233,7 @@ function IncomingBidPanel({ message, career, onAction, busy }) {
                     counterAmount: counterNum,
                   })
                 }
-                className="rounded-md bg-ufa-gold px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                className="rounded-md bg-ufa-gold px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
               >{t.sendCounterShort}</button>
             </div>
           </label>
@@ -255,7 +255,7 @@ function IncomingLoanRequestPanel({ message, onAction, busy }) {
   if (!pending) return null
 
   return (
-    <div className="rounded-lg border border-ufa-gold/30 bg-ufa-gold/5 px-4 py-3 text-sm space-y-3">
+    <div className="rounded-sm border border-ufa-gold/30 bg-ufa-gold/5 px-4 py-3 text-sm space-y-3">
       <p className="text-ufa-text">
         <span className="text-ufa-muted">{t.buyer}:</span> {p.destinationTeamName}
       </p>
@@ -276,7 +276,7 @@ function IncomingLoanRequestPanel({ message, onAction, busy }) {
           type="button"
           disabled={busy}
           onClick={() => onAction({ action: 'accept', messageId: message.id })}
-          className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+          className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
         >
           {t.accept}
         </button>
@@ -373,18 +373,18 @@ function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t }
 
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className="rounded border border-ufa-accent/30 bg-ufa-accent/10 px-2 py-1.5">
-          <p className="text-[10px] text-ufa-muted">{t.contractWeekly}</p>
+          <p className="text-[11px] text-ufa-muted">{t.contractWeekly}</p>
           <p className="font-bold tabular-nums text-ufa-accent">{formatUsd(preview.weeklyWage)}</p>
         </div>
         <div className="rounded border border-ufa-gold/30 bg-ufa-gold/10 px-2 py-1.5">
-          <p className="text-[10px] text-ufa-muted">{t.contractTotal}</p>
+          <p className="text-[11px] text-ufa-muted">{t.contractTotal}</p>
           <p className="font-bold tabular-nums text-ufa-gold">{formatUsd(preview.totalCost)}</p>
         </div>
       </div>
       {budgetHint}
 
       <div>
-        <p className="text-[10px] uppercase text-ufa-muted mb-1">{t.bonuses}</p>
+        <p className="text-[11px] uppercase text-ufa-muted mb-1">{t.bonuses}</p>
         <div className="flex flex-wrap gap-1.5">
           {CONTRACT_BONUS_DEFS.map((b) => (
             <button
@@ -392,7 +392,7 @@ function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t }
               type="button"
               disabled={busy}
               onClick={() => toggle(setSelectedBonuses, b.id)}
-              className={`rounded px-2 py-1 text-[10px] ring-1 ${
+              className={`rounded px-2 py-1 text-[11px] ring-1 ${
                 selectedBonuses.has(b.id)
                   ? 'bg-ufa-gold/20 text-ufa-gold ring-ufa-gold/40'
                   : 'bg-ufa-bg text-ufa-muted ring-ufa-border'
@@ -404,7 +404,7 @@ function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t }
         </div>
       </div>
       <div>
-        <p className="text-[10px] uppercase text-ufa-muted mb-1">{t.promises}</p>
+        <p className="text-[11px] uppercase text-ufa-muted mb-1">{t.promises}</p>
         <div className="flex flex-wrap gap-1.5">
           {CONTRACT_PROMISE_DEFS.map((pr) => (
             <button
@@ -412,7 +412,7 @@ function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t }
               type="button"
               disabled={busy}
               onClick={() => toggle(setSelectedPromises, pr.id)}
-              className={`rounded px-2 py-1 text-[10px] ring-1 ${
+              className={`rounded px-2 py-1 text-[11px] ring-1 ${
                 selectedPromises.has(pr.id)
                   ? 'bg-ufa-accent/20 text-ufa-accent ring-ufa-accent/40'
                   : 'bg-ufa-bg text-ufa-muted ring-ufa-border'
@@ -436,7 +436,7 @@ function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t }
               promises: promisesPayload,
             })
           }
-          className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+          className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
         >
           {t.proposeContract}
         </button>
@@ -465,9 +465,9 @@ function OutgoingClubOfferPanel({ message, career, onAction, busy }) {
   const canNegotiate = true
 
   return (
-    <div className="rounded-lg border border-ufa-accent/30 bg-ufa-accent/5 px-4 py-3 text-sm space-y-3">
+    <div className="rounded-sm border border-ufa-accent/30 bg-ufa-accent/5 px-4 py-3 text-sm space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded border border-ufa-accent/40 px-2 py-0.5 text-[10px] font-semibold uppercase text-ufa-accent">
+        <span className="rounded border border-ufa-accent/40 px-2 py-0.5 text-[11px] font-semibold uppercase text-ufa-accent">
           {t.offerStatus[p.status] ?? p.status}
         </span>
         {p.replyDate && p.status === 'awaiting_reply' ? (
@@ -497,7 +497,7 @@ function OutgoingClubOfferPanel({ message, career, onAction, busy }) {
             type="button"
             disabled={busy}
             onClick={() => onAction({ action: 'accept_club_counter', messageId: message.id })}
-            className="rounded-md bg-ufa-gold px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+            className="rounded-md bg-ufa-gold px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
           >
             {t.acceptClubCounter}
           </button>
@@ -530,9 +530,9 @@ function OutgoingPlayerContractPanel({ message, career, onAction, busy }) {
   const p = message.payload ?? {}
 
   return (
-    <div className="rounded-lg border border-ufa-gold/30 bg-ufa-gold/5 px-4 py-3 text-sm space-y-3">
+    <div className="rounded-sm border border-ufa-gold/30 bg-ufa-gold/5 px-4 py-3 text-sm space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded border border-ufa-gold/40 px-2 py-0.5 text-[10px] font-semibold uppercase text-ufa-gold">
+        <span className="rounded border border-ufa-gold/40 px-2 py-0.5 text-[11px] font-semibold uppercase text-ufa-gold">
           {t.offerStatus[p.status] ?? p.status}
         </span>
         {p.replyDate && p.status === 'awaiting_reply' ? (
@@ -561,7 +561,7 @@ function OutgoingPlayerContractPanel({ message, career, onAction, busy }) {
             type="button"
             disabled={busy}
             onClick={() => onAction({ action: 'accept_player_counter', messageId: message.id })}
-            className="rounded-md bg-ufa-gold px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+            className="rounded-md bg-ufa-gold px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
           >
             {t.acceptPlayerCounter}
           </button>
@@ -602,9 +602,9 @@ function PendingRegistrationPanel({ message, career, onAction, busy }) {
   const active = p.status === 'pending_confirm'
 
   return (
-    <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm space-y-3">
+    <div className="rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded border border-emerald-500/40 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-300">
+        <span className="rounded border border-emerald-500/40 px-2 py-0.5 text-[11px] font-semibold uppercase text-ufa-success">
           {t.offerStatus[p.status] ?? p.status}
         </span>
       </div>
@@ -630,7 +630,7 @@ function PendingRegistrationPanel({ message, career, onAction, busy }) {
               type="button"
               disabled={busy}
               onClick={() => onAction({ action: 'confirm_registration', messageId: message.id })}
-              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
             >
               {t.confirmRegistration}
             </button>
@@ -667,8 +667,8 @@ function PlayerImpactList({ title, players, tone = 'good' }) {
       ? 'border-orange-400/30 bg-orange-500/5'
       : 'border-emerald-500/30 bg-emerald-500/5'
   return (
-    <div className={`rounded-lg border px-3 py-2.5 ${toneClass}`}>
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">{title}</p>
+    <div className={`rounded-sm border px-3 py-2.5 ${toneClass}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-ufa-muted">{title}</p>
       <ul className="mt-1.5 space-y-1.5 text-sm">
         {players.map((h) => (
           <li
@@ -713,39 +713,39 @@ function MatchAnalysisPanel({ message }) {
   return (
     <div className="space-y-3">
       {(ours || theirs || ourLine) && (
-        <div className="rounded-lg border border-ufa-accent/30 bg-ufa-accent/5 px-3 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">
+        <div className="rounded-sm border border-ufa-accent/30 bg-ufa-accent/5 px-3 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ufa-muted">
             {t.teamStats}
           </p>
           <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 text-sm">
             <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2">
-              <dt className="text-[10px] uppercase text-ufa-muted">{t.scoreLabel}</dt>
+              <dt className="text-[11px] uppercase text-ufa-muted">{t.scoreLabel}</dt>
               <dd className="font-semibold tabular-nums text-ufa-text">
                 {ts.ourPoints ?? p.ourScore ?? '—'}–{ts.theirPoints ?? p.theirScore ?? '—'}
               </dd>
             </div>
             <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2">
-              <dt className="text-[10px] uppercase text-ufa-muted">{t.completionYou}</dt>
+              <dt className="text-[11px] uppercase text-ufa-muted">{t.completionYou}</dt>
               <dd className="font-semibold tabular-nums text-ufa-text">{fmtTeamCompletion(ours)}</dd>
             </div>
             <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2">
-              <dt className="text-[10px] uppercase text-ufa-muted">{t.completionOpp}</dt>
+              <dt className="text-[11px] uppercase text-ufa-muted">{t.completionOpp}</dt>
               <dd className="font-semibold tabular-nums text-ufa-text">{fmtTeamCompletion(theirs)}</dd>
             </div>
             <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2">
-              <dt className="text-[10px] uppercase text-ufa-muted">{t.yardsYou}</dt>
+              <dt className="text-[11px] uppercase text-ufa-muted">{t.yardsYou}</dt>
               <dd className="font-semibold tabular-nums text-ufa-text">
                 {ours?.totalYards != null ? `${ours.totalYards} m` : '—'}
               </dd>
             </div>
             <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2">
-              <dt className="text-[10px] uppercase text-ufa-muted">{t.yardsOpp}</dt>
+              <dt className="text-[11px] uppercase text-ufa-muted">{t.yardsOpp}</dt>
               <dd className="font-semibold tabular-nums text-ufa-text">
                 {theirs?.totalYards != null ? `${theirs.totalYards} m` : '—'}
               </dd>
             </div>
             <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2">
-              <dt className="text-[10px] uppercase text-ufa-muted">{t.odYou}</dt>
+              <dt className="text-[11px] uppercase text-ufa-muted">{t.odYou}</dt>
               <dd className="font-semibold tabular-nums text-ufa-text">
                 {ourLine
                   ? `${ourLine.offense ?? 0} / ${ourLine.defense ?? 0}`
@@ -754,7 +754,7 @@ function MatchAnalysisPanel({ message }) {
             </div>
             {theirLine ? (
               <div className="rounded-md border border-ufa-border/60 bg-ufa-bg/40 px-2.5 py-2 sm:col-span-2">
-                <dt className="text-[10px] uppercase text-ufa-muted">{t.odOpp}</dt>
+                <dt className="text-[11px] uppercase text-ufa-muted">{t.odOpp}</dt>
                 <dd className="font-semibold tabular-nums text-ufa-text">
                   {theirLine.offense ?? 0} / {theirLine.defense ?? 0}
                 </dd>
@@ -803,7 +803,7 @@ function SponsorOffersPanel({ message, busy, onSign, lang, t }) {
 
   if (status === 'signed') {
     return (
-      <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-300">
+      <div className="rounded-sm border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-ufa-success">
         {lang === 'en'
           ? `Signed with ${brandDisplayName({ brandName: p.brandName, brandNameEn: p.brandNameEn }, lang)}${
               p.paid ? ` · ${formatUsd(p.paid)}` : ''
@@ -825,16 +825,16 @@ function SponsorOffersPanel({ message, busy, onSign, lang, t }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-300">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-ufa-info">
         {slotLabel} · {lang === 'en' ? 'Pick an offer' : 'Wybierz ofertę'}
       </p>
       <div className="grid gap-2 sm:grid-cols-3">
         {offers.map((offer) => (
           <div
             key={offer.id}
-            className="rounded-lg border border-sky-400/30 bg-sky-400/5 p-3 flex flex-col gap-1.5"
+            className="rounded-sm border border-sky-400/30 bg-sky-400/5 p-3 flex flex-col gap-1.5"
           >
-            <p className="text-[10px] uppercase tracking-wide text-sky-300 font-semibold">
+            <p className="text-[11px] uppercase tracking-wide text-ufa-info font-semibold">
               {lang === 'en' ? `Offer ${offer.offerIndex ?? ''}` : `Oferta ${offer.offerIndex ?? ''}`}
             </p>
             <p className="text-sm font-semibold text-ufa-text">{brandDisplayName(offer, lang)}</p>
@@ -843,7 +843,7 @@ function SponsorOffersPanel({ message, busy, onSign, lang, t }) {
               {describeSponsorOfferTotals(offer, lang)}
             </p>
             {offer.performanceBonus ? (
-              <p className="text-[10px] text-amber-300">
+              <p className="text-[11px] text-ufa-gold">
                 {performanceBonusLabel(offer.performanceBonus, lang)}
               </p>
             ) : null}
@@ -851,7 +851,7 @@ function SponsorOffersPanel({ message, busy, onSign, lang, t }) {
               type="button"
               disabled={busy || !onSign}
               onClick={() => onSign?.(message.id, offer.id)}
-              className="mt-auto rounded-md bg-sky-500/90 px-3 py-1.5 text-xs font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+              className="mt-auto rounded-md bg-sky-500/90 px-3 py-1.5 text-xs font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
             >
               {busy
                 ? lang === 'en'
@@ -912,15 +912,15 @@ function MessageDetail({
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <span
-            className={`rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${typeBadgeClass(message.type)}`}
+            className={`rounded border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${typeBadgeClass(message.type)}`}
           >
             {pickLabel(meta, lang) ?? message.type}
           </span>
           {resolvedDecision ? (
-            <span className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">{t.resolved}</span>
+            <span className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ufa-success">{t.resolved}</span>
           ) : null}
           {pendingDecision ? (
-            <span className="rounded border border-violet-400/40 bg-violet-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-300">
+            <span className="rounded border border-violet-400/40 bg-violet-400/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ufa-special">
               {t.needsDecision}
             </span>
           ) : null}
@@ -936,8 +936,8 @@ function MessageDetail({
 
       {message.type === INBOX_TYPES.TRAINING_REPORT && p.report && (
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-sm">
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
-            <dt className="text-[10px] uppercase text-ufa-muted">{t.quality}</dt>
+          <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2">
+            <dt className="text-[11px] uppercase text-ufa-muted">{t.quality}</dt>
             <dd className="font-semibold text-ufa-text">
               {p.report.quality}% ·{' '}
               {lang === 'en'
@@ -945,18 +945,18 @@ function MessageDetail({
                 : p.report.qualityLabel}
             </dd>
           </div>
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
-            <dt className="text-[10px] uppercase text-ufa-muted">{t.attendance}</dt>
+          <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2">
+            <dt className="text-[11px] uppercase text-ufa-muted">{t.attendance}</dt>
             <dd className="font-semibold text-ufa-text">
               {p.report.attendedCount}/{p.report.rosterSize} ({p.report.attendance}%)
             </dd>
           </div>
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
-            <dt className="text-[10px] uppercase text-ufa-muted">{t.engagement}</dt>
+          <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2">
+            <dt className="text-[11px] uppercase text-ufa-muted">{t.engagement}</dt>
             <dd className="font-semibold text-ufa-text">{p.report.engagement}%</dd>
           </div>
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
-            <dt className="text-[10px] uppercase text-ufa-muted">{t.skillBumps}</dt>
+          <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2">
+            <dt className="text-[11px] uppercase text-ufa-muted">{t.skillBumps}</dt>
             <dd className="font-semibold text-ufa-text">{p.report.skillBumps ?? 0}</dd>
           </div>
         </dl>
@@ -1038,12 +1038,12 @@ function MessageDetail({
 
       {message.type === INBOX_TYPES.INJURY && (
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 text-sm">
-          <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-3 py-2">
-            <dt className="text-[10px] uppercase text-ufa-muted">{t.injuryLabel}</dt>
-            <dd className="font-semibold text-red-300">{lang === UI_LANG.EN ? (p.labelEn ?? injuryLabelEn(p.label)) || '—' : p.label ?? '—'}</dd>
+          <div className="rounded-sm border border-red-500/30 bg-red-500/5 px-3 py-2">
+            <dt className="text-[11px] uppercase text-ufa-muted">{t.injuryLabel}</dt>
+            <dd className="font-semibold text-ufa-danger">{lang === UI_LANG.EN ? (p.labelEn ?? injuryLabelEn(p.label)) || '—' : p.label ?? '—'}</dd>
           </div>
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
-            <dt className="text-[10px] uppercase text-ufa-muted">{t.unavailable}</dt>
+          <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2">
+            <dt className="text-[11px] uppercase text-ufa-muted">{t.unavailable}</dt>
             <dd className="font-semibold text-ufa-text tabular-nums">
               {p.daysRemaining ?? '—'}{' '}
               {lang === UI_LANG.EN
@@ -1055,8 +1055,8 @@ function MessageDetail({
                   : 'dni'}
             </dd>
           </div>
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2">
-            <dt className="text-[10px] uppercase text-ufa-muted">{t.source}</dt>
+          <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2">
+            <dt className="text-[11px] uppercase text-ufa-muted">{t.source}</dt>
             <dd className="font-semibold text-ufa-text">
               {p.source === 'training'
                 ? lang === UI_LANG.EN
@@ -1081,7 +1081,7 @@ function MessageDetail({
       )}
 
       {message.type === INBOX_TYPES.CLUB_NEWS && p.kind === 'sponsor_expired' && (
-        <div className="rounded-lg border border-amber-400/30 bg-amber-400/5 px-4 py-3 text-sm text-amber-200">
+        <div className="rounded-sm border border-amber-400/30 bg-amber-400/5 px-4 py-3 text-sm text-ufa-gold">
           {lang === 'en'
             ? `Slot freed: ${sponsorSlotLabel(p.slot, lang)}. New offers should be in your inbox.`
             : `Zwolniony slot: ${sponsorSlotLabel(p.slot, lang)}. Nowe oferty powinny być w skrzynce.`}
@@ -1090,7 +1090,7 @@ function MessageDetail({
 
       {message.type === INBOX_TYPES.RANDOM_EVENT && pendingDecision && (
         <div className="space-y-2">
-          {decisionError?.id === message.id && <p role="alert" className="text-sm text-red-300">{lang === UI_LANG.EN ? decisionError.errorEn : decisionError.error}</p>}
+          {decisionError?.id === message.id && <p role="alert" className="text-sm text-ufa-danger">{lang === UI_LANG.EN ? decisionError.errorEn : decisionError.error}</p>}
           <p className="text-xs font-medium uppercase tracking-wide text-ufa-muted">
             {lang === UI_LANG.EN ? 'Your decision' : 'Twoja decyzja'}
           </p>
@@ -1104,7 +1104,7 @@ function MessageDetail({
                   const result = onResolveDecision?.(message.id, choice.id)
                   setDecisionError(result?.ok === false ? { id: message.id, ...result } : null)
                 }}
-                className="rounded-lg border border-violet-400/35 bg-violet-400/5 px-4 py-3 text-left transition-colors hover:border-violet-400/60 hover:bg-violet-400/10 disabled:opacity-40"
+                className="rounded-sm border border-violet-400/35 bg-violet-400/5 px-4 py-3 text-left transition-colors hover:border-violet-400/60 hover:bg-violet-400/10 disabled:opacity-40"
               >
                 <span className="block text-sm font-medium text-ufa-text">
                   {pickLabel(choice, lang) || choice.label}
@@ -1116,7 +1116,7 @@ function MessageDetail({
       )}
 
       {message.type === INBOX_TYPES.RANDOM_EVENT && resolvedDecision && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm">
+        <div className="rounded-sm border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm">
           {p.chosenLabel ? (
             <p className="text-ufa-text">
               <span className="text-ufa-muted">
@@ -1145,7 +1145,7 @@ function MessageDetail({
             type="button"
             disabled={!onWatchFinal}
             onClick={() => onWatchFinal?.(message.id)}
-            className="rounded-lg border border-ufa-accent/50 bg-ufa-accent/10 px-4 py-3 text-left transition-colors hover:border-ufa-accent hover:bg-ufa-accent/20 disabled:opacity-40"
+            className="rounded-sm border border-ufa-accent/50 bg-ufa-accent/10 px-4 py-3 text-left transition-colors hover:border-ufa-accent hover:bg-ufa-accent/20 disabled:opacity-40"
           >
             <span className="block text-sm font-medium text-ufa-text">
               {lang === UI_LANG.EN ? 'Watch live' : 'Oglądaj na żywo'}
@@ -1155,7 +1155,7 @@ function MessageDetail({
             type="button"
             disabled={!onIgnoreFinal}
             onClick={() => onIgnoreFinal?.(message.id)}
-            className="rounded-lg border border-ufa-border bg-ufa-bg/60 px-4 py-3 text-left transition-colors hover:border-ufa-border/80 hover:bg-ufa-bg disabled:opacity-40"
+            className="rounded-sm border border-ufa-border bg-ufa-bg/60 px-4 py-3 text-left transition-colors hover:border-ufa-border/80 hover:bg-ufa-bg disabled:opacity-40"
           >
             <span className="block text-sm font-medium text-ufa-text">
               {lang === UI_LANG.EN ? 'Ignore (resolve automatically)' : 'Zignoruj (rozstrzygnie się automatycznie)'}
@@ -1165,7 +1165,7 @@ function MessageDetail({
       )}
 
       {message.type === INBOX_TYPES.WATCHABLE_FINAL && p.status === 'resolved' && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-ufa-muted">
+        <div className="rounded-sm border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-sm text-ufa-muted">
           {lang === UI_LANG.EN ? 'Resolved.' : 'Rozstrzygnięte.'}
         </div>
       )}
@@ -1279,7 +1279,7 @@ function SwipeableRow({ onDelete, deleteLabel, children }) {
 
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-y-0 right-0 flex w-20 items-center justify-center bg-red-500/90 px-2 text-center text-[10px] font-bold uppercase tracking-wide text-white">
+      <div className="absolute inset-y-0 right-0 flex w-20 items-center justify-center bg-red-500/90 px-2 text-center text-[11px] font-bold uppercase tracking-wide text-white">
         {deleteLabel}
       </div>
       <div
@@ -1410,10 +1410,10 @@ export default function InboxView({
 
   return (
     <div className="space-y-6 league-fade-in">
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+      <div className="um-section  ">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-ufa-text">{tInbox.title}</h2>
+            <h2 className="text-2xl font-semibold text-ufa-text">{tInbox.title}</h2>
             <p className="mt-1 text-sm text-ufa-muted">
               {lang === 'en'
                 ? 'Training reports, transfer offers, post-match analysis and random events.'
@@ -1444,7 +1444,7 @@ export default function InboxView({
               flash.type === 'ok'
                 ? 'text-ufa-accent'
                 : flash.type === 'error'
-                  ? 'text-red-400'
+                  ? 'text-ufa-danger'
                   : 'text-ufa-gold'
             }`}
           >
@@ -1470,7 +1470,7 @@ export default function InboxView({
               onClick={() => setFilter(f.id)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                 filter === f.id
-                  ? 'bg-ufa-accent text-ufa-bg'
+                  ? 'bg-ufa-accent text-ufa-on-accent'
                   : 'border border-ufa-border text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text'
               }`}
             >
@@ -1481,7 +1481,7 @@ export default function InboxView({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-10 text-center shadow-xl shadow-black/30">
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-10 text-center  ">
           <p className="text-sm text-ufa-muted">
             {inbox.length === 0
               ? tInbox.empty
@@ -1492,7 +1492,7 @@ export default function InboxView({
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-          <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30 overflow-hidden">
+          <div className="rounded-sm border border-ufa-border bg-ufa-panel   overflow-hidden">
             <ul className="divide-y divide-ufa-border/80 max-h-[70vh] overflow-y-auto">
               {filtered.map((message) => {
                 const meta = INBOX_TYPE_META[message.type]
@@ -1528,7 +1528,7 @@ export default function InboxView({
                       >
                         <div className="flex items-start justify-between gap-2">
                           <span
-                            className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase ${typeBadgeClass(message.type)}`}
+                            className={`rounded border px-1.5 py-0.5 text-[11px] font-semibold uppercase ${typeBadgeClass(message.type)}`}
                           >
                             {pickLabel(meta, lang) ?? message.type}
                             {bidPending ? (lang === UI_LANG.EN ? ' · action' : ' · akcja') : ''}
@@ -1555,7 +1555,7 @@ export default function InboxView({
             </ul>
           </div>
 
-          <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5 sm:p-6 shadow-xl shadow-black/30">
+          <div className="um-section  ">
             {selected ? (
               <>
                 <MessageDetail
@@ -1574,7 +1574,7 @@ export default function InboxView({
                   <button
                     type="button"
                     onClick={() => handleDelete(selected.id)}
-                    className="rounded-md border border-ufa-border px-3 py-1.5 text-xs text-ufa-muted hover:border-red-400/50 hover:text-red-300"
+                    className="rounded-md border border-ufa-border px-3 py-1.5 text-xs text-ufa-muted hover:border-red-400/50 hover:text-ufa-danger"
                   >{tInbox.deleteMessage}</button>
                 </div>
               </>

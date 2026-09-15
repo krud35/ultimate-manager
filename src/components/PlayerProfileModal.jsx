@@ -1,5 +1,6 @@
 import { ATTRIBUTE_HELP_PL } from '../models/detailedAttributes.js'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { useDialogFocus } from '../ui/useDialogFocus'
 import { createPortal } from 'react-dom'
 import { getPlayerFullName, getOverallRating } from '../data/mockPlayers'
 import {
@@ -74,9 +75,9 @@ function CategoryBlock({
   const overallDisplay = scoutedValueDisplay(overall, knowledge, lang)
 
   return (
-    <section className="rounded-lg border border-ufa-border bg-ufa-bg/50 p-3">
+    <section className="border-t border-ufa-border py-4">
       <div className="flex items-center justify-between gap-2 mb-3">
-        <h3 className="text-sm font-semibold text-ufa-text">{CATEGORY_LABELS[category]}</h3>
+        <h3 className="text-xl font-semibold text-ufa-text">{CATEGORY_LABELS[category]}</h3>
         {overallDisplay.kind === 'exact' ? (
           <span className="text-xs font-bold tabular-nums text-ufa-accent">{overallDisplay.label}</span>
         ) : (
@@ -102,7 +103,7 @@ function CategoryBlock({
                   {growth && growth.delta !== 0 && (
                     <span
                       className={`text-[11px] font-semibold tabular-nums ${
-                        growth.delta > 0 ? 'text-emerald-400' : 'text-red-400'
+                        growth.delta > 0 ? 'text-ufa-success' : 'text-ufa-danger'
                       }`}
                       title={growthTitle}
                     >
@@ -153,15 +154,8 @@ export default function PlayerProfileModal({
   const [extendFlash, setExtendFlash] = useState(null)
   const [scoutFlash, setScoutFlash] = useState(null)
   const [scoutBusy, setScoutBusy] = useState(false)
-
-  useEffect(() => {
-    if (!player) return undefined
-    function onKey(e) {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [player, onClose])
+  const dialogRef = useRef(null)
+  useDialogFocus(dialogRef, !!player, onClose)
 
   useEffect(() => {
     setExtendOpen(false)
@@ -275,11 +269,11 @@ export default function PlayerProfileModal({
         aria-label={t.closeAria}
         onClick={onClose}
       />
-      <div className="relative z-10 mt-0 w-full max-w-3xl max-h-[min(92vh,100%)] overflow-auto rounded-t-xl sm:mt-0 sm:rounded-xl border border-ufa-border bg-ufa-panel shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-ufa-border bg-ufa-panel/95 px-5 py-4 backdrop-blur">
+      <div ref={dialogRef} className="um-dialog-surface relative z-10 mt-0 w-full max-w-3xl max-h-[min(92dvh,100%)] overflow-auto sm:mt-0">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-ufa-border bg-ufa-panel px-5 py-4 backdrop-blur">
           <div>
             <p className="text-xs uppercase tracking-wide text-ufa-muted">{teamLabel}</p>
-            <h2 id="player-profile-title" className="text-xl font-semibold text-ufa-text">
+            <h2 id="player-profile-title" className="um-player-heading text-ufa-text">
               #{player.jersey} {getPlayerFullName(player)}
             </h2>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -321,12 +315,12 @@ export default function PlayerProfileModal({
               )}
               {injured ? (
                 <span
-                  className="rounded bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-400 ring-1 ring-red-500/40"
+                  className="rounded bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-ufa-danger ring-1 ring-red-500/40"
                   title={injuryStatusLabel(player, lang)}
                 >
                   {t.injury} · {injuryDays} {t.days(injuryDays)}
                   {injuryLabel ? (
-                    <span className="font-normal text-red-300/80"> · {injuryLabel}</span>
+                    <span className="font-normal text-ufa-danger/80"> · {injuryLabel}</span>
                   ) : null}
                 </span>
               ) : null}
@@ -356,14 +350,14 @@ export default function PlayerProfileModal({
               {isOwnPlayer && (
                 <span
                   className={`inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm font-bold ${
-                    ovr >= 85 ? 'bg-ufa-accent/20 text-ufa-accent' : 'bg-slate-700/50 text-slate-200'
+                    ovr >= 85 ? 'bg-ufa-accent/20 text-ufa-accent' : 'bg-ufa-panel text-ufa-text'
                   }`}
                 >
                   OVR {ovr}
                 </span>
               )}
-              {player.loanListed && <span className="rounded border border-sky-400/40 px-2 py-1 text-xs text-sky-300">{lang === 'en' ? 'Listed for loan' : 'Na liście wypożyczeń'}</span>}
-              {player.notForSale && <span className="rounded border border-amber-400/40 px-2 py-1 text-xs text-amber-300">{lang === 'en' ? 'Not for sale' : 'Nie na sprzedaż'}</span>}
+              {player.loanListed && <span className="rounded border border-sky-400/40 px-2 py-1 text-xs text-ufa-info">{lang === 'en' ? 'Listed for loan' : 'Na liście wypożyczeń'}</span>}
+              {player.notForSale && <span className="rounded border border-amber-400/40 px-2 py-1 text-xs text-ufa-gold">{lang === 'en' ? 'Not for sale' : 'Nie na sprzedaż'}</span>}
               {isOwnPlayer && player.transferListed && (
                 <span className="rounded bg-ufa-gold/15 px-2 py-0.5 text-xs font-semibold text-ufa-gold ring-1 ring-ufa-gold/40">
                   {t.transferListedBadge}
@@ -422,7 +416,7 @@ export default function PlayerProfileModal({
               <button
                 type="button"
                 onClick={() => onStartNegotiation(player.id)}
-                className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-bg hover:opacity-90"
+                className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-on-accent hover:opacity-90"
               >
                 {t.startNegotiation}
               </button>
@@ -454,7 +448,7 @@ export default function PlayerProfileModal({
                 type="button"
                 onClick={handleScoutClick}
                 disabled={scoutBusy || scoutPending}
-                className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
               >
                 {scoutPending
                   ? ts.scoutPlayerPending
@@ -464,7 +458,7 @@ export default function PlayerProfileModal({
               </button>
             )}
             {scoutFlash && (
-              <span className={`text-xs ${scoutFlash.ok ? 'text-ufa-accent' : 'text-red-400'}`}>
+              <span className={`text-xs ${scoutFlash.ok ? 'text-ufa-accent' : 'text-ufa-danger'}`}>
                 {scoutFlash.text}
               </span>
             )}
@@ -511,18 +505,18 @@ export default function PlayerProfileModal({
                 className={"rounded-md px-3 py-1.5 text-xs font-semibold ring-1 " + (player.transferListed ? 'bg-ufa-gold/15 text-ufa-gold ring-ufa-gold/40' : 'bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover')}>
                 {player.transferListed ? t.removeFromTransferList : t.addToTransferList}</button>}
               {onToggleLoanList && <button type="button" onClick={() => onToggleLoanList(player.id)} aria-pressed={!!player.loanListed}
-                className={"rounded-md px-3 py-1.5 text-xs font-semibold ring-1 " + (player.loanListed ? 'bg-sky-400/15 text-sky-300 ring-sky-400/40' : 'bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover')}>
+                className={"rounded-md px-3 py-1.5 text-xs font-semibold ring-1 " + (player.loanListed ? 'bg-sky-400/15 text-ufa-info ring-sky-400/40' : 'bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover')}>
                 {player.loanListed ? (lang === 'en' ? 'Remove from loan list' : 'Zdejmij z listy wypożyczeń') : (lang === 'en' ? 'Add to loan list' : 'Dodaj do listy wypożyczeń')}</button>}
               {onToggleNotForSale && <button type="button" onClick={() => onToggleNotForSale(player.id)} aria-pressed={!!player.notForSale}
                 title={lang === 'en' ? 'Discourages offers and raises the asking price.' : 'Ogranicza zainteresowanie klubów i podnosi oczekiwaną cenę.'}
-                className={"rounded-md px-3 py-1.5 text-xs font-semibold ring-1 " + (player.notForSale ? 'bg-amber-400/15 text-amber-300 ring-amber-400/40' : 'bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover')}>
+                className={"rounded-md px-3 py-1.5 text-xs font-semibold ring-1 " + (player.notForSale ? 'bg-amber-400/15 text-ufa-gold ring-amber-400/40' : 'bg-ufa-bg text-ufa-text ring-ufa-border hover:bg-ufa-panel-hover')}>
                 {lang === 'en' ? 'Not for sale' : 'Nie na sprzedaż'}</button>}
             </div>
           )}
           {isOwnPlayer && onExtendContract && !player.loan && (
             <div className="mt-3 space-y-2">
               {extendOpen && (
-                <div className="rounded-lg border border-ufa-border bg-ufa-bg/40 p-3 space-y-2">
+                <div className="rounded-sm border border-ufa-border bg-ufa-bg/40 p-3 space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <label className="text-xs text-ufa-muted">
                       {t.extendWage}
@@ -552,7 +546,7 @@ export default function PlayerProfileModal({
                     type="button"
                     disabled={extendBusy}
                     onClick={handleExtendSubmit}
-                    className="rounded-md bg-ufa-accent px-3 py-1.5 text-xs font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                    className="rounded-md bg-ufa-accent px-3 py-1.5 text-xs font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
                   >
                     {extendBusy ? t.extending : t.extendSubmit}
                   </button>
@@ -560,7 +554,7 @@ export default function PlayerProfileModal({
               )}
               {extendFlash && (
                 <p
-                  className={`text-xs ${extendFlash.ok ? 'text-emerald-400' : 'text-red-400'}`}
+                  className={`text-xs ${extendFlash.ok ? 'text-ufa-success' : 'text-ufa-danger'}`}
                 >
                   {extendFlash.text}
                 </p>
@@ -609,7 +603,7 @@ export default function PlayerProfileModal({
               <p className="text-xs text-ufa-muted">{t.plusMinus}</p>
               <p
                 className={`text-lg font-semibold tabular-nums ${
-                  s.plusMinus > 0 ? 'text-emerald-400' : s.plusMinus < 0 ? 'text-red-400' : ''
+                  s.plusMinus > 0 ? 'text-ufa-success' : s.plusMinus < 0 ? 'text-ufa-danger' : ''
                 }`}
               >
                 {s.plusMinus > 0 ? `+${s.plusMinus}` : s.plusMinus}

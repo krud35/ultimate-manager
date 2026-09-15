@@ -219,13 +219,13 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-ufa-text">{ts.centerTitle}</h2>
+      <h2 className="text-2xl font-bold text-ufa-text">{ts.centerTitle}</h2>
 
       <ScoutingAnalysisPanel report={buyer?.scoutingAnalysis?.last?.report} side={buyer?.scoutingAnalysis?.last?.side}
         subtitle={buyer?.scoutingAnalysis?.last ? `${buyer.scoutingAnalysis.last.homeName} ${buyer.scoutingAnalysis.last.homeScore} : ${buyer.scoutingAnalysis.last.awayScore} ${buyer.scoutingAnalysis.last.awayName} · ${buyer.scoutingAnalysis.last.date ?? ''}` : null} />
       <ScoutingAnalysisPanel total={buyer?.scoutingAnalysis?.total ?? { games: 0 }} title={lang === 'pl' ? 'Analiza drużyny' : 'Team analysis'} />
 
-      <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+      <section className="um-section  ">
         <h3 className="font-semibold text-ufa-text mb-3">{ts.shortlistTitle}</h3>
         {shortlistRows.length === 0 ? (
           <p className="text-sm text-ufa-muted">{ts.shortlistEmpty}</p>
@@ -298,7 +298,7 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
         )}
       </section>
 
-      <details className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+      <details className="um-section  ">
         <summary className="cursor-pointer font-semibold text-ufa-text mb-1">{ts.playerSearchTitle}</summary>
         <p className="mb-3 text-xs text-ufa-muted">{ts.playerSearchHint}</p>
 
@@ -399,8 +399,8 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
             {playerSearchCost != null ? `${ts.sendScoutButton} (${formatUsd(playerSearchCost)})` : ts.sendScoutButton}
           </button>
         </div>
-        {searchError && <p className="mt-2 text-sm text-red-400">{searchError}</p>}
-        {searchMsg && <p className="mt-2 text-sm text-emerald-400">{searchMsg}</p>}
+        {searchError && <p className="mt-2 text-sm text-ufa-danger">{searchError}</p>}
+        {searchMsg && <p className="mt-2 text-sm text-ufa-success">{searchMsg}</p>}
 
         <h4 className="mt-5 text-sm font-semibold text-ufa-text">{ts.resultsTitle}</h4>
         {playerSearchMissions.length === 0 ? (
@@ -499,7 +499,7 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
         )}
       </details>
 
-      <details className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+      <details className="um-section  ">
         <summary className="cursor-pointer font-semibold text-ufa-text mb-3">{ts.leagueTeamsTitle}</summary>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
@@ -612,7 +612,7 @@ export default function ScoutingCenterView({ career, onCareerUpdate, onOpenTeam 
         />
       )}
       {negotiateFlash && (
-        <p className={`text-sm ${negotiateFlash.type === 'ok' ? 'text-ufa-accent' : 'text-red-400'}`}>
+        <p className={`text-sm ${negotiateFlash.type === 'ok' ? 'text-ufa-accent' : 'text-ufa-danger'}`}>
           {negotiateFlash.text}
         </p>
       )}

@@ -58,12 +58,12 @@ function pointEventLabel(event, homeName, awayName, t, lang) {
 
 function eventRowClass(event) {
   if (event.type === EVENT.SCORE) return 'text-ufa-accent font-semibold'
-  if (event.type === EVENT.INJURY) return 'text-red-400 font-semibold'
-  if (event.type === EVENT.THROW_FAIL) return 'text-orange-300/90'
+  if (event.type === EVENT.INJURY) return 'text-ufa-danger font-semibold'
+  if (event.type === EVENT.THROW_FAIL) return 'text-ufa-gold/90'
   if (event.type === EVENT.TURNOVER) return 'text-ufa-gold/90'
-  if (event.type === EVENT.STALL_OUT) return 'text-red-300 font-semibold'
-  if (event.type === EVENT.STALL_PRESSURE) return 'text-amber-200/90'
-  if (event.type === EVENT.PERSON_MATCHUPS) return 'text-sky-300/90'
+  if (event.type === EVENT.STALL_OUT) return 'text-ufa-danger font-semibold'
+  if (event.type === EVENT.STALL_PRESSURE) return 'text-ufa-gold/90'
+  if (event.type === EVENT.PERSON_MATCHUPS) return 'text-ufa-info/90'
   return 'text-ufa-muted'
 }
 
@@ -93,7 +93,7 @@ const PointHistory = memo(function PointHistory({
       : TACTICS_MODIFIERS.defense[DEFENSE_STYLES.ZONE_CUP]?.label
 
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30 overflow-hidden">
+    <div className="rounded-sm border border-ufa-border bg-ufa-panel   overflow-hidden">
       <div className="border-b border-ufa-border px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h3 className="font-semibold text-ufa-text">{t.pointHistoryTitle}</h3>

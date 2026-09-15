@@ -25,7 +25,7 @@ export default function SimulationProgressOverlay({ progress }) {
       aria-busy="true"
       aria-label={label ?? t.simulation}
     >
-      <div className="w-full max-w-md rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-2xl shadow-black/50">
+      <div className="w-full max-w-md rounded-sm border border-ufa-border bg-ufa-panel p-5 shadow-2xl shadow-black/50">
         <p className="text-sm font-semibold text-ufa-text">{label ?? t.simulationEllipsis}</p>
         {detail ? <p className="mt-1 text-xs text-ufa-muted tabular-nums">{detail}</p> : null}
 

@@ -32,7 +32,7 @@ function TeamBlock({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[34rem] border-collapse text-left">
           <thead>
-            <tr className="text-[10px] uppercase tracking-wide text-ufa-muted">
+            <tr className="text-[11px] uppercase tracking-wide text-ufa-muted">
               <th className="pb-1.5 pr-2 font-normal">{t.playerCol}</th>
               <th className="pb-1.5 pr-2 font-normal w-[26%]">Sta</th>
               <th
@@ -104,12 +104,12 @@ function TeamBlock({
                     >
                       {playerLabel(player)}
                       {isScorer ? (
-                        <span className="ml-1 text-[9px] font-semibold uppercase text-ufa-accent">
+                        <span className="ml-1 text-[11px] font-semibold uppercase text-ufa-accent">
                           {t.goalTag}
                         </span>
                       ) : null}
                       {isAssist && !isScorer ? (
-                        <span className="ml-1 text-[9px] font-semibold uppercase text-ufa-gold">
+                        <span className="ml-1 text-[11px] font-semibold uppercase text-ufa-gold">
                           {t.assistTag}
                         </span>
                       ) : null}
@@ -178,7 +178,7 @@ const PointStaminaPanel = memo(function PointStaminaPanel({
     pointComplete || !!(stats?.assistId || stats?.scorerId)
 
   return (
-    <div className="w-full rounded-xl border border-ufa-border bg-ufa-panel/95 p-4 shadow-lg shadow-black/15">
+    <div className="w-full rounded-sm border border-ufa-border bg-ufa-panel p-4  ">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm font-semibold text-ufa-text">
           {t.staminaPanelTitle}

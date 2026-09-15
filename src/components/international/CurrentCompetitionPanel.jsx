@@ -12,7 +12,7 @@ import InternationalBracketView from './InternationalBracketView.jsx'
 function LiveGroupTable({ groupId, standings, t, lang }) {
   const table = nationalTournamentStandingsTable(standings)
   return (
-    <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 p-3">
+    <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 p-3">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ufa-muted">{t.groupLabel(groupId)}</p>
       <table className="w-full text-xs">
         <thead>
@@ -41,7 +41,7 @@ function LiveGroupTable({ groupId, standings, t, lang }) {
 function PlayoffMatches({ playoff, t, lang }) {
   if (!playoff?.matches?.length) return null
   return (
-    <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 p-3">
+    <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 p-3">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ufa-muted">{t.playoffTitle}</p>
       <ul className="space-y-1.5 text-xs">
         {playoff.matches.map((m) => {
@@ -71,12 +71,12 @@ function QualifyingCampaignCard({ campaign, t, lang }) {
         ? t.phasePlayoff
         : t.phaseComplete
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+    <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5  ">
       <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-ufa-text">
           {campaign.zoneContinentId ? academyContinentLabel(campaign.zoneContinentId, lang) : t.kind.euro}
         </p>
-        <span className="rounded-full bg-ufa-bg px-2.5 py-1 text-[10px] font-medium text-ufa-muted ring-1 ring-ufa-border">
+        <span className="rounded-full bg-ufa-bg px-2.5 py-1 text-[11px] font-medium text-ufa-muted ring-1 ring-ufa-border">
           {phaseLabel}
         </span>
       </div>
@@ -96,8 +96,8 @@ function YourPlayersOnDuty({ career, world, t, lang, onSelectPlayer }) {
   const rows = playersAwayOnNationalDuty(career, world)
   const provisional = rows.length > 0 && rows.every((r) => !r.calledUp)
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
-      <h3 className="text-sm font-semibold text-ufa-text">{t.yourPlayersTitle}</h3>
+    <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5  ">
+      <h3 className="text-xl font-semibold text-ufa-text">{t.yourPlayersTitle}</h3>
       {provisional && <p className="mt-1 text-xs text-ufa-muted">{t.yourPlayersProvisional}</p>}
       {!rows.length ? (
         <p className="mt-2 text-xs text-ufa-muted">{t.yourPlayersEmpty}</p>
@@ -106,7 +106,7 @@ function YourPlayersOnDuty({ career, world, t, lang, onSelectPlayer }) {
           {rows.map(({ player, countryId, nextFixtureDate }) => (
             <li
               key={player.id}
-              className="flex items-center justify-between gap-2 rounded-lg border border-ufa-gold/30 bg-ufa-gold/5 px-3 py-2 text-sm"
+              className="flex items-center justify-between gap-2 rounded-sm border border-ufa-gold/30 bg-ufa-gold/5 px-3 py-2 text-sm"
             >
               <button
                 type="button"
@@ -146,12 +146,12 @@ export default function CurrentCompetitionPanel({ career, t, lang }) {
 
       {qualifying && (
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-ufa-text">{t.qualifyingTitle(t.kind[qualifying.kind] ?? qualifying.kind, qualifying.year)}</h3>
+          <h3 className="text-xl font-semibold text-ufa-text">{t.qualifyingTitle(t.kind[qualifying.kind] ?? qualifying.kind, qualifying.year)}</h3>
           {qualifying.campaigns.map((campaign, i) => (
             <QualifyingCampaignCard key={campaign.zoneContinentId ?? `campaign-${i}`} campaign={campaign} t={t} lang={lang} />
           ))}
           {!!autoQualifiedNames.length && (
-            <p className="rounded-lg border border-dashed border-ufa-border bg-ufa-panel/50 p-3 text-xs text-ufa-muted">
+            <p className="rounded-sm border border-dashed border-ufa-border bg-ufa-panel p-3 text-xs text-ufa-muted">
               {t.zoneAutoQualified}: {autoQualifiedNames.join(', ')}
             </p>
           )}
@@ -160,7 +160,7 @@ export default function CurrentCompetitionPanel({ career, t, lang }) {
 
       {finals && (
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-ufa-text">{t.finalsTitle(t.kind[finals.kind] ?? finals.kind, finals.year)}</h3>
+          <h3 className="text-xl font-semibold text-ufa-text">{t.finalsTitle(t.kind[finals.kind] ?? finals.kind, finals.year)}</h3>
           {finals.phase === 'groupStage' && (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {finals.groups.map((group) => (
@@ -169,7 +169,7 @@ export default function CurrentCompetitionPanel({ career, t, lang }) {
             </div>
           )}
           {finals.knockout && (
-            <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-xl shadow-black/20">
+            <div className="rounded-sm border border-ufa-border bg-ufa-panel p-4  ">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ufa-gold">{t.bracketTitle}</p>
               <InternationalBracketView finals={finals} t={t} lang={lang} />
             </div>
@@ -178,7 +178,7 @@ export default function CurrentCompetitionPanel({ career, t, lang }) {
       )}
 
       {!qualifying && !finals && (
-        <div className="rounded-xl border border-dashed border-ufa-border bg-ufa-panel/50 p-8 text-center">
+        <div className="rounded-sm border border-dashed border-ufa-border bg-ufa-panel p-8 text-center">
           <p className="text-sm font-semibold text-ufa-text">{t.emptyWindowTitle}</p>
           <p className="mx-auto mt-2 max-w-md text-sm text-ufa-muted">
             {t.emptyWindowBody(t.kind[nt.nextTournament?.kind] ?? nt.nextTournament?.kind, nt.nextTournament?.year)}

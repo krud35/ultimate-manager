@@ -18,7 +18,7 @@ export default function WelcomeModal({ managerName, teamName, lang, onYes, onNo 
           <button
             type="button"
             onClick={onYes}
-            className="flex-1 rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+            className="flex-1 rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90"
           >
             {t.yes}
           </button>

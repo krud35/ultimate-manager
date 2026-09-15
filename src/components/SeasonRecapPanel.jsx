@@ -84,7 +84,7 @@ function PyramidMovementSection({ career, playerTierIds, t }) {
   }
 
   return (
-    <div className="mt-5 rounded-lg border border-ufa-border bg-ufa-panel px-4 py-3">
+    <div className="mt-5 rounded-sm border border-ufa-border bg-ufa-panel px-4 py-3">
       <p className="text-sm font-semibold text-ufa-text">{t.pyramidMovementTitle}</p>
       <p className="mt-1 text-xs font-medium text-ufa-accent">{status}</p>
       <ul className="mt-2 space-y-1 text-xs text-ufa-muted">
@@ -94,7 +94,7 @@ function PyramidMovementSection({ career, playerTierIds, t }) {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-[10px] text-ufa-muted">{t.pyramidMovementHint}</p>
+      <p className="mt-2 text-[11px] text-ufa-muted">{t.pyramidMovementHint}</p>
     </div>
   )
 }
@@ -122,9 +122,9 @@ export function SeasonSummaryPanel({ career, onViewStandings, onOpenTransfers = 
     officialSeasonEndDate(league.calendar ?? league.seasonYear)
 
   return (
-    <div className="rounded-xl border border-ufa-gold/35 bg-ufa-panel p-6 shadow-xl shadow-black/30">
+    <div className="rounded-sm border border-ufa-gold/35 bg-ufa-panel p-6  ">
       <p className="text-xs font-semibold uppercase tracking-wide text-ufa-gold">{t.compsDone}</p>
-      <h2 className="mt-2 text-xl font-bold text-ufa-text">
+      <h2 className="mt-2 text-2xl font-bold text-ufa-text">
         {displaySeasonLabel(league.seasonLabel, lang)}
       </h2>
       <p className="mt-2 text-sm text-ufa-text">
@@ -224,15 +224,15 @@ export default function SeasonRecapPanel({
     isOfficialSeasonEnded(league) || career.phase === 'season_complete'
 
   return (
-    <div className="rounded-xl border border-ufa-gold/40 bg-ufa-panel p-6 shadow-xl shadow-black/30">
+    <div className="rounded-sm border border-ufa-gold/40 bg-ufa-panel p-6  ">
       <p className="text-xs font-semibold uppercase tracking-wide text-ufa-gold">
         {atOfficialEnd ? t.seasonEndOfficial : t.seasonEnded}
       </p>
-      <h2 className="mt-2 text-xl font-bold text-ufa-text">
+      <h2 className="mt-2 text-2xl font-bold text-ufa-text">
         {displaySeasonLabel(league.seasonLabel, lang)} · {team?.name}
       </h2>
 
-      <div className="mt-3 rounded-lg border border-ufa-gold/30 bg-ufa-gold/10 px-4 py-3">
+      <div className="mt-3 rounded-sm border border-ufa-gold/30 bg-ufa-gold/10 px-4 py-3">
         <p className="text-sm font-semibold text-ufa-gold">
           {t.leagueChampion}: {championName}
         </p>
@@ -270,7 +270,7 @@ export default function SeasonRecapPanel({
         </div>
       )}
 
-      <div className="mt-4 rounded-lg border border-ufa-accent/30 bg-ufa-accent/5 px-4 py-3">
+      <div className="mt-4 rounded-sm border border-ufa-accent/30 bg-ufa-accent/5 px-4 py-3">
         <p className="text-sm font-semibold text-ufa-accent">{t.transferWindow}</p>
         <p className="mt-1 text-xs text-ufa-muted">
           {t.budget}: {formatUsd(budget)}. {t.transferBudgetHint}
@@ -279,7 +279,7 @@ export default function SeasonRecapPanel({
 
       {history.length > 0 && (
         <div className="mt-5">
-          <h3 className="text-sm font-semibold text-ufa-text">{t.careerHistory}</h3>
+          <h3 className="text-xl font-semibold text-ufa-text">{t.careerHistory}</h3>
           <ul className="mt-2 space-y-1.5 text-sm text-ufa-muted">
             {history.map((season) => (
               <li key={`${season.seasonYear}-${season.seasonIndex}`}>
@@ -323,7 +323,7 @@ export default function SeasonRecapPanel({
             if (!ok) return
             onStartNextSeason?.()
           }}
-          className="rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+          className="rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90"
         >
           {t.goToNext(nextLabel)}
         </button>

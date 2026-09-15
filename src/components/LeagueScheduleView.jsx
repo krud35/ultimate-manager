@@ -8,13 +8,13 @@ function VenueTag({ fixture, playerTeamId }) {
   if (!marker) return null
   const tone =
     marker === 'H'
-      ? 'text-emerald-300/90'
+      ? 'text-ufa-success/90'
       : marker === 'A'
-        ? 'text-sky-300/90'
+        ? 'text-ufa-info/90'
         : 'text-ufa-gold'
   return (
     <span
-      className={`inline-flex min-w-[1.35rem] justify-center rounded border border-current/25 px-1 text-[10px] font-semibold tabular-nums ${tone}`}
+      className={`inline-flex min-w-[1.35rem] justify-center rounded border border-current/25 px-1 text-[11px] font-semibold tabular-nums ${tone}`}
       title={marker === 'H' ? 'Home' : marker === 'A' ? 'Away' : 'Neutral'}
     >
       {marker}
@@ -60,10 +60,10 @@ function FixtureRow({ f, names, playerTeamId, round, currentRound, onPlayFixture
       </span>
       {isPlayer && <VenueTag fixture={f} playerTeamId={playerTeamId} />}
       {f.competition === 'cup' ? (
-        <span className="text-[10px] uppercase tracking-wide text-ufa-gold">{t.cup}</span>
+        <span className="text-[11px] uppercase tracking-wide text-ufa-gold">{t.cup}</span>
       ) : null}
       <span className="ml-auto shrink-0 whitespace-nowrap text-xs tabular-nums text-ufa-muted">
-        {f.date && !done && <span className="mr-2 text-[10px]">{f.date.slice(5)}</span>}
+        {f.date && !done && <span className="mr-2 text-[11px]">{f.date.slice(5)}</span>}
         {done ? (
           f.playedByPlayer && <span className="text-ufa-accent">{t.you}</span>
         ) : round != null && round < currentRound ? (
@@ -135,10 +135,10 @@ export default function LeagueScheduleView({ league, onPlayFixture }) {
 
     return (
       <div className="space-y-6">
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+        <div className="um-section  ">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-ufa-text">
+              <h2 className="text-2xl font-semibold text-ufa-text">
                 {names[teamFilter] ?? t.scheduleTeam}
               </h2>
               <p className="mt-1 text-sm text-ufa-muted">
@@ -151,7 +151,7 @@ export default function LeagueScheduleView({ league, onPlayFixture }) {
                 <button
                   type="button"
                   onClick={() => onPlayFixture(nextPlayable)}
-                  className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+                  className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90"
                 >
                   {t.nextMatch}
                 </button>
@@ -160,7 +160,7 @@ export default function LeagueScheduleView({ league, onPlayFixture }) {
           </div>
         </div>
 
-        <section className="rounded-xl border border-ufa-border bg-ufa-panel overflow-hidden shadow-lg shadow-black/20">
+        <section className="rounded-sm border border-ufa-border bg-ufa-panel overflow-hidden  ">
           <ul className="divide-y divide-ufa-border/60">
             {teamFixtures.map((f) => (
               <FixtureRow
@@ -185,10 +185,10 @@ export default function LeagueScheduleView({ league, onPlayFixture }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+      <div className="um-section  ">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-ufa-text">{t.scheduleLeague}</h2>
+            <h2 className="text-2xl font-semibold text-ufa-text">{t.scheduleLeague}</h2>
             <p className="mt-1 text-sm text-ufa-muted">
               {t.scheduleLeagueHint(league.totalRounds, league.currentDate)}
             </p>
@@ -208,7 +208,7 @@ export default function LeagueScheduleView({ league, onPlayFixture }) {
         return (
           <section
             key={round}
-            className={`rounded-xl border bg-ufa-panel overflow-hidden shadow-lg shadow-black/20 ${
+            className={`rounded-sm border bg-ufa-panel overflow-hidden   ${
               isCurrent ? 'border-ufa-accent/50 ring-1 ring-ufa-accent/30' : 'border-ufa-border'
             }`}
           >
@@ -232,7 +232,7 @@ export default function LeagueScheduleView({ league, onPlayFixture }) {
                 <button
                   type="button"
                   onClick={() => onPlayFixture(playerFix)}
-                  className="rounded-md bg-ufa-accent px-4 py-1.5 text-xs font-semibold text-ufa-bg hover:opacity-90"
+                  className="rounded-md bg-ufa-accent px-4 py-1.5 text-xs font-semibold text-ufa-on-accent hover:opacity-90"
                 >
                   {t.yourMatch}
                 </button>

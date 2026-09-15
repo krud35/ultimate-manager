@@ -13,7 +13,7 @@ function PlayerRow({ player, starting, injured, t, lang }) {
       }`}
     >
       <span
-        className={`w-7 shrink-0 text-center text-[10px] font-bold tabular-nums ${
+        className={`w-7 shrink-0 text-center text-[11px] font-bold tabular-nums ${
           starting ? 'text-ufa-accent' : 'text-ufa-muted/50'
         }`}
       >
@@ -27,7 +27,7 @@ function PlayerRow({ player, starting, injured, t, lang }) {
         {getPlayerFullName(player)}
       </span>
       {starting ? (
-        <span className="shrink-0 rounded bg-ufa-accent/15 px-1.5 py-0.5 text-[10px] font-bold text-ufa-accent ring-1 ring-ufa-accent/30">
+        <span className="shrink-0 rounded bg-ufa-accent/15 px-1.5 py-0.5 text-[11px] font-bold text-ufa-accent ring-1 ring-ufa-accent/30">
           {t.teamNewsStarting}
         </span>
       ) : null}
@@ -35,7 +35,7 @@ function PlayerRow({ player, starting, injured, t, lang }) {
       {injured ? (
         <span
           title={injuryStatusLabel(player, lang)}
-          className="shrink-0 rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-400 ring-1 ring-red-500/40"
+          className="shrink-0 rounded bg-red-500/15 px-1.5 py-0.5 text-[11px] font-bold text-ufa-danger ring-1 ring-red-500/40"
         >
           {injuryStatusLabel(player, lang)}
         </span>
@@ -68,7 +68,7 @@ function RosterColumn({ team, startingIds, t, lang }) {
   }, [team?.players, startingIds])
 
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
+    <div className="rounded-sm border border-ufa-border bg-ufa-panel  ">
       <div className="border-b border-ufa-border px-4 py-3">
         <h3 className="font-semibold text-ufa-text">{team?.name ?? '—'}</h3>
         <p className="mt-0.5 text-xs text-ufa-muted">
@@ -88,7 +88,7 @@ function RosterColumn({ team, startingIds, t, lang }) {
         ))}
         {injured.length > 0 ? (
           <>
-            <li className="bg-ufa-bg/40 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">
+            <li className="bg-ufa-bg/40 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-ufa-muted">
               {t.teamNewsInjured}
             </li>
             {injured.map((p) => (
@@ -121,7 +121,7 @@ export default function TeamNewsView({
 
   return (
     <div className="space-y-5 league-fade-in">
-      <div className="rounded-xl border border-ufa-accent/35 bg-ufa-panel p-5 text-center shadow-xl shadow-black/30">
+      <div className="rounded-sm border border-ufa-accent/35 bg-ufa-panel p-5 text-center  ">
         <p className="text-xs font-semibold uppercase tracking-wide text-ufa-accent">
           {t.teamNewsTitle}
         </p>
@@ -129,7 +129,7 @@ export default function TeamNewsView({
         <button
           type="button"
           onClick={onContinue}
-          className="mt-4 rounded-md bg-ufa-accent px-6 py-2.5 text-sm font-semibold text-ufa-bg shadow-md hover:opacity-90"
+          className="mt-4 rounded-md bg-ufa-accent px-6 py-2.5 text-sm font-semibold text-ufa-on-accent  hover:opacity-90"
         >
           {t.teamNewsContinue}
         </button>

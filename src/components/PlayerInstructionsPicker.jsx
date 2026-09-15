@@ -85,8 +85,8 @@ export default function PlayerInstructionsPicker({
         aria-label={t.close ?? 'Close'}
         onClick={onClose}
       />
-      <div className="relative z-10 mt-0 w-full max-w-2xl max-h-[min(92vh,100%)] overflow-auto rounded-t-xl sm:mt-0 sm:rounded-xl border border-ufa-border bg-ufa-panel shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-ufa-border bg-ufa-panel/95 px-4 py-3 backdrop-blur">
+      <div className="relative z-10 mt-0 w-full max-w-2xl max-h-[min(92vh,100%)] overflow-auto rounded-t-xl sm:mt-0 sm:rounded-sm border border-ufa-border bg-ufa-panel ">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-ufa-border bg-ufa-panel px-4 py-3 backdrop-blur">
           <h2 id="player-instructions-title" className="text-sm font-semibold text-ufa-text">
             {t.instructions}
             {player ? ` · ${getPlayerFullName(player)}` : ''}
@@ -102,8 +102,8 @@ export default function PlayerInstructionsPicker({
 
         <div className="flex gap-1 border-b border-ufa-border/60 bg-ufa-bg/30 p-2">
           {[
-            { id: 'offense', label: t.oLine, accent: 'bg-sky-500/20 text-sky-200' },
-            { id: 'defense', label: t.dLine, accent: 'bg-orange-500/20 text-orange-200' },
+            { id: 'offense', label: t.oLine, accent: 'bg-sky-500/20 text-ufa-info' },
+            { id: 'defense', label: t.dLine, accent: 'bg-orange-500/20 text-ufa-gold' },
           ].map((tab) => {
             const on = lineRole === tab.id
             return (
@@ -127,7 +127,7 @@ export default function PlayerInstructionsPicker({
             if (!pairs.length) return null
             return (
               <div key={group.id} className="space-y-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-ufa-muted">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-ufa-muted">
                   {lang === 'en' ? group.labelEn : group.label}
                 </p>
                 <div className="space-y-1">
@@ -149,7 +149,7 @@ export default function PlayerInstructionsPicker({
                             }`}
                           >
                             <span className="block font-medium">{pickLabel(def, lang)}</span>
-                            <span className="mt-0.5 block text-[10px] opacity-80">
+                            <span className="mt-0.5 block text-[11px] opacity-80">
                               {pickDesc(def, lang)}
                             </span>
                           </button>
@@ -186,7 +186,7 @@ export function PlayerInstructionBadges({ playerId, tactics, maxShow = 2, lineRo
         <span
           key={b.id}
           title={b.label}
-          className="inline-flex rounded bg-ufa-accent/15 px-1 py-0.5 text-[9px] font-semibold text-ufa-accent ring-1 ring-ufa-accent/30"
+          className="inline-flex rounded bg-ufa-accent/15 px-1 py-0.5 text-[11px] font-semibold text-ufa-accent ring-1 ring-ufa-accent/30"
         >
           {b.short}
         </span>

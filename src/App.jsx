@@ -1,3 +1,6 @@
+import ThemeControl from './ui/ThemeControl'
+import Wordmark from './ui/Wordmark'
+import MobileMenu from './ui/MobileMenu'
 import { setPlayerLoanListed, setPlayerNotForSale } from './career/transfers/transferEngine.js'
 import ManagerCareerPanel from './components/ManagerCareerPanel.jsx'
 import { addManagerWelcome, processManagerCareer } from './career/managerCareer.js'
@@ -114,9 +117,6 @@ import {
 } from './ui/locale'
 import { useUiLang } from './ui/UiLangContext'
 import { LangSwitch } from './ui/LangSwitch'
-import { ScreenBackground } from './ui/backgrounds/ScreenBackground.jsx'
-import { sceneForTab } from './ui/backgrounds/scenes.js'
-import { useBackgroundPref } from './ui/backgrounds/backgroundPref.js'
 import { careerFlowStrings } from './ui/strings/careerFlow'
 import { shellStrings } from './ui/strings/shell'
 import { hubStrings } from './ui/strings/hub'
@@ -201,9 +201,6 @@ const TAB_ALIASES = {
   'league-transfers': 'club-transfers',
 }
 
-const VIEW_TO_CATEGORY = Object.fromEntries(
-  NAV_CATEGORIES.flatMap((cat) => cat.items.map((item) => [item.id, cat.id])),
-)
 
 function resolveTabId(tabId) {
   return TAB_ALIASES[tabId] ?? tabId
@@ -275,35 +272,6 @@ function IconDots({ className }) {
     </svg>
   )
 }
-function IconNextDay({ className }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-      <path d="M6 5l6 7-6 7" />
-      <path d="M13 5l6 7-6 7" />
-    </svg>
-  )
-}
-function IconAlert({ className }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-      <path d="M12 9v4" />
-      <path d="M10.3 3.9 2.7 17a1.8 1.8 0 0 0 1.55 2.7h15.5A1.8 1.8 0 0 0 21.3 17L13.7 3.9a1.8 1.8 0 0 0-3.4 0Z" />
-      <path d="M12 16.2h.01" />
-    </svg>
-  )
-}
-
-function IconBackdrop({ className, off = false }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="m3 16 4.5-5 3.5 4 3-3 7 6" />
-      <circle cx="9" cy="9" r="1.4" />
-      {off ? <path d="m4 20 16-16" /> : null}
-    </svg>
-  )
-}
-
 function IconClub({ className }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
@@ -332,48 +300,6 @@ const NAV_ICONS = {
   ultiworld: IconNews,
   international: IconGlobe,
   other: IconDots,
-}
-
-/** Ringed-disc brand mark — replaces the generic gradient monogram badge. */
-function UfaMark({ className }) {
-  return (
-    <svg viewBox="0 0 30 30" className={className} aria-hidden="true">
-      <circle cx="15" cy="15" r="12" fill="none" style={{ stroke: 'var(--color-ufa-border)' }} strokeWidth="2.2" />
-      <circle
-        cx="15"
-        cy="15"
-        r="12"
-        fill="none"
-        style={{ stroke: 'var(--color-ufa-accent)' }}
-        strokeWidth="2.2"
-        strokeDasharray="42 75.4"
-        strokeLinecap="round"
-        transform="rotate(-90 15 15)"
-      />
-      <circle
-        cx="15"
-        cy="15"
-        r="12"
-        fill="none"
-        style={{ stroke: 'var(--color-ufa-gold)' }}
-        strokeWidth="2.2"
-        strokeDasharray="14 75.4"
-        strokeDashoffset="-42"
-        strokeLinecap="round"
-        transform="rotate(-90 15 15)"
-      />
-    </svg>
-  )
-}
-
-/** One segment of the header's scoreboard-style meta strip (desktop). */
-function ScoreCell({ label, value }) {
-  return (
-    <div className="border-r border-ufa-border px-3 py-1.5 last:border-r-0">
-      <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-ufa-muted">{label}</p>
-      <p className="mt-0.5 truncate max-w-[10rem] font-semibold text-ufa-text">{value}</p>
-    </div>
-  )
 }
 
 /** ⌘K / Ctrl+K quick-jump across every nav destination — desktop power-user shortcut. */
@@ -449,7 +375,7 @@ function CommandPalette({ open, items, onNavigate, onClose, placeholder, emptyLa
             placeholder={placeholder}
             className="min-w-0 flex-1 bg-transparent text-sm text-ufa-text placeholder:text-ufa-muted focus:outline-none"
           />
-          <kbd className="hidden shrink-0 rounded border border-ufa-border px-1.5 py-0.5 font-mono text-[10px] text-ufa-muted sm:block">
+          <kbd className="hidden shrink-0 rounded border border-ufa-border px-1.5 py-0.5 font-mono text-[11px] text-ufa-muted sm:block">
             Esc
           </kbd>
         </div>
@@ -496,7 +422,8 @@ export default function App() {
   const { lang: uiLang, setLang: setUiLang } = useUiLang()
   const tShell = shellStrings(uiLang)
   const [screen, setScreen] = useState('slots') // slots | new | play
-  const [bgEnabled, toggleBg] = useBackgroundPref()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), [])
   const [slots, setSlots] = useState(() => listSlots())
   const [pendingSlot, setPendingSlot] = useState(null)
   const [career, setCareer] = useState(null)
@@ -537,7 +464,8 @@ export default function App() {
 
   useEffect(() => {
     if (activeTab !== 'match') setMatchInProgress(false)
-  }, [activeTab])
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [activeTab, screen])
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -1580,7 +1508,6 @@ export default function App() {
   if (screen === 'slots') {
     return (
       <>
-        <ScreenBackground scene="career-select" enabled={bgEnabled} />
         <div className="relative z-10 min-h-screen">
           <CareerSelectScreen
             slots={slots}
@@ -1598,7 +1525,6 @@ export default function App() {
   if (screen === 'new' && pendingSlot != null) {
     return (
       <>
-        <ScreenBackground scene="career-new" enabled={bgEnabled} />
         <div className="relative z-10 min-h-screen">
           <NewCareerScreen
             slotIndex={pendingSlot}
@@ -1645,9 +1571,6 @@ export default function App() {
 
   const inboxUnread = unreadInboxCount(career)
   const ultiworldUnread = unreadUltiworldCount(career)
-  const activeCategoryId = VIEW_TO_CATEGORY[activeTab] ?? 'home'
-  const activeCategory =
-    NAV_CATEGORIES.find((c) => c.id === activeCategoryId) ?? NAV_CATEGORIES[0]
   const categoryBadge = (cat) => {
     if (cat.id === 'home') return inboxUnread
     if (cat.id === 'ultiworld') return ultiworldUnread
@@ -1656,16 +1579,9 @@ export default function App() {
 
   return (
     <>
-    <ScreenBackground scene={sceneForTab(activeTab)} enabled={bgEnabled} />
-    <div className="relative z-10 flex min-h-screen flex-col md:flex-row">
-      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-ufa-border bg-ufa-panel/85 md:flex">
-        <div className="flex items-center gap-2.5 border-b border-ufa-border px-4 py-4">
-          <UfaMark className="h-8 w-8 shrink-0" />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold tracking-tight text-ufa-text">{tShell.appName}</p>
-            <p className="truncate text-[10px] text-ufa-muted">{career.managerName}</p>
-          </div>
-        </div>
+    <div className="um-shell relative z-10 flex min-h-screen flex-col lg:flex-row">
+      <aside className="um-sidebar sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-ufa-border bg-ufa-panel lg:flex">
+        <div className="um-sidebar-brand"><Wordmark /><p>{career.managerName}</p></div>
 
         <button
           type="button"
@@ -1677,7 +1593,7 @@ export default function App() {
             <path d="m20 20-3.2-3.2" />
           </svg>
           <span className="flex-1">{tShell.paletteTrigger}</span>
-          <kbd className="rounded border border-ufa-border px-1 font-mono text-[10px]">Ctrl K</kbd>
+          <kbd className="rounded border border-ufa-border px-1 font-mono text-[11px]">Ctrl K</kbd>
         </button>
 
         <nav
@@ -1692,11 +1608,11 @@ export default function App() {
             const catBadge = categoryBadge(cat)
             return (
               <div key={cat.id} className="mb-4 last:mb-0">
-                <p className="flex items-center gap-1.5 px-2 pb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-ufa-muted">
+                <p className="flex items-center gap-1.5 px-2 pb-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-ufa-muted">
                   <Icon className="h-3.5 w-3.5" />
                   {pickLabel(cat, uiLang)}
                   {catBadge > 0 ? (
-                    <span className="ml-auto inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-ufa-accent px-1 text-[10px] font-bold text-ufa-bg">
+                    <span className="ml-auto inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-ufa-accent px-1 text-[11px] font-bold text-ufa-on-accent">
                       {catBadge > 9 ? '9+' : catBadge}
                     </span>
                   ) : null}
@@ -1711,7 +1627,9 @@ export default function App() {
                         key={item.id}
                         type="button"
                         onClick={() => navigateTo(item.id)}
-                        className={`flex w-full items-center justify-between rounded-sm border-l-2 px-2.5 py-1.5 text-left text-sm transition-colors ${
+                        aria-current={active ? 'page' : undefined}
+                        disabled={matchInProgress}
+                        className={`um-nav-item flex w-full items-center justify-between rounded-sm border-l-2 px-2.5 py-1.5 text-left text-sm transition-colors ${
                           active
                             ? 'border-ufa-accent bg-ufa-accent/15 font-semibold text-ufa-accent'
                             : 'border-transparent text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text'
@@ -1719,7 +1637,7 @@ export default function App() {
                       >
                         {pickLabel(item, uiLang)}
                         {badgeCount > 0 ? (
-                          <span className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-ufa-gold px-1 text-[10px] font-bold text-ufa-bg">
+                          <span className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-ufa-gold px-1 text-[11px] font-bold text-ufa-on-accent">
                             {badgeCount > 9 ? '9+' : badgeCount}
                           </span>
                         ) : null}
@@ -1735,20 +1653,7 @@ export default function App() {
         <div className="flex flex-col gap-2 border-t border-ufa-border p-3">
           <div className="flex items-center gap-2">
             <LangSwitch lang={uiLang} onChange={setUiLang} />
-            <button
-              type="button"
-              onClick={toggleBg}
-              aria-pressed={bgEnabled}
-              aria-label={bgEnabled ? tShell.bgOn : tShell.bgOff}
-              title={bgEnabled ? tShell.bgOn : tShell.bgOff}
-              className={`ml-auto flex h-8 w-8 items-center justify-center rounded-md border transition-colors ${
-                bgEnabled
-                  ? 'border-ufa-accent/50 text-ufa-accent'
-                  : 'border-ufa-border text-ufa-muted hover:text-ufa-text'
-              }`}
-            >
-              <IconBackdrop className="h-4 w-4" off={!bgEnabled} />
-            </button>
+            <ThemeControl />
           </div>
           <button
             type="button"
@@ -1762,43 +1667,22 @@ export default function App() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 border-b border-ufa-border bg-ufa-panel/95 pt-[env(safe-area-inset-top)] backdrop-blur-md md:static md:border-b-0 md:bg-transparent md:pt-0 md:backdrop-blur-none">
-          <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 px-3 py-2.5 sm:px-6 sm:py-3 md:justify-start md:gap-4 md:py-4">
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3 md:hidden">
-              <UfaMark className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
-              <h1 className="truncate text-base font-bold tracking-tight text-ufa-text sm:text-lg">
-                {tShell.appName}
-              </h1>
-            </div>
-
-            <div className="hidden overflow-hidden rounded-sm border border-ufa-border font-mono text-[11px] md:flex">
-              <ScoreCell label={tShell.scoreManager} value={career.managerName} />
-              <ScoreCell label={tShell.scoreSeason} value={displaySeasonLabel(league.seasonLabel, uiLang)} />
-              <ScoreCell label={tShell.scoreDate} value={league.currentDate} />
-              <ScoreCell label={tShell.scoreTeam} value={userTeam.name} />
-            </div>
-
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-3 md:hidden">
-              <LangSwitch lang={uiLang} onChange={setUiLang} />
-              <button
-                type="button"
-                onClick={handleExitToSlots}
-                disabled={matchInProgress}
-                className="min-h-9 max-w-[7.5rem] truncate rounded-md border border-ufa-border bg-ufa-bg px-2.5 py-1.5 text-xs font-medium text-ufa-text hover:border-ufa-accent/50 hover:bg-ufa-panel-hover disabled:pointer-events-none disabled:opacity-40"
-              >
-                {tShell.saveAndExit}
-              </button>
+        <header className="um-topbar">
+          <div className="um-topbar-inner">
+            <div className="um-mobile-brand"><Wordmark compact /></div>
+            <div className="um-topbar-context"><strong>{userTeam.name}</strong><span>{displaySeasonLabel(league.seasonLabel, uiLang)} · {league.currentDate}</span></div>
+            <div className="um-topbar-actions">
+              <ThemeControl />
+              <button type="button" className="um-button" disabled={matchInProgress} onClick={() => navigateTo('inbox')}>{uiLang === 'en' ? 'Inbox' : 'Skrzynka'}{inboxUnread > 0 ? ' · ' + inboxUnread : ''} →</button>
+              {activeTab !== 'match' && <button type="button" className="um-button um-button--primary" disabled={!!simProgress || !!calendarSim || matchInProgress} onClick={actionRequiredMessageId ? handleActionRequired : handleAdvanceDay}>{actionRequiredMessageId ? hubStrings(uiLang).actionRequired : tShell.advanceDay} →</button>}
             </div>
           </div>
-          <p className="truncate px-3 pb-2 text-[10px] text-ufa-muted sm:px-6 md:hidden">
-            {career.managerName} · {displaySeasonLabel(league.seasonLabel, uiLang)} · {league.currentDate} ·{' '}
-            {userTeam.name}
-          </p>
         </header>
 
-        <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 py-4 pb-28 sm:px-6 sm:py-6 md:pb-6 league-fade-in">
+        <main className="um-workspace um-screen mx-auto w-full max-w-[1600px] flex-1" data-screen={activeTab}>
         {activeTab === 'hub' && (
           <LeagueHub
+            nextFixture={findNextPlayerFixture(league)}
             league={league}
             onPlayFixture={handlePlayFixture}
             onNavigate={navigateTo}
@@ -1962,8 +1846,8 @@ export default function App() {
               />
             )
           ) : (
-            <div className="rounded-xl border border-ufa-border bg-ufa-panel p-8 text-center shadow-xl shadow-black/30">
-              <h2 className="text-lg font-semibold text-ufa-text">{tShell.noActiveMatchTitle}</h2>
+            <div className="rounded-sm border border-ufa-border bg-ufa-panel p-8 text-center shadow-xl shadow-black/30">
+              <h2 className="text-2xl font-semibold text-ufa-text">{tShell.noActiveMatchTitle}</h2>
               <p className="mt-2 text-sm text-ufa-muted max-w-md mx-auto">
                 {tShell.noActiveMatchBody}
               </p>
@@ -1971,7 +1855,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => navigateTo('hub')}
-                  className="rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-bg"
+                  className="rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-on-accent"
                 >
                   {tShell.goHome}
                 </button>
@@ -2006,80 +1890,15 @@ export default function App() {
         </footer>
       </div>
 
-      {activeTab !== 'match' && (
-        <nav
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-ufa-border bg-ufa-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
-          aria-label={tShell.navAria}
-        >
-          {activeCategory.items.length > 1 && (
-            <div className="flex gap-1 overflow-x-auto overscroll-x-contain border-b border-ufa-border/60 px-2 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {activeCategory.items.map((item) => {
-                const active = activeTab === item.id
-                const badgeCount =
-                  item.id === 'inbox' ? inboxUnread : item.id === 'ultiworld' ? ultiworldUnread : 0
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => navigateTo(item.id)}
-                    className={`relative shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                      active ? 'bg-ufa-accent text-ufa-bg' : 'bg-ufa-bg text-ufa-muted'
-                    }`}
-                  >
-                    {pickLabel(item, uiLang)}
-                    {badgeCount > 0 ? (
-                      <span className="ml-1 font-bold">· {badgeCount > 9 ? '9+' : badgeCount}</span>
-                    ) : null}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-          <div className="flex overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {NAV_CATEGORIES.map((cat) => {
-              const Icon = NAV_ICONS[cat.id]
-              const active = cat.id === activeCategoryId
-              const badge = categoryBadge(cat)
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => navigateTo(cat.items[0].id)}
-                  className={`relative flex shrink-0 flex-col items-center gap-0.5 px-3.5 py-1.5 text-[9px] font-medium ${
-                    active ? 'text-ufa-accent' : 'text-ufa-muted'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="whitespace-nowrap">{pickLabel(cat, uiLang)}</span>
-                  {badge > 0 ? (
-                    <span className="absolute right-1.5 top-0.5 min-w-[0.85rem] rounded-full bg-ufa-gold px-1 text-center text-[8px] font-bold leading-[1.1] text-ufa-bg">
-                      {badge > 9 ? '9+' : badge}
-                    </span>
-                  ) : null}
-                </button>
-              )
-            })}
-          </div>
-        </nav>
-      )}
-
-      {activeTab !== 'match' && !simProgress && !calendarSim && (
-        <button
-          type="button"
-          onClick={actionRequiredMessageId ? handleActionRequired : handleAdvanceDay}
-          className={`fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full text-ufa-bg shadow-lg shadow-black/40 transition-transform active:scale-95 md:hidden ${
-            actionRequiredMessageId ? 'bg-ufa-gold' : 'bg-ufa-accent'
-          }`}
-          aria-label={actionRequiredMessageId ? hubStrings(uiLang).actionRequired : tShell.advanceDay}
-          title={actionRequiredMessageId ? hubStrings(uiLang).actionRequired : tShell.advanceDay}
-        >
-          {actionRequiredMessageId ? (
-            <IconAlert className="h-6 w-6" />
-          ) : (
-            <IconNextDay className="h-6 w-6" />
-          )}
-        </button>
-      )}
+      <nav className="um-mobile-nav" aria-label={tShell.navAria}>
+        {[
+          { id: 'hub', label: uiLang === 'en' ? 'Home' : 'Centrum', Icon: IconHome },
+          { id: 'roster', label: uiLang === 'en' ? 'Roster' : 'Skład', Icon: IconShirt },
+          { id: 'match', label: uiLang === 'en' ? 'Match' : 'Mecz', Icon: IconTrophy },
+        ].map(({ id, label, Icon }) => <button key={id} type="button" disabled={matchInProgress && id !== 'match'} aria-current={activeTab === id ? 'page' : undefined} onClick={() => navigateTo(id)}><Icon /><span>{label}</span></button>)}
+        <button type="button" disabled={matchInProgress} aria-expanded={mobileMenuOpen} aria-current={!['hub', 'roster', 'match'].includes(activeTab) ? 'page' : undefined} onClick={() => setMobileMenuOpen(true)}><IconDots /><span>Menu</span></button>
+      </nav>
+      <MobileMenu open={mobileMenuOpen} onClose={closeMobileMenu} categories={NAV_CATEGORIES} activeTab={activeTab} lang={uiLang} setLang={setUiLang} navigate={navigateTo} onExit={handleExitToSlots} onSearch={() => setPaletteOpen(true)} disabled={matchInProgress} />
 
       <CommandPalette
         open={paletteOpen}
@@ -2098,12 +1917,12 @@ export default function App() {
 
       {appError && (
         <div className="fixed inset-x-0 top-0 z-[90] flex justify-center px-4 pt-3">
-          <div className="flex max-w-xl items-start gap-3 rounded-lg border border-red-500/40 bg-ufa-panel px-4 py-3 text-sm text-red-300 shadow-2xl shadow-black/50">
+          <div className="flex max-w-xl items-start gap-3 rounded-sm border border-red-500/40 bg-ufa-panel px-4 py-3 text-sm text-ufa-danger shadow-2xl shadow-black/50">
             <span className="flex-1">{appError}</span>
             <button
               type="button"
               onClick={() => setAppError('')}
-              className="text-red-300/70 hover:text-red-200"
+              className="text-ufa-danger/70 hover:text-ufa-danger"
               aria-label={commonStrings(uiLang).close}
             >
               ✕
@@ -2164,8 +1983,8 @@ function CareerHistoryView({ career, onStartNextSeason }) {
 
   return (
     <div className="space-y-6 league-fade-in">
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
-        <h2 className="text-lg font-semibold text-ufa-text">{t.careerTitle}</h2>
+      <div className="rounded-sm border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+        <h2 className="text-2xl font-semibold text-ufa-text">{t.careerTitle}</h2>
         <p className="mt-2 text-sm text-ufa-muted">
           {t.careerMeta(
             career.managerName,
@@ -2184,7 +2003,7 @@ function CareerHistoryView({ career, onStartNextSeason }) {
           <button
             type="button"
             onClick={onStartNextSeason}
-            className="mt-4 rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+            className="mt-4 rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90"
           >
             {t.startNext(next)}
           </button>
@@ -2192,8 +2011,8 @@ function CareerHistoryView({ career, onStartNextSeason }) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5">
-          <h3 className="font-semibold text-ufa-text text-sm mb-3">{t.seasonHistory}</h3>
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5">
+          <h3 className="font-semibold text-ufa-text text-xl mb-3">{t.seasonHistory}</h3>
           {history.length === 0 ? (
             <p className="text-sm text-ufa-muted">{t.noSeasonsYet}</p>
           ) : (
@@ -2218,8 +2037,8 @@ function CareerHistoryView({ career, onStartNextSeason }) {
           )}
         </div>
 
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5">
-          <h3 className="font-semibold text-ufa-text text-sm mb-3">{t.allTimeLeaders}</h3>
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5">
+          <h3 className="font-semibold text-ufa-text text-xl mb-3">{t.allTimeLeaders}</h3>
           {allTimePlayers.length === 0 ? (
             <p className="text-sm text-ufa-muted">{t.noAllTime}</p>
           ) : (

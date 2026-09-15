@@ -63,7 +63,7 @@ export default function LoanTermsModal({
         aria-label={t.close}
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-lg max-h-[min(92vh,100%)] overflow-y-auto rounded-t-xl sm:rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-2xl">
+      <div className="relative z-10 w-full max-w-lg max-h-[min(92vh,100%)] overflow-y-auto rounded-t-xl sm:rounded-sm border border-ufa-border bg-ufa-panel p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-wide text-ufa-muted">
@@ -108,7 +108,7 @@ export default function LoanTermsModal({
               className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text tabular-nums"
             />
           </label>
-          {overBudget && <p className="text-xs text-red-400">{t.overBudget}</p>}
+          {overBudget && <p className="text-xs text-ufa-danger">{t.overBudget}</p>}
 
           <label className="block text-sm text-ufa-text">
             {t.loanDuration}
@@ -142,7 +142,7 @@ export default function LoanTermsModal({
           </label>
 
           <div>
-            <p className="text-[10px] uppercase text-ufa-muted mb-1">{t.loanBuyClause}</p>
+            <p className="text-[11px] uppercase text-ufa-muted mb-1">{t.loanBuyClause}</p>
             <div className="flex flex-wrap gap-1.5">
               {['none', 'option', 'obligation'].map((id) => (
                 <button
@@ -178,7 +178,7 @@ export default function LoanTermsModal({
             type="button"
             disabled={overBudget || (isOut && !destinationTeamId)}
             onClick={handleSubmit}
-            className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+            className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
           >
             {t.sendLoanProposal}
           </button>

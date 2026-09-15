@@ -45,7 +45,7 @@ function SectionPanel({ section, lang }) {
       <div className="grid gap-3 md:grid-cols-2">
         {section.cards.map((card) => (
           <div key={pickCopy(card, 'title', lang)} className="rounded-sm border border-ufa-border bg-ufa-panel p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ufa-muted">
               {pickCopy(card, 'crumb', lang)}
             </p>
             <h4 className="mt-1 text-sm font-semibold text-ufa-text">{pickCopy(card, 'title', lang)}</h4>
@@ -135,7 +135,7 @@ export default function TutorialGuide({ open, onClose, lang }) {
               onClick={() => setActiveId(tab.id)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 tab.id === activeId
-                  ? 'bg-ufa-accent text-ufa-bg'
+                  ? 'bg-ufa-accent text-ufa-on-accent'
                   : 'text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text'
               }`}
             >
@@ -158,7 +158,7 @@ export default function TutorialGuide({ open, onClose, lang }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+            className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90"
           >
             {t.gotIt}
           </button>

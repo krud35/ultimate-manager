@@ -21,7 +21,7 @@ export default function StaminaBar({ stamina, compact = false, className = '' })
         <div className={`h-full rounded-full ${color}`} style={{ width: `${value}%` }} />
       </div>
       <span
-        className={`tabular-nums text-ufa-muted text-right ${compact ? 'text-[10px] w-7' : 'text-xs w-8'}`}
+        className={`tabular-nums text-ufa-muted text-right ${compact ? 'text-[11px] w-7' : 'text-xs w-8'}`}
       >
         {value}
       </span>

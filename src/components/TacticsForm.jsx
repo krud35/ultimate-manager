@@ -45,8 +45,8 @@ function PointStartBadge({ role }) {
     <span
       className={`inline-flex items-center rounded-md px-3 py-1 text-sm font-semibold ${
         isOffense
-          ? 'bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/40'
-          : 'bg-orange-500/20 text-orange-300 ring-1 ring-orange-500/40'
+          ? 'bg-sky-500/20 text-ufa-info ring-1 ring-sky-500/40'
+          : 'bg-orange-500/20 text-ufa-gold ring-1 ring-orange-500/40'
       }`}
     >
       {isOffense ? t.startOffense : t.startDefense}
@@ -61,7 +61,7 @@ function InstructionTagList({ tags, lang, toneClass }) {
       {tags.map((tag) => (
         <span
           key={tag}
-          className={`rounded px-1.5 py-0.5 text-[10px] ring-1 ${toneClass}`}
+          className={`rounded px-1.5 py-0.5 text-[11px] ring-1 ${toneClass}`}
         >
           {playerInstructionLabel(tag, lang)}
         </span>
@@ -87,9 +87,9 @@ function PlayerInstructionsOverview({ roster, tactics }) {
     .filter(Boolean)
 
   return (
-    <section className="rounded-xl border border-ufa-border/80 bg-ufa-panel/50 px-4 py-3">
+    <section className="rounded-sm border border-ufa-border/80 bg-ufa-panel px-4 py-3">
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-sm font-semibold text-ufa-text">{t.individualOrders}</h3>
+        <h3 className="text-xl font-semibold text-ufa-text">{t.individualOrders}</h3>
         <span className="text-[11px] text-ufa-muted">{t.playersShort(rows.length)}</span>
       </div>
       {!rows.length ? (
@@ -106,12 +106,12 @@ function PlayerInstructionsOverview({ roster, tactics }) {
               <InstructionTagList
                 tags={oTags}
                 lang={lang}
-                toneClass="bg-sky-500/12 text-sky-300 ring-sky-500/25"
+                toneClass="bg-sky-500/12 text-ufa-info ring-sky-500/25"
               />
               <InstructionTagList
                 tags={dTags}
                 lang={lang}
-                toneClass="bg-orange-500/12 text-orange-300 ring-orange-500/25"
+                toneClass="bg-orange-500/12 text-ufa-gold ring-orange-500/25"
               />
             </li>
           ))}
@@ -151,7 +151,7 @@ function CompactLineupSection({
       className={
         compact
           ? ''
-          : 'rounded-xl border border-ufa-border bg-ufa-panel p-3 shadow-xl shadow-black/30 sm:p-5'
+          : 'rounded-sm border border-ufa-border bg-ufa-panel p-3   sm:p-5'
       }
     >
       <div className="mb-3">
@@ -178,9 +178,9 @@ function CompactLineupSection({
             staminaMap={staminaMap}
             accentClass={
               slot.role === 'handler'
-                ? 'bg-sky-500/25 text-sky-300'
+                ? 'bg-sky-500/25 text-ufa-info'
                 : slot.role === 'cutter'
-                  ? 'bg-violet-500/25 text-violet-300'
+                  ? 'bg-violet-500/25 text-ufa-special'
                   : accentClass
             }
             slotLabel={slot.label}
@@ -237,7 +237,7 @@ function RichLineupSection({
   const handlerN = slots.filter((s) => s.role === 'handler').length
   const cutterN = slots.filter((s) => s.role === 'cutter').length
   return (
-    <section className="rounded-xl border border-ufa-border bg-ufa-panel p-3 shadow-xl shadow-black/30 sm:p-5">
+    <section className="rounded-sm border border-ufa-border bg-ufa-panel p-3   sm:p-5">
       <div className="mb-3">
         <div className="flex items-baseline justify-between gap-2">
           <h3 className="font-semibold text-ufa-text">{title}</h3>
@@ -261,9 +261,9 @@ function RichLineupSection({
             staminaMap={staminaMap}
             accentClass={
               slot.role === 'handler'
-                ? 'bg-sky-500/25 text-sky-300'
+                ? 'bg-sky-500/25 text-ufa-info'
                 : slot.role === 'cutter'
-                  ? 'bg-violet-500/25 text-violet-300'
+                  ? 'bg-violet-500/25 text-ufa-special'
                   : accentClass
             }
             slotLabel={slot.label}
@@ -413,7 +413,7 @@ export default function TacticsForm({
 
   if (!tactics) {
     return (
-      <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+      <div className="rounded-sm border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
         {t.noTactics}
       </div>
     )
@@ -432,7 +432,7 @@ export default function TacticsForm({
     const accent = isD
       ? 'border-orange-500/25 bg-orange-500/[0.04]'
       : 'border-sky-500/25 bg-sky-500/[0.04]'
-    const titleColor = isD ? 'text-orange-300/90' : 'text-sky-300/90'
+    const titleColor = isD ? 'text-ufa-gold/90' : 'text-ufa-info/90'
     const label = isD ? 'D-Line' : 'O-Line'
 
     if (compact) {
@@ -475,7 +475,7 @@ export default function TacticsForm({
     }
 
     return (
-      <div className={`space-y-3 rounded-xl border p-4 ${accent}`}>
+      <div className={`space-y-3 rounded-sm border p-4 ${accent}`}>
         <p className={`text-[11px] font-semibold uppercase tracking-wider ${titleColor}`}>
           {t.lineDotStyles(label)}
         </p>
@@ -519,7 +519,7 @@ export default function TacticsForm({
     const isD = lineRole === 'defense'
     const line = isD ? defenseLine : offenseLine
     const slots = isD ? dPositionSlots : oPositionSlots
-    const accent = isD ? 'bg-orange-500/25 text-orange-300' : 'bg-sky-500/25 text-sky-300'
+    const accent = isD ? 'bg-orange-500/25 text-ufa-gold' : 'bg-sky-500/25 text-ufa-info'
     const title = isD ? t.dLine : t.oLine
     const subtitle = isD
       ? t.dLinePullHint
@@ -603,15 +603,15 @@ export default function TacticsForm({
   return (
     <div className={compact ? 'space-y-3' : 'space-y-5'}>
       {lineupError && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        <div className="rounded-sm border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
           {lineupError}
         </div>
       )}
 
       {exhaustedIds.length > 0 && (
-        <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div className="rounded-sm border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-ufa-danger">
           <p className="font-medium">{t.exhaustedWarn}</p>
-          <p className="mt-1 text-xs text-red-200/80">
+          <p className="mt-1 text-xs text-ufa-danger/80">
             {t.exhaustedHint}
           </p>
         </div>
@@ -619,15 +619,15 @@ export default function TacticsForm({
 
       {useTabs && (
         <div
-          className={`flex flex-wrap gap-1 rounded-lg border border-ufa-border/80 bg-ufa-bg/40 p-1 ${
+          className={`flex flex-wrap gap-1 rounded-sm border border-ufa-border/80 bg-ufa-bg/40 p-1 ${
             compact ? '' : ''
           }`}
           role="tablist"
           aria-label={t.tacticsViewAria}
         >
           {[
-            { id: 'o-line', label: 'O-Line', accent: 'data-[on]:bg-sky-500/20 data-[on]:text-sky-200' },
-            { id: 'd-line', label: 'D-Line', accent: 'data-[on]:bg-orange-500/20 data-[on]:text-orange-200' },
+            { id: 'o-line', label: 'O-Line', accent: 'data-[on]:bg-sky-500/20 data-[on]:text-ufa-info' },
+            { id: 'd-line', label: 'D-Line', accent: 'data-[on]:bg-orange-500/20 data-[on]:text-ufa-gold' },
             { id: 'combined', label: t.linked, accent: 'data-[on]:bg-ufa-accent/20 data-[on]:text-ufa-accent' },
           ].map((tab) => {
             const on = viewTab === tab.id
@@ -643,7 +643,7 @@ export default function TacticsForm({
                   on
                     ? tab.accent.replace(/data-\[on\]:/g, '')
                     : 'text-ufa-muted hover:text-ufa-text'
-                } ${on ? (tab.id === 'o-line' ? 'bg-sky-500/20 text-sky-200' : tab.id === 'd-line' ? 'bg-orange-500/20 text-orange-200' : 'bg-ufa-accent/20 text-ufa-accent') : ''}`}
+                } ${on ? (tab.id === 'o-line' ? 'bg-sky-500/20 text-ufa-info' : tab.id === 'd-line' ? 'bg-orange-500/20 text-ufa-gold' : 'bg-ufa-accent/20 text-ufa-accent') : ''}`}
               >
                 {tab.label}
               </button>
@@ -715,7 +715,7 @@ export default function TacticsForm({
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="font-semibold text-ufa-text text-sm">{t.pointSeven}</h3>
+              <h3 className="font-semibold text-ufa-text text-xl">{t.pointSeven}</h3>
               <p className="text-xs text-ufa-muted mt-0.5">
                 {t.pointSevenHint}
               </p>
@@ -801,11 +801,32 @@ export default function TacticsForm({
       {/* ── Dual: O-Line / D-Line / Połączony ── */}
       {lineupMode === 'dual' && (
         <>
+          {showLines && (
+            <section className="space-y-3">
+              {!compact && (
+                <div>
+                  <h3 className="text-xl font-semibold text-ufa-text">{t.formationPreview}</h3>
+                  <p className="mt-0.5 text-xs text-ufa-muted">
+                    {t.formationPreviewHint}
+                  </p>
+                </div>
+              )}
+              <div
+                className={
+                  isCombined ? 'grid gap-4 lg:grid-cols-2' : 'grid gap-4'
+                }
+              >
+                {showO && renderFormation('offense')}
+                {showD && renderFormation('defense')}
+              </div>
+            </section>
+          )}
+
           {(showO || showD) && (
             <section className="space-y-3">
               {!compact && (
                 <div>
-                  <h3 className="text-sm font-semibold text-ufa-text">
+                  <h3 className="text-xl font-semibold text-ufa-text">
                     {isCombined ? t.lineStyles : showO ? t.oLineStyles : t.dLineStyles}
                   </h3>
                   <p className="mt-0.5 text-xs text-ufa-muted">
@@ -850,7 +871,7 @@ export default function TacticsForm({
               onTacticsChange={onTacticsChange}
               compact={compact}
               lineRole="offense"
-              defaultOpen={!compact && !isCombined}
+              defaultOpen={false}
             />
           )}
           {showD && (
@@ -859,7 +880,7 @@ export default function TacticsForm({
               onTacticsChange={onTacticsChange}
               compact={compact}
               lineRole="defense"
-              defaultOpen={!compact && !isCombined}
+              defaultOpen={false}
             />
           )}
 
@@ -870,26 +891,6 @@ export default function TacticsForm({
             <PlayerInstructionsOverview roster={roster} tactics={tactics} />
           )}
 
-          {showLines && (
-            <section className="space-y-3">
-              {!compact && (
-                <div>
-                  <h3 className="text-sm font-semibold text-ufa-text">{t.formationPreview}</h3>
-                  <p className="mt-0.5 text-xs text-ufa-muted">
-                    {t.formationPreviewHint}
-                  </p>
-                </div>
-              )}
-              <div
-                className={
-                  isCombined ? 'grid gap-4 lg:grid-cols-2' : 'grid gap-4'
-                }
-              >
-                {showO && renderFormation('offense')}
-                {showD && renderFormation('defense')}
-              </div>
-            </section>
-          )}
 
           {showLines && (
             <div

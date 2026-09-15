@@ -28,7 +28,7 @@ function Mark({ kind, labels }) {
   return (
     <span
       title={isGoal ? labels.goal : labels.assist}
-      className={`ml-1 rounded px-1 text-[10px] font-bold ${
+      className={`ml-1 rounded px-1 text-[11px] font-bold ${
         isGoal ? 'bg-ufa-accent text-black' : 'bg-ufa-border text-ufa-text'
       }`}
     >
@@ -102,7 +102,7 @@ export default function AutoSimOverlay({
       aria-busy="true"
       aria-label={labels.title}
     >
-      <div className="w-full max-w-lg rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-2xl shadow-black/50">
+      <div className="w-full max-w-lg rounded-sm border border-ufa-border bg-ufa-panel p-5 shadow-2xl shadow-black/50">
         <p className="text-xs uppercase tracking-wide text-ufa-muted">{labels.title}</p>
 
         <div className="mt-3 flex items-end justify-between gap-4">

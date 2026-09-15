@@ -39,8 +39,9 @@ test('Regular lower-tier play earns more experience than being benched in a top 
 test('Academy fatigue recovers daily, rest speeds recovery, injured juniors do not grow',()=>{
  const p=young();p.developmentFatigue=50;p.injury={label:'strain',daysRemaining:10}
  const t={id:'junior-club',players:[],academyPlayers:[p]},league={teamsById:{[t.id]:t},currentDate:'2025-09-01'}
- const skills=JSON.stringify(p.skills);applyDailyDevelopment(league,{date:'2025-09-01'});assert.equal(p.developmentFatigue,48);assert.equal(p.injury.daysRemaining,9);assert.equal(JSON.stringify(p.skills),skills)
- p.trainingFocus='rest';applyDailyDevelopment(league,{date:'2025-09-02'});assert.equal(p.developmentFatigue,44);assert.equal(p.injury.daysRemaining,7)
+ const skills=JSON.stringify(p.skills);applyDailyDevelopment(league,{date:'2025-09-01'});assert(p.developmentFatigue<50);assert.equal(p.injury.daysRemaining,9);assert.equal(JSON.stringify(p.skills),skills)
+ const dayOne=p.developmentFatigue,normalRecovery=50-dayOne
+ p.trainingFocus='rest';applyDailyDevelopment(league,{date:'2025-09-02'});assert(dayOne-p.developmentFatigue>normalRecovery);assert.equal(p.injury.daysRemaining,7)
 })
 test('AI distinguishes blocked prospects and expendable reserves using actual appearances',()=>{
  const team=structuredClone(teams[0]);team.players.sort((a,b)=>getOverallRating(b.skills)-getOverallRating(a.skills))

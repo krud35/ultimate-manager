@@ -37,10 +37,10 @@ function FacilityCard({ team, facilityId, budget, lang, t, busy, onUpgrade }) {
   const name = facilityName(facilityId, lang)
 
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-bg/50 p-4 flex flex-col gap-2">
+    <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 p-4 flex flex-col gap-2">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h3 className="font-semibold text-ufa-text text-sm">{name}</h3>
+          <h3 className="font-semibold text-ufa-text text-xl">{name}</h3>
           <p className="text-[11px] text-ufa-muted">{facilityEffectLabel(facilityId, lang)}</p>
         </div>
         <span className={`text-lg font-bold tabular-nums ${facilityToneClass(facilityId, level)}`}>
@@ -62,7 +62,7 @@ function FacilityCard({ team, facilityId, budget, lang, t, busy, onUpgrade }) {
           type="button"
           disabled={!canUpgrade}
           onClick={() => onUpgrade(facilityId)}
-          className="rounded-md bg-ufa-accent px-3 py-1.5 text-xs font-semibold text-ufa-bg disabled:opacity-40 hover:opacity-90"
+          className="rounded-md bg-ufa-accent px-3 py-1.5 text-xs font-semibold text-ufa-on-accent disabled:opacity-40 hover:opacity-90"
           title={!canUpgrade && cost != null && budget < cost ? t.cannotAfford : undefined}
         >
           {busy ? t.upgrading : t.upgrade}
@@ -74,9 +74,9 @@ function FacilityCard({ team, facilityId, budget, lang, t, busy, onUpgrade }) {
 
 function OfferCard({ offer, lang, t, busy, onSign }) {
   return (
-    <div className="rounded-lg border border-ufa-border bg-ufa-panel/80 p-3 flex flex-col gap-2">
+    <div className="rounded-sm border border-ufa-border bg-ufa-panel p-3 flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] uppercase tracking-wide text-ufa-accent font-semibold">
+        <span className="text-[11px] uppercase tracking-wide text-ufa-accent font-semibold">
           {t.offer(offer.offerIndex ?? 1)}
         </span>
         <span className="text-xs text-ufa-muted">
@@ -91,13 +91,13 @@ function OfferCard({ offer, lang, t, busy, onSign }) {
       <p className="text-xs text-ufa-text leading-snug">{describeSponsorOfferTotals(offer, lang)}</p>
       <p className="text-[11px] text-ufa-muted">
         {t.signingBonus}:{' '}
-        <span className="text-emerald-400 tabular-nums">{formatUsd(offer.signingPayout)}</span>
+        <span className="text-ufa-success tabular-nums">{formatUsd(offer.signingPayout)}</span>
         {' · '}
         {t.totalValue}:{' '}
         <span className="tabular-nums">{formatUsd(offer.totalContractValue)}</span>
       </p>
       {offer.performanceBonus && (
-        <p className="text-[11px] text-amber-300">
+        <p className="text-[11px] text-ufa-gold">
           {performanceBonusLabel(offer.performanceBonus, lang)}
         </p>
       )}
@@ -132,9 +132,9 @@ function SponsorSlotPanel({ team, slot, seasonYear, lang, t, busy, onChanged }) 
   }
 
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-bg/40 p-4 space-y-3">
+    <div className="rounded-sm border border-ufa-border bg-ufa-bg/40 p-4 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-semibold text-sm text-ufa-text">{sponsorSlotLabel(slot, lang)}</h3>
+        <h3 className="font-semibold text-xl text-ufa-text">{sponsorSlotLabel(slot, lang)}</h3>
         {!contract && (
           <button
             type="button"
@@ -147,8 +147,8 @@ function SponsorSlotPanel({ team, slot, seasonYear, lang, t, busy, onChanged }) 
       </div>
 
       {contract ? (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-1.5">
-          <p className="text-[10px] uppercase tracking-wide text-emerald-400">{t.activeDeal}</p>
+        <div className="rounded-sm border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-1.5">
+          <p className="text-[11px] uppercase tracking-wide text-ufa-success">{t.activeDeal}</p>
           <p className="font-semibold text-ufa-text">{brandDisplayName(contract, lang)}</p>
           <p className="text-xs text-ufa-muted">{paymentModelLabel(contract.paymentModel, lang)}</p>
           {contract.seasonalTiming && (
@@ -161,12 +161,12 @@ function SponsorSlotPanel({ team, slot, seasonYear, lang, t, busy, onChanged }) 
           </p>
           <p className="text-[11px] text-ufa-muted">
             {t.paidToDate}:{' '}
-            <span className="text-emerald-400 tabular-nums">
+            <span className="text-ufa-success tabular-nums">
               {formatUsd(contract.paidToDate ?? 0)}
             </span>
           </p>
           {contract.performanceBonus && (
-            <p className="text-[11px] text-amber-300">
+            <p className="text-[11px] text-ufa-gold">
               {performanceBonusLabel(contract.performanceBonus, lang)}
             </p>
           )}
@@ -264,22 +264,22 @@ export default function ClubBoardView({ career, onChange }) {
 
   return (
     <div className="space-y-6 league-fade-in">
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+      <div className="um-section  ">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-xl font-semibold text-ufa-text">{t.title}</h2>
+            <h2 className="text-2xl font-semibold text-ufa-text">{t.title}</h2>
             <p className="text-sm text-ufa-muted mt-0.5">{t.subtitle}</p>
           </div>
         </div>
         {flash && (
-          <p className="mt-3 text-sm text-emerald-400 border border-emerald-500/30 rounded-md bg-emerald-500/10 px-3 py-2">
+          <p className="mt-3 text-sm text-ufa-success border border-emerald-500/30 rounded-md bg-emerald-500/10 px-3 py-2">
             {flash}
           </p>
         )}
       </div>
 
       <ClubManagementPanel team={team} seasonYear={career.seasonYear} lang={lang} onChange={() => persist()} />
-      {team.facilityProject && <p className="rounded-lg border border-ufa-border p-3 text-sm">{lang === 'en' ? 'Under construction' : 'Trwa budowa'}: {facilityName(team.facilityProject.facilityId, lang)} → {team.facilityProject.targetLevel}. {lang === 'en' ? 'Completion' : 'Zakończenie'}: {team.facilityProject.completesOn}.</p>}
+      {team.facilityProject && <p className="rounded-sm border border-ufa-border p-3 text-sm">{lang === 'en' ? 'Under construction' : 'Trwa budowa'}: {facilityName(team.facilityProject.facilityId, lang)} → {team.facilityProject.targetLevel}. {lang === 'en' ? 'Completion' : 'Zakończenie'}: {team.facilityProject.completesOn}.</p>}
       <section className="space-y-3">
         <div>
           <h3 className="font-semibold text-ufa-text">{t.facilities}</h3>

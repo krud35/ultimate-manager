@@ -272,11 +272,11 @@ export default function FieldView2D({
   return (
     <div className={`field-view-2d ${className}`}>
       <div className="field-view-2d__header">
-        <span className="field-team field-team--home" style={{ color: homeColor }}>
+        <span className="field-team field-team--home" style={{ '--team-color': homeColor }}>
           {homeLabel}
         </span>
         <PhaseBadge phase={frame.phase} />
-        <span className="field-team field-team--away" style={{ color: awayColor }}>
+        <span className="field-team field-team--away" style={{ '--team-color': awayColor }}>
           {awayLabel}
         </span>
       </div>

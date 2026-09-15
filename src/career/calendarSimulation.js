@@ -43,6 +43,7 @@ import {
 } from './index.js'
 import { advanceNationalTeamsForDate } from './nationalTeamSeason.js'
 import { processTeamTrainingsForDate, weeklyTeamTrainingMaintenance } from './teamTraining.js'
+import { trainingDateAdd } from './trainingSchedule.js'
 import { advanceCalendarDay, getPlayerFixtureOnDate, areCompetitionsComplete } from '../league/dayEngine.js'
 import { processContractExpirations, processContractExpiryReminders } from './transfers/contractLifecycle.js'
 import { recordMatchKnowledgeGainForNewMatches } from './scouting.js'
@@ -60,11 +61,13 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
   // ten sam wzorzec co finał ME/MŚ niżej (advanceNationalTeamsForDate).
   const cupFinalMsg = cupFinalWatchableMessage(nextLeague, career)
   if (cupFinalMsg) inboxMessages.push(cupFinalMsg)
+  // International match load must be recorded before club training and overnight recovery.
+  if(career.world) inboxMessages.push(...advanceNationalTeamsForDate(career,career.world,trainingDate??nextLeague.currentDate))
   if (trainingDate) {
     const training = processTeamTrainingsForDate(nextLeague, trainingDate, {
       playerTeamId: career.playerTeamId,
     })
-    inboxMessages.push(...messagesFromTrainingReports(training.reports, career))
+    inboxMessages.push(...messagesFromTrainingReports(training.reports.filter(r => r.source !== 'schedule'), career))
     inboxMessages.push(...messagesFromTrainingInjuries(training.reports, career))
     applyDailyDevelopment(nextLeague, {
       playerTeamId: career.playerTeamId,
@@ -85,15 +88,16 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
     inboxMessages.push(
       ...messagesFromAcademyCampaignReports(academyReports, { ...career, league: nextLeague }),
     )
-    // Kadry narodowe (Fazy 1-5) — kwalifikacje/turniej ME/MŚ mają konkretne daty
-    // (przerwy reprezentacyjne, patrz seasonCalendar.js), więc muszą być sprawdzane
-    // codziennie jak reszta tego bloku, nie tylko w weekTick. Zwraca już gotowe
-    // wiadomości (nie surowe raporty), więc bez pośredniego messagesFromX.
-    inboxMessages.push(
-      ...advanceNationalTeamsForDate(career, career.world, trainingDate ?? nextLeague.currentDate),
-    )
   }
   if (weekTick) {
+    const trainingTeam=nextLeague.teamsById?.[career.playerTeamId]
+    const reportDate=trainingDate??nextLeague.currentDate
+    if(trainingTeam?.teamTraining?.schedule && trainingTeam.teamTraining.lastSummaryDate!==reportDate) {
+      const rows=(trainingTeam.teamTraining.sessionLog??[]).filter(r=>r.date>trainingDateAdd(reportDate,-7)&&r.date<=reportDate)
+      const gains=rows.reduce((sum,r)=>sum+(r.skillBumps??0),0),adjustments=rows.reduce((sum,r)=>sum+(r.adjustments?.length??0),0)
+      trainingTeam.teamTraining.lastSummaryDate=reportDate
+      inboxMessages.push({id:`training-week-${reportDate}`,date:reportDate,read:false,type:'club_news',title:'Tygodniowy raport treningowy',titleEn:'Weekly training report',body:`Sesje: ${rows.length}. Przyrosty umiejętności: ${gains}. Indywidualne odciążenia / ograniczenia: ${adjustments}. Szczegóły i prognoza świeżości są w Treningu.`,bodyEn:`Sessions: ${rows.length}. Skill gains: ${gains}. Individual rest / restrictions: ${adjustments}. See Training for details and the freshness forecast.`})
+    }
     weeklyTeamTrainingMaintenance(nextLeague, {
       playerTeamId: career.playerTeamId,
     })

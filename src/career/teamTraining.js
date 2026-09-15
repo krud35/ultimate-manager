@@ -7,7 +7,10 @@ import { getOverallRating, getSubStat, normalizePlayerSkills, PLAYER_STAT_CATEGO
 import { getPlayerMorale, ensurePlayerMorale } from '../models/playerMorale.js'
 import { ensurePlayerTraits, getPlayerTraits, getTraitMods } from '../models/playerTraits.js'
 import { isPlayerInjured, tryTrainingInjury } from '../models/playerInjury.js'
-import { ensurePlayerDevelopment, getIndividualFocusMods } from './playerDevelopment.js'
+import { ensurePlayerDevelopment, getIndividualFocusMods, applyDailyDevelopment } from './playerDevelopment.js'
+import { addPlayerLoad, ensurePlayerWorkload, trainingParticipation, workloadRisk } from '../models/playerWorkload.js'
+import { ensureTrainingSchedule, resolveTrainingDay, playerSessionPlan, SESSION_DEFS, trainingFixtures } from './trainingSchedule.js'
+import { staffSessionQuality } from './clubStaff.js'
 import { parseISODate, formatISODate, addDays } from '../league/seasonCalendar.js'
 import { getPlayerFullName } from '../data/mockPlayers.js'
 import {
@@ -215,7 +218,7 @@ export function ensureTeamTraining(team) {
   if (!Array.isArray(tt.oneOff)) tt.oneOff = []
   if (!Array.isArray(tt.sessionLog)) tt.sessionLog = []
   if (typeof tt.tacticsFamiliarity !== 'number') tt.tacticsFamiliarity = 38
-  tt.tacticsFamiliarity = clampInt(tt.tacticsFamiliarity, 0, 100)
+  tt.tacticsFamiliarity = clamp(tt.tacticsFamiliarity, 0, 100)
   return tt
 }
 
@@ -380,18 +383,21 @@ function rollSessionInjuries(
   attendedOnly = null,
   injuryChanceMult = 1,
   team = null,
+  plan = null,
 ) {
   const injuries = []
   for (const player of players) {
     if (!player) continue
     if (attendedOnly && !attendedOnly.has(player.id)) continue
     if (isPlayerInjured(player)) continue
+    const personal = plan ? playerSessionPlan(player, plan, team) : null
+    if (personal && (personal.load < 1 || !personal.multiplier)) continue
 
     const sessionFocuses = [...(focuses ?? [])]
     if (player.trainingFocus === 'rest') sessionFocuses.push('rest')
 
-    const hit = tryTrainingInjury(player, intensityId, sessionFocuses, rng, {
-      chanceMult: injuryChanceMult,
+    const hit = tryTrainingInjury(player, SESSION_DEFS[personal?.type]?.intensity ?? intensityId, sessionFocuses, rng, {
+      chanceMult: injuryChanceMult * (personal ? Math.min(1.5, personal.load / 8.5) : 1) * (workloadRisk(player) === 'high' ? 1.6 : 1),
       team,
       medicalLevel: team?.facilities?.medicalCenter,
     })
@@ -436,27 +442,35 @@ function growthChance(player, intensityGrowth, quality, category) {
   return clamp(p, 0.012, 0.5)
 }
 
-function applySessionToPlayer(player, focuses, intensityId, quality, attended, engagement, rng) {
+function applySessionToPlayer(player, focuses, intensityId, quality, attended, engagement, rng, meta = {}, team = null) {
   ensurePlayerDevelopment(player)
-  const intensity = TEAM_TRAINING_INTENSITY[intensityId] ?? TEAM_TRAINING_INTENSITY.medium
   const traitFatigue = getTraitMods(player).trainingFatigueMult ?? 1
   const focusMods = getIndividualFocusMods(player)
 
-  if (!attended) {
-    player.developmentFatigue = clampInt((player.developmentFatigue ?? 0) - 1.5, 0, 100)
-    return { attended: false, bumps: 0 }
+  const participation = meta.plan ? playerSessionPlan(player, meta.plan, team) : trainingParticipation(player, meta.date, team?.teamTraining?.schedule)
+  if (!attended || !participation.multiplier) return { attended: false, bumps: 0 }
+  const sessionDef = SESSION_DEFS[participation.type]
+  const intensity = TEAM_TRAINING_INTENSITY[sessionDef?.intensity ?? intensityId] ?? TEAM_TRAINING_INTENSITY.medium
+  if (participation.type === 'rest') return { attended: false, bumps: 0 }
+  if (participation.type === 'recovery') {
+    ensurePlayerWorkload(player).recovery = 4
+    return { attended: true, bumps: 0 }
   }
+  if (sessionDef) focuses = sessionDef.focuses
+  if (participation.type === 'individual' && player.trainingFocus !== 'balanced') focuses = [player.trainingFocus]
+  if (participation.type === 'roles') focuses = [player.trainingGroup === 'handlers' || String(player.position).toLowerCase().includes('handler') ? 'throwing' : 'offensive']
 
   const fatigueGain =
-    intensity.fatigue *
+    (sessionDef ? participation.load : intensity.fatigue * participation.multiplier) *
     (0.75 + (1 - engagement) * 0.35) *
     traitFatigue *
     focusMods.sessionFatigueMult *
     (0.85 + quality * 0.15)
-  player.developmentFatigue = clampInt((player.developmentFatigue ?? 0) + fatigueGain, 0, 100)
+  addPlayerLoad(player, fatigueGain, { sharpness: (sessionDef?.sharpness ?? 0) * participation.multiplier })
 
   let bumps = 0
-  const personalQuality = quality * (0.7 + engagement * 0.3)
+  const dailyLoad = ensurePlayerWorkload(player).pending ?? 0
+  const personalQuality = quality * (0.7 + engagement * 0.3) * Math.min(1, participation.multiplier) * (dailyLoad > 20 ? 0.5 : 1) * (meta.plan ? 0.55 : 1) * (team ? staffSessionQuality(team,focuses,player) : 1)
 
   for (const focusId of focuses) {
     const def = FOCUS_BY_ID[focusId]
@@ -528,7 +542,7 @@ function runSessionCore(team, focuses, intensityId, meta) {
   const injuryChanceMult = medicalInjuryChanceMult(team)
   const moraleNudge = chillRoomMoraleDelta(team)
   const rng = mulberry32(meta.seed)
-  const players = team.players ?? []
+  const players = (team.players ?? []).filter(player => meta.plan ? playerSessionPlan(player, meta.plan, team).multiplier > 0 : trainingParticipation(player, meta.date, team.teamTraining?.schedule).multiplier > 0)
   const detail = meta.detail ?? 'full'
   const luck = 0.72 + rng() * 0.5
 
@@ -551,7 +565,7 @@ function runSessionCore(team, focuses, intensityId, meta) {
       if (isPlayerInjured(player)) continue
       const attended = rng() < attendance
       const eng = clamp(engagement + (rng() - 0.5) * 0.08, 0.2, 0.98)
-      const result = applySessionToPlayer(player, focuses, intensityId, quality, attended, eng, rng)
+      const result = applySessionToPlayer(player, focuses, intensityId, quality, attended, eng, rng, meta, team)
       if (result.attended) {
         attendedCount += 1
         totalBumps += result.bumps
@@ -568,6 +582,7 @@ function runSessionCore(team, focuses, intensityId, meta) {
       attendedIds,
       injuryChanceMult,
       team,
+      meta.plan,
     )
     const tacticsDelta = applyTacticsGain(tt, focuses, quality, intensityId)
     const report = buildReport({
@@ -593,7 +608,7 @@ function runSessionCore(team, focuses, intensityId, meta) {
   // Full detail — drużyna gracza
   const attendanceFlags = []
   for (const player of players) {
-    const attended = playerAttends(player, intensityId, rng)
+    const attended = meta.plan ? true : playerAttends(player, intensityId, rng)
     const eng = playerEngagement01(player, rng)
     attendanceFlags.push({ player, attended, eng })
   }
@@ -621,6 +636,8 @@ function runSessionCore(team, focuses, intensityId, meta) {
       row.attended,
       row.eng,
       rng,
+      meta,
+      team,
     )
     if (result.attended) {
       attendedCount += 1
@@ -638,8 +655,9 @@ function runSessionCore(team, focuses, intensityId, meta) {
     attendedIds,
     injuryChanceMult,
     team,
+    meta.plan,
   )
-  const tacticsDelta = applyTacticsGain(tt, focuses, quality, intensityId)
+  const tacticsDelta = players.length ? applyTacticsGain(tt, focuses, quality, intensityId) : 0
   const report = buildReport({
     date: meta.date,
     focuses,
@@ -688,7 +706,7 @@ function applyTacticsGain(tt, focuses, quality, intensityId) {
   const roomMult = cur >= 85 ? 0.25 : cur >= 70 ? 0.5 : cur >= 55 ? 0.75 : 1
   const delta = gain * quality * intensity.growth * 0.55 * roomMult
   const before = cur
-  tt.tacticsFamiliarity = clampInt(cur + delta, 0, 100)
+  tt.tacticsFamiliarity = clamp(cur + delta, 0, 100)
   // Natural tiny decay is applied weekly elsewhere; here only gains
   return tt.tacticsFamiliarity - before
 }
@@ -716,7 +734,7 @@ function buildReport(args) {
 
 function storeReport(tt, report) {
   tt.lastSession = report
-  tt.sessionLog = [report, ...(tt.sessionLog ?? [])].slice(0, 12)
+  tt.sessionLog = [report, ...(tt.sessionLog ?? [])].slice(0, 100)
 }
 
 /** AI: 1–2 stałe dni w tygodniu (unikaj weekendu meczowego gdy się da). */
@@ -797,10 +815,12 @@ function plansForDate(team, isoDate, isPlayerTeam) {
  * Treningi drużyny do wyświetlenia w kalendarzu (tygodniowe + one-off, także ukończone).
  * @returns {object[]}
  */
-export function getTeamTrainingsOnDate(team, isoDate) {
+export function getTeamTrainingsOnDate(team, isoDate, league = null) {
   if (!team || !isoDate) return []
   const tt = ensureTeamTraining(team)
   const date = String(isoDate).slice(0, 10)
+  const regular = resolveTrainingDay(team, date, league)
+  if (regular) return regular.filter(p => !['rest','match'].includes(p.type)).map(p => ({ ...p, recurring: true, report: tt.sessionLog.find(r => r.planId === p.id) }))
   const dow = parseISODate(date).getDay()
   const plans = []
 
@@ -853,24 +873,36 @@ export function processTeamTrainingsForDate(league, isoDate, options = {}) {
   let sessions = 0
   const date = String(isoDate).slice(0, 10)
 
-  // Skip training on heavy match congestion? Still allow — fatigue handles it.
+  // One calendar date is processed once, regardless of the stepping UI.
 
   for (const team of Object.values(teamsById)) {
     const isPlayer = team.id === playerTeamId
-    const plans = plansForDate(team, date, isPlayer)
+    const schedule = ensureTrainingSchedule(team)
+    schedule.fixtureCache = trainingFixtures(league, team.id).map(f => ({ date: f.date }))
+    // AI uses the same regular plan and individual rules as the user's club.
+    if (!isPlayer) schedule.legacy = false
+    const tt = ensureTeamTraining(team)
+    if (tt.lastProcessedDate >= date) continue
+    const plans = resolveTrainingDay(team, date, league) ?? plansForDate(team, date, isPlayer)
+    tt.lastProcessedDate = date
+    schedule.overrides = Object.fromEntries(Object.entries(schedule.overrides).filter(([key]) => key.slice(0,10) >= date))
     if (!plans.length) continue
 
     for (const plan of plans) {
+      if (plan.type === 'rest' || plan.type === 'match') continue
       const report = runSessionCore(team, plan.focuses, plan.intensity, {
         seed: hashStr(
           `${league.simSeedBase ?? 0}|${team.id}|${date}|${plan.id}|${plan.focuses.join('+')}`,
         ),
-        detail: isPlayer ? 'full' : 'fast',
+        detail: 'full',
         date,
         planId: plan.id,
         source: plan.source,
+        plan: plan.source === 'schedule' ? plan : null,
       })
       if (report) {
+        report.sessionType = plan.type
+        report.adjustments = (team.players ?? []).map(p => ({ playerId: p.id, ...trainingParticipation(p,date,schedule), risk: workloadRisk(p) })).filter(p => p.reason !== 'normal')
         sessions += 1
         if (isPlayer) reports.push(report)
       }
@@ -899,7 +931,7 @@ export function weeklyTeamTrainingMaintenance(league, options = {}) {
   for (const team of Object.values(teamsById)) {
     const tt = ensureTeamTraining(team)
     // Natural decay of unused structure knowledge
-    tt.tacticsFamiliarity = clampInt((tt.tacticsFamiliarity ?? 38) - (0.35 + rng() * 0.45), 0, 100)
+    tt.tacticsFamiliarity = clamp((tt.tacticsFamiliarity ?? 38) - (0.35 + rng() * 0.45), 0, 100)
 
     if (team.id === playerTeamId) continue
     ensureAiTeamTrainingPlan(team)
@@ -931,6 +963,7 @@ export function processTeamTrainingsDateRange(league, fromIso, toIso, options = 
   let guard = 0
   while (cursor < toIso && guard < 400) {
     const result = processTeamTrainingsForDate(league, cursor, options)
+    applyDailyDevelopment(league, { ...options, date: cursor, tag: `day-${cursor}` })
     sessions += result.sessions
     if (result.reports?.length) reports.push(...result.reports)
     cursor = formatISODate(addDays(cursor, 1))
@@ -958,6 +991,7 @@ export async function processTeamTrainingsDateRangeAsync(league, fromIso, toIso,
   )
   while (cursor < toIso && guard < 400) {
     const result = processTeamTrainingsForDate(league, cursor, options)
+    applyDailyDevelopment(league, { ...options, date: cursor, tag: `day-${cursor}` })
     sessions += result.sessions
     if (result.reports?.length) reports.push(...result.reports)
     guard += 1
@@ -977,7 +1011,7 @@ export async function processTeamTrainingsDateRangeAsync(league, fromIso, toIso,
 
 export function focusLabel(id, lang = 'pl') {
   const row = FOCUS_BY_ID[id]
-  if (!row) return id
+  if (!row) return id ?? ''
   return lang === 'en' ? row.labelEn ?? row.labelPl : row.labelPl ?? row.labelEn
 }
 

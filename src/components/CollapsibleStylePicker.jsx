@@ -44,7 +44,7 @@ export default function CollapsibleStylePicker({
       className={
         embedded
           ? 'space-y-2'
-          : 'rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20'
+          : 'rounded-sm border border-ufa-border bg-ufa-panel p-4  '
       }
     >
       <p className="text-[11px] font-semibold uppercase tracking-wider text-ufa-muted">
@@ -55,7 +55,7 @@ export default function CollapsibleStylePicker({
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2.5 text-left hover:border-ufa-accent/40 hover:bg-ufa-accent/5"
+        className="flex w-full items-center justify-between gap-3 rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2.5 text-left hover:border-ufa-accent/40 hover:bg-ufa-accent/5"
       >
         <span className="text-sm font-semibold text-ufa-text">
           {pickLabel(selected, lang) || selected?.label || '—'}
@@ -78,7 +78,7 @@ export default function CollapsibleStylePicker({
                   onChange(opt.id)
                   setOpen(false)
                 }}
-                className={`w-full rounded-lg border px-3 py-2 text-left transition-all ${
+                className={`w-full rounded-sm border px-3 py-2 text-left transition-all ${
                   active
                     ? 'border-ufa-accent/70 bg-ufa-accent/10'
                     : 'border-ufa-border/80 bg-ufa-bg/40 hover:border-ufa-muted hover:bg-ufa-panel-hover'

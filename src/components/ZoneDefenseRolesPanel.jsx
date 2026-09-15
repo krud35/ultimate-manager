@@ -50,7 +50,7 @@ export default function ZoneDefenseRolesPanel({ lineIds = [], roster = [], tacti
   }
 
   return (
-    <div className="space-y-2 rounded-lg border border-ufa-border/70 bg-ufa-bg/40 p-3">
+    <div className="space-y-2 rounded-sm border border-ufa-border/70 bg-ufa-bg/40 p-3">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-ufa-muted">
         {label ? t.zoneRolesFor(label) : t.zoneRoles}
       </p>

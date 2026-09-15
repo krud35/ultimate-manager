@@ -70,10 +70,10 @@ export default function FormationPreview({
   const cutterN = positionSlots.filter((s) => s.role === 'cutter').length
 
   return (
-    <section className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20">
+    <section className="border-t border-ufa-border py-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-ufa-text">{title ?? t.formationO}</h3>
+          <h3 className="text-xl font-semibold text-ufa-text">{title ?? t.formationO}</h3>
           <p className="mt-0.5 text-xs text-ufa-muted">
             {teamName ? `${teamName} · ` : ''}
             {styleLabel} — {t.handlersCutters(handlerN, cutterN)}
@@ -84,7 +84,7 @@ export default function FormationPreview({
         </span>
       </div>
 
-      <div className="field-view-2d__stage overflow-hidden rounded-lg ring-1 ring-ufa-border">
+      <div className="field-view-2d__stage overflow-hidden rounded-sm ring-1 ring-ufa-border">
         <svg
           className="field-view-2d__svg field-view-2d__svg--live"
           viewBox={`0 0 ${LENGTH_M} ${WIDTH_M}`}
@@ -182,10 +182,10 @@ export default function FormationPreview({
 
       <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-ufa-muted">
         <span>
-          <span className="font-semibold text-sky-300">H1…</span> handlery
+          <span className="font-semibold text-ufa-info">H1…</span> {lang === 'en' ? 'handlers' : 'handlery'}
         </span>
         <span>
-          <span className="font-semibold text-violet-300">C1…</span> cuttery
+          <span className="font-semibold text-ufa-special">C1…</span> {lang === 'en' ? 'cutters' : 'cuttery'}
         </span>
       </div>
     </section>

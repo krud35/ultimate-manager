@@ -27,8 +27,9 @@ import {
   tickPlayerInjury,
 } from '../models/playerInjury.js'
 import { addDays, formatISODate, parseISODate } from '../league/seasonCalendar.js'
-import { MATCH_STAMINA_CONFIG, currentMatchStamina, matchStaminaCeiling } from '../matchEngine/stamina.js'
+import { MATCH_STAMINA_CONFIG, matchStaminaCeiling } from '../matchEngine/stamina.js'
 import { medicalRecoveryMult } from './clubFacilities.js'
+import { recoverPlayerDay, ensurePlayerWorkload } from '../models/playerWorkload.js'
 
 function worldTeamsList(world) {
   if (!world?.teamsById) return []
@@ -391,23 +392,6 @@ export function initWorldPlayerDevelopment(world, options = {}) {
   return world
 }
 
-/** Czy drużyna ma zaplanowany trening w danym dniu (bez importu teamTraining). */
-function teamHasTrainingPlanOnDate(team, isoDate) {
-  const tt = team?.teamTraining
-  if (!tt || !isoDate) return false
-  const date = String(isoDate).slice(0, 10)
-  const dow = parseISODate(date).getDay()
-  for (const w of tt.weekly ?? []) {
-    if (w.enabled === false) continue
-    if (w.weekday === dow) return true
-  }
-  for (const o of tt.oneOff ?? []) {
-    if (o.completed) continue
-    if (o.date === date) return true
-  }
-  return false
-}
-
 /**
  * Dzienny wzrost prospektów akademii. Nie trenują z seniorami (poza `team.players`,
  * patrz runSessionCore w teamTraining.js), więc bez tego ticka jedyny ich rozwój to
@@ -463,17 +447,13 @@ export function applyDailyDevelopment(league, options = {}) {
 
   for (const team of Object.values(teamsById)) {
     const isPlayer = team.id === playerTeamId
-    const hadTeamTraining =
-      typeof options.hadTeamTraining === 'boolean'
-        ? options.hadTeamTraining
-        : isoDate
-          ? teamHasTrainingPlanOnDate(team, isoDate)
-          : false
 
     for (const player of team.players ?? []) {
       ensurePlayerDevelopment(player, {
         leaguePlayerStats: league.playerStats,
       })
+      const workload = ensurePlayerWorkload(player)
+      if (isoDate && workload.lastRecoveryDate >= isoDate) continue
       if (isPlayer && isoDate && isoDate.slice(8, 10) === '01') {
         recordPlayerSkillsSnapshot(player, isoDate.slice(0, 7))
       }
@@ -486,30 +466,12 @@ export function applyDailyDevelopment(league, options = {}) {
         applyAgingDecline(player, 0.22 * dayScale, rng)
       }
 
-      if (!hadTeamTraining) {
-        const mods = getIndividualFocusMods(player)
-        player.developmentFatigue = clamp(
-          (player.developmentFatigue ?? 0) - mods.passiveRecovery,
-          0,
-          100,
-        )
-      }
-
-      // Regeneracja staminy meczowej — działa też w dniu treningu (mocno wolniej),
-      // ale nigdy powyżej pułapu narzuconego przez zmęczenie ogólne.
-      const matchRecoveryMult = hadTeamTraining
-        ? MATCH_STAMINA_CONFIG.trainingDayRecoveryMult
-        : 1
-      const matchStaminaCeilingValue = matchStaminaCeiling(player)
-      player.matchStamina = Math.min(
-        matchStaminaCeilingValue,
-        currentMatchStamina(player) +
-          MATCH_STAMINA_CONFIG.dailyRecovery * medicalRecoveryMult(team) * matchRecoveryMult,
-      )
-
+      recoverPlayerDay(player, isoDate ?? league.currentDate, medicalRecoveryMult(team))
+      const wasInjured = player.injury?.daysRemaining > 0
       tickPlayerInjury(player, {
         restBonus: player.trainingFocus === 'rest',
       })
+      if (wasInjured && !(player.injury?.daysRemaining > 0) && isoDate) workload.returnUntil = formatISODate(addDays(isoDate, 3))
 
       const perf = performanceScore01(player, league.playerStats)
       if ((player.age ?? 99) <= 25 && perf >= 0.65 && rng() < 0.12 * dayScale) {
@@ -523,7 +485,7 @@ export function applyDailyDevelopment(league, options = {}) {
 
     for (const prospect of team.academyPlayers ?? []) {
       ensurePlayerDevelopment(prospect)
-      prospect.developmentFatigue = clamp((prospect.developmentFatigue ?? 0) - (prospect.trainingFocus === 'rest' ? 28 : 14) * dayScale, 0, 100)
+      if (!recoverPlayerDay(prospect, isoDate ?? league.currentDate, medicalRecoveryMult(team))) continue
       tickPlayerInjury(prospect, { restBonus: prospect.trainingFocus === 'rest' })
       const before = getOverallRating(prospect.skills)
       if (!(prospect.injury?.daysRemaining > 0)) applyAcademyDailyGrowth(prospect, dayScale, rng)

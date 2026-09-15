@@ -7,7 +7,7 @@ const RESULT_BADGE_CLASS = {
   champion: 'bg-ufa-gold/20 text-ufa-gold',
   'runner-up': 'bg-ufa-accent/20 text-ufa-accent',
   semifinalist: 'bg-ufa-panel-hover text-ufa-text',
-  spirit: 'bg-emerald-500/20 text-emerald-400',
+  spirit: 'bg-emerald-500/20 text-ufa-success',
 }
 
 function resultLabel(result, t) {
@@ -74,7 +74,7 @@ export default function EucsTeamPreviewModal({ team, t, anchorTop = null, onClos
         onClick={onClose}
       />
       <div
-        className={`absolute z-10 flex max-h-[calc(100vh-2rem)] w-full flex-col rounded-t-xl border border-ufa-border bg-ufa-panel shadow-2xl sm:max-h-[85vh] sm:w-full sm:max-w-2xl sm:rounded-xl ${
+        className={`absolute z-10 flex max-h-[calc(100vh-2rem)] w-full flex-col rounded-t-xl border border-ufa-border bg-ufa-panel shadow-2xl sm:max-h-[85vh] sm:w-full sm:max-w-2xl sm:rounded-sm ${
           panelTop == null ? 'inset-x-0 bottom-0 sm:inset-0 sm:m-auto sm:h-fit' : ''
         }`}
         style={
@@ -86,13 +86,13 @@ export default function EucsTeamPreviewModal({ team, t, anchorTop = null, onClos
         <div className="flex items-start justify-between gap-3 border-b border-ufa-border px-5 py-4">
           <div className="flex items-center gap-3 min-w-0">
             <span
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-xs font-bold text-white"
               style={{ backgroundColor: team.primaryColor }}
             >
               {team.shortName}
             </span>
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-ufa-text truncate">{team.name}</h2>
+              <h2 className="text-2xl font-semibold text-ufa-text truncate">{team.name}</h2>
               <p className="text-xs text-ufa-muted">{t.rosterCount(roster.length)}</p>
             </div>
           </div>
@@ -124,7 +124,7 @@ export default function EucsTeamPreviewModal({ team, t, anchorTop = null, onClos
                     </li>
                   ))}
                 </ul>
-                <p className="mt-2 text-[10px] text-ufa-muted">{t.eucsPreviewSource}</p>
+                <p className="mt-2 text-[11px] text-ufa-muted">{t.eucsPreviewSource}</p>
               </>
             ) : (
               <p className="text-sm text-ufa-muted">{t.eucsPreviewNoHistory}</p>
@@ -135,9 +135,9 @@ export default function EucsTeamPreviewModal({ team, t, anchorTop = null, onClos
             <h3 className="text-xs font-semibold uppercase tracking-wide text-ufa-muted mb-2">
               {t.eucsPreviewRoster}
             </h3>
-            <div className="overflow-x-auto rounded-lg border border-ufa-border">
+            <div className="overflow-x-auto rounded-sm border border-ufa-border">
               <table className="w-full text-left text-sm">
-                <thead className="text-[10px] uppercase tracking-wide text-ufa-muted bg-ufa-bg/60">
+                <thead className="text-[11px] uppercase tracking-wide text-ufa-muted bg-ufa-bg/60">
                   <tr className="border-b border-ufa-border">
                     <th className="px-2 py-2 font-medium w-10">#</th>
                     <th className="px-2 py-2 font-medium">{t.previewPlayer}</th>
@@ -163,7 +163,7 @@ export default function EucsTeamPreviewModal({ team, t, anchorTop = null, onClos
             <button
               type="button"
               onClick={() => onSelect(team.id)}
-              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+              className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90"
             >
               {t.previewSelect}
             </button>

@@ -10,13 +10,13 @@ export function LeagueStandingsView({ league, compact = false, topN = 8, onTeamS
   const display = compact ? rows.slice(0, topN) : rows
 
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30 overflow-hidden">
-      <div className="border-b border-ufa-border px-6 py-4">
+    <div className={compact ? 'overflow-hidden' : 'border-t-2 border-ufa-accent overflow-hidden'}>
+      {!compact && <div className="border-b border-ufa-border px-1 py-4">
         <h3 className="font-semibold text-ufa-text">{t.standingsTitle}</h3>
         {!compact && (
           <p className="text-xs text-ufa-muted mt-1">{t.standingsHint}</p>
         )}
-      </div>
+      </div>}
       <div className="divide-y divide-ufa-border/50 sm:hidden">
         {display.map((row, idx) => {
           const isPlayer = row.teamId === league.playerTeamId
@@ -32,7 +32,7 @@ export function LeagueStandingsView({ league, compact = false, topN = 8, onTeamS
                   <button
                     type="button"
                     onClick={() => onTeamSelect(row.teamId)}
-                    className="truncate text-left text-sm font-medium text-ufa-text"
+                    className="um-link text-left text-sm font-medium"
                   >
                     {row.teamName}
                   </button>
@@ -45,7 +45,7 @@ export function LeagueStandingsView({ league, compact = false, topN = 8, onTeamS
                   {row.wins}-{row.losses}
                 </span>
                 <span
-                  className={`w-9 text-right tabular-nums ${diff >= 0 ? 'text-ufa-accent' : 'text-red-400'}`}
+                  className={`w-9 text-right tabular-nums ${diff >= 0 ? 'text-ufa-accent' : 'text-ufa-danger'}`}
                 >
                   {diff >= 0 ? '+' : ''}
                   {diff}

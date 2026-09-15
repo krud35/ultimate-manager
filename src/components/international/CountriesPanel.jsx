@@ -57,7 +57,7 @@ export default function CountriesPanel({ career, onCareerUpdate, t, lang }) {
                     key={country.id}
                     type="button"
                     onClick={() => setCountryProfileId(country.id)}
-                    className="rounded-xl border border-ufa-border bg-ufa-panel p-4 text-left shadow-lg shadow-black/20 transition hover:border-ufa-accent/50 hover:bg-ufa-panel-hover/40"
+                    className="rounded-sm border border-ufa-border bg-ufa-panel p-4 text-left   transition hover:border-ufa-accent/50 hover:bg-ufa-panel-hover/40"
                   >
                     <p className="font-semibold text-ufa-text">{academyCountryLabel(country.id, lang)}</p>
                     <p className={`mt-1 text-xs font-medium ${countryRankingTierToneClass(points)}`}>

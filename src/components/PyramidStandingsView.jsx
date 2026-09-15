@@ -26,7 +26,7 @@ const ZONE_DOT_CLASS = {
 
 function TierTable({ tier, title, rows, playerTeamId, onTeamSelect, t }) {
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30 overflow-hidden">
+    <div className="rounded-sm border border-ufa-border bg-ufa-panel   overflow-hidden">
       <div className="border-b border-ufa-border px-6 py-4">
         <h3 className="font-semibold text-ufa-text">{title}</h3>
       </div>
@@ -84,7 +84,7 @@ function TierTable({ tier, title, rows, playerTeamId, onTeamSelect, t }) {
           </tbody>
         </table>
       </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-ufa-border px-4 py-2 text-[10px] text-ufa-muted">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-ufa-border px-4 py-2 text-[11px] text-ufa-muted">
         {tier !== 1 && (
           <>
             <span className="flex items-center gap-1.5">
@@ -114,7 +114,7 @@ export default function PyramidStandingsView({ career, onTeamSelect }) {
 
   if (career?.competition !== 'eucs' || !career.pyramid || !career.league) {
     return (
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel px-6 py-8 text-center text-sm text-ufa-muted">
+      <div className="rounded-sm border border-ufa-border bg-ufa-panel px-6 py-8 text-center text-sm text-ufa-muted">
         {t.pyramidNotAvailable}
       </div>
     )
@@ -142,7 +142,7 @@ export default function PyramidStandingsView({ career, onTeamSelect }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-ufa-text">{t.pyramidTitle}</h2>
+        <h2 className="text-2xl font-bold text-ufa-text">{t.pyramidTitle}</h2>
         <p className="mt-1 text-sm text-ufa-muted">{t.pyramidHint}</p>
       </div>
       {[1, 2, 3].map((tier) => (

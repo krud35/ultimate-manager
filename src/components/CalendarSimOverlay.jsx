@@ -50,7 +50,7 @@ export default function CalendarSimOverlay({ sim }) {
       aria-busy="true"
       aria-label={t.title}
     >
-      <div className="w-full max-w-sm rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-2xl shadow-black/50">
+      <div className="w-full max-w-sm rounded-sm border border-ufa-border bg-ufa-panel p-5 shadow-2xl shadow-black/50">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-ufa-text">{t.title}</p>
           {sim.daysAdvanced ? (
@@ -60,7 +60,7 @@ export default function CalendarSimOverlay({ sim }) {
           ) : null}
         </div>
 
-        <div className="calsim-track mt-4 overflow-hidden rounded-lg border border-ufa-border bg-ufa-bg/60 py-3">
+        <div className="calsim-track mt-4 overflow-hidden rounded-sm border border-ufa-border bg-ufa-bg/60 py-3">
           <div className="flex items-center gap-2 px-3">
             {trail.map((date, i) => {
               const isLast = i === trail.length - 1
@@ -69,7 +69,7 @@ export default function CalendarSimOverlay({ sim }) {
                   key={date}
                   className={
                     isLast
-                      ? 'calsim-chip flex-shrink-0 rounded-md bg-ufa-accent px-2.5 py-1.5 text-center text-xs font-semibold text-ufa-bg tabular-nums'
+                      ? 'calsim-chip flex-shrink-0 rounded-md bg-ufa-accent px-2.5 py-1.5 text-center text-xs font-semibold text-ufa-on-accent tabular-nums'
                       : 'calsim-chip flex-shrink-0 rounded-md bg-ufa-panel-hover px-2.5 py-1.5 text-center text-[11px] text-ufa-muted tabular-nums'
                   }
                 >
@@ -81,7 +81,7 @@ export default function CalendarSimOverlay({ sim }) {
         </div>
 
         <div className="mt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ufa-muted">
             {t.inbox}
           </p>
           <ul className="mt-1.5 space-y-1">
@@ -99,7 +99,7 @@ export default function CalendarSimOverlay({ sim }) {
 
         {uw ? (
           <div className="mt-3 border-t border-ufa-border pt-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ufa-muted">
               {t.ultiworld}
             </p>
             <p className="mt-1 truncate text-xs text-ufa-text">{pickCopy(uw, 'headline', lang)}</p>

@@ -64,6 +64,10 @@ function stampSide(players, tactics, role, context) {
   if (!Array.isArray(players)) return
   for (const player of players) {
     if (!player || typeof player !== 'object') continue
-    setPlayerMods(player, { ...mergeTraitAndCoachMods(player, tactics, role, null), isClutchPoint: context.isClutchPoint === true })
+    const mods = { ...mergeTraitAndCoachMods(player, tactics, role, null), isClutchPoint: context.isClutchPoint === true }
+    // Rust affects decisions, independently from physical freshness. Legacy baseline is neutral.
+    const rhythm = Math.max(0, Math.min(100, player.matchSharpness ?? 65))
+    mods.decisionNoiseMult = (mods.decisionNoiseMult ?? 1) * (1 + Math.max(0, 65 - rhythm) * 0.003)
+    setPlayerMods(player, mods)
   }
 }

@@ -16,8 +16,8 @@ import PlayerProfileModal from './PlayerProfileModal'
 
 function LeaderColumn({ title, rows, valueKey, teamNames, emptyLabel, onSelectPlayer }) {
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20">
-      <h3 className="font-semibold text-ufa-text text-sm mb-3">{title}</h3>
+    <div className="um-section  ">
+      <h3 className="font-semibold text-ufa-text text-xl mb-3">{title}</h3>
       {rows.length === 0 ? (
         <p className="text-xs text-ufa-muted">{emptyLabel}</p>
       ) : (
@@ -114,8 +114,8 @@ export default function LeagueLeadersView({ league, career, onCareerUpdate }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
-        <h2 className="text-lg font-semibold text-ufa-text">{t.leadersTitle}</h2>
+      <div className="um-section  ">
+        <h2 className="text-2xl font-semibold text-ufa-text">{t.leadersTitle}</h2>
         <p className="mt-1 text-sm text-ufa-muted">{t.leadersHint}</p>
         {leagueOptions.length > 1 && (
           <div className="mt-4 flex flex-wrap gap-2">
@@ -126,7 +126,7 @@ export default function LeagueLeadersView({ league, career, onCareerUpdate }) {
                 onClick={() => setSelectedLeagueId(opt.id)}
                 className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                   opt.id === selectedLeagueId
-                    ? 'bg-ufa-accent text-ufa-bg'
+                    ? 'bg-ufa-accent text-ufa-on-accent'
                     : 'bg-ufa-bg text-ufa-muted hover:text-ufa-text'
                 }`}
               >

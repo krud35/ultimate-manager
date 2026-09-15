@@ -29,7 +29,7 @@ function PlayerRow({ player, clubLabel, isOwnPlayer, knowledge, lang, onSelect }
     ? { label: String(getOverallRating(player.skills)), toneClass: 'text-ufa-accent' }
     : scoutedValueDisplay(getOverallRating(player.skills), knowledge, lang)
   return (
-    <li className="flex items-center justify-between gap-2 rounded-lg border border-ufa-border bg-ufa-bg/50 px-3 py-2 text-sm">
+    <li className="flex items-center justify-between gap-2 rounded-sm border border-ufa-border bg-ufa-bg/50 px-3 py-2 text-sm">
       <button
         type="button"
         onClick={() => onSelect(player)}
@@ -103,19 +103,19 @@ export default function CountryProfileView({ career, countryId, onBack, t, lang 
         {t.backToCountries}
       </button>
 
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+      <div className="rounded-sm border border-ufa-border bg-ufa-panel p-6  ">
         <p className="text-xs uppercase tracking-wide text-ufa-muted">
           {academyContinentLabel(country.continent, lang)}
         </p>
-        <h2 className="mt-1 text-lg font-semibold text-ufa-text">{academyCountryLabel(countryId, lang)}</h2>
+        <h2 className="mt-1 text-2xl font-semibold text-ufa-text">{academyCountryLabel(countryId, lang)}</h2>
         <p className={`mt-1 text-sm font-medium ${countryRankingTierToneClass(points)}`}>
           {t.tier}: {countryRankingTierLabel(points, lang)}
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
-          <h3 className="text-sm font-semibold text-ufa-text">{t.trophyCabinetReal}</h3>
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5  ">
+          <h3 className="text-xl font-semibold text-ufa-text">{t.trophyCabinetReal}</h3>
           {!realMedals ? (
             <p className="mt-2 text-xs text-ufa-muted">{t.noTrophies}</p>
           ) : (
@@ -132,8 +132,8 @@ export default function CountryProfileView({ career, countryId, onBack, t, lang 
           )}
         </div>
 
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
-          <h3 className="text-sm font-semibold text-ufa-text">{t.trophyCabinetCareer}</h3>
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5  ">
+          <h3 className="text-xl font-semibold text-ufa-text">{t.trophyCabinetCareer}</h3>
           {!careerAppearances.length ? (
             <p className="mt-2 text-xs text-ufa-muted">{t.noTrophies}</p>
           ) : (
@@ -151,9 +151,9 @@ export default function CountryProfileView({ career, countryId, onBack, t, lang 
         </div>
       </div>
 
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+      <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5  ">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-ufa-text">{t.currentSquad}</h3>
+          <h3 className="text-xl font-semibold text-ufa-text">{t.currentSquad}</h3>
           {squad?.asOfDate && <span className="text-xs text-ufa-muted">{t.squadAsOf(squad.asOfDate)}</span>}
         </div>
         {!squadRows.length ? (
@@ -179,8 +179,8 @@ export default function CountryProfileView({ career, countryId, onBack, t, lang 
         )}
       </div>
 
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
-        <h3 className="text-sm font-semibold text-ufa-text">{t.topPlayersTitle}</h3>
+      <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5  ">
+        <h3 className="text-xl font-semibold text-ufa-text">{t.topPlayersTitle}</h3>
         {!topPlayersLimited.length ? (
           <p className="mt-2 text-xs text-ufa-muted">{t.noTopPlayers}</p>
         ) : (

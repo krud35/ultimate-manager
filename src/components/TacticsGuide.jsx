@@ -14,28 +14,28 @@ import {
 
 const ACCENT = {
   sky: {
-    tab: 'data-[active=true]:bg-sky-500/20 data-[active=true]:text-sky-200 data-[active=true]:ring-sky-500/40',
-    badge: 'bg-sky-500/15 text-sky-300 ring-sky-500/30',
+    tab: 'data-[active=true]:bg-sky-500/20 data-[active=true]:text-ufa-info data-[active=true]:ring-sky-500/40',
+    badge: 'bg-sky-500/15 text-ufa-info ring-sky-500/30',
     border: 'border-sky-500/30',
   },
   orange: {
-    tab: 'data-[active=true]:bg-orange-500/20 data-[active=true]:text-orange-200 data-[active=true]:ring-orange-500/40',
-    badge: 'bg-orange-500/15 text-orange-300 ring-orange-500/30',
+    tab: 'data-[active=true]:bg-orange-500/20 data-[active=true]:text-ufa-gold data-[active=true]:ring-orange-500/40',
+    badge: 'bg-orange-500/15 text-ufa-gold ring-orange-500/30',
     border: 'border-orange-500/30',
   },
   amber: {
-    tab: 'data-[active=true]:bg-amber-500/20 data-[active=true]:text-amber-200 data-[active=true]:ring-amber-500/40',
-    badge: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+    tab: 'data-[active=true]:bg-amber-500/20 data-[active=true]:text-ufa-gold data-[active=true]:ring-amber-500/40',
+    badge: 'bg-amber-500/15 text-ufa-gold ring-amber-500/30',
     border: 'border-amber-500/30',
   },
   violet: {
-    tab: 'data-[active=true]:bg-violet-500/20 data-[active=true]:text-violet-200 data-[active=true]:ring-violet-500/40',
-    badge: 'bg-violet-500/15 text-violet-300 ring-violet-500/30',
+    tab: 'data-[active=true]:bg-violet-500/20 data-[active=true]:text-ufa-special data-[active=true]:ring-violet-500/40',
+    badge: 'bg-violet-500/15 text-ufa-special ring-violet-500/30',
     border: 'border-violet-500/30',
   },
   emerald: {
-    tab: 'data-[active=true]:bg-emerald-500/20 data-[active=true]:text-emerald-200 data-[active=true]:ring-emerald-500/40',
-    badge: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+    tab: 'data-[active=true]:bg-emerald-500/20 data-[active=true]:text-ufa-success data-[active=true]:ring-emerald-500/40',
+    badge: 'bg-emerald-500/15 text-ufa-success ring-emerald-500/30',
     border: 'border-emerald-500/30',
   },
 }
@@ -66,11 +66,11 @@ function EngineBadge({ entry, t }) {
         coverage.forceSides.includes(entry.engineId)))
 
   return inEngine ? (
-    <span className="rounded-full bg-ufa-accent/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ufa-accent ring-1 ring-ufa-accent/30">
+    <span className="rounded-full bg-ufa-accent/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ufa-accent ring-1 ring-ufa-accent/30">
       {t.inGameBadge}
     </span>
   ) : (
-    <span className="rounded-full bg-ufa-panel-hover px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ufa-muted ring-1 ring-ufa-border">
+    <span className="rounded-full bg-ufa-panel-hover px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ufa-muted ring-1 ring-ufa-border">
       {t.descBadge}
     </span>
   )
@@ -80,9 +80,9 @@ function BulletList({ items, tone = 'muted' }) {
   if (!items?.length) return null
   const color =
     tone === 'good'
-      ? 'text-emerald-300/90'
+      ? 'text-ufa-success/90'
       : tone === 'bad'
-        ? 'text-red-300/90'
+        ? 'text-ufa-danger/90'
         : 'text-ufa-muted'
   return (
     <ul className={`mt-2 space-y-1.5 text-sm leading-relaxed ${color}`}>
@@ -108,7 +108,7 @@ function TacticCard({ entry, accent, selected, onSelect, lang, t }) {
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full rounded-xl border p-4 text-left transition-all ${
+      className={`w-full rounded-sm border p-4 text-left transition-all ${
         selected
           ? `${styles.border} bg-ufa-panel-hover ring-1 ring-ufa-accent/40`
           : 'border-ufa-border bg-ufa-bg/40 hover:border-ufa-muted hover:bg-ufa-panel-hover'
@@ -130,7 +130,7 @@ function TacticCard({ entry, accent, selected, onSelect, lang, t }) {
 function TacticDetail({ entry, accent, lang, t }) {
   if (!entry) {
     return (
-      <div className="flex h-full min-h-[320px] items-center justify-center rounded-xl border border-dashed border-ufa-border bg-ufa-panel/50 p-8 text-center text-sm text-ufa-muted">
+      <div className="flex h-full min-h-[320px] items-center justify-center rounded-sm border border-dashed border-ufa-border bg-ufa-panel p-8 text-center text-sm text-ufa-muted">
         {t.emptyDetail}
       </div>
     )
@@ -154,10 +154,10 @@ function TacticDetail({ entry, accent, lang, t }) {
   const impacts = pickList(entry, 'matchImpact', lang)
 
   return (
-    <article className="space-y-5 rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-xl shadow-black/20 sm:p-6">
+    <article className="space-y-5 um-section   sm:p-6">
       <header className="space-y-2 border-b border-ufa-border pb-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ${styles.badge}`}>
+          <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ring-1 ${styles.badge}`}>
             {pickLabel(TACTICS_GUIDE_CATEGORIES.find((c) => c.id === entry.category), lang)}
           </span>
           <EngineBadge entry={entry} t={t} />
@@ -179,7 +179,7 @@ function TacticDetail({ entry, accent, lang, t }) {
           {behaviors.map((row) => (
             <div
               key={`${row.role}-${row.behavior}`}
-              className="rounded-lg border border-ufa-border/80 bg-ufa-bg/50 px-3 py-2.5"
+              className="rounded-sm border border-ufa-border/80 bg-ufa-bg/50 px-3 py-2.5"
             >
               <p className="text-xs font-semibold uppercase tracking-wide text-ufa-accent">{row.role}</p>
               <p className="mt-1 text-sm leading-relaxed text-ufa-muted">{row.behavior}</p>
@@ -194,7 +194,7 @@ function TacticDetail({ entry, accent, lang, t }) {
           {impacts.map((row) => (
             <div
               key={row.label}
-              className="rounded-lg border border-ufa-border/80 bg-ufa-bg/50 px-3 py-2.5"
+              className="rounded-sm border border-ufa-border/80 bg-ufa-bg/50 px-3 py-2.5"
             >
               <p className="text-sm font-medium text-ufa-text">{row.label}</p>
               <p className="mt-1 text-xs leading-relaxed text-ufa-muted">{row.effect}</p>
@@ -234,7 +234,7 @@ function TacticDetail({ entry, accent, lang, t }) {
                 {pairNames.map((name) => (
                   <span
                     key={name}
-                    className="rounded-md bg-emerald-500/10 px-2 py-1 text-xs text-emerald-300 ring-1 ring-emerald-500/25"
+                    className="rounded-md bg-emerald-500/10 px-2 py-1 text-xs text-ufa-success ring-1 ring-emerald-500/25"
                   >
                     {name}
                   </span>
@@ -249,7 +249,7 @@ function TacticDetail({ entry, accent, lang, t }) {
                 {conflictNames.map((name) => (
                   <span
                     key={name}
-                    className="rounded-md bg-red-500/10 px-2 py-1 text-xs text-red-300 ring-1 ring-red-500/25"
+                    className="rounded-md bg-red-500/10 px-2 py-1 text-xs text-ufa-danger ring-1 ring-red-500/25"
                   >
                     {name}
                   </span>
@@ -288,7 +288,7 @@ function TacticDetail({ entry, accent, lang, t }) {
 
 function LoadoutCard({ loadout, lang }) {
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20">
+    <div className="um-section  ">
       <h3 className="font-semibold text-ufa-text">{pickLabel(loadout, lang)}</h3>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {[loadout.attackEntry, loadout.defenseEntry, loadout.forceEntry]
@@ -338,10 +338,10 @@ export default function TacticsGuide() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+      <div className="um-section  ">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-3xl">
-            <h2 className="text-lg font-semibold text-ufa-text">{t.title}</h2>
+            <h2 className="text-2xl font-semibold text-ufa-text">{t.title}</h2>
             <p className="mt-1 text-sm leading-relaxed text-ufa-muted">
               {t.introBefore}{' '}
               <span className="text-ufa-text">{t.introEngineNote}</span>
@@ -362,7 +362,7 @@ export default function TacticsGuide() {
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-1 rounded-lg bg-ufa-bg p-1 ring-1 ring-ufa-border">
+        <div className="mt-4 flex flex-wrap gap-1 rounded-sm bg-ufa-bg p-1 ring-1 ring-ufa-border">
           {viewTabs.map((tab) => (
             <button
               key={tab.id}
@@ -370,7 +370,7 @@ export default function TacticsGuide() {
               onClick={() => setView(tab.id)}
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
                 view === tab.id
-                  ? 'bg-ufa-accent text-ufa-bg'
+                  ? 'bg-ufa-accent text-ufa-on-accent'
                   : 'text-ufa-muted hover:bg-ufa-panel-hover hover:text-ufa-text'
               }`}
             >
@@ -392,7 +392,7 @@ export default function TacticsGuide() {
                   type="button"
                   data-active={active}
                   onClick={() => handleCategory(cat.id)}
-                  className={`rounded-lg px-3 py-2 text-sm font-medium text-ufa-muted ring-1 ring-ufa-border transition hover:text-ufa-text ${styles.tab}`}
+                  className={`rounded-sm px-3 py-2 text-sm font-medium text-ufa-muted ring-1 ring-ufa-border transition hover:text-ufa-text ${styles.tab}`}
                 >
                   {pickLabel(cat, lang)}{' '}
                 </button>
@@ -439,7 +439,7 @@ export default function TacticsGuide() {
       )}
 
       {view === 'sources' && (
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+        <div className="um-section  ">
           <h3 className="font-semibold text-ufa-text">{t.sourcesTitle}</h3>
           <p className="mt-1 text-sm text-ufa-muted">{t.sourcesIntro}</p>
           <ul className="mt-4 space-y-2">

@@ -1,18 +1,23 @@
 @import 'tailwindcss';
+@import './ui/design-system.css';
 
 @theme {
-  /* Paleta "boiska": zielenie trawy zamiast domyślnego SaaS-emerald,
-     bursztyn krążka/stall-clocka jako drugi akcent. */
-  --color-ufa-bg: #0a120c;
-  --color-ufa-panel: #121c15;
-  --color-ufa-panel-hover: #17251b;
-  --color-ufa-border: #263a2a;
-  --color-ufa-accent: #8fae46;
-  --color-ufa-accent-dim: #526b26;
-  --color-ufa-gold: #e8a23d;
-  --color-ufa-text: #eef2ea;
-  --color-ufa-muted: #93a68a;
-  --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --color-ufa-bg: var(--um-bg);
+  --color-ufa-panel: var(--um-panel);
+  --color-ufa-panel-hover: var(--um-hover);
+  --color-ufa-border: var(--um-border);
+  --color-ufa-accent: var(--um-accent);
+  --color-ufa-accent-dim: var(--um-accent-dim);
+  --color-ufa-on-accent: var(--um-on-accent);
+  --color-ufa-gold: var(--um-warning);
+  --color-ufa-text: var(--um-text);
+  --color-ufa-muted: var(--um-muted);
+  --color-ufa-danger: var(--um-danger);
+  --color-ufa-success: var(--um-success);
+  --color-ufa-info: var(--um-info);
+  --color-ufa-special: var(--um-special);
+  --font-sans: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
 }
 
 html {
@@ -62,7 +67,7 @@ body {
 }
 
 .league-fade-in {
-  animation: leagueFadeIn 0.55s ease-out both;
+  animation: none;
 }
 
 @keyframes leagueFadeIn {
@@ -110,9 +115,9 @@ body {
   letter-spacing: 0.06em;
   color: var(--color-ufa-gold);
   padding: 0.1rem 0.45rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(234, 179, 8, 0.35);
-  background: rgba(15, 23, 42, 0.75);
+  border-radius: 3px;
+  border: 1px solid var(--color-ufa-border);
+  background: var(--color-ufa-panel);
 }
 
 .field-player-svg--zone {
@@ -194,9 +199,9 @@ body {
   min-height: 2.55rem;
   margin-bottom: 0.45rem;
   padding: 0.45rem 0.65rem;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background: rgba(15, 23, 42, 0.72);
+  border-radius: 3px;
+  border: 1px solid var(--color-ufa-border);
+  background: var(--color-ufa-panel-hover);
   animation: fieldCommentaryIn 220ms ease-out;
 }
 

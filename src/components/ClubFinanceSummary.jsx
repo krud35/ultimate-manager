@@ -41,12 +41,12 @@ export default function ClubFinanceSummary({ team, lang, onChange }) {
         [en ? 'Club money' : 'Wszystkie pieniądze klubu', formatUsd(a.cash)],
         [en ? 'Transfer budget' : 'Budżet transferowy', formatUsd(a.transferBudget)],
         [en ? 'Weekly wage budget' : 'Budżet płacowy / tydzień', moneyWeekly(a.weeklyWageLimit)],
-      ].map(([label,value]) => <div key={label} className="rounded-lg border border-ufa-border bg-ufa-bg/60 p-4">
+      ].map(([label,value]) => <div key={label} className="rounded-sm border border-ufa-border bg-ufa-bg/60 p-4">
         <p className="text-xs text-ufa-muted">{label}</p><p className="text-xl font-bold tabular-nums text-ufa-text">{value}</p>
       </div>)}
     </div>
     <div className="flex flex-wrap items-center gap-3">
-      <button type="button" disabled={disabled} className="rounded-lg border border-ufa-border px-4 py-2 text-sm font-semibold text-ufa-text hover:bg-ufa-panel-hover disabled:opacity-40"
+      <button type="button" disabled={disabled} className="rounded-sm border border-ufa-border px-4 py-2 text-sm font-semibold text-ufa-text hover:bg-ufa-panel-hover disabled:opacity-40"
         onClick={() => { setDraft(Math.min(a.cash,Math.max(a.minimum,a.seasonPayrollBudget))); setError(null); setOpen(true) }}>
         {en ? 'Adjust transfer budget / wages' : 'Zmień budżet transferowy / płacowy'}
       </button>
@@ -55,10 +55,10 @@ export default function ClubFinanceSummary({ team, lang, onChange }) {
         : `${en ? 'Available once every' : 'Zmiana dostępna raz na'} ${BUDGET_ADJUSTMENT_DAYS} ${en ? 'in-game days.' : 'dni gry.'}`}</p>
     </div>
     <p className="text-xs text-ufa-muted">{en ? 'Current weekly wages' : 'Obecne pensje tygodniowe'}: {formatUsd(wages)}</p>
-    {a.shortfall > 0 && <p className="text-sm text-red-400">{en ? 'Wage funding shortfall' : 'Brak pokrycia pensji'}: {formatUsd(a.shortfall)}</p>}
+    {a.shortfall > 0 && <p className="text-sm text-ufa-danger">{en ? 'Wage funding shortfall' : 'Brak pokrycia pensji'}: {formatUsd(a.shortfall)}</p>}
     {!a.weeks && <p className="text-xs text-ufa-muted">{en ? 'No payrolls remain this season. The split resets for the new season.' : 'W tym sezonie nie ma już wypłat. Podział zostanie odnowiony na nowy sezon.'}</p>}
     {open && <dialog ref={dialogRef} aria-labelledby={titleId} onCancel={close}
-      className="fixed inset-0 m-auto w-[calc(100%_-_2rem)] max-w-xl max-h-[90vh] overflow-y-auto rounded-xl border border-ufa-border bg-ufa-panel p-5 text-ufa-text shadow-xl backdrop:bg-black/70">
+      className="fixed inset-0 m-auto w-[calc(100%_-_2rem)] max-w-xl max-h-[90vh] overflow-y-auto rounded-sm border border-ufa-border bg-ufa-panel p-5 text-ufa-text  backdrop:bg-black/70">
       <h3 id={titleId} className="text-lg font-semibold">{en ? 'Adjust transfer budget / wages' : 'Zmień budżet transferowy / płacowy'}</h3>
       <p className="mt-2 text-xs text-ufa-muted">{en ? 'Confirming a change locks further adjustments for 30 in-game days. Cancelling leaves the budget unchanged.' : 'Zatwierdzenie zmiany blokuje kolejną korektę na 30 dni gry. Anulowanie nie zmienia budżetu.'}</p>
       <label htmlFor={sliderId} className="mt-5 block text-sm font-semibold">{en ? 'Split your money' : 'Podział pieniędzy'}</label>
@@ -72,10 +72,10 @@ export default function ClubFinanceSummary({ team, lang, onChange }) {
       </div>
       <p className="text-xs text-ufa-muted">{en ? 'Season wage budget' : 'Sezonowy budżet płacowy'}: {formatUsd(draft)} · {a.weeks} {en ? 'payroll weeks left' : 'pozostałych tygodni wypłat'}.</p>
       <p className="mt-2 text-xs text-ufa-muted">{en ? 'Signed contracts remain protected. Moving the slider does not create money.' : 'Pieniądze na podpisane kontrakty są chronione. Przesuwanie suwaka nie tworzy pieniędzy.'}</p>
-      {error && <p role="alert" className="mt-3 text-sm text-red-400">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-sm text-ufa-danger">{error}</p>}
       <div className="mt-5 flex justify-end gap-3">
-        <button type="button" className="rounded-lg border border-ufa-border px-4 py-2 text-sm" onClick={close}>{en ? 'Cancel' : 'Anuluj'}</button>
-        <button type="button" disabled={!validDraft || draft === a.seasonPayrollBudget || !status.available} className="rounded-lg bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg disabled:opacity-40" onClick={save}>{en ? 'Confirm change' : 'Zatwierdź zmianę'}</button>
+        <button type="button" className="rounded-sm border border-ufa-border px-4 py-2 text-sm" onClick={close}>{en ? 'Cancel' : 'Anuluj'}</button>
+        <button type="button" disabled={!validDraft || draft === a.seasonPayrollBudget || !status.available} className="rounded-sm bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent disabled:opacity-40" onClick={save}>{en ? 'Confirm change' : 'Zatwierdź zmianę'}</button>
       </div>
     </dialog>}
   </section>

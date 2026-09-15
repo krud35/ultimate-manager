@@ -33,8 +33,8 @@ function topBy(rows, key, limit = 10) {
 
 function LeaderColumn({ title, rows, valueKey, lang, emptyLabel }) {
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20">
-      <h3 className="mb-3 text-sm font-semibold text-ufa-text">{title}</h3>
+    <div className="rounded-sm border border-ufa-border bg-ufa-panel p-4  ">
+      <h3 className="mb-3 text-xl font-semibold text-ufa-text">{title}</h3>
       {rows.length === 0 ? (
         <p className="text-xs text-ufa-muted">{emptyLabel}</p>
       ) : (
@@ -65,7 +65,7 @@ export default function LeadersPanel({ career, t, lang }) {
 
   if (!history.length) {
     return (
-      <div className="rounded-xl border border-dashed border-ufa-border bg-ufa-panel/50 p-8 text-center">
+      <div className="rounded-sm border border-dashed border-ufa-border bg-ufa-panel p-8 text-center">
         <p className="mx-auto max-w-md text-sm text-ufa-muted">{t.leadersEmpty}</p>
       </div>
     )
@@ -79,7 +79,7 @@ export default function LeadersPanel({ career, t, lang }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+      <div className="rounded-sm border border-ufa-border bg-ufa-panel p-6  ">
         <p className="text-sm text-ufa-muted">{t.leadersHint}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {filters.map((f) => (
@@ -88,7 +88,7 @@ export default function LeadersPanel({ career, t, lang }) {
               type="button"
               onClick={() => setKindFilter(f.id)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                kindFilter === f.id ? 'bg-ufa-accent text-ufa-bg' : 'bg-ufa-bg text-ufa-muted hover:text-ufa-text'
+                kindFilter === f.id ? 'bg-ufa-accent text-ufa-on-accent' : 'bg-ufa-bg text-ufa-muted hover:text-ufa-text'
               }`}
             >
               {f.label}

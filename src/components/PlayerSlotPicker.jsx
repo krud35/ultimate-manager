@@ -85,7 +85,7 @@ function PlayerStatChips({ player, staminaMap, dense = false, lang = 'pl' }) {
   return (
     <div
       className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 tabular-nums ${
-        dense ? 'text-[10px]' : 'text-[11px]'
+        dense ? 'text-[11px]' : 'text-[11px]'
       } text-ufa-muted`}
     >
       <span className="font-semibold text-ufa-text">
@@ -101,7 +101,7 @@ function PlayerStatChips({ player, staminaMap, dense = false, lang = 'pl' }) {
       <StaminaBar stamina={sta} compact className="w-16 shrink-0" />
       {injured ? (
         <span
-          className="font-semibold text-red-400"
+          className="font-semibold text-ufa-danger"
           title={injuryStatusLabel(player, lang)}
         >
           OUT {injuryDays}d
@@ -117,7 +117,7 @@ function InjuryBadge({ player, lang = 'pl' }) {
   return (
     <span
       title={label}
-      className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide bg-red-500/20 text-red-300 ring-1 ring-red-500/45"
+      className="inline-flex rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide bg-red-500/20 text-ufa-danger ring-1 ring-red-500/45"
     >
       {label}
     </span>
@@ -130,7 +130,7 @@ function OnLineBadge({ label, title = null }) {
   return (
     <span
       title={title ?? label}
-      className="inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide bg-amber-500/20 text-amber-200 ring-1 ring-amber-500/45"
+      className="inline-flex rounded px-1.5 py-0.5 text-[11px] font-bold tracking-wide bg-amber-500/20 text-ufa-gold ring-1 ring-amber-500/45"
     >
       {label}
     </span>
@@ -298,7 +298,7 @@ export default function PlayerSlotPicker({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`rounded-lg border bg-ufa-bg/50 transition ${
+      className={`rounded-sm border bg-ufa-bg/50 transition ${
         isDragOver
           ? 'border-ufa-accent border-dashed ring-2 ring-ufa-accent/50'
           : selectedInjured
@@ -335,7 +335,7 @@ export default function PlayerSlotPicker({
           }}
           className="min-h-11 min-w-0 flex-1 rounded-md border border-ufa-border bg-ufa-panel px-3 py-1.5 text-left hover:bg-ufa-panel-hover sm:min-h-0"
         >
-          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{positionTitle}</p>
+          <p className="text-[11px] uppercase tracking-wide text-ufa-muted">{positionTitle}</p>
           {selectedPlayer ? (
             <div className="mt-0.5 space-y-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -439,10 +439,10 @@ export default function PlayerSlotPicker({
       )}
 
       {open && (
-        <div className="border-t border-ufa-border bg-ufa-panel/80">
+        <div className="border-t border-ufa-border bg-ufa-panel">
           <div className="space-y-2 border-b border-ufa-border/60 px-2 py-2">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="self-center text-[10px] uppercase tracking-wide text-ufa-muted">
+              <span className="self-center text-[11px] uppercase tracking-wide text-ufa-muted">
                 {t.sortBy}
               </span>
               {SORT_KEYS.map((k) => (
@@ -464,13 +464,13 @@ export default function PlayerSlotPicker({
                 <button
                   type="button"
                   onClick={() => pick(null)}
-                  className="ml-auto min-h-8 rounded px-2 py-1 text-[11px] text-amber-300/90 hover:bg-amber-500/10 sm:min-h-0 sm:px-1.5 sm:py-0.5"
+                  className="ml-auto min-h-8 rounded px-2 py-1 text-[11px] text-ufa-gold/90 hover:bg-amber-500/10 sm:min-h-0 sm:px-1.5 sm:py-0.5"
                 >
                   {t.clearSlot}
                 </button>
               )}
             </div>
-            <p className="text-[10px] text-ufa-muted">
+            <p className="text-[11px] text-ufa-muted">
               {t.shownOf(filteredSorted.length, roster.length)}
             </p>
           </div>
@@ -535,7 +535,7 @@ export default function PlayerSlotPicker({
                           defenseLineIds={defenseLineIds}
                         />
                         {isCurrent ? (
-                          <span className="text-[10px] text-ufa-accent">{t.selected}</span>
+                          <span className="text-[11px] text-ufa-accent">{t.selected}</span>
                         ) : null}
                       </div>
                       <div className="mt-1 space-y-1">

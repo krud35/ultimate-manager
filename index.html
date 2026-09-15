@@ -2,12 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/disc.svg" />
+    <link rel="stylesheet" href="/fonts/barlow.css" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <title>Ultimate Manager</title>
+    <script>
+      try { document.documentElement.dataset.theme = localStorage.getItem('ufa-ui-theme') || 'system' } catch {}
+    </script>
     <script>
       // Pokazuje błędy ładowania ES modules (np. brakujący named export) zamiast pustego ekranu.
       ;(function () {

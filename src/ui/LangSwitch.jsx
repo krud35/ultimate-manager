@@ -12,7 +12,7 @@ export function LangSwitch({ lang, onChange, className = '' }) {
         onClick={() => onChange(UI_LANG.PL)}
         className={`min-h-8 rounded px-2.5 py-1 text-xs font-semibold tracking-wide transition-colors sm:min-h-0 ${
           lang === UI_LANG.PL
-            ? 'bg-ufa-accent text-ufa-bg'
+            ? 'bg-ufa-accent text-ufa-on-accent'
             : 'text-ufa-muted hover:text-ufa-text'
         }`}
       >
@@ -23,7 +23,7 @@ export function LangSwitch({ lang, onChange, className = '' }) {
         onClick={() => onChange(UI_LANG.EN)}
         className={`min-h-8 rounded px-2.5 py-1 text-xs font-semibold tracking-wide transition-colors sm:min-h-0 ${
           lang === UI_LANG.EN
-            ? 'bg-ufa-accent text-ufa-bg'
+            ? 'bg-ufa-accent text-ufa-on-accent'
             : 'text-ufa-muted hover:text-ufa-text'
         }`}
       >

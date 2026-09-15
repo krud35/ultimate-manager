@@ -40,20 +40,20 @@ function StatTile({ label, homeVal, awayVal, title = null }) {
 
   return (
     <div
-      className="flex flex-col gap-2.5 rounded-lg border border-ufa-border/70 bg-ufa-bg/55 px-3 py-3 shadow-sm shadow-black/10"
+      className="flex flex-col gap-2.5 border-b border-ufa-border px-3 py-3"
       title={title ?? undefined}
     >
-      <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-ufa-muted">
+      <p className="text-center text-[11px] font-semibold uppercase tracking-wider text-ufa-muted">
         {label}
       </p>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <p className="text-right text-sm font-bold tabular-nums text-blue-400 sm:text-base">
+        <p className="text-right text-sm font-bold tabular-nums text-ufa-info sm:text-base">
           {homeVal}
         </p>
-        <span className="text-[10px] text-ufa-muted/70" aria-hidden>
+        <span className="text-[11px] text-ufa-muted/70" aria-hidden>
           ·
         </span>
-        <p className="text-left text-sm font-bold tabular-nums text-red-400 sm:text-base">
+        <p className="text-left text-sm font-bold tabular-nums text-ufa-danger sm:text-base">
           {awayVal}
         </p>
       </div>
@@ -63,11 +63,11 @@ function StatTile({ label, homeVal, awayVal, title = null }) {
           aria-hidden
         >
           <div
-            className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
+            className="h-full bg-blue-500"
             style={{ width: `${homeShare}%` }}
           />
           <div
-            className="h-full bg-gradient-to-r from-red-400 to-red-500"
+            className="h-full bg-red-500"
             style={{ width: `${100 - homeShare}%` }}
           />
         </div>
@@ -162,35 +162,35 @@ const MatchDashboard = memo(function MatchDashboard({
   ]
 
   return (
-    <div className="mx-auto w-full max-w-3xl rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20 sm:p-5">
-      <div className="flex flex-wrap items-center justify-center gap-6 rounded-lg bg-ufa-bg/80 py-5 ring-1 ring-ufa-border sm:gap-10">
-        <div className="min-w-[7rem] text-center">
+    <div className="um-scoreboard mx-auto w-full max-w-4xl">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 py-5">
+        <div className="min-w-0 text-center">
           <p
-            className="max-w-[11rem] truncate text-sm font-medium text-blue-400/90"
+            className="text-base font-semibold text-ufa-info/90"
             title={homeName}
           >
             {homeName}
           </p>
-          <p className="mt-1 text-4xl font-black tabular-nums text-ufa-text">
+          <p className="um-scoreboard-number mt-2 tabular-nums text-ufa-text">
             {homeScore ?? 0}
           </p>
         </div>
         <span className="text-2xl text-ufa-muted">:</span>
-        <div className="min-w-[7rem] text-center">
+        <div className="min-w-0 text-center">
           <p
-            className="max-w-[11rem] truncate text-sm font-medium text-red-400/90"
+            className="text-base font-semibold text-ufa-danger/90"
             title={awayName}
           >
             {awayName}
           </p>
-          <p className="mt-1 text-4xl font-black tabular-nums text-ufa-text">
+          <p className="um-scoreboard-number mt-2 tabular-nums text-ufa-text">
             {awayScore ?? 0}
           </p>
         </div>
       </div>
 
       <div className="mt-4">
-        <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">
+        <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-wide text-ufa-muted">
           {t.matchStatsTitle}
         </p>
         <div className="mx-auto grid max-w-2xl grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5">
@@ -198,7 +198,7 @@ const MatchDashboard = memo(function MatchDashboard({
             <StatTile key={tile.label} {...tile} />
           ))}
         </div>
-        <div className="mt-2.5 flex items-center justify-center gap-4 text-[10px] uppercase tracking-wide text-ufa-muted">
+        <div className="mt-2.5 flex items-center justify-center gap-4 text-[11px] uppercase tracking-wide text-ufa-muted">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-400" aria-hidden />
             {t.homeShort}

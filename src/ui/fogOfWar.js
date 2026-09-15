@@ -17,9 +17,9 @@ export function financeStateLabel(budget, lang = 'en') {
 
 export function financeStateToneClass(budget) {
   const b = Math.max(0, Number(budget) || 0)
-  if (b < 550_000) return 'text-red-400'
+  if (b < 550_000) return 'text-ufa-danger'
   if (b < 1_200_000) return 'text-ufa-gold'
-  return 'text-emerald-400'
+  return 'text-ufa-success'
 }
 
 /** Attribute 0–99 → bad / OK / good / outstanding. */
@@ -39,10 +39,10 @@ export function attributeBandLabel(value, lang = 'en') {
 
 export function attributeBandToneClass(value) {
   const v = Number(value) || 0
-  if (v >= 85) return 'text-emerald-400'
+  if (v >= 85) return 'text-ufa-success'
   if (v >= 70) return 'text-ufa-gold'
   if (v >= 55) return 'text-ufa-muted'
-  return 'text-red-400'
+  return 'text-ufa-danger'
 }
 
 /**
@@ -103,10 +103,10 @@ export function fatigueBandLabel(fatigue, lang = 'en') {
 
 export function fatigueBandToneClass(fatigue) {
   const f = Math.max(0, Number(fatigue) || 0)
-  if (f >= 75) return 'text-red-400'
-  if (f >= 50) return 'text-amber-400'
+  if (f >= 75) return 'text-ufa-danger'
+  if (f >= 50) return 'text-ufa-gold'
   if (f >= 25) return 'text-ufa-gold'
-  return 'text-emerald-400'
+  return 'text-ufa-success'
 }
 
 /**
@@ -129,7 +129,7 @@ export function trainingRoomLabel(room, age = 0, lang = 'en') {
 
 export function trainingRoomToneClass(room, age = 0) {
   const r = Number(room) || 0
-  if (r <= 0) return age >= 30 ? 'text-amber-400' : 'text-ufa-gold'
-  if (r >= 8) return 'text-emerald-400'
+  if (r <= 0) return age >= 30 ? 'text-ufa-gold' : 'text-ufa-gold'
+  if (r >= 8) return 'text-ufa-success'
   return 'text-ufa-accent'
 }

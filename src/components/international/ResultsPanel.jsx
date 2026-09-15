@@ -3,7 +3,7 @@ import { academyCountryLabel } from '../../data/academyScoutGeography.js'
 
 function GroupTable({ group, t, lang }) {
   return (
-    <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 p-3">
+    <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 p-3">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ufa-muted">
         {t.groupLabel(group.id)}
       </p>
@@ -34,7 +34,7 @@ function GroupTable({ group, t, lang }) {
 function ResultDetail({ entry, t, lang }) {
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-ufa-gold/30 bg-ufa-panel p-5 shadow-lg shadow-black/20">
+      <div className="rounded-sm border border-ufa-gold/30 bg-ufa-panel p-5  ">
         <p className="text-xs uppercase tracking-wide text-ufa-gold">
           {t.kind[entry.kind] ?? entry.kind} {entry.year}
         </p>
@@ -83,7 +83,7 @@ export default function ResultsPanel({ career, t, lang }) {
 
   if (!history.length) {
     return (
-      <div className="rounded-xl border border-dashed border-ufa-border bg-ufa-panel/50 p-8 text-center">
+      <div className="rounded-sm border border-dashed border-ufa-border bg-ufa-panel p-8 text-center">
         <p className="mx-auto max-w-md text-sm text-ufa-muted">{t.resultsEmpty}</p>
       </div>
     )
@@ -111,7 +111,7 @@ export default function ResultsPanel({ career, t, lang }) {
                 setSelectedIndex(0)
               }}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                filterKind === f.id ? 'bg-ufa-accent text-ufa-bg' : 'bg-ufa-bg text-ufa-muted hover:text-ufa-text'
+                filterKind === f.id ? 'bg-ufa-accent text-ufa-on-accent' : 'bg-ufa-bg text-ufa-muted hover:text-ufa-text'
               }`}
             >
               {f.label}
@@ -124,13 +124,13 @@ export default function ResultsPanel({ career, t, lang }) {
               <button
                 type="button"
                 onClick={() => setSelectedIndex(i)}
-                className={`w-full rounded-lg border px-3 py-2.5 text-left text-sm transition ${
+                className={`w-full rounded-sm border px-3 py-2.5 text-left text-sm transition ${
                   entry === selected
                     ? 'border-ufa-gold/50 bg-ufa-gold/10'
                     : 'border-ufa-border bg-ufa-panel hover:border-ufa-accent/40'
                 }`}
               >
-                <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+                <p className="text-[11px] uppercase tracking-wide text-ufa-muted">
                   {entry.year} · {t.kindShort[entry.kind] ?? entry.kind}
                 </p>
                 <p className="mt-0.5 truncate text-ufa-text">

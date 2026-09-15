@@ -31,12 +31,13 @@ import {
   trainingRoomToneClass,
 } from '../ui/fogOfWar'
 import { currentMatchStamina } from '../matchEngine/stamina.js'
+import TrainingSchedulePanel from './TrainingSchedulePanel.jsx'
 
 function qualityClass(q) {
-  if (q >= 78) return 'text-emerald-400'
+  if (q >= 78) return 'text-ufa-success'
   if (q >= 62) return 'text-ufa-accent'
   if (q >= 48) return 'text-ufa-gold'
-  return 'text-amber-400'
+  return 'text-ufa-gold'
 }
 
 const INTENSITY_IDS = Object.keys(TEAM_TRAINING_INTENSITY)
@@ -45,6 +46,7 @@ function FocusSelect({ value, onChange, exclude, disabled }) {
   const { lang } = useUiLang()
   return (
     <select
+      aria-label={lang === 'en' ? 'Training focus' : 'Fokus treningu'}
       value={value}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
@@ -63,6 +65,7 @@ function IntensitySelect({ value, onChange, disabled }) {
   const { lang } = useUiLang()
   return (
     <select
+      aria-label={lang === 'en' ? 'Training intensity' : 'Intensywność treningu'}
       value={value}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
@@ -136,16 +139,16 @@ function TeamTrainingPanel({ team, league, disabled, onChange }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-xl shadow-black/30">
+      <div className="um-section  ">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-ufa-text">{t.title}</h2>
+            <h2 className="text-2xl font-semibold text-ufa-text">{t.title}</h2>
             <p className="mt-1 text-sm text-ufa-muted max-w-2xl">
               {t.intro}
             </p>
           </div>
-          <div className="min-w-[160px] rounded-lg border border-ufa-border bg-ufa-bg/60 px-3 py-2">
-            <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{t.tacticsFamiliarity}</p>
+          <div className="min-w-[160px] rounded-sm border border-ufa-border bg-ufa-bg/60 px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-ufa-muted">{t.tacticsFamiliarity}</p>
             <p className="text-xl font-semibold tabular-nums text-ufa-accent">{fam}</p>
             <div className="mt-1 h-1.5 rounded-full bg-ufa-border overflow-hidden">
               <div
@@ -157,7 +160,7 @@ function TeamTrainingPanel({ team, league, disabled, onChange }) {
         </div>
 
         {last && (
-          <div className="mt-4 rounded-lg border border-ufa-border/80 bg-ufa-bg/50 px-4 py-3">
+          <div className="mt-4 rounded-sm border border-ufa-border/80 bg-ufa-bg/50 px-4 py-3">
             <p className="text-xs uppercase tracking-wide text-ufa-muted">{t.lastSession} · {last.date}</p>
             <p className={`mt-1 text-sm font-semibold ${qualityClass(last.quality)}`}>
               {lang === 'en'
@@ -178,14 +181,15 @@ function TeamTrainingPanel({ team, league, disabled, onChange }) {
           </div>
         )}
 
-        {error && <p className="mt-3 text-sm text-amber-400">{error}</p>}
+        {error && <p className="mt-3 text-sm text-ufa-gold">{error}</p>}
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/40 p-4">
-            <h3 className="text-sm font-semibold text-ufa-text">{t.weekly}</h3>
+          <div className="rounded-sm border border-ufa-border bg-ufa-bg/40 p-4">
+            <h3 className="text-xl font-semibold text-ufa-text">{t.weekly}</h3>
             <p className="mt-0.5 text-[11px] text-ufa-muted">{t.weeklyHint}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <select
+                aria-label={lang === 'en' ? 'Day of the week' : 'Dzień tygodnia'}
                 value={weekDay}
                 disabled={disabled}
                 onChange={(e) => setWeekDay(Number(e.target.value))}
@@ -204,7 +208,7 @@ function TeamTrainingPanel({ team, league, disabled, onChange }) {
                 type="button"
                 disabled={disabled}
                 onClick={addWeekly}
-                className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
               >
                 {t.addWeekly}
               </button>
@@ -228,7 +232,7 @@ function TeamTrainingPanel({ team, league, disabled, onChange }) {
                     <span className="text-ufa-muted mx-2">·</span>
                     <span className="text-ufa-muted">{intensityLabel(s.intensity, lang)}</span>
                     {s.enabled === false && (
-                      <span className="ml-2 text-[10px] text-amber-400">{t.off}</span>
+                      <span className="ml-2 text-[11px] text-ufa-gold">{t.off}</span>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -250,7 +254,7 @@ function TeamTrainingPanel({ team, league, disabled, onChange }) {
                         removeWeeklyTeamTraining(team, s.id)
                         bump()
                       }}
-                      className="text-xs text-red-400/90 hover:underline disabled:opacity-40"
+                      className="text-xs text-ufa-danger/90 hover:underline disabled:opacity-40"
                     >{t.remove}</button>
                   </div>
                 </li>
@@ -258,8 +262,8 @@ function TeamTrainingPanel({ team, league, disabled, onChange }) {
             </ul>
           </div>
 
-          <div className="rounded-lg border border-ufa-border bg-ufa-bg/40 p-4">
-            <h3 className="text-sm font-semibold text-ufa-text">{t.oneOff}</h3>
+          <div className="rounded-sm border border-ufa-border bg-ufa-bg/40 p-4">
+            <h3 className="text-xl font-semibold text-ufa-text">{t.oneOff}</h3>
             <p className="mt-0.5 text-[11px] text-ufa-muted">{t.oneOffDateHint}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <input
@@ -276,7 +280,7 @@ function TeamTrainingPanel({ team, league, disabled, onChange }) {
                 type="button"
                 disabled={disabled}
                 onClick={addOneOff}
-                className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                className="rounded-md bg-ufa-accent px-3 py-1.5 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
               >
                 Zaplanuj
               </button>
@@ -307,7 +311,7 @@ function TeamTrainingPanel({ team, league, disabled, onChange }) {
                       removeOneOffTeamTraining(team, s.id)
                       bump()
                     }}
-                    className="text-xs text-red-400/90 hover:underline disabled:opacity-40"
+                    className="text-xs text-ufa-danger/90 hover:underline disabled:opacity-40"
                   >{t.remove}</button>
                 </li>
               ))}
@@ -407,10 +411,11 @@ export default function TrainingView({
 
   return (
     <div className="space-y-6 league-fade-in">
-      <TeamTrainingPanel team={team} league={league} disabled={disabled} onChange={onChange} />
+      <TrainingSchedulePanel team={team} league={league} disabled={disabled} onChange={onChange} />
+      {(team.teamTraining?.schedule?.legacy ?? Boolean(team.teamTraining?.weekly?.length || team.teamTraining?.oneOff?.length)) && <TeamTrainingPanel team={team} league={league} disabled={disabled} onChange={onChange} />}
 
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
-        <h2 className="text-lg font-semibold text-ufa-text">{t.individualTitle(team.name)}</h2>
+      <div className="um-section  ">
+        <h2 className="text-2xl font-semibold text-ufa-text">{t.individualTitle(team.name)}</h2>
         <p className="mt-2 text-sm text-ufa-muted max-w-3xl">
           {t.individualIntro}
         </p>
@@ -431,7 +436,7 @@ export default function TrainingView({
               }}
               className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                 filter === f.id
-                  ? 'bg-ufa-accent text-ufa-bg'
+                  ? 'bg-ufa-accent text-ufa-on-accent'
                   : 'bg-ufa-bg text-ufa-muted ring-1 ring-ufa-border hover:text-ufa-text'
               }`}
             >
@@ -474,7 +479,7 @@ export default function TrainingView({
               type="button"
               disabled={disabled}
               onClick={applyBulkFocus}
-              className="rounded-md bg-ufa-accent px-3 py-1.5 text-xs font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+              className="rounded-md bg-ufa-accent px-3 py-1.5 text-xs font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
             >
               {t.applyToSelected}
             </button>
@@ -489,7 +494,7 @@ export default function TrainingView({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
+      <div className="overflow-hidden rounded-sm border border-ufa-border bg-ufa-panel  ">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[920px] text-left text-sm">
             <thead>
@@ -551,7 +556,7 @@ export default function TrainingView({
                     </td>
                     <td className="px-3 py-3 text-sm">
                       {isPlayerInjured(player) ? (
-                        <span className="font-semibold text-red-400">
+                        <span className="font-semibold text-ufa-danger">
                           {injuryStatusLabel(player, lang)}
                         </span>
                       ) : (

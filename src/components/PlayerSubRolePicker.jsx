@@ -33,7 +33,7 @@ export default function PlayerSubRolePicker({
 
   return (
     <label
-      className={`flex flex-wrap items-center gap-1.5 ${compact ? 'text-[10px]' : 'text-[11px]'}`}
+      className={`flex flex-wrap items-center gap-1.5 ${compact ? 'text-[11px]' : 'text-[11px]'}`}
       title={t.subRoleTitle}
     >
       <span className="text-ufa-muted">{t.subRole}</span>
@@ -44,7 +44,7 @@ export default function PlayerSubRolePicker({
           onTacticsChange(setPlayerSubRoleInTactics(tactics, playerId, id))
         }}
         className={`rounded border border-ufa-border bg-ufa-panel text-ufa-text ${
-          compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-[11px]'
+          compact ? 'px-1.5 py-0.5 text-[11px]' : 'px-2 py-0.5 text-[11px]'
         }`}
       >
         {options.map((opt) => (
@@ -69,7 +69,7 @@ export function PlayerSubRoleBadge({ playerId, tactics, slotRole = null, slotRol
   if (!id) return null
   return (
     <span
-      className="rounded bg-ufa-border/40 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-ufa-muted"
+      className="rounded bg-ufa-border/40 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-ufa-muted"
       title={t.subRole}
     >
       {playerSubRoleShortLabel(id)}

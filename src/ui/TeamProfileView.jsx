@@ -76,8 +76,8 @@ import { financeStateLabel, financeStateToneClass, scoutedValueDisplay, attribut
 
 function StatPill({ label, value, valueClassName = 'text-ufa-text' }) {
   return (
-    <div className="rounded-lg border border-ufa-border bg-ufa-bg/60 px-3 py-2 text-center">
-      <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{label}</p>
+    <div className="rounded-sm border border-ufa-border bg-ufa-bg/60 px-3 py-2 text-center">
+      <p className="text-[11px] uppercase tracking-wide text-ufa-muted">{label}</p>
       <p className={`text-lg font-semibold tabular-nums ${valueClassName}`}>{value}</p>
     </div>
   )
@@ -94,7 +94,7 @@ function StartingSevenCard({ player, seasonState, isOwnClub }) {
   const form = getPlayerForm(player)
 
   return (
-    <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 p-3 flex flex-col gap-2 min-w-[160px]">
+    <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 p-3 flex flex-col gap-2 min-w-[160px]">
       <div>
         <p className="font-medium text-sm text-ufa-text leading-tight">{getPlayerFullName(player)}</p>
       </div>
@@ -189,40 +189,40 @@ function ScoutingSection({ career, onChange, playerTeam, opponentTeam, opponentT
   )
 
   return (
-    <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+    <section className="rounded-sm border border-ufa-border bg-ufa-panel p-5  ">
       <h3 className="font-semibold text-ufa-text mb-4">{ts.sectionTitle}</h3>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
-          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{ts.knowledgeLabel}</p>
+        <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+          <p className="text-[11px] uppercase tracking-wide text-ufa-muted">{ts.knowledgeLabel}</p>
           <p className={`mt-1 text-xl font-bold tabular-nums ${attributeBandToneClass(knowledge)}`}>
             {knowledge}%
           </p>
         </div>
-        <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
-          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{ts.tacticsLabel}</p>
+        <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+          <p className="text-[11px] uppercase tracking-wide text-ufa-muted">{ts.tacticsLabel}</p>
           <p
             className={`mt-1 text-xl font-bold tabular-nums ${attributeBandToneClass(tacticsKnowledge)}`}
           >
             {tacticsKnowledge}%
           </p>
         </div>
-        <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
-          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+        <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+          <p className="text-[11px] uppercase tracking-wide text-ufa-muted">
             {ts.capacityLabel(used, capacity)}
           </p>
           <p className="mt-1 text-xl font-bold tabular-nums text-ufa-text">
             {used}/{capacity}
           </p>
         </div>
-        <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
-          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">{ts.costLabel}</p>
+        <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+          <p className="text-[11px] uppercase tracking-wide text-ufa-muted">{ts.costLabel}</p>
           <p className="mt-1 text-xl font-bold tabular-nums text-ufa-gold">{formatUsd(cost)}</p>
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap items-end gap-2">
         <div>
-          <label className="block text-[10px] uppercase tracking-wide text-ufa-muted mb-1">
+          <label className="block text-[11px] uppercase tracking-wide text-ufa-muted mb-1">
             {ts.pickerKindLabel}
           </label>
           <select
@@ -242,7 +242,7 @@ function ScoutingSection({ career, onChange, playerTeam, opponentTeam, opponentT
         </div>
         {kind === 'player' && (
           <div>
-            <label className="block text-[10px] uppercase tracking-wide text-ufa-muted mb-1">
+            <label className="block text-[11px] uppercase tracking-wide text-ufa-muted mb-1">
               {ts.pickerPlayerLabel}
             </label>
             <select
@@ -266,16 +266,16 @@ function ScoutingSection({ career, onChange, playerTeam, opponentTeam, opponentT
           type="button"
           onClick={handleSend}
           disabled={busy || used >= capacity || duplicate || (kind === 'player' && !targetPlayerId)}
-          className="rounded-md bg-ufa-accent px-4 py-1.5 text-sm font-semibold text-ufa-bg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-ufa-accent/90"
+          className="rounded-md bg-ufa-accent px-4 py-1.5 text-sm font-semibold text-ufa-on-accent disabled:opacity-50 disabled:cursor-not-allowed hover:bg-ufa-accent/90"
         >
           {ts.sendScoutButton}
         </button>
       </div>
-      {flash && !flash.ok && <p className="mt-2 text-xs text-red-400">{errorText}</p>}
+      {flash && !flash.ok && <p className="mt-2 text-xs text-ufa-danger">{errorText}</p>}
 
       {pending.length > 0 && (
         <div className="mt-4">
-          <p className="text-[10px] uppercase tracking-wide text-ufa-muted mb-2">
+          <p className="text-[11px] uppercase tracking-wide text-ufa-muted mb-2">
             {ts.pendingMissionsTitle}
           </p>
           <ul className="space-y-1.5">
@@ -465,7 +465,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
 
   if (!team) {
     return (
-      <div className="rounded-xl border border-ufa-border bg-ufa-panel p-8 text-center">
+      <div className="rounded-sm border border-ufa-border bg-ufa-panel p-8 text-center">
         <p className="text-ufa-muted">{t.notFound}</p>
         {onBack && (
           <button
@@ -499,7 +499,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
 
       {/* Header */}
       <section
-        className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30 overflow-hidden"
+        className="rounded-sm border border-ufa-border bg-ufa-panel   overflow-hidden"
         style={{ borderTopWidth: 4, borderTopColor: accent }}
       >
         <div className="px-6 py-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -612,30 +612,30 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
 
       {/* Finances */}
       {finances && (
-        <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+        <section className="rounded-sm border border-ufa-border bg-ufa-panel p-5  ">
           <h3 className="font-semibold text-ufa-text mb-1">{t.finances}</h3>
           {isOwnClub ? (
             <>
               <p className="text-xs text-ufa-muted mb-4">{t.financesHintOwn}</p>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+                <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-wide text-ufa-muted">
                     {t.transferBudget}
                   </p>
                   <p className="mt-1 text-xl font-bold tabular-nums text-ufa-accent">
                     {formatUsd(finances.budget)}
                   </p>
                 </div>
-                <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+                <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-wide text-ufa-muted">
                     {t.wageBudget}
                   </p>
                   <p className="mt-1 text-xl font-bold tabular-nums text-ufa-gold">
                     {formatUsd(finances.salaryBudget)}
                   </p>
                 </div>
-                <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+                <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-wide text-ufa-muted">
                     {t.rosterValue}
                   </p>
                   <p className="mt-1 text-xl font-bold tabular-nums text-ufa-gold">
@@ -648,8 +648,8 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
               </div>
             </>
           ) : (
-            <div className="rounded-lg border border-ufa-border bg-ufa-bg/50 px-4 py-3 max-w-sm">
-              <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+            <div className="rounded-sm border border-ufa-border bg-ufa-bg/50 px-4 py-3 max-w-sm">
+              <p className="text-[11px] uppercase tracking-wide text-ufa-muted">
                 {t.financesState}
               </p>
               <p
@@ -675,7 +675,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
       )}
 
       {/* Starting 7 */}
-      <section className="rounded-xl border border-ufa-border bg-ufa-panel p-5 shadow-lg shadow-black/20">
+      <section className="rounded-sm border border-ufa-border bg-ufa-panel p-5  ">
         <h3 className="font-semibold text-ufa-text mb-1">{t.bestSeven}</h3>
         <p className="text-xs text-ufa-muted mb-4">{t.bestSevenHint}</p>
         <div className="flex gap-3 overflow-x-auto pb-1">
@@ -692,7 +692,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
 
       {/* Results & schedule */}
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5">
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5">
           <h3 className="font-semibold text-ufa-text mb-3">{t.recentResults}</h3>
           {completed.length === 0 ? (
             <p className="text-sm text-ufa-muted">{t.noPlayedMatches}</p>
@@ -729,7 +729,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
             </ul>
           )}
         </div>
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-5">
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-5">
           <h3 className="font-semibold text-ufa-text mb-3">{t.upcomingMatches}</h3>
           {upcoming.length === 0 ? (
             <p className="text-sm text-ufa-muted">{t.noScheduled}</p>
@@ -760,7 +760,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
       </section>
 
       {/* Roster table */}
-      <section className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30 overflow-hidden">
+      <section className="rounded-sm border border-ufa-border bg-ufa-panel   overflow-hidden">
         <div className="border-b border-ufa-border px-6 py-4">
           <h3 className="font-semibold text-ufa-text">{t.rosterStats}</h3>
           <p className="text-xs text-ufa-muted mt-1">{t.sortHint}</p>
@@ -941,7 +941,7 @@ export default function TeamProfileView({ teamId, seasonState, onBack, career = 
         />
       )}
       {negotiateFlash && (
-        <p className={`mt-2 text-sm ${negotiateFlash.type === 'ok' ? 'text-ufa-accent' : 'text-red-400'}`}>
+        <p className={`mt-2 text-sm ${negotiateFlash.type === 'ok' ? 'text-ufa-accent' : 'text-ufa-danger'}`}>
           {negotiateFlash.text}
         </p>
       )}

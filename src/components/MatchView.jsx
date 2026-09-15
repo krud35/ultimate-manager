@@ -1268,14 +1268,14 @@ export default function MatchView({
         />
       )}
       {isLeagueMatch && !spectatorMode && (
-        <div className="rounded-lg border border-ufa-gold/40 bg-ufa-panel/80 px-4 py-2 text-sm text-ufa-muted">
+        <div className="rounded-sm border border-ufa-gold/40 bg-ufa-panel px-4 py-2 text-sm text-ufa-muted">
           {t.leagueMatch} ·  {leagueFixture.round} ·{' '}
           <span className="text-ufa-text">{homeTeam.name}</span> vs{' '}
           <span className="text-ufa-text">{awayTeam.name}</span>
         </div>
       )}
       {spectatorMode && (
-        <div className="rounded-lg border border-ufa-gold/40 bg-ufa-panel/80 px-4 py-2 text-sm text-ufa-muted">
+        <div className="rounded-sm border border-ufa-gold/40 bg-ufa-panel px-4 py-2 text-sm text-ufa-muted">
           {t.spectatorMatch} ·{' '}
           <span className="text-ufa-text">{homeTeam.name}</span> vs{' '}
           <span className="text-ufa-text">{awayTeam.name}</span>
@@ -1283,10 +1283,10 @@ export default function MatchView({
       )}
 
       {stage === 'prep' && (
-        <div className="rounded-xl border border-ufa-border bg-ufa-panel p-6 shadow-xl shadow-black/30">
+        <div className="rounded-sm border border-ufa-border bg-ufa-panel p-6  ">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-ufa-text">
+              <h2 className="text-2xl font-semibold text-ufa-text">
                 {isLeagueMatch ? t.leagueMatch : t.simMatch}
               </h2>
               <p className="mt-1 text-sm text-ufa-muted">
@@ -1327,7 +1327,7 @@ export default function MatchView({
                   <button
                     type="button"
                     onClick={startInteractiveMatch}
-                    className="rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-bg shadow-md hover:opacity-90"
+                    className="rounded-md bg-ufa-accent px-5 py-2 text-sm font-semibold text-ufa-on-accent  hover:opacity-90"
                   >
                     {t.pointByPointMatch}
                   </button>
@@ -1383,14 +1383,14 @@ export default function MatchView({
 
       {stage === 'live' && (
         <div className="space-y-4 league-fade-in">
-          <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-xl shadow-black/30">
+          <div className="um-scoreboard">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-ufa-text">
-                {homeTeam.name}
-                <span className="mx-2 tabular-nums text-ufa-accent">
+              <h2 className="um-live-score">
+                <span>{homeTeam.name}</span>
+                <span className="um-scoreboard-number tabular-nums text-ufa-accent">
                   {displayedScore.home}–{displayedScore.away}
                 </span>
-                {awayTeam.name}
+                <span>{awayTeam.name}</span>
               </h2>
               <button
                 type="button"
@@ -1414,7 +1414,7 @@ export default function MatchView({
             )}
           </div>
 
-          <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 sm:p-6 shadow-xl shadow-black/30">
+          <div className="rounded-sm border border-ufa-border bg-ufa-panel p-4 sm:p-6  ">
             {pointByPointMode ? (
               <div>
                 <div className="flex flex-wrap gap-2">
@@ -1422,7 +1422,7 @@ export default function MatchView({
                     type="button"
                     disabled={!canPlayPoint || !lineupCheck.ok}
                     onClick={handleSimulateNextPoint}
-                    className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+                    className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
                   >
                     {t.simNextPoint}
                   </button>
@@ -1442,7 +1442,7 @@ export default function MatchView({
                   </button>
                 </div>
                 {lineupSubmitError ? (
-                  <p className="mt-3 text-sm text-red-400">{lineupSubmitError}</p>
+                  <p className="mt-3 text-sm text-ufa-danger">{lineupSubmitError}</p>
                 ) : null}
               </div>
             ) : (
@@ -1457,7 +1457,7 @@ export default function MatchView({
                         onClick={() => setPlaybackSpeed(speed)}
                         className={`rounded-md px-2.5 py-1 text-xs font-medium tabular-nums ${
                           playbackSpeed === speed
-                            ? 'bg-ufa-accent text-ufa-bg'
+                            ? 'bg-ufa-accent text-ufa-on-accent'
                             : 'border border-ufa-border text-ufa-muted hover:bg-ufa-panel-hover'
                         }`}
                       >
@@ -1469,7 +1469,7 @@ export default function MatchView({
                     <button
                       type="button"
                       onClick={() => setTacticsModalOpen(true)}
-                      className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90"
+                      className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90"
                     >
                       {t.tacticsAndSubs}
                     </button>
@@ -1553,7 +1553,7 @@ export default function MatchView({
             <button
               type="button"
               onClick={() => (spectatorMode ? handleReturnToLeague() : setStage('dressingRoomPost'))}
-              className="rounded-md bg-ufa-accent px-6 py-2.5 text-sm font-semibold text-ufa-bg shadow-md hover:opacity-90"
+              className="rounded-md bg-ufa-accent px-6 py-2.5 text-sm font-semibold text-ufa-on-accent  hover:opacity-90"
             >
               {t.postMatchContinue}
             </button>
@@ -1587,7 +1587,7 @@ export default function MatchView({
           )}
 
           {result && (
-            <div className="rounded-xl border border-ufa-border bg-ufa-panel shadow-xl shadow-black/30">
+            <div className="rounded-sm border border-ufa-border bg-ufa-panel  ">
               <div className="border-b border-ufa-border px-6 py-4">
                 <h3 className="font-semibold text-ufa-text">{t.matchLog}</h3>
                 <p className="text-xs text-ufa-muted mt-1">

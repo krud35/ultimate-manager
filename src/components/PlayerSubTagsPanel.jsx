@@ -86,8 +86,8 @@ export default function PlayerSubTagsPanel({
 
   return (
     <>
-      <section className="rounded-xl border border-ufa-border/80 bg-ufa-panel/50 px-4 py-3">
-      <h3 className="text-sm font-semibold text-ufa-text">{t.subAssignments}</h3>
+      <section className="rounded-sm border border-ufa-border/80 bg-ufa-panel px-4 py-3">
+      <h3 className="text-xl font-semibold text-ufa-text">{t.subAssignments}</h3>
       <p className="mt-0.5 text-xs text-ufa-muted">{t.subAssignmentsHint}</p>
       <p className="mt-1 text-[11px] font-medium text-ufa-accent">{t.subPriorityHint}</p>
       {!bench.length ? (
@@ -101,7 +101,7 @@ export default function PlayerSubTagsPanel({
                 key={player.id}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={() => moveBefore(player.id)}
-                className={`grid gap-2 rounded-lg bg-ufa-bg/35 px-2.5 py-2 transition sm:grid-cols-[minmax(10rem,1fr)_minmax(8rem,0.7fr)_minmax(8rem,0.7fr)] sm:items-center ${
+                className={`grid gap-2 rounded-sm bg-ufa-bg/35 px-2.5 py-2 transition sm:grid-cols-[minmax(10rem,1fr)_minmax(8rem,0.7fr)_minmax(8rem,0.7fr)] sm:items-center ${
                   draggedId === player.id ? 'opacity-45 ring-1 ring-ufa-accent/50' : 'hover:bg-ufa-bg/55'
                 }`}
               >

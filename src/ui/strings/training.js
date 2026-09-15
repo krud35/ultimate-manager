@@ -45,7 +45,7 @@ const pl = {
   noUpcomingOneOff: 'Brak nadchodzących sesji jednorazowych.',
   noTeam: 'Brak drużyny do treningu.',
   individualIntro:
-    'Fokus nie jest osobnym treningiem — przyspiesza rozwój wybranych umiejętności na treningach drużynowych (i spowalnia pozostałe). Regeneracja obniża zmęczenie z sesji i szybciej regeneruje w dni bez treningu. Jedyny realny trening to sesje drużynowe.',
+    'Fokus kieruje rozwojem podczas zaplanowanych sesji. Regeneracja zwalnia zawodnika z aktywnego treningu i przyspiesza codzienny odpoczynek. Dodatkową pracę indywidualną możesz zaplanować jako osobną sesję w kalendarzu; ma własny koszt wysiłku.',
   fatigue: 'Zmęczenie',
   matchFreshness: 'Świeżość mecz.',
   attendance: 'frekwencja',
@@ -101,7 +101,7 @@ const en = {
   noUpcomingOneOff: 'No upcoming one-off sessions.',
   noTeam: 'No team available for training.',
   individualIntro:
-    'Focus is not a separate session — it speeds selected skills on team trainings (and slows the rest). Recovery lowers session fatigue and regenerates faster on off days. Real training is team sessions only.',
+    'Focus directs development during scheduled sessions. Rest excuses the player from active training and improves daily recovery. Additional individual practice can be scheduled as a separate calendar session with its own workload.',
   fatigue: 'Fatigue',
   matchFreshness: 'Match freshness',
   attendance: 'attendance',

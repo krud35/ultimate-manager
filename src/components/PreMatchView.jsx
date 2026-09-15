@@ -88,14 +88,14 @@ function ScoutingReportSection({ opponentTeam, opponentLeaders, tacticsKnowledge
   const forceSide = tactics.oLineCoachDirectives?.forceSide ?? tactics.dLineCoachDirectives?.forceSide
 
   return (
-    <div className="rounded-xl border border-ufa-border bg-ufa-panel p-4 shadow-lg shadow-black/20">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-accent mb-3">
+    <div className="um-section  ">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-ufa-accent mb-3">
         {ts.scoutReportTitle}
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted mb-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ufa-muted mb-2">
             {ts.bestSevenTitle}
           </p>
           <LeadersList leaders={opponentLeaders} emptyLabel={t.noPlayerStats} />
@@ -103,7 +103,7 @@ function ScoutingReportSection({ opponentTeam, opponentLeaders, tacticsKnowledge
 
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ufa-muted">
               {ts.expectedStyleTitle}
             </p>
             <span className="text-xs text-ufa-muted tabular-nums">
@@ -113,7 +113,7 @@ function ScoutingReportSection({ opponentTeam, opponentLeaders, tacticsKnowledge
           {showExact ? (
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <dt className="text-[10px] uppercase text-ufa-muted">O-Line</dt>
+                <dt className="text-[11px] uppercase text-ufa-muted">O-Line</dt>
                 <dd className="text-ufa-text">
                   {styleLabel(tactics.oLineAttackStyle ?? tactics.attackStyle, TACTICS_MODIFIERS.attack)}
                   {' / '}
@@ -121,7 +121,7 @@ function ScoutingReportSection({ opponentTeam, opponentLeaders, tacticsKnowledge
                 </dd>
               </div>
               <div>
-                <dt className="text-[10px] uppercase text-ufa-muted">D-Line</dt>
+                <dt className="text-[11px] uppercase text-ufa-muted">D-Line</dt>
                 <dd className="text-ufa-text">
                   {styleLabel(tactics.dLineAttackStyle ?? tactics.attackStyle, TACTICS_MODIFIERS.attack)}
                   {' / '}
@@ -130,7 +130,7 @@ function ScoutingReportSection({ opponentTeam, opponentLeaders, tacticsKnowledge
               </div>
               {forceSide && (
                 <div className="col-span-2">
-                  <dt className="text-[10px] uppercase text-ufa-muted">{ts.forceLabel}</dt>
+                  <dt className="text-[11px] uppercase text-ufa-muted">{ts.forceLabel}</dt>
                   <dd className="text-ufa-text">{styleLabel(forceSide, TACTICS_MODIFIERS.force)}</dd>
                 </div>
               )}
@@ -176,13 +176,13 @@ function TeamCard({
 
   return (
     <div
-      className={`rounded-xl border bg-ufa-panel p-4 shadow-lg shadow-black/20 ${
+      className={`rounded-sm border bg-ufa-panel p-4   ${
         highlight ? 'border-ufa-accent/50' : 'border-ufa-border'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-wide text-ufa-muted">
+          <p className="text-[11px] uppercase tracking-wide text-ufa-muted">
             {highlight ? t.yourTeam : t.opponent}
           </p>
           <h3 className="mt-0.5 text-lg font-semibold text-ufa-text truncate">{teamName}</h3>
@@ -206,26 +206,26 @@ function TeamCard({
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-        <div className="rounded-lg border border-ufa-border bg-ufa-bg/60 px-2 py-2">
-          <p className="text-[10px] uppercase text-ufa-muted">{t.wins}</p>
+        <div className="rounded-sm border border-ufa-border bg-ufa-bg/60 px-2 py-2">
+          <p className="text-[11px] uppercase text-ufa-muted">{t.wins}</p>
           <p className="text-base font-semibold tabular-nums text-ufa-text">
             {standing?.wins ?? 0}
           </p>
         </div>
-        <div className="rounded-lg border border-ufa-border bg-ufa-bg/60 px-2 py-2">
-          <p className="text-[10px] uppercase text-ufa-muted">{t.losses}</p>
+        <div className="rounded-sm border border-ufa-border bg-ufa-bg/60 px-2 py-2">
+          <p className="text-[11px] uppercase text-ufa-muted">{t.losses}</p>
           <p className="text-base font-semibold tabular-nums text-ufa-text">
             {standing?.losses ?? 0}
           </p>
         </div>
-        <div className="rounded-lg border border-ufa-border bg-ufa-bg/60 px-2 py-2">
-          <p className="text-[10px] uppercase text-ufa-muted">{t.pointsDiff}</p>
+        <div className="rounded-sm border border-ufa-border bg-ufa-bg/60 px-2 py-2">
+          <p className="text-[11px] uppercase text-ufa-muted">{t.pointsDiff}</p>
           <p className="text-base font-semibold tabular-nums text-ufa-text">{diffLabel}</p>
         </div>
       </div>
 
       <div className="mt-4">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-ufa-muted mb-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-ufa-muted mb-2">
           {t.topPlayers}
         </p>
         <LeadersList leaders={leaders} emptyLabel={t.noPlayerStats} />
@@ -297,25 +297,25 @@ export default function PreMatchView({
 
   return (
     <div className="space-y-5 league-fade-in">
-      <div className="rounded-xl border border-ufa-accent/35 bg-ufa-panel p-5 shadow-xl shadow-black/30">
+      <div className="um-match-feature">
         <p className="text-xs font-semibold uppercase tracking-wide text-ufa-accent">
           {t.preMatch}
           {isCup ? ` · ${t.cup}` : ` · ${t.league}`}
         </p>
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-4 sm:gap-8">
-          <div className="text-center min-w-[8rem]">
+        <div className="um-match-teams">
+          <div className="min-w-0">
             <p
-              className={`text-sm font-medium truncate max-w-[12rem] ${
+              className={`um-match-team !text-left ${
                 homeHighlight ? 'text-ufa-accent' : 'text-ufa-text'
               }`}
             >
               {names[homeId] ?? homeId}
             </p>
           </div>
-          <span className="text-xl font-bold text-ufa-muted">vs</span>
-          <div className="text-center min-w-[8rem]">
+          <span className="um-match-vs">vs</span>
+          <div className="min-w-0">
             <p
-              className={`text-sm font-medium truncate max-w-[12rem] ${
+              className={`um-match-team ${
                 awayHighlight ? 'text-ufa-accent' : 'text-ufa-text'
               }`}
             >
@@ -409,7 +409,7 @@ export default function PreMatchView({
             type="button"
             onClick={onSimulateUntilMatch}
             disabled={simulating}
-            className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-bg hover:opacity-90 disabled:opacity-40"
+            className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
           >
             {simulating ? t.simulating : t.simUntilMatch}
           </button>
