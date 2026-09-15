@@ -1,9 +1,32 @@
 import { FIELD_DIMENSIONS } from './fieldDimensions.js'
 
-export const ANALYSIS_COLS = 10
+// Kolumny wyrównane do linii bramkowych: każda strefa punktowa i strefa środkowa
+// dzielone są osobno, więc żadna komórka nie miesza strefy punktowej ze środkową.
+const ENDZONE_COLS = 2
+const CENTER_COLS = 6
+
+function buildColumnEdges() {
+  const { lengthM, endzoneM } = FIELD_DIMENSIONS
+  const centerLengthM = lengthM - 2 * endzoneM
+  const edges = [0]
+  for (let i = 1; i <= ENDZONE_COLS; i++) edges.push((i * endzoneM) / ENDZONE_COLS)
+  for (let i = 1; i <= CENTER_COLS; i++) edges.push(endzoneM + (i * centerLengthM) / CENTER_COLS)
+  for (let i = 1; i <= ENDZONE_COLS; i++) edges.push(endzoneM + centerLengthM + (i * endzoneM) / ENDZONE_COLS)
+  return edges
+}
+
+export const ANALYSIS_COL_EDGES = buildColumnEdges()
+export const ANALYSIS_COLS = ANALYSIS_COL_EDGES.length - 1
 export const ANALYSIS_ROWS = 5
+
+function columnIndex(x) {
+  for (let i = 0; i < ANALYSIS_COLS - 1; i++) {
+    if (x < ANALYSIS_COL_EDGES[i + 1]) return i
+  }
+  return ANALYSIS_COLS - 1
+}
 const counters = ['pointsPlayed', 'pointsWon', 'pointsLost', 'goals', 'assists', 'blocks', 'turnovers', 'drops', 'attempts', 'completions', 'catches', 'throwMeters', 'catchMeters', 'huckAttempts', 'huckCompletions', 'pressureAttempts', 'pressureCompletions']
-const layers = ['throws', 'catches', 'losses', 'blocks', 'drops', 'otherLosses', 'goals', 'assists', 'completedThrows']
+const layers = ['throws', 'catches', 'losses', 'blocks', 'drops', 'throwaways', 'stallOuts', 'goals', 'assists', 'completedThrows']
 const opposite = side => side === 'home' ? 'away' : 'home'
 const bucket = () => ({ ...Object.fromEntries(counters.map(k => [k, 0])), maps: Object.fromEntries(layers.map(k => [k, {}])) })
 const entity = () => ({ all: bucket(), offense: bucket(), defense: bucket() })
@@ -20,7 +43,7 @@ function normalize(point, side, swapped) {
 }
 
 function cell(point) {
-  const x = Math.min(ANALYSIS_COLS - 1, Math.floor(point.x / FIELD_DIMENSIONS.lengthM * ANALYSIS_COLS))
+  const x = columnIndex(point.x)
   const y = Math.min(ANALYSIS_ROWS - 1, Math.floor(point.y / FIELD_DIMENSIONS.widthM * ANALYSIS_ROWS))
   return y * ANALYSIS_COLS + x
 }
@@ -82,12 +105,15 @@ export function buildScoutingAnalysis(result) {
         update(side, receiver, { catches: 1, catchMeters: e.yardsGained ?? 0 }, 'catches', end)
         caught = { side, from: release, to: end, thrower, receiver }
       } else {
-        const kind = e.isBlock ? 'blocks' : e.isDrop ? 'drops' : 'otherLosses'
+        // Wietrzne zbicie dysku (isWindDrop) liczy się jak drop: odbiorca dosięgnął dysku,
+        // wiatr strącił go z rąk — winny jest kontakt z dyskiem, nie „nie dobiegł".
+        const isDrop = e.isDrop || e.isWindDrop
+        const kind = e.isBlock ? 'blocks' : isDrop ? 'drops' : 'throwaways'
         update(side, thrower, { turnovers: 1 }, 'losses', end)
         update(side, thrower, {}, kind, end)
-        if (e.isDrop) update(side, receiver, { drops: 1 })
+        if (isDrop) update(side, receiver, { drops: 1 })
         if (e.isBlock) update(opposite(side), e.defenderId, { blocks: 1 })
-        if (end) report.marks.push({ side, role: roles[side], kind, ...end, playerId: thrower, receiverId: receiver })
+        if (end) report.marks.push({ side, role: roles[side], kind, ...end, from: release, playerId: thrower, receiverId: receiver })
         caught = null
       }
       attempt = null
@@ -102,8 +128,8 @@ export function buildScoutingAnalysis(result) {
         const side = opposite(e.newPossession)
         const p = normalize(e.turnoverPoint, side, swapped)
         update(side, stall.playerId, {}, 'losses', p)
-        update(side, stall.playerId, {}, 'otherLosses', p)
-        if (p) report.marks.push({ side, role: roles[side], kind: 'otherLosses', ...p, playerId: stall.playerId })
+        update(side, stall.playerId, {}, 'stallOuts', p)
+        if (p) report.marks.push({ side, role: roles[side], kind: 'stallOuts', ...p, playerId: stall.playerId })
       }
       stall = null
       caught = null
@@ -125,8 +151,11 @@ export function buildScoutingAnalysis(result) {
 function mergeEntity(target, source) {
   for (const role of ['all', 'offense', 'defense']) {
     for (const key of counters) target[role][key] += source[role][key]
-    for (const layer of layers) for (const [index, count] of Object.entries(source[role].maps[layer])) {
-      target[role].maps[layer][index] = (target[role].maps[layer][index] ?? 0) + count
+    // Starsze zapisy mogą pochodzić sprzed zmiany listy warstw (np. przed rozbiciem
+    // otherLosses na throwaways/stallOuts) i nie mieć wszystkich kluczy w maps.
+    for (const layer of layers) for (const [index, count] of Object.entries(source[role].maps[layer] ?? {})) {
+      const targetMap = target[role].maps[layer] ??= {}
+      targetMap[index] = (targetMap[index] ?? 0) + count
     }
   }
 }
@@ -156,4 +185,17 @@ export function saveScoutingAnalysis(league, record) {
     }
   }
   club.scoutingAnalysis = { version: 1, last, total }
+}
+
+/**
+ * Zeruje analizę pomeczową przed nowym sezonem, żeby "total" obejmowało tylko
+ * bieżący sezon — bez tego rosłaby bezterminowo przez całą karierę (wiele
+ * sezonów). Wywoływane przy starcie kolejnego sezonu, analogicznie do
+ * resetWorldSeasonStats / resetWorldSeasonInjuryCounts.
+ */
+export function resetScoutingAnalysisForNewSeason(world) {
+  if (!world?.teamsById) return
+  for (const team of Object.values(world.teamsById)) {
+    delete team.scoutingAnalysis
+  }
 }

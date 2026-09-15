@@ -40,3 +40,6 @@ artifacts/disc-flight/
 artifacts/recommendations/
 *.cpuprofile
 engine-audit-*.json
+
+# Local assistant permissions
+.claude/settings.local.json

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { buildScoutingAnalysis, saveScoutingAnalysis } from '../src/matchEngine/scoutingAnalysis.js'
+import { buildScoutingAnalysis, saveScoutingAnalysis, resetScoutingAnalysisForNewSeason } from '../src/matchEngine/scoutingAnalysis.js'
 import { simulateMatch } from '../src/matchEngine/match.js'
 import { demoHomeTeam, demoAwayTeam } from '../src/data/demoMatchTeams.js'
 
@@ -52,6 +52,11 @@ assert.equal(league.teamsById.b.scoutingAnalysis, undefined, 'Do not store analy
 saveScoutingAnalysis(league, { ...record, fixtureId: 'forfeit', scoutingAnalysis: undefined })
 assert.equal(league.teamsById.a.scoutingAnalysis.last.report, null)
 assert.equal(league.teamsById.a.scoutingAnalysis.total.games, 2)
+
+resetScoutingAnalysisForNewSeason({ teamsById: league.teamsById })
+assert.equal(league.teamsById.a.scoutingAnalysis, undefined, 'New season must clear the previous season analysis')
+saveScoutingAnalysis(league, { ...record, fixtureId: 'next-season' })
+assert.equal(league.teamsById.a.scoutingAnalysis.total.games, 1, 'A fresh season starts the total over from zero')
 
 for (const fastMode of [true, false]) {
   const match = simulateMatch({ homeTeam: structuredClone(demoHomeTeam), awayTeam: structuredClone(demoAwayTeam), seed: 724, fastMode })

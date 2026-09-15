@@ -36,7 +36,7 @@ import { addDays, formatISODate, parseISODate } from '../league/seasonCalendar.j
 /** Zgodne z INBOX_TYPES.RANDOM_EVENT — bez importu inbox (unikamy cyklu). */
 export const RANDOM_EVENT_TYPE = 'random_event'
 
-const SPAWN_CHANCE = 0.26
+const SPAWN_CHANCE = 0.18
 
 /** Support both the released escrow economy and cash-ledger saves. */
 function availableEventFunds(team) {

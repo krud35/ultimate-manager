@@ -43,6 +43,7 @@ import {
   createAllTimeStats,
   pruneLeagueMemory,
 } from './seasonArchive.js'
+import { resetScoutingAnalysisForNewSeason } from '../matchEngine/scoutingAnalysis.js'
 import { ensureWorldFinances, rollSeasonBudgets } from './transfers/clubFinances.js'
 import { setMoneyCurrency } from './transfers/moneyFormat.js'
 import {
@@ -673,6 +674,7 @@ export function startNextSeason(career) {
   initAllAiTeamTraining(world, base.playerTeamId)
   ensureTeamTraining(worldTeamById(world, base.playerTeamId))
   resetWorldSeasonStats(world)
+  resetScoutingAnalysisForNewSeason(world)
   resetWorldSeasonInjuryCounts(world)
   ensureWorldFreeAgents(world)
   rollSeasonBudgets(world, {
@@ -810,6 +812,7 @@ function startNextSeasonEucs(career) {
   initAllAiTeamTraining(world, base.playerTeamId)
   ensureTeamTraining(worldTeamById(world, base.playerTeamId))
   resetWorldSeasonStats(world)
+  resetScoutingAnalysisForNewSeason(world)
   resetWorldSeasonInjuryCounts(world)
   ensureWorldFreeAgents(world)
   rollSeasonBudgets(world, { seed, seasonYear: nextYear })
