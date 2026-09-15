@@ -1,0 +1,349 @@
+{
+  "checkedAt": "2026-09-15T12:47:22.954Z",
+  "rosters": [
+    {
+      "file": "src/data/usau/usauRealRosters.json",
+      "teams": 32,
+      "players": 1015,
+      "repeatedNames": [
+        {
+          "name": "ryan dusaire",
+          "teams": [
+            "usau-chicago-machine",
+            "usau-sub-zero"
+          ]
+        },
+        {
+          "name": "alexander davis",
+          "teams": [
+            "usau-pony",
+            "usau-ring-of-fire"
+          ]
+        },
+        {
+          "name": "brian trowbridge",
+          "teams": [
+            "usau-ring-of-fire",
+            "usau-haymaker"
+          ]
+        },
+        {
+          "name": "elliott moore",
+          "teams": [
+            "usau-doublewide",
+            "usau-blueprint"
+          ]
+        },
+        {
+          "name": "caelan mcsweeney",
+          "teams": [
+            "usau-truck-stop",
+            "usau-sprout"
+          ]
+        },
+        {
+          "name": "daniel gribbin",
+          "teams": [
+            "usau-truck-stop",
+            "usau-oak-grove-boys"
+          ]
+        },
+        {
+          "name": "ben kuster",
+          "teams": [
+            "usau-truck-stop",
+            "usau-oak-grove-boys"
+          ]
+        },
+        {
+          "name": "kobe oley",
+          "teams": [
+            "usau-truck-stop",
+            "usau-oak-grove-boys"
+          ]
+        },
+        {
+          "name": "landon evans",
+          "teams": [
+            "usau-haymaker",
+            "usau-lounar"
+          ]
+        },
+        {
+          "name": "nicholas jeschke",
+          "teams": [
+            "usau-haymaker",
+            "usau-lounar"
+          ]
+        },
+        {
+          "name": "joshua gabella",
+          "teams": [
+            "usau-blueprint",
+            "usau-lounar"
+          ]
+        },
+        {
+          "name": "colin mclaughlin",
+          "teams": [
+            "usau-vault",
+            "usau-big-wrench"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/data/cuc/cucRealRosters.json",
+      "teams": 16,
+      "players": 388,
+      "repeatedNames": []
+    },
+    {
+      "file": "src/data/buoc/buocRealRosters.json",
+      "teams": 32,
+      "players": 526,
+      "repeatedNames": []
+    },
+    {
+      "file": "src/data/psgu/psguRealRosters.json",
+      "teams": 16,
+      "players": 216,
+      "repeatedNames": []
+    },
+    {
+      "file": "src/data/eucs/eucsRealRosters.json",
+      "teams": 48,
+      "players": 992,
+      "repeatedNames": [
+        {
+          "name": "august smessaert",
+          "teams": [
+            "eucs-freezzz-beezzz",
+            "eucs-jetset"
+          ]
+        },
+        {
+          "name": "arthur moyersoen",
+          "teams": [
+            "eucs-freezzz-beezzz",
+            "eucs-jetset"
+          ]
+        },
+        {
+          "name": "lorenz jordi",
+          "teams": [
+            "eucs-gentle",
+            "eucs-flying-angels-bern"
+          ]
+        },
+        {
+          "name": "andri baumgartner",
+          "teams": [
+            "eucs-flying-angels-bern",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "gino negri",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "anton elsemans",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "flurin schmitz",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "simon mühlemann",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "lennart wieck",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "jan ghadamian",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "marius stauffer",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "timon eggenberg",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "benjamin lerch",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "sol ghadamian",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "frederick pollmeier",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "timon müller",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "janiss binder",
+          "teams": [
+            "eucs-ratrac-bern-ultimate",
+            "eucs-panthers-bern"
+          ]
+        },
+        {
+          "name": "philipp palle",
+          "teams": [
+            "eucs-echo",
+            "eucs-fwd"
+          ]
+        },
+        {
+          "name": "benjamin gaudernak",
+          "teams": [
+            "eucs-echo",
+            "eucs-fwd"
+          ]
+        },
+        {
+          "name": "florian bayr",
+          "teams": [
+            "eucs-echo",
+            "eucs-fwd"
+          ]
+        },
+        {
+          "name": "raphael panic",
+          "teams": [
+            "eucs-echo",
+            "eucs-fwd"
+          ]
+        },
+        {
+          "name": "erik samstag",
+          "teams": [
+            "eucs-echo",
+            "eucs-fwd"
+          ]
+        },
+        {
+          "name": "michael schwob",
+          "teams": [
+            "eucs-echo",
+            "eucs-fwd"
+          ]
+        }
+      ]
+    }
+  ],
+  "leagues": [
+    {
+      "id": "italy",
+      "country": "Italy",
+      "teams": 32
+    },
+    {
+      "id": "australia",
+      "country": "Australia",
+      "teams": 32
+    },
+    {
+      "id": "netherlands",
+      "country": "Netherlands",
+      "teams": 16
+    },
+    {
+      "id": "czechia",
+      "country": "Czech Republic",
+      "teams": 16
+    },
+    {
+      "id": "germany",
+      "country": "Germany",
+      "teams": 16
+    },
+    {
+      "id": "japan",
+      "country": "Japan",
+      "teams": 16
+    },
+    {
+      "id": "newZealand",
+      "country": "New Zealand",
+      "teams": 16
+    },
+    {
+      "id": "brazil",
+      "country": "Brazil",
+      "teams": 16
+    },
+    {
+      "id": "ireland",
+      "country": "Ireland",
+      "teams": 16
+    },
+    {
+      "id": "iberia",
+      "country": "Spain + Portugal",
+      "teams": 16
+    },
+    {
+      "id": "colombia",
+      "country": "Colombia",
+      "teams": 16
+    },
+    {
+      "id": "alpineNordic",
+      "country": "Switzerland / Austria / Finland / Hungary",
+      "teams": 16
+    }
+  ],
+  "notes": [
+    "Counts are roster entries, not unique people. Repeated full names across clubs require review; this is not proof of identical people.",
+    "The new domestic data files currently have no imports in the game source. Presence on disk does not mean playable domestic leagues are implemented.",
+    "worldLeagueTeams.json contains club lists, not complete player rosters. Some entries combine countries and require mapping to the planned national league structure."
+  ]
+}

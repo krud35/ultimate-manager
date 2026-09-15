@@ -94,6 +94,8 @@ import CareerSelectScreen from './components/CareerSelectScreen'
 import NewCareerScreen from './components/NewCareerScreen'
 import TrainingView from './components/TrainingView'
 import ClubBoardView from './components/ClubBoardView'
+import StaffManagementPanel from './components/StaffManagementPanel.jsx'
+import ClubFinancesView from './components/ClubFinancesView.jsx'
 import TransfersView from './components/TransfersView'
 import ScoutingCenterView from './components/ScoutingCenterView'
 import AcademyView from './components/AcademyView'
@@ -152,6 +154,8 @@ const NAV_CATEGORIES = [
     labelEn: 'Club',
     items: [
       { id: 'club-board', labelPl: 'Zarząd', labelEn: 'Club board' },
+      { id: 'club-staff', labelPl: 'Sztab klubowy', labelEn: 'Club staff' },
+      { id: 'club-finances', labelPl: 'Finanse', labelEn: 'Club finances' },
       { id: 'academy', labelPl: 'Akademia', labelEn: 'Academy' },
       { id: 'team-profile', labelPl: 'Profil drużyny', labelEn: 'Team profile' },
     ],
@@ -1801,6 +1805,16 @@ export default function App() {
 
         {activeTab === 'club-board' && (
           <><ClubBoardView career={career} onChange={handleClubBoardChange} /><ManagerCareerPanel career={career} onUpdate={updateManagerCareer} onWait={waitForManagerJob} /></>
+        )}
+
+        {activeTab === 'club-staff' && userTeam && (
+          <div className="um-section league-fade-in">
+            <StaffManagementPanel key={userTeam.id} team={userTeam} lang={uiLang} currentDate={career.league.currentDate} onChange={handleClubBoardChange} />
+          </div>
+        )}
+
+        {activeTab === 'club-finances' && userTeam && (
+          <ClubFinancesView key={userTeam.id} team={userTeam} world={career.world} seasonYear={career.seasonYear} currentDate={career.league.currentDate} lang={uiLang} onChange={handleClubBoardChange} />
         )}
 
         {activeTab === 'academy' && (

@@ -1,0 +1,3666 @@
+{
+  "source": "https://wjuc.wfdf.sport/teams/division/open",
+  "event": "WJUC 2026",
+  "division": "Open",
+  "excludedTeams": [
+    "Israel"
+  ],
+  "retrievedOn": "2026-09-15",
+  "note": "Real names, national teams, jersey numbers and tournament statistics. In-game age (16–18 at introduction), skills and potential are generated; dates of birth are not supplied by this source. Introduced once per career, not once per scouting mission or season.",
+  "teams": [
+    {
+      "sourceTeamId": 3,
+      "countryId": "be",
+      "country": "Belgium",
+      "players": [
+        {
+          "sourcePlayerId": 61,
+          "firstName": "Bavo",
+          "lastName": "Delanote",
+          "jersey": 48,
+          "games": 10,
+          "goals": 1,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 74,
+          "firstName": "Bono",
+          "lastName": "Vandamme",
+          "jersey": 77,
+          "games": 10,
+          "goals": 4,
+          "assists": 11
+        },
+        {
+          "sourcePlayerId": 75,
+          "firstName": "Corentin",
+          "lastName": "Wilkin",
+          "jersey": 39,
+          "games": 10,
+          "goals": 2,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 76,
+          "firstName": "Diego",
+          "lastName": "Wilkin",
+          "jersey": 36,
+          "games": 9,
+          "goals": 5,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 58,
+          "firstName": "Elias",
+          "lastName": "De Fraye",
+          "jersey": 99,
+          "games": 10,
+          "goals": 2,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 59,
+          "firstName": "Emile",
+          "lastName": "De Staercke",
+          "jersey": 12,
+          "games": 10,
+          "goals": 3,
+          "assists": 9
+        },
+        {
+          "sourcePlayerId": 69,
+          "firstName": "Ethan",
+          "lastName": "Petit",
+          "jersey": 31,
+          "games": 10,
+          "goals": 3,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 70,
+          "firstName": "Han",
+          "lastName": "Pisano",
+          "jersey": 68,
+          "games": 10,
+          "goals": 9,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 64,
+          "firstName": "Jarne",
+          "lastName": "Laisnez",
+          "jersey": 16,
+          "games": 1,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 66,
+          "firstName": "Jasper",
+          "lastName": "Morlion",
+          "jersey": 79,
+          "games": 10,
+          "goals": 0,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 71,
+          "firstName": "Joppe",
+          "lastName": "Schevenels",
+          "jersey": 21,
+          "games": 10,
+          "goals": 5,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 65,
+          "firstName": "Kai",
+          "lastName": "Maes",
+          "jersey": 88,
+          "games": 10,
+          "goals": 5,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 68,
+          "firstName": "Leon",
+          "lastName": "Pannemans",
+          "jersey": 95,
+          "games": 8,
+          "goals": 7,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 55,
+          "firstName": "Loris",
+          "lastName": "Coeckelberghs",
+          "jersey": 65,
+          "games": 10,
+          "goals": 7,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 54,
+          "firstName": "Matt",
+          "lastName": "Claes",
+          "jersey": 5,
+          "games": 10,
+          "goals": 13,
+          "assists": 9
+        },
+        {
+          "sourcePlayerId": 72,
+          "firstName": "Natan",
+          "lastName": "Van Cleempoel",
+          "jersey": 81,
+          "games": 10,
+          "goals": 4,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 60,
+          "firstName": "Pierjan",
+          "lastName": "Deforce",
+          "jersey": 64,
+          "games": 8,
+          "goals": 8,
+          "assists": 27
+        },
+        {
+          "sourcePlayerId": 73,
+          "firstName": "Ramon",
+          "lastName": "Van Coillie",
+          "jersey": 13,
+          "games": 10,
+          "goals": 2,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 56,
+          "firstName": "Stan",
+          "lastName": "Coppejans",
+          "jersey": 23,
+          "games": 10,
+          "goals": 7,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 57,
+          "firstName": "Stan",
+          "lastName": "De Clercq",
+          "jersey": 91,
+          "games": 10,
+          "goals": 5,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 63,
+          "firstName": "Stan",
+          "lastName": "Geernaert",
+          "jersey": 14,
+          "games": 10,
+          "goals": 1,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 67,
+          "firstName": "Stern",
+          "lastName": "Ongenaet",
+          "jersey": 18,
+          "games": 10,
+          "goals": 16,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 53,
+          "firstName": "Vadim",
+          "lastName": "Andrien",
+          "jersey": 6,
+          "games": 10,
+          "goals": 6,
+          "assists": 10
+        },
+        {
+          "sourcePlayerId": 62,
+          "firstName": "William",
+          "lastName": "Dumon",
+          "jersey": 8,
+          "games": 10,
+          "goals": 9,
+          "assists": 5
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 5,
+      "countryId": "ca",
+      "country": "Canada",
+      "players": [
+        {
+          "sourcePlayerId": 99,
+          "firstName": "Callahan",
+          "lastName": "McCullagh",
+          "jersey": 99,
+          "games": 10,
+          "goals": 11,
+          "assists": 14
+        },
+        {
+          "sourcePlayerId": 100,
+          "firstName": "Charlie",
+          "lastName": "Lumley",
+          "jersey": 42,
+          "games": 10,
+          "goals": 2,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 101,
+          "firstName": "Chase",
+          "lastName": "Alexander",
+          "jersey": 9,
+          "games": 10,
+          "goals": 10,
+          "assists": 8
+        },
+        {
+          "sourcePlayerId": 102,
+          "firstName": "Dominic",
+          "lastName": "McKinney",
+          "jersey": 11,
+          "games": 10,
+          "goals": 8,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 103,
+          "firstName": "Ezekiel",
+          "lastName": "Centeno",
+          "jersey": 0,
+          "games": 9,
+          "goals": 6,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 104,
+          "firstName": "Findlay",
+          "lastName": "Gray",
+          "jersey": 20,
+          "games": 10,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 121,
+          "firstName": "Gavin",
+          "lastName": "Tang",
+          "jersey": 46,
+          "games": 10,
+          "goals": 2,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 105,
+          "firstName": "Grady",
+          "lastName": "Avarell",
+          "jersey": 24,
+          "games": 10,
+          "goals": 7,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 106,
+          "firstName": "Hubert",
+          "lastName": "Gauthier",
+          "jersey": 14,
+          "games": 10,
+          "goals": 13,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 107,
+          "firstName": "Isaac",
+          "lastName": "Breton",
+          "jersey": 3,
+          "games": 10,
+          "goals": 9,
+          "assists": 20
+        },
+        {
+          "sourcePlayerId": 108,
+          "firstName": "Jack",
+          "lastName": "Ponton",
+          "jersey": 88,
+          "games": 10,
+          "goals": 9,
+          "assists": 16
+        },
+        {
+          "sourcePlayerId": 109,
+          "firstName": "James",
+          "lastName": "Foord-Kelcey",
+          "jersey": 34,
+          "games": 10,
+          "goals": 10,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 110,
+          "firstName": "Jeremy",
+          "lastName": "Fletcher",
+          "jersey": 39,
+          "games": 10,
+          "goals": 7,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 111,
+          "firstName": "Jesse",
+          "lastName": "Harrison",
+          "jersey": 23,
+          "games": 10,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 112,
+          "firstName": "Jonathan",
+          "lastName": "Chua",
+          "jersey": 33,
+          "games": 10,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 113,
+          "firstName": "Lael",
+          "lastName": "Yip",
+          "jersey": 19,
+          "games": 10,
+          "goals": 1,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 114,
+          "firstName": "Liam",
+          "lastName": "Howes",
+          "jersey": 96,
+          "games": 10,
+          "goals": 1,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 115,
+          "firstName": "Loïc",
+          "lastName": "Cleveland",
+          "jersey": 50,
+          "games": 10,
+          "goals": 5,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 116,
+          "firstName": "Lucas",
+          "lastName": "Arial",
+          "jersey": 12,
+          "games": 10,
+          "goals": 5,
+          "assists": 25
+        },
+        {
+          "sourcePlayerId": 117,
+          "firstName": "Maxime",
+          "lastName": "Belliveau",
+          "jersey": 5,
+          "games": 5,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 118,
+          "firstName": "Maxime",
+          "lastName": "Chandonnet",
+          "jersey": 8,
+          "games": 10,
+          "goals": 11,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 119,
+          "firstName": "North",
+          "lastName": "Reder",
+          "jersey": 60,
+          "games": 10,
+          "goals": 4,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 120,
+          "firstName": "Samuel",
+          "lastName": "Xie",
+          "jersey": 55,
+          "games": 10,
+          "goals": 4,
+          "assists": 8
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 9,
+      "countryId": "co",
+      "country": "Colombia",
+      "players": [
+        {
+          "sourcePlayerId": 197,
+          "firstName": "Alejandro",
+          "lastName": "Madrid",
+          "jersey": 38,
+          "games": 9,
+          "goals": 3,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 199,
+          "firstName": "Daniel",
+          "lastName": "Rodriguez Naranjo",
+          "jersey": 14,
+          "games": 9,
+          "goals": 1,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 198,
+          "firstName": "Daniel Alejandro",
+          "lastName": "Diaz Mortigo",
+          "jersey": 77,
+          "games": 9,
+          "goals": 0,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 200,
+          "firstName": "Emiliano",
+          "lastName": "Martinez Mojica",
+          "jersey": 85,
+          "games": 9,
+          "goals": 5,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 201,
+          "firstName": "Federico",
+          "lastName": "Ortiz Segura",
+          "jersey": 24,
+          "games": 9,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 202,
+          "firstName": "Jacobo",
+          "lastName": "Builes Restrepo",
+          "jersey": 22,
+          "games": 9,
+          "goals": 5,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 203,
+          "firstName": "Jeronimo",
+          "lastName": "Reyes Diaz-granados",
+          "jersey": 7,
+          "games": 9,
+          "goals": 4,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 204,
+          "firstName": "Jose Alejandro",
+          "lastName": "Lasso Fonseca",
+          "jersey": 0,
+          "games": 9,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 205,
+          "firstName": "Juan Alejandro",
+          "lastName": "Alvarez Munoz",
+          "jersey": 19,
+          "games": 9,
+          "goals": 3,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 206,
+          "firstName": "Juan Jose",
+          "lastName": "Ochoa Chaverra",
+          "jersey": 4,
+          "games": 9,
+          "goals": 22,
+          "assists": 8
+        },
+        {
+          "sourcePlayerId": 207,
+          "firstName": "Juan Nicolas",
+          "lastName": "Espitia Parada",
+          "jersey": 9,
+          "games": 9,
+          "goals": 7,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 208,
+          "firstName": "Juan Sebastian",
+          "lastName": "Gomez Trujillo",
+          "jersey": 1,
+          "games": 9,
+          "goals": 1,
+          "assists": 9
+        },
+        {
+          "sourcePlayerId": 209,
+          "firstName": "Marco",
+          "lastName": "Santamaria",
+          "jersey": 5,
+          "games": 9,
+          "goals": 4,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 210,
+          "firstName": "Martin",
+          "lastName": "Arenas Layton",
+          "jersey": 52,
+          "games": 9,
+          "goals": 3,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 211,
+          "firstName": "Martin",
+          "lastName": "Grisales",
+          "jersey": 88,
+          "games": 9,
+          "goals": 4,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 212,
+          "firstName": "Miguel Angel",
+          "lastName": "Sanchez Aldana",
+          "jersey": 98,
+          "games": 9,
+          "goals": 0,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 213,
+          "firstName": "Nicolas",
+          "lastName": "Gomez Taborda",
+          "jersey": 3,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 218,
+          "firstName": "Nicolás",
+          "lastName": "Heredia Mejia",
+          "jersey": 18,
+          "games": 9,
+          "goals": 1,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 214,
+          "firstName": "Ronald David",
+          "lastName": "Bernal Henandez",
+          "jersey": 28,
+          "games": 8,
+          "goals": 4,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 215,
+          "firstName": "Simon",
+          "lastName": "Gomez Sanchez",
+          "jersey": 10,
+          "games": 9,
+          "goals": 3,
+          "assists": 9
+        },
+        {
+          "sourcePlayerId": 216,
+          "firstName": "Tomas",
+          "lastName": "Lopez Hoyos",
+          "jersey": 8,
+          "games": 9,
+          "goals": 7,
+          "assists": 27
+        },
+        {
+          "sourcePlayerId": 217,
+          "firstName": "Tomas",
+          "lastName": "Reyes Betancourt",
+          "jersey": 11,
+          "games": 9,
+          "goals": 7,
+          "assists": 2
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 12,
+      "countryId": "cz",
+      "country": "Czech Republic",
+      "players": [
+        {
+          "sourcePlayerId": 272,
+          "firstName": "David",
+          "lastName": "Tlapa",
+          "jersey": 40,
+          "games": 9,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 263,
+          "firstName": "Filip",
+          "lastName": "Kubeš",
+          "jersey": 95,
+          "games": 7,
+          "goals": 5,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 260,
+          "firstName": "Jan",
+          "lastName": "Harsa",
+          "jersey": 22,
+          "games": 9,
+          "goals": 3,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 270,
+          "firstName": "Jan",
+          "lastName": "Stanislav",
+          "jersey": 16,
+          "games": 9,
+          "goals": 5,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 261,
+          "firstName": "Josef",
+          "lastName": "Kodym",
+          "jersey": 41,
+          "games": 9,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 274,
+          "firstName": "Karel",
+          "lastName": "Vrbík",
+          "jersey": 97,
+          "games": 9,
+          "goals": 9,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 1050,
+          "firstName": "Lukáš",
+          "lastName": "Hurta",
+          "jersey": 28,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 257,
+          "firstName": "Matěj",
+          "lastName": "Barášek",
+          "jersey": 11,
+          "games": 9,
+          "goals": 7,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 265,
+          "firstName": "Matěj",
+          "lastName": "Ludvík",
+          "jersey": 24,
+          "games": 9,
+          "goals": 5,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 275,
+          "firstName": "Matěj",
+          "lastName": "Záluský",
+          "jersey": 48,
+          "games": 9,
+          "goals": 12,
+          "assists": 19
+        },
+        {
+          "sourcePlayerId": 276,
+          "firstName": "Matěj",
+          "lastName": "Žiška",
+          "jersey": 4,
+          "games": 9,
+          "goals": 7,
+          "assists": 20
+        },
+        {
+          "sourcePlayerId": 264,
+          "firstName": "Radek",
+          "lastName": "Lepší",
+          "jersey": 77,
+          "games": 9,
+          "goals": 3,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 267,
+          "firstName": "Šimon",
+          "lastName": "Medek",
+          "jersey": 34,
+          "games": 9,
+          "goals": 3,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 268,
+          "firstName": "Štěpán",
+          "lastName": "Opočenský",
+          "jersey": 7,
+          "games": 9,
+          "goals": 2,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 269,
+          "firstName": "Štěpán",
+          "lastName": "Pokorný",
+          "jersey": 54,
+          "games": 9,
+          "goals": 2,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 259,
+          "firstName": "Václav",
+          "lastName": "Gembicki",
+          "jersey": 81,
+          "games": 9,
+          "goals": 1,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 266,
+          "firstName": "Václav",
+          "lastName": "Machek",
+          "jersey": 8,
+          "games": 9,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 258,
+          "firstName": "Vilém",
+          "lastName": "Gallus",
+          "jersey": 73,
+          "games": 9,
+          "goals": 1,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 262,
+          "firstName": "Vojtěch",
+          "lastName": "Kovářík",
+          "jersey": 35,
+          "games": 9,
+          "goals": 4,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 271,
+          "firstName": "Vojtěch",
+          "lastName": "Švenda",
+          "jersey": 14,
+          "games": 9,
+          "goals": 1,
+          "assists": 2
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 39,
+      "countryId": "es",
+      "country": "Spain",
+      "players": [
+        {
+          "sourcePlayerId": 862,
+          "firstName": "Agassi",
+          "lastName": "Dsouza",
+          "jersey": 4,
+          "games": 8,
+          "goals": 6,
+          "assists": 10
+        },
+        {
+          "sourcePlayerId": 852,
+          "firstName": "Alejandro",
+          "lastName": "Laya Mangas",
+          "jersey": 14,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 853,
+          "firstName": "Amán",
+          "lastName": "Rodríguez Vega",
+          "jersey": 22,
+          "games": 8,
+          "goals": 3,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 866,
+          "firstName": "Bruno",
+          "lastName": "Tejada García",
+          "jersey": 67,
+          "games": 8,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 868,
+          "firstName": "Diego",
+          "lastName": "Rodríguez Vega",
+          "jersey": 1,
+          "games": 8,
+          "goals": 1,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 867,
+          "firstName": "Federico",
+          "lastName": "Guirado Márquez",
+          "jersey": 5,
+          "games": 8,
+          "goals": 1,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 861,
+          "firstName": "Hugo",
+          "lastName": "Rodriguez Betancort",
+          "jersey": 10,
+          "games": 8,
+          "goals": 14,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 858,
+          "firstName": "Ibón",
+          "lastName": "Tejada Lombillo",
+          "jersey": 26,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 859,
+          "firstName": "Javier Iriome",
+          "lastName": "Doreste Ortega",
+          "jersey": 9,
+          "games": 8,
+          "goals": 0,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 863,
+          "firstName": "Juan",
+          "lastName": "Izquierdo Manzanares",
+          "jersey": 37,
+          "games": 8,
+          "goals": 1,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 855,
+          "firstName": "Leonardo",
+          "lastName": "Sun",
+          "jersey": 32,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 857,
+          "firstName": "Marcos",
+          "lastName": "López Ortiz",
+          "jersey": 3,
+          "games": 8,
+          "goals": 2,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 856,
+          "firstName": "Millán",
+          "lastName": "Pérez Santos",
+          "jersey": 6,
+          "games": 8,
+          "goals": 0,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 851,
+          "firstName": "Pablo",
+          "lastName": "Martínez Pallares",
+          "jersey": 88,
+          "games": 8,
+          "goals": 4,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 854,
+          "firstName": "Pablo",
+          "lastName": "Mosquera Estrada",
+          "jersey": 8,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 865,
+          "firstName": "Pablo",
+          "lastName": "Trigo",
+          "jersey": 89,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 864,
+          "firstName": "Pedro",
+          "lastName": "Izquierdo Manzanares",
+          "jersey": 17,
+          "games": 8,
+          "goals": 1,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 860,
+          "firstName": "Víctor",
+          "lastName": "Ruiz Muñoz",
+          "jersey": 7,
+          "games": 8,
+          "goals": 8,
+          "assists": 1
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 14,
+      "countryId": "fi",
+      "country": "Finland",
+      "players": [
+        {
+          "sourcePlayerId": 304,
+          "firstName": "Aatos",
+          "lastName": "Nagy",
+          "jersey": 19,
+          "games": 8,
+          "goals": 5,
+          "assists": 8
+        },
+        {
+          "sourcePlayerId": 309,
+          "firstName": "Arvi",
+          "lastName": "Tuuri",
+          "jersey": 18,
+          "games": 8,
+          "goals": 9,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 299,
+          "firstName": "Eikka",
+          "lastName": "Kemppainen",
+          "jersey": 21,
+          "games": 8,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 300,
+          "firstName": "Erno",
+          "lastName": "Kerman",
+          "jersey": 57,
+          "games": 8,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 296,
+          "firstName": "Jussi",
+          "lastName": "Cederlöf",
+          "jersey": 7,
+          "games": 8,
+          "goals": 0,
+          "assists": 9
+        },
+        {
+          "sourcePlayerId": 301,
+          "firstName": "Lauri",
+          "lastName": "Koikkalainen",
+          "jersey": 8,
+          "games": 8,
+          "goals": 3,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 306,
+          "firstName": "Niilo",
+          "lastName": "Suontama",
+          "jersey": 9,
+          "games": 8,
+          "goals": 2,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 302,
+          "firstName": "Oskari",
+          "lastName": "Koikkalainen",
+          "jersey": 32,
+          "games": 8,
+          "goals": 4,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 295,
+          "firstName": "Sanna",
+          "lastName": "Jalovaara",
+          "jersey": 14,
+          "games": 6,
+          "goals": 6,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 297,
+          "firstName": "Sisu",
+          "lastName": "Euramo",
+          "jersey": 20,
+          "games": 8,
+          "goals": 5,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 310,
+          "firstName": "Tapio",
+          "lastName": "Tiihonen",
+          "jersey": 30,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 308,
+          "firstName": "Torsti",
+          "lastName": "Visuri",
+          "jersey": 54,
+          "games": 8,
+          "goals": 0,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 307,
+          "firstName": "Valtteri",
+          "lastName": "Väätäinen",
+          "jersey": 10,
+          "games": 8,
+          "goals": 4,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 303,
+          "firstName": "Vihtori",
+          "lastName": "Myrskyranta",
+          "jersey": 86,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 305,
+          "firstName": "Vili",
+          "lastName": "Peltoniemi",
+          "jersey": 41,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 298,
+          "firstName": "Viljami",
+          "lastName": "Kataja",
+          "jersey": 28,
+          "games": 8,
+          "goals": 1,
+          "assists": 1
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 15,
+      "countryId": "fr",
+      "country": "France",
+      "players": [
+        {
+          "sourcePlayerId": 331,
+          "firstName": "Auriel",
+          "lastName": "Vaultier",
+          "jersey": 23,
+          "games": 10,
+          "goals": 2,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 321,
+          "firstName": "Baptiste",
+          "lastName": "Lebon",
+          "jersey": 3,
+          "games": 10,
+          "goals": 15,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 316,
+          "firstName": "Bojan",
+          "lastName": "Chretien",
+          "jersey": 22,
+          "games": 10,
+          "goals": 0,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 317,
+          "firstName": "Gabriel",
+          "lastName": "Donnart",
+          "jersey": 29,
+          "games": 10,
+          "goals": 9,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 318,
+          "firstName": "Gaston",
+          "lastName": "Fallourd",
+          "jersey": 14,
+          "games": 10,
+          "goals": 5,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 320,
+          "firstName": "Guilhem",
+          "lastName": "Laurent-Beaulieu",
+          "jersey": 24,
+          "games": 10,
+          "goals": 0,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 325,
+          "firstName": "Ilyan",
+          "lastName": "Mendli",
+          "jersey": 21,
+          "games": 10,
+          "goals": 8,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 313,
+          "firstName": "Julian",
+          "lastName": "Caillaud",
+          "jersey": 34,
+          "games": 10,
+          "goals": 2,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 322,
+          "firstName": "Léopold",
+          "lastName": "Lecroat",
+          "jersey": 79,
+          "games": 10,
+          "goals": 9,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 315,
+          "firstName": "Lucas",
+          "lastName": "Chevalier",
+          "jersey": 51,
+          "games": 10,
+          "goals": 2,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 319,
+          "firstName": "Malo",
+          "lastName": "Gaudon",
+          "jersey": 68,
+          "games": 10,
+          "goals": 3,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 327,
+          "firstName": "Marin",
+          "lastName": "Perez",
+          "jersey": 20,
+          "games": 10,
+          "goals": 7,
+          "assists": 27
+        },
+        {
+          "sourcePlayerId": 324,
+          "firstName": "Marius",
+          "lastName": "Mandineau",
+          "jersey": 9,
+          "games": 10,
+          "goals": 2,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 330,
+          "firstName": "Maxence",
+          "lastName": "Sarrant",
+          "jersey": 85,
+          "games": 10,
+          "goals": 4,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 332,
+          "firstName": "Nataël",
+          "lastName": "Roué",
+          "jersey": 28,
+          "games": 10,
+          "goals": 6,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 328,
+          "firstName": "Noah",
+          "lastName": "Peschard",
+          "jersey": 10,
+          "games": 10,
+          "goals": 5,
+          "assists": 12
+        },
+        {
+          "sourcePlayerId": 326,
+          "firstName": "Pierre",
+          "lastName": "Moreau",
+          "jersey": 16,
+          "games": 10,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 314,
+          "firstName": "Raphaël",
+          "lastName": "Chareix",
+          "jersey": 47,
+          "games": 10,
+          "goals": 3,
+          "assists": 13
+        },
+        {
+          "sourcePlayerId": 323,
+          "firstName": "Thomas",
+          "lastName": "Leroux",
+          "jersey": 25,
+          "games": 10,
+          "goals": 5,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 329,
+          "firstName": "Thomas",
+          "lastName": "Pinheiro",
+          "jersey": 5,
+          "games": 10,
+          "goals": 14,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 311,
+          "firstName": "Timothé",
+          "lastName": "Barillot-Sannier",
+          "jersey": 26,
+          "games": 10,
+          "goals": 5,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 312,
+          "firstName": "Valentin",
+          "lastName": "Bibard Viaud",
+          "jersey": 32,
+          "games": 10,
+          "goals": 3,
+          "assists": 5
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 18,
+      "countryId": "gb",
+      "country": "Great Britain",
+      "players": [
+        {
+          "sourcePlayerId": 379,
+          "firstName": "AIDAN",
+          "lastName": "HUGHES",
+          "jersey": 12,
+          "games": 7,
+          "goals": 0,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 380,
+          "firstName": "ALBERT",
+          "lastName": "CONNELLY-BOSSON",
+          "jersey": 11,
+          "games": 6,
+          "goals": 4,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 381,
+          "firstName": "ALFRED",
+          "lastName": "HODSON",
+          "jersey": 95,
+          "games": 7,
+          "goals": 7,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 382,
+          "firstName": "ANDREW",
+          "lastName": "BAIN",
+          "jersey": 23,
+          "games": 9,
+          "goals": 8,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 384,
+          "firstName": "BEN",
+          "lastName": "HUDSON",
+          "jersey": 6,
+          "games": 9,
+          "goals": 4,
+          "assists": 16
+        },
+        {
+          "sourcePlayerId": 383,
+          "firstName": "BENJAMIN",
+          "lastName": "ALLEN",
+          "jersey": 54,
+          "games": 9,
+          "goals": 3,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 385,
+          "firstName": "BRYN",
+          "lastName": "STYLES",
+          "jersey": 82,
+          "games": 9,
+          "goals": 2,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 386,
+          "firstName": "CHARLES",
+          "lastName": "PICK",
+          "jersey": 4,
+          "games": 9,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 387,
+          "firstName": "COHEN",
+          "lastName": "DU-MARTIN",
+          "jersey": 15,
+          "games": 9,
+          "goals": 7,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 388,
+          "firstName": "DANIEL",
+          "lastName": "SUTHERLAND",
+          "jersey": 42,
+          "games": 9,
+          "goals": 5,
+          "assists": 16
+        },
+        {
+          "sourcePlayerId": 389,
+          "firstName": "FERGUS",
+          "lastName": "BENN",
+          "jersey": 33,
+          "games": 6,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 390,
+          "firstName": "FINN",
+          "lastName": "MACGREGOR",
+          "jersey": 32,
+          "games": 9,
+          "goals": 4,
+          "assists": 10
+        },
+        {
+          "sourcePlayerId": 391,
+          "firstName": "FINN",
+          "lastName": "MULCAHY",
+          "jersey": 77,
+          "games": 9,
+          "goals": 14,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 392,
+          "firstName": "JOSHUA",
+          "lastName": "HOLMES",
+          "jersey": 8,
+          "games": 9,
+          "goals": 3,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 393,
+          "firstName": "LOUIS",
+          "lastName": "WOODWARD",
+          "jersey": 14,
+          "games": 9,
+          "goals": 5,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 394,
+          "firstName": "MIRAN",
+          "lastName": "YILMAZ",
+          "jersey": 50,
+          "games": 9,
+          "goals": 5,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 396,
+          "firstName": "ROBIN",
+          "lastName": "SIDDANS",
+          "jersey": 66,
+          "games": 9,
+          "goals": 4,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 395,
+          "firstName": "ROWAN",
+          "lastName": "TIGG",
+          "jersey": 20,
+          "games": 1,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 397,
+          "firstName": "THOMAS",
+          "lastName": "WALKINGTON",
+          "jersey": 44,
+          "games": 9,
+          "goals": 1,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 398,
+          "firstName": "TOBY",
+          "lastName": "LOOK",
+          "jersey": 88,
+          "games": 9,
+          "goals": 5,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 399,
+          "firstName": "TOMMASO",
+          "lastName": "RUFFMAN",
+          "jersey": 30,
+          "games": 6,
+          "goals": 3,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 400,
+          "firstName": "URAS",
+          "lastName": "YILMAZ",
+          "jersey": 28,
+          "games": 6,
+          "goals": 0,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 401,
+          "firstName": "WILL",
+          "lastName": "UPSTON",
+          "jersey": 98,
+          "games": 9,
+          "goals": 2,
+          "assists": 2
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 20,
+      "countryId": "de",
+      "country": "Germany",
+      "players": [
+        {
+          "sourcePlayerId": 422,
+          "firstName": "Benjamin",
+          "lastName": "Schenk",
+          "jersey": 21,
+          "games": 10,
+          "goals": 3,
+          "assists": 12
+        },
+        {
+          "sourcePlayerId": 423,
+          "firstName": "Benjamin",
+          "lastName": "Steinhoff",
+          "jersey": 80,
+          "games": 10,
+          "goals": 12,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 424,
+          "firstName": "Bruno",
+          "lastName": "Roeder",
+          "jersey": 3,
+          "games": 10,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 425,
+          "firstName": "Christian",
+          "lastName": "Winkler",
+          "jersey": 29,
+          "games": 10,
+          "goals": 3,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 426,
+          "firstName": "Daniel",
+          "lastName": "Boyadjiev",
+          "jersey": 2,
+          "games": 10,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 427,
+          "firstName": "Daniel",
+          "lastName": "Salman",
+          "jersey": 13,
+          "games": 10,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 428,
+          "firstName": "Emil",
+          "lastName": "Fernkorn",
+          "jersey": 30,
+          "games": 10,
+          "goals": 6,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 429,
+          "firstName": "Fabian",
+          "lastName": "Maierhofer",
+          "jersey": 19,
+          "games": 10,
+          "goals": 8,
+          "assists": 16
+        },
+        {
+          "sourcePlayerId": 430,
+          "firstName": "Felix",
+          "lastName": "Henning",
+          "jersey": 98,
+          "games": 10,
+          "goals": 3,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 431,
+          "firstName": "Jakob",
+          "lastName": "Loos",
+          "jersey": 28,
+          "games": 10,
+          "goals": 4,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 432,
+          "firstName": "Janosch",
+          "lastName": "Unger",
+          "jersey": 96,
+          "games": 10,
+          "goals": 8,
+          "assists": 12
+        },
+        {
+          "sourcePlayerId": 433,
+          "firstName": "Jaques",
+          "lastName": "Odenkirchen",
+          "jersey": 26,
+          "games": 10,
+          "goals": 0,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 434,
+          "firstName": "Johann",
+          "lastName": "van der Linden",
+          "jersey": 17,
+          "games": 10,
+          "goals": 3,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 435,
+          "firstName": "Konrad",
+          "lastName": "Boehm",
+          "jersey": 11,
+          "games": 10,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 436,
+          "firstName": "Konrad",
+          "lastName": "Gramsch",
+          "jersey": 5,
+          "games": 10,
+          "goals": 2,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 437,
+          "firstName": "Luan",
+          "lastName": "Müller",
+          "jersey": 84,
+          "games": 10,
+          "goals": 5,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 438,
+          "firstName": "Mathis",
+          "lastName": "Kurth",
+          "jersey": 12,
+          "games": 10,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 439,
+          "firstName": "Meo",
+          "lastName": "Dallmann",
+          "jersey": 7,
+          "games": 9,
+          "goals": 1,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 440,
+          "firstName": "Moritz",
+          "lastName": "Klimesch",
+          "jersey": 10,
+          "games": 9,
+          "goals": 14,
+          "assists": 8
+        },
+        {
+          "sourcePlayerId": 441,
+          "firstName": "Nicolas",
+          "lastName": "Hoyos",
+          "jersey": 23,
+          "games": 10,
+          "goals": 4,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 442,
+          "firstName": "Nolan",
+          "lastName": "Liebermann",
+          "jersey": 20,
+          "games": 10,
+          "goals": 0,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 443,
+          "firstName": "Philipp",
+          "lastName": "Rieder",
+          "jersey": 4,
+          "games": 10,
+          "goals": 10,
+          "assists": 24
+        },
+        {
+          "sourcePlayerId": 444,
+          "firstName": "Thove",
+          "lastName": "Zander",
+          "jersey": 16,
+          "games": 10,
+          "goals": 3,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 445,
+          "firstName": "Willy",
+          "lastName": "Marx",
+          "jersey": 8,
+          "games": 10,
+          "goals": 1,
+          "assists": 4
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 24,
+      "countryId": "ie",
+      "country": "Ireland",
+      "players": [
+        {
+          "sourcePlayerId": 515,
+          "firstName": "Advik",
+          "lastName": "Ajay",
+          "jersey": 4,
+          "games": 9,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 516,
+          "firstName": "Alex",
+          "lastName": "Twomey",
+          "jersey": 99,
+          "games": 9,
+          "goals": 3,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 517,
+          "firstName": "Brendan",
+          "lastName": "O’ Byrne",
+          "jersey": 32,
+          "games": 9,
+          "goals": 1,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 536,
+          "firstName": "Callum",
+          "lastName": "Cott",
+          "jersey": 27,
+          "games": 9,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 518,
+          "firstName": "Conor",
+          "lastName": "Fitzgerald",
+          "jersey": 23,
+          "games": 9,
+          "goals": 2,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 519,
+          "firstName": "Conor",
+          "lastName": "Foley",
+          "jersey": 5,
+          "games": 8,
+          "goals": 1,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 520,
+          "firstName": "Daniel",
+          "lastName": "Cleary",
+          "jersey": 25,
+          "games": 9,
+          "goals": 2,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 521,
+          "firstName": "Daniel",
+          "lastName": "Nolan",
+          "jersey": 7,
+          "games": 9,
+          "goals": 2,
+          "assists": 20
+        },
+        {
+          "sourcePlayerId": 522,
+          "firstName": "Emile",
+          "lastName": "Miller-Carney",
+          "jersey": 0,
+          "games": 9,
+          "goals": 1,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 523,
+          "firstName": "Finn",
+          "lastName": "Tierney",
+          "jersey": 3,
+          "games": 9,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 525,
+          "firstName": "Igor",
+          "lastName": "Kowalczyk",
+          "jersey": 19,
+          "games": 9,
+          "goals": 2,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 526,
+          "firstName": "Janer",
+          "lastName": "Yildiz",
+          "jersey": 17,
+          "games": 9,
+          "goals": 2,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 527,
+          "firstName": "Joel",
+          "lastName": "Manyara",
+          "jersey": 77,
+          "games": 3,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 528,
+          "firstName": "John",
+          "lastName": "McEnroy",
+          "jersey": 11,
+          "games": 9,
+          "goals": 7,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 529,
+          "firstName": "Joseph",
+          "lastName": "Kirwin",
+          "jersey": 10,
+          "games": 9,
+          "goals": 2,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 530,
+          "firstName": "Kevin",
+          "lastName": "Lannon-Walsh",
+          "jersey": 42,
+          "games": 9,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 531,
+          "firstName": "Kyle",
+          "lastName": "Coogan",
+          "jersey": 87,
+          "games": 9,
+          "goals": 2,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 532,
+          "firstName": "Liam",
+          "lastName": "O' Brien",
+          "jersey": 1,
+          "games": 9,
+          "goals": 4,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 533,
+          "firstName": "Luca",
+          "lastName": "C Rodriguez Graham",
+          "jersey": 13,
+          "games": 9,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 534,
+          "firstName": "Luke",
+          "lastName": "McKone",
+          "jersey": 9,
+          "games": 9,
+          "goals": 3,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 535,
+          "firstName": "Matthew",
+          "lastName": "Clarke",
+          "jersey": 88,
+          "games": 9,
+          "goals": 13,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 537,
+          "firstName": "Oisin",
+          "lastName": "O’Shea",
+          "jersey": 26,
+          "games": 9,
+          "goals": 0,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 538,
+          "firstName": "Sean",
+          "lastName": "Hurley",
+          "jersey": 12,
+          "games": 9,
+          "goals": 4,
+          "assists": 6
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 27,
+      "countryId": "it",
+      "country": "Italy",
+      "players": [
+        {
+          "sourcePlayerId": 593,
+          "firstName": "Alessio",
+          "lastName": "Marchesini",
+          "jersey": 16,
+          "games": 10,
+          "goals": 7,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 601,
+          "firstName": "Andrea",
+          "lastName": "Sangiorgi",
+          "jersey": 11,
+          "games": 10,
+          "goals": 6,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 602,
+          "firstName": "Andrea",
+          "lastName": "Sarais",
+          "jersey": 30,
+          "games": 10,
+          "goals": 0,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 583,
+          "firstName": "Beniamino",
+          "lastName": "Boni",
+          "jersey": 95,
+          "games": 10,
+          "goals": 2,
+          "assists": 11
+        },
+        {
+          "sourcePlayerId": 588,
+          "firstName": "Carlo",
+          "lastName": "Conti",
+          "jersey": 21,
+          "games": 10,
+          "goals": 5,
+          "assists": 9
+        },
+        {
+          "sourcePlayerId": 603,
+          "firstName": "Daniele",
+          "lastName": "Scarso",
+          "jersey": 72,
+          "games": 10,
+          "goals": 1,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 589,
+          "firstName": "Federico",
+          "lastName": "Fogli",
+          "jersey": 23,
+          "games": 10,
+          "goals": 3,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 587,
+          "firstName": "Gabriele",
+          "lastName": "Cassani",
+          "jersey": 24,
+          "games": 10,
+          "goals": 10,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 592,
+          "firstName": "Giacomo",
+          "lastName": "Guzzi",
+          "jersey": 14,
+          "games": 10,
+          "goals": 6,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 595,
+          "firstName": "Giacomo",
+          "lastName": "Negozio",
+          "jersey": 8,
+          "games": 10,
+          "goals": 7,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 605,
+          "firstName": "Giacomo",
+          "lastName": "Vandelli Spinella",
+          "jersey": 32,
+          "games": 10,
+          "goals": 6,
+          "assists": 16
+        },
+        {
+          "sourcePlayerId": 594,
+          "firstName": "Giulio",
+          "lastName": "Mascagni",
+          "jersey": 10,
+          "games": 10,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 606,
+          "firstName": "Giuseppe",
+          "lastName": "Zagra",
+          "jersey": 92,
+          "games": 10,
+          "goals": 5,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 586,
+          "firstName": "Jacopo",
+          "lastName": "Casali",
+          "jersey": 22,
+          "games": 10,
+          "goals": 4,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 585,
+          "firstName": "Lorenzo",
+          "lastName": "Cappi",
+          "jersey": 28,
+          "games": 10,
+          "goals": 5,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 584,
+          "firstName": "Manuel",
+          "lastName": "Bruni",
+          "jersey": 99,
+          "games": 10,
+          "goals": 2,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 582,
+          "firstName": "Marco",
+          "lastName": "Benedetti",
+          "jersey": 20,
+          "games": 10,
+          "goals": 5,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 598,
+          "firstName": "Martino",
+          "lastName": "Reani",
+          "jersey": 19,
+          "games": 10,
+          "goals": 1,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 600,
+          "firstName": "Matteo",
+          "lastName": "Sancini",
+          "jersey": 17,
+          "games": 10,
+          "goals": 6,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 604,
+          "firstName": "Matteo",
+          "lastName": "Sironi",
+          "jersey": 18,
+          "games": 10,
+          "goals": 6,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 590,
+          "firstName": "Mattia",
+          "lastName": "Ghelli",
+          "jersey": 0,
+          "games": 10,
+          "goals": 12,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 597,
+          "firstName": "Mattia",
+          "lastName": "Querzè",
+          "jersey": 12,
+          "games": 10,
+          "goals": 0,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 596,
+          "firstName": "Niccolò",
+          "lastName": "Pivi",
+          "jersey": 9,
+          "games": 10,
+          "goals": 6,
+          "assists": 32
+        },
+        {
+          "sourcePlayerId": 607,
+          "firstName": "Pietro",
+          "lastName": "Zanon",
+          "jersey": 3,
+          "games": 10,
+          "goals": 2,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 599,
+          "firstName": "Simone",
+          "lastName": "Ridolfi",
+          "jersey": 96,
+          "games": 10,
+          "goals": 4,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 591,
+          "firstName": "Ulisse",
+          "lastName": "Giacanelli",
+          "jersey": 26,
+          "games": 10,
+          "goals": 4,
+          "assists": 4
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 29,
+      "countryId": "jp",
+      "country": "Japan",
+      "players": [
+        {
+          "sourcePlayerId": 649,
+          "firstName": "Aiga",
+          "lastName": "Otomo",
+          "jersey": 66,
+          "games": 9,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 652,
+          "firstName": "Arito",
+          "lastName": "Kobayashi",
+          "jersey": 88,
+          "games": 9,
+          "goals": 7,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 632,
+          "firstName": "Haruki",
+          "lastName": "Matsushita",
+          "jersey": 6,
+          "games": 9,
+          "goals": 6,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 640,
+          "firstName": "Hiroto",
+          "lastName": "Ouchi",
+          "jersey": 21,
+          "games": 9,
+          "goals": 5,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 647,
+          "firstName": "Ippei",
+          "lastName": "Sudo",
+          "jersey": 47,
+          "games": 9,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 636,
+          "firstName": "Junnosuke",
+          "lastName": "Ezaki",
+          "jersey": 10,
+          "games": 9,
+          "goals": 2,
+          "assists": 11
+        },
+        {
+          "sourcePlayerId": 650,
+          "firstName": "Kaede",
+          "lastName": "Shibata",
+          "jersey": 73,
+          "games": 9,
+          "goals": 2,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 633,
+          "firstName": "Kairi",
+          "lastName": "Yoshida",
+          "jersey": 7,
+          "games": 9,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 648,
+          "firstName": "Kakeru",
+          "lastName": "Nishizono",
+          "jersey": 52,
+          "games": 9,
+          "goals": 6,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 637,
+          "firstName": "Kenta",
+          "lastName": "Aranami",
+          "jersey": 11,
+          "games": 9,
+          "goals": 7,
+          "assists": 11
+        },
+        {
+          "sourcePlayerId": 654,
+          "firstName": "Kohei",
+          "lastName": "Yamashita",
+          "jersey": 99,
+          "games": 7,
+          "goals": 2,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 642,
+          "firstName": "Kosei",
+          "lastName": "Kawashima",
+          "jersey": 23,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 651,
+          "firstName": "Rakuto",
+          "lastName": "Hayashi",
+          "jersey": 77,
+          "games": 9,
+          "goals": 3,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 634,
+          "firstName": "Ryunosuke",
+          "lastName": "Fukasawa",
+          "jersey": 8,
+          "games": 9,
+          "goals": 4,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 631,
+          "firstName": "Ryuto",
+          "lastName": "Tsukada",
+          "jersey": 4,
+          "games": 9,
+          "goals": 4,
+          "assists": 12
+        },
+        {
+          "sourcePlayerId": 653,
+          "firstName": "Sean",
+          "lastName": "Wakamatsu",
+          "jersey": 97,
+          "games": 9,
+          "goals": 1,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 646,
+          "firstName": "Shotaro",
+          "lastName": "Yazaki",
+          "jersey": 46,
+          "games": 9,
+          "goals": 9,
+          "assists": 8
+        },
+        {
+          "sourcePlayerId": 641,
+          "firstName": "Shuta",
+          "lastName": "Kinoshita",
+          "jersey": 22,
+          "games": 9,
+          "goals": 4,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 638,
+          "firstName": "Sohei",
+          "lastName": "Udo",
+          "jersey": 14,
+          "games": 9,
+          "goals": 22,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 644,
+          "firstName": "Sota",
+          "lastName": "Yamane",
+          "jersey": 34,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 643,
+          "firstName": "Sumiteru",
+          "lastName": "Otogawa",
+          "jersey": 33,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 635,
+          "firstName": "Taisei",
+          "lastName": "Masuyama",
+          "jersey": 9,
+          "games": 9,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 645,
+          "firstName": "Yui",
+          "lastName": "Enohara",
+          "jersey": 43,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 639,
+          "firstName": "Yushin",
+          "lastName": "Wada",
+          "jersey": 18,
+          "games": 9,
+          "goals": 7,
+          "assists": 10
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 32,
+      "countryId": "nl",
+      "country": "Netherlands",
+      "players": [
+        {
+          "sourcePlayerId": 705,
+          "firstName": "Boaz",
+          "lastName": "De Jong",
+          "jersey": 35,
+          "games": 9,
+          "goals": 2,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 724,
+          "firstName": "Daan",
+          "lastName": "Tollenaar",
+          "jersey": 34,
+          "games": 9,
+          "goals": 1,
+          "assists": 9
+        },
+        {
+          "sourcePlayerId": 706,
+          "firstName": "Dano",
+          "lastName": "Van Ek",
+          "jersey": 37,
+          "games": 9,
+          "goals": 7,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 707,
+          "firstName": "Djayden",
+          "lastName": "Van Mierlo",
+          "jersey": 40,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 708,
+          "firstName": "Elianne Amber",
+          "lastName": "Snijders",
+          "jersey": 7,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 709,
+          "firstName": "Hessel",
+          "lastName": "Peters",
+          "jersey": 27,
+          "games": 9,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 728,
+          "firstName": "Ivo",
+          "lastName": "Kerkhoven",
+          "jersey": 41,
+          "games": 9,
+          "goals": 7,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 710,
+          "firstName": "Jesper",
+          "lastName": "Doekes",
+          "jersey": 5,
+          "games": 9,
+          "goals": 4,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 711,
+          "firstName": "Job",
+          "lastName": "van der Spek",
+          "jersey": 18,
+          "games": 9,
+          "goals": 11,
+          "assists": 12
+        },
+        {
+          "sourcePlayerId": 712,
+          "firstName": "Julan",
+          "lastName": "Robertz",
+          "jersey": 14,
+          "games": 9,
+          "goals": 8,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 713,
+          "firstName": "Julian",
+          "lastName": "Spies",
+          "jersey": 49,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 714,
+          "firstName": "Mark",
+          "lastName": "Hogewoning",
+          "jersey": 31,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 715,
+          "firstName": "Mats",
+          "lastName": "Gerritsen",
+          "jersey": 15,
+          "games": 9,
+          "goals": 0,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 723,
+          "firstName": "Menno",
+          "lastName": "van den Aardweg",
+          "jersey": 3,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 716,
+          "firstName": "Modi",
+          "lastName": "Merkus",
+          "jersey": 10,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 717,
+          "firstName": "Niek",
+          "lastName": "Van den Ham",
+          "jersey": 26,
+          "games": 9,
+          "goals": 1,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 718,
+          "firstName": "Oscar",
+          "lastName": "Haagsman",
+          "jersey": 28,
+          "games": 9,
+          "goals": 1,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 727,
+          "firstName": "Quinten",
+          "lastName": "Werink",
+          "jersey": 60,
+          "games": 9,
+          "goals": 1,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 719,
+          "firstName": "Stach",
+          "lastName": "Dapper",
+          "jersey": 8,
+          "games": 9,
+          "goals": 3,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 725,
+          "firstName": "Ties",
+          "lastName": "Looze",
+          "jersey": 12,
+          "games": 9,
+          "goals": 8,
+          "assists": 8
+        },
+        {
+          "sourcePlayerId": 720,
+          "firstName": "Tije",
+          "lastName": "Van Deursen",
+          "jersey": 44,
+          "games": 9,
+          "goals": 3,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 721,
+          "firstName": "Timotée",
+          "lastName": "Bertet",
+          "jersey": 89,
+          "games": 9,
+          "goals": 7,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 726,
+          "firstName": "Tom",
+          "lastName": "van Mil",
+          "jersey": 25,
+          "games": 9,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 729,
+          "firstName": "Tristan",
+          "lastName": "Broos",
+          "jersey": 30,
+          "games": 9,
+          "goals": 2,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 722,
+          "firstName": "Wieke",
+          "lastName": "Bol",
+          "jersey": 13,
+          "games": 9,
+          "goals": 0,
+          "assists": 1
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 33,
+      "countryId": "nz",
+      "country": "New Zealand",
+      "players": [
+        {
+          "sourcePlayerId": 731,
+          "firstName": "Alex",
+          "lastName": "Dewhurst",
+          "jersey": 7,
+          "games": 10,
+          "goals": 13,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 730,
+          "firstName": "Andrew",
+          "lastName": "Snijders",
+          "jersey": 20,
+          "games": 10,
+          "goals": 2,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 733,
+          "firstName": "Ben",
+          "lastName": "Coubrough",
+          "jersey": 88,
+          "games": 9,
+          "goals": 5,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 732,
+          "firstName": "Ben",
+          "lastName": "McLanahan",
+          "jersey": 28,
+          "games": 10,
+          "goals": 1,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 734,
+          "firstName": "Billy",
+          "lastName": "Maui",
+          "jersey": 33,
+          "games": 10,
+          "goals": 3,
+          "assists": 9
+        },
+        {
+          "sourcePlayerId": 735,
+          "firstName": "Cooper",
+          "lastName": "McCone",
+          "jersey": 4,
+          "games": 10,
+          "goals": 9,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 736,
+          "firstName": "Finlay",
+          "lastName": "Armstrong",
+          "jersey": 29,
+          "games": 10,
+          "goals": 7,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 737,
+          "firstName": "Gatsby",
+          "lastName": "Cohen",
+          "jersey": 13,
+          "games": 10,
+          "goals": 10,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 738,
+          "firstName": "Harris",
+          "lastName": "Coubrough",
+          "jersey": 43,
+          "games": 10,
+          "goals": 4,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 739,
+          "firstName": "James",
+          "lastName": "Bowen",
+          "jersey": 76,
+          "games": 10,
+          "goals": 9,
+          "assists": 34
+        },
+        {
+          "sourcePlayerId": 740,
+          "firstName": "Josh",
+          "lastName": "Jack",
+          "jersey": 0,
+          "games": 10,
+          "goals": 2,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 741,
+          "firstName": "Luke",
+          "lastName": "Dillon-Price",
+          "jersey": 42,
+          "games": 10,
+          "goals": 4,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 742,
+          "firstName": "Matthew",
+          "lastName": "Connelly",
+          "jersey": 18,
+          "games": 10,
+          "goals": 7,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 743,
+          "firstName": "Michael",
+          "lastName": "James",
+          "jersey": 16,
+          "games": 10,
+          "goals": 4,
+          "assists": 10
+        },
+        {
+          "sourcePlayerId": 744,
+          "firstName": "Oli",
+          "lastName": "Pitts",
+          "jersey": 8,
+          "games": 10,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 745,
+          "firstName": "Ori",
+          "lastName": "Hoskin",
+          "jersey": 41,
+          "games": 10,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 746,
+          "firstName": "River",
+          "lastName": "Read-Smith",
+          "jersey": 10,
+          "games": 10,
+          "goals": 4,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 747,
+          "firstName": "Samuel",
+          "lastName": "Worsley",
+          "jersey": 47,
+          "games": 10,
+          "goals": 6,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 748,
+          "firstName": "Toby",
+          "lastName": "Connor-Kebbell",
+          "jersey": 23,
+          "games": 10,
+          "goals": 0,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 749,
+          "firstName": "Troy",
+          "lastName": "Craddock",
+          "jersey": 3,
+          "games": 10,
+          "goals": 4,
+          "assists": 9
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 35,
+      "countryId": "za",
+      "country": "South Africa",
+      "players": [
+        {
+          "sourcePlayerId": 775,
+          "firstName": "Blake",
+          "lastName": "Roodt",
+          "jersey": 96,
+          "games": 8,
+          "goals": 0,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 771,
+          "firstName": "Cacia",
+          "lastName": "Holmes",
+          "jersey": 86,
+          "games": 9,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 786,
+          "firstName": "Caleb",
+          "lastName": "Rossouw",
+          "jersey": 51,
+          "games": 9,
+          "goals": 2,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 774,
+          "firstName": "Chase",
+          "lastName": "Roodt",
+          "jersey": 7,
+          "games": 7,
+          "goals": 6,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 773,
+          "firstName": "Christiaan",
+          "lastName": "Pauw",
+          "jersey": 3,
+          "games": 9,
+          "goals": 2,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 782,
+          "firstName": "Finn",
+          "lastName": "Rajna",
+          "jersey": 0,
+          "games": 8,
+          "goals": 1,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 781,
+          "firstName": "Joel",
+          "lastName": "Britten",
+          "jersey": 22,
+          "games": 9,
+          "goals": 2,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 772,
+          "firstName": "Joshua",
+          "lastName": "Corcoran",
+          "jersey": 19,
+          "games": 9,
+          "goals": 6,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 778,
+          "firstName": "Joshua",
+          "lastName": "Harris",
+          "jersey": 4,
+          "games": 9,
+          "goals": 3,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 780,
+          "firstName": "Kai",
+          "lastName": "Goodwin",
+          "jersey": 77,
+          "games": 9,
+          "goals": 10,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 784,
+          "firstName": "Keegan",
+          "lastName": "Smith",
+          "jersey": 33,
+          "games": 9,
+          "goals": 3,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 783,
+          "firstName": "Kian",
+          "lastName": "Goliath",
+          "jersey": 41,
+          "games": 9,
+          "goals": 2,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 776,
+          "firstName": "Laurijn",
+          "lastName": "Moorcroft",
+          "jersey": 18,
+          "games": 9,
+          "goals": 16,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 785,
+          "firstName": "Logan",
+          "lastName": "Darroll",
+          "jersey": 1,
+          "games": 9,
+          "goals": 4,
+          "assists": 20
+        },
+        {
+          "sourcePlayerId": 777,
+          "firstName": "Luke",
+          "lastName": "Rayner",
+          "jersey": 69,
+          "games": 9,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 787,
+          "firstName": "Nathan",
+          "lastName": "Floweday",
+          "jersey": 67,
+          "games": 9,
+          "goals": 3,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 788,
+          "firstName": "Njabulo",
+          "lastName": "Ziqubu",
+          "jersey": 10,
+          "games": 9,
+          "goals": 3,
+          "assists": 13
+        },
+        {
+          "sourcePlayerId": 779,
+          "firstName": "Samuel",
+          "lastName": "Harris",
+          "jersey": 23,
+          "games": 9,
+          "goals": 16,
+          "assists": 2
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 36,
+      "countryId": "sg",
+      "country": "Singapore",
+      "players": [
+        {
+          "sourcePlayerId": 802,
+          "firstName": "Anders",
+          "lastName": "Ng Hong Rui",
+          "jersey": 37,
+          "games": 8,
+          "goals": 10,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 789,
+          "firstName": "Eyan",
+          "lastName": "Lim",
+          "jersey": 2,
+          "games": 8,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 790,
+          "firstName": "Jax",
+          "lastName": "Sutrisno",
+          "jersey": 3,
+          "games": 8,
+          "goals": 0,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 801,
+          "firstName": "Jayden",
+          "lastName": "Neo Yu Chen",
+          "jersey": 10,
+          "games": 8,
+          "goals": 3,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 791,
+          "firstName": "Jitin",
+          "lastName": "Rajesh",
+          "jersey": 22,
+          "games": 8,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 803,
+          "firstName": "Julian",
+          "lastName": "Pereira",
+          "jersey": 9,
+          "games": 8,
+          "goals": 6,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 794,
+          "firstName": "Kai Bin, Ethan",
+          "lastName": "Lee",
+          "jersey": 95,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 795,
+          "firstName": "Kun Da",
+          "lastName": "Lu",
+          "jersey": 17,
+          "games": 8,
+          "goals": 1,
+          "assists": 13
+        },
+        {
+          "sourcePlayerId": 796,
+          "firstName": "Marven",
+          "lastName": "Ong Shao Ying",
+          "jersey": 93,
+          "games": 0,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 797,
+          "firstName": "Mohamad Hakim",
+          "lastName": "Bin Mohamad Hamim",
+          "jersey": 21,
+          "games": 8,
+          "goals": 7,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 798,
+          "firstName": "Muhammad Hakeem",
+          "lastName": "Bin Hassim",
+          "jersey": 1,
+          "games": 8,
+          "goals": 3,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 799,
+          "firstName": "Muhammad Uzayr",
+          "lastName": "Bin Erwan",
+          "jersey": 43,
+          "games": 8,
+          "goals": 0,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 792,
+          "firstName": "Noah",
+          "lastName": "Koh Yi Hong",
+          "jersey": 8,
+          "games": 8,
+          "goals": 6,
+          "assists": 17
+        },
+        {
+          "sourcePlayerId": 804,
+          "firstName": "Quintus",
+          "lastName": "Koh",
+          "jersey": 88,
+          "games": 8,
+          "goals": 1,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 800,
+          "firstName": "Ryan",
+          "lastName": "Neo Tse Woon",
+          "jersey": 11,
+          "games": 8,
+          "goals": 4,
+          "assists": 11
+        },
+        {
+          "sourcePlayerId": 805,
+          "firstName": "Ryan Hansen De Leon",
+          "lastName": "Cruz",
+          "jersey": 24,
+          "games": 8,
+          "goals": 2,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 793,
+          "firstName": "Yu Chen",
+          "lastName": "Lai",
+          "jersey": 18,
+          "games": 8,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 806,
+          "firstName": "Zhi Ren",
+          "lastName": "Teo",
+          "jersey": 7,
+          "games": 8,
+          "goals": 11,
+          "assists": 6
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 42,
+      "countryId": "se",
+      "country": "Sweden",
+      "players": [
+        {
+          "sourcePlayerId": 927,
+          "firstName": "Caesar",
+          "lastName": "Nilsson",
+          "jersey": 25,
+          "games": 9,
+          "goals": 7,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 930,
+          "firstName": "Clemens",
+          "lastName": "Sandelin",
+          "jersey": 16,
+          "games": 9,
+          "goals": 7,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 929,
+          "firstName": "Cornelis",
+          "lastName": "Rosengren Lundqvist",
+          "jersey": 27,
+          "games": 9,
+          "goals": 3,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 934,
+          "firstName": "Elliot",
+          "lastName": "Danielsson",
+          "jersey": 20,
+          "games": 9,
+          "goals": 5,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 920,
+          "firstName": "Elmer",
+          "lastName": "Jenefeldt",
+          "jersey": 41,
+          "games": 9,
+          "goals": 6,
+          "assists": 8
+        },
+        {
+          "sourcePlayerId": 931,
+          "firstName": "Erik",
+          "lastName": "Sundström",
+          "jersey": 19,
+          "games": 9,
+          "goals": 1,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 926,
+          "firstName": "Filip",
+          "lastName": "Nanberg",
+          "jersey": 22,
+          "games": 9,
+          "goals": 6,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 917,
+          "firstName": "Gunnar",
+          "lastName": "Broström",
+          "jersey": 14,
+          "games": 7,
+          "goals": 1,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 913,
+          "firstName": "Gustav",
+          "lastName": "Andersson",
+          "jersey": 52,
+          "games": 9,
+          "goals": 0,
+          "assists": 9
+        },
+        {
+          "sourcePlayerId": 918,
+          "firstName": "Gustav",
+          "lastName": "Herrlin",
+          "jersey": 7,
+          "games": 9,
+          "goals": 8,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 916,
+          "firstName": "Hugo",
+          "lastName": "Berge",
+          "jersey": 34,
+          "games": 9,
+          "goals": 10,
+          "assists": 9
+        },
+        {
+          "sourcePlayerId": 925,
+          "firstName": "Josef",
+          "lastName": "More",
+          "jersey": 10,
+          "games": 9,
+          "goals": 5,
+          "assists": 8
+        },
+        {
+          "sourcePlayerId": 933,
+          "firstName": "Kevin",
+          "lastName": "Berisha",
+          "jersey": 11,
+          "games": 9,
+          "goals": 1,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 914,
+          "firstName": "Malte",
+          "lastName": "Andersson",
+          "jersey": 55,
+          "games": 9,
+          "goals": 4,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 932,
+          "firstName": "Malte",
+          "lastName": "Wennebrink",
+          "jersey": 63,
+          "games": 9,
+          "goals": 5,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 915,
+          "firstName": "Melvin",
+          "lastName": "Arne",
+          "jersey": 15,
+          "games": 9,
+          "goals": 2,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 921,
+          "firstName": "Sebastian",
+          "lastName": "Johansson",
+          "jersey": 4,
+          "games": 9,
+          "goals": 1,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 922,
+          "firstName": "Simon",
+          "lastName": "Korslid",
+          "jersey": 83,
+          "games": 9,
+          "goals": 4,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 923,
+          "firstName": "Tage",
+          "lastName": "Lundgren",
+          "jersey": 5,
+          "games": 9,
+          "goals": 4,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 928,
+          "firstName": "Viggo",
+          "lastName": "Oscarsson",
+          "jersey": 96,
+          "games": 9,
+          "goals": 5,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 924,
+          "firstName": "Vincent",
+          "lastName": "Miller",
+          "jersey": 76,
+          "games": 9,
+          "goals": 8,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 919,
+          "firstName": "William",
+          "lastName": "Högild",
+          "jersey": 94,
+          "games": 9,
+          "goals": 2,
+          "assists": 9
+        }
+      ]
+    },
+    {
+      "sourceTeamId": 45,
+      "countryId": "us",
+      "country": "United States",
+      "players": [
+        {
+          "sourcePlayerId": 977,
+          "firstName": "Aage",
+          "lastName": "Bonnell",
+          "jersey": 16,
+          "games": 9,
+          "goals": 2,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 982,
+          "firstName": "Benjamin",
+          "lastName": "Holland",
+          "jersey": 39,
+          "games": 9,
+          "goals": 2,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 998,
+          "firstName": "Blake",
+          "lastName": "Holt",
+          "jersey": 3,
+          "games": 9,
+          "goals": 6,
+          "assists": 18
+        },
+        {
+          "sourcePlayerId": 991,
+          "firstName": "Caoba",
+          "lastName": "Nichim-Luta",
+          "jersey": 11,
+          "games": 9,
+          "goals": 2,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 981,
+          "firstName": "Daniel",
+          "lastName": "Hobday",
+          "jersey": 23,
+          "games": 9,
+          "goals": 6,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 997,
+          "firstName": "Eliseo",
+          "lastName": "Vaquerano",
+          "jersey": 15,
+          "games": 9,
+          "goals": 2,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 976,
+          "firstName": "Evan",
+          "lastName": "Benoit",
+          "jersey": 33,
+          "games": 9,
+          "goals": 3,
+          "assists": 5
+        },
+        {
+          "sourcePlayerId": 996,
+          "firstName": "Finnigan",
+          "lastName": "Thaler",
+          "jersey": 26,
+          "games": 9,
+          "goals": 5,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 993,
+          "firstName": "Joel",
+          "lastName": "Simon",
+          "jersey": 20,
+          "games": 9,
+          "goals": 5,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 983,
+          "firstName": "Joseph",
+          "lastName": "Lodahl",
+          "jersey": 12,
+          "games": 9,
+          "goals": 1,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 994,
+          "firstName": "Jude",
+          "lastName": "Small",
+          "jersey": 18,
+          "games": 9,
+          "goals": 6,
+          "assists": 1
+        },
+        {
+          "sourcePlayerId": 989,
+          "firstName": "Lane",
+          "lastName": "Mires",
+          "jersey": 22,
+          "games": 9,
+          "goals": 4,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 975,
+          "firstName": "Muhammad",
+          "lastName": "Awais",
+          "jersey": 1,
+          "games": 9,
+          "goals": 7,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 980,
+          "firstName": "Nikolas",
+          "lastName": "Goodrum",
+          "jersey": 10,
+          "games": 9,
+          "goals": 3,
+          "assists": 6
+        },
+        {
+          "sourcePlayerId": 986,
+          "firstName": "Noah",
+          "lastName": "Malla",
+          "jersey": 4,
+          "games": 9,
+          "goals": 4,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 978,
+          "firstName": "Owen",
+          "lastName": "Erdman",
+          "jersey": 55,
+          "games": 9,
+          "goals": 11,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 987,
+          "firstName": "Reggie",
+          "lastName": "Masket",
+          "jersey": 17,
+          "games": 9,
+          "goals": 10,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 995,
+          "firstName": "Sawyer",
+          "lastName": "Thacker",
+          "jersey": 21,
+          "games": 9,
+          "goals": 3,
+          "assists": 0
+        },
+        {
+          "sourcePlayerId": 984,
+          "firstName": "Simon",
+          "lastName": "Logan",
+          "jersey": 8,
+          "games": 6,
+          "goals": 0,
+          "assists": 4
+        },
+        {
+          "sourcePlayerId": 985,
+          "firstName": "Son",
+          "lastName": "Mai-Clark",
+          "jersey": 13,
+          "games": 9,
+          "goals": 7,
+          "assists": 7
+        },
+        {
+          "sourcePlayerId": 988,
+          "firstName": "Stefan",
+          "lastName": "McCall",
+          "jersey": 7,
+          "games": 9,
+          "goals": 17,
+          "assists": 16
+        },
+        {
+          "sourcePlayerId": 992,
+          "firstName": "Suriya",
+          "lastName": "Sethi",
+          "jersey": 2,
+          "games": 8,
+          "goals": 2,
+          "assists": 3
+        },
+        {
+          "sourcePlayerId": 990,
+          "firstName": "Tanner",
+          "lastName": "Monohan",
+          "jersey": 9,
+          "games": 9,
+          "goals": 1,
+          "assists": 2
+        },
+        {
+          "sourcePlayerId": 979,
+          "firstName": "William",
+          "lastName": "Fath",
+          "jersey": 81,
+          "games": 9,
+          "goals": 4,
+          "assists": 2
+        }
+      ]
+    }
+  ]
+}

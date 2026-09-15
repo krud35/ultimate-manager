@@ -4,6 +4,7 @@ import { eucsTeamCountry } from '../data/eucsLeagueTeams.js'
 import { createRng } from '../matchEngine/rng.js'
 import { createAcademyProspect } from './academy.js'
 import { getOverallRating } from '../models/playerStats.js'
+import wjucJuniors from '../data/wjucJuniors.json' with { type: 'json' }
 
 function hash(value) {
   let h = 2166136261
@@ -12,8 +13,47 @@ function hash(value) {
 }
 
 export function clubYouthCountry(team) {
-  const name = eucsTeamCountry(team.id)
-  return Object.keys(ACADEMY_COUNTRIES).find(id => ACADEMY_COUNTRIES[id].nameEn === name) ?? 'us'
+  if (ACADEMY_COUNTRIES[team.countryId]) return team.countryId
+  const name = team.country ?? eucsTeamCountry(team.id)
+  return Object.keys(ACADEMY_COUNTRIES).find(id => id === name || ACADEMY_COUNTRIES[id].nameEn === name || ACADEMY_COUNTRIES[id].labelEn === name) ?? 'us'
+}
+
+const nameKey = p => `${p.firstName ?? ''} ${p.lastName ?? ''}`.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
+
+/** A real-name starting cohort, introduced once and never recreated after claims/departures. */
+export function ensureWjucJuniors(world, year) {
+  if (!world || !Number.isFinite(year)) return
+  if (world.wjucYouthImportVersion >= 1) return
+  world.regionalYouth ??= []
+  const registered = [
+    ...(world.regionalYouth ?? []), ...(world.freeAgents ?? []), ...(world.retiredPlayers ?? []),
+    ...Object.values(world.teamsById ?? {}).flatMap(t => [...(t.players ?? []), ...(t.academyPlayers ?? [])]),
+  ]
+  const ids = new Set(registered.map(p => p.id))
+  const names = new Set(registered.map(nameKey))
+  for (const team of wjucJuniors.teams) {
+    for (const record of team.players) {
+      const id = `wjuc-2026-${record.sourcePlayerId}`
+      if (ids.has(id) || names.has(nameKey(record))) continue
+      const rng = createRng(hash(`${world.templateSeasonYear}|${id}`))
+      const player = createAcademyProspect(() => rng.float(), {
+        teamId: `region-${team.countryId}`, seasonYear: year, countryId: team.countryId,
+        source: 'wjuc-2026', index: record.sourcePlayerId,
+      })
+      Object.assign(player, {
+        id, firstName: record.firstName, lastName: record.lastName, jersey: record.jersey ?? player.jersey,
+        regionalYouth: true, cohortYear: year, inAcademy: false, status: 'unattached_youth',
+        youthReference: { event: wjucJuniors.event, sourcePlayerId: record.sourcePlayerId,
+          sourceTeamId: team.sourceTeamId, games: record.games, goals: record.goals, assists: record.assists,
+          generatedAgeAndAbilities: true },
+      })
+      world.regionalYouth.push(player)
+      ids.add(id)
+      names.add(nameKey(record))
+    }
+  }
+  world.wjucYouthImportVersion = 1
+  world.wjucYouthIntroducedSeason = year
 }
 
 /** Shared finite rosters are generated once per cohort, never by sending a scout. */
@@ -22,6 +62,7 @@ export function ensureYouthCohort(world, year) {
   world.regionalYouth ??= []
   world.youthCohortYears ??= []
   world.youthCohortVersions ??= {}
+  ensureWjucJuniors(world, year)
   if (world.youthCohortVersions[year] === 2) return world.regionalYouth
   const expanding = world.youthCohortYears.includes(year)
   if (!expanding) world.youthCohortYears.push(year)

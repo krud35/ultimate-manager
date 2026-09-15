@@ -69,6 +69,8 @@ export const TAB_TO_SCENE = {
   'club-transfers': 'negotiation-room',
   'scouting-center': 'scouting-stand',
   'club-board': 'boardroom',
+  'club-staff': 'boardroom',
+  'club-finances': 'boardroom',
   academy: 'academy-field',
 
   standings: 'league-arena',

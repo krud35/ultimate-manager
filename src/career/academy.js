@@ -189,6 +189,7 @@ export function initializeWorldAcademies(world, seasonYear) {
       team.academyPlayers.push(player)
     }
   }
+  ensureYouthCohort(world, seasonYear)
   return world
 }
 

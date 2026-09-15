@@ -1,0 +1,4555 @@
+{
+  "source": "https://results.wfdf.sport/wmucc-2026/",
+  "retrievedOn": "2026-09-15",
+  "note": "Public GM/GGM Open and Women rosters. Names are recombined for fictional staff; club country is not player nationality. Staff ages, skills and jobs are generated, not biographical facts.",
+  "teams": [
+    {
+      "id": 26,
+      "name": "BFD La Fotta",
+      "division": "Grand Master Open",
+      "country": "Italy",
+      "players": [
+        {
+          "firstName": "Andrea",
+          "lastName": "Furlan"
+        },
+        {
+          "firstName": "Andrea",
+          "lastName": "Temporin"
+        },
+        {
+          "firstName": "Carles",
+          "lastName": "Foguet"
+        },
+        {
+          "firstName": "dario",
+          "lastName": "poletti"
+        },
+        {
+          "firstName": "Davide",
+          "lastName": "Morri"
+        },
+        {
+          "firstName": "Elliott",
+          "lastName": "Murray"
+        },
+        {
+          "firstName": "Gabor",
+          "lastName": "Boross"
+        },
+        {
+          "firstName": "Giacomo",
+          "lastName": "Tenaglia"
+        },
+        {
+          "firstName": "Guillaume",
+          "lastName": "Casanova"
+        },
+        {
+          "firstName": "Jan",
+          "lastName": "Tenger"
+        },
+        {
+          "firstName": "Jaume",
+          "lastName": "Martin Serentill"
+        },
+        {
+          "firstName": "Lorenzo",
+          "lastName": "Rizzi"
+        },
+        {
+          "firstName": "Luigi",
+          "lastName": "Tinti"
+        },
+        {
+          "firstName": "Maurizio",
+          "lastName": "Murciato"
+        },
+        {
+          "firstName": "Michele",
+          "lastName": "Bernardoni"
+        },
+        {
+          "firstName": "Michele",
+          "lastName": "Giogoli"
+        },
+        {
+          "firstName": "Michele",
+          "lastName": "Gnudi"
+        },
+        {
+          "firstName": "Piero",
+          "lastName": "Pisano"
+        },
+        {
+          "firstName": "Simone",
+          "lastName": "Zoffoli"
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "name": "Black Cans",
+      "division": "Grand Master Open",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Adam",
+          "lastName": "Sigelman"
+        },
+        {
+          "firstName": "Aden",
+          "lastName": "Richards"
+        },
+        {
+          "firstName": "Andrew",
+          "lastName": "Allen"
+        },
+        {
+          "firstName": "Andrew",
+          "lastName": "Weisman"
+        },
+        {
+          "firstName": "Ben",
+          "lastName": "Banyas"
+        },
+        {
+          "firstName": "Bobby",
+          "lastName": "Gordon"
+        },
+        {
+          "firstName": "Calvin",
+          "lastName": "Oung"
+        },
+        {
+          "firstName": "Christopher",
+          "lastName": "Muller"
+        },
+        {
+          "firstName": "Ernesto",
+          "lastName": "Ricourt"
+        },
+        {
+          "firstName": "Jarnail",
+          "lastName": "Bajwa"
+        },
+        {
+          "firstName": "Jason",
+          "lastName": "Fortner"
+        },
+        {
+          "firstName": "John",
+          "lastName": "Agan"
+        },
+        {
+          "firstName": "Joseph",
+          "lastName": "Cuneo"
+        },
+        {
+          "firstName": "Justin",
+          "lastName": "Solis"
+        },
+        {
+          "firstName": "Keven",
+          "lastName": "Moldenhauer"
+        },
+        {
+          "firstName": "Matthew",
+          "lastName": "Gordon"
+        },
+        {
+          "firstName": "Michael",
+          "lastName": "Chirlin"
+        },
+        {
+          "firstName": "Michael",
+          "lastName": "Stephen"
+        },
+        {
+          "firstName": "Paul",
+          "lastName": "Butterfoss"
+        },
+        {
+          "firstName": "Peter",
+          "lastName": "MacArthur"
+        },
+        {
+          "firstName": "Robert",
+          "lastName": "Dulabon"
+        },
+        {
+          "firstName": "Robert",
+          "lastName": "Gillies"
+        },
+        {
+          "firstName": "Ryan",
+          "lastName": "Plant"
+        },
+        {
+          "firstName": "Sean",
+          "lastName": "Keegan"
+        },
+        {
+          "firstName": "Sean",
+          "lastName": "McComb"
+        },
+        {
+          "firstName": "Zack",
+          "lastName": "Thompson"
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "name": "Clapham Old Frogs",
+      "division": "Grand Master Open",
+      "country": "Great Britain",
+      "players": [
+        {
+          "firstName": "Alex",
+          "lastName": "Bowers"
+        },
+        {
+          "firstName": "Christopher",
+          "lastName": "Baker"
+        },
+        {
+          "firstName": "Cian",
+          "lastName": "O Morain"
+        },
+        {
+          "firstName": "Colin",
+          "lastName": "Shaw"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Reshef"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Stobbs"
+        },
+        {
+          "firstName": "Ham",
+          "lastName": "Roushanzamir"
+        },
+        {
+          "firstName": "Jaimie",
+          "lastName": "Cross"
+        },
+        {
+          "firstName": "Jiri",
+          "lastName": "Sedlar"
+        },
+        {
+          "firstName": "Johan",
+          "lastName": "Leandersson"
+        },
+        {
+          "firstName": "John",
+          "lastName": "Howell"
+        },
+        {
+          "firstName": "Jonathan",
+          "lastName": "Cummings"
+        },
+        {
+          "firstName": "Martin",
+          "lastName": "Hargeby"
+        },
+        {
+          "firstName": "Matt",
+          "lastName": "Rose"
+        },
+        {
+          "firstName": "Matt",
+          "lastName": "Woods"
+        },
+        {
+          "firstName": "Matthew",
+          "lastName": "Beavan"
+        },
+        {
+          "firstName": "Nick",
+          "lastName": "Bildner"
+        },
+        {
+          "firstName": "Oliver",
+          "lastName": "Benjamin"
+        },
+        {
+          "firstName": "Oliver",
+          "lastName": "Gray"
+        },
+        {
+          "firstName": "Sion",
+          "lastName": "Scone"
+        },
+        {
+          "firstName": "Stepan",
+          "lastName": "Materna"
+        },
+        {
+          "firstName": "Tomas",
+          "lastName": "Vesely"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "name": "DJ Dahlem Silverbacks",
+      "division": "Grand Master Open",
+      "country": "Germany",
+      "players": [
+        {
+          "firstName": "Bjorn",
+          "lastName": "Kossahl"
+        },
+        {
+          "firstName": "Christian",
+          "lastName": "Söngen"
+        },
+        {
+          "firstName": "Fabian",
+          "lastName": "Michaelis"
+        },
+        {
+          "firstName": "Georg",
+          "lastName": "Pohl"
+        },
+        {
+          "firstName": "Gregor",
+          "lastName": "Ehrmann"
+        },
+        {
+          "firstName": "Jörn",
+          "lastName": "König"
+        },
+        {
+          "firstName": "Marc",
+          "lastName": "Koschemann"
+        },
+        {
+          "firstName": "Marcus",
+          "lastName": "Finder"
+        },
+        {
+          "firstName": "Nicolas",
+          "lastName": "Merz"
+        },
+        {
+          "firstName": "Patrick",
+          "lastName": "Lamm"
+        },
+        {
+          "firstName": "Patrick",
+          "lastName": "Rost"
+        },
+        {
+          "firstName": "Robert",
+          "lastName": "Klein"
+        },
+        {
+          "firstName": "Samuel",
+          "lastName": "Schellenburg"
+        },
+        {
+          "firstName": "Stefan",
+          "lastName": "Reinsch"
+        },
+        {
+          "firstName": "Stefan",
+          "lastName": "Schmidt"
+        },
+        {
+          "firstName": "Thomas",
+          "lastName": "Warichet"
+        },
+        {
+          "firstName": "Thorsten",
+          "lastName": "Albrecht"
+        },
+        {
+          "firstName": "Timm",
+          "lastName": "Guggenberger"
+        },
+        {
+          "firstName": "Timo",
+          "lastName": "Dumke"
+        },
+        {
+          "firstName": "Wojciech",
+          "lastName": "Kalbarczyk"
+        },
+        {
+          "firstName": "Yuan-Juhn",
+          "lastName": "Chiao"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "name": "Eulchtimate",
+      "division": "Grand Master Open",
+      "country": "France",
+      "players": [
+        {
+          "firstName": "Emilio",
+          "lastName": "Roth"
+        },
+        {
+          "firstName": "Florent",
+          "lastName": "Guinot"
+        },
+        {
+          "firstName": "François",
+          "lastName": "Souquière"
+        },
+        {
+          "firstName": "Frédéric",
+          "lastName": "Bloch"
+        },
+        {
+          "firstName": "Gabriel",
+          "lastName": "Desbouvries"
+        },
+        {
+          "firstName": "Gildas",
+          "lastName": "Le Cloirec"
+        },
+        {
+          "firstName": "Gilles",
+          "lastName": "LEROY"
+        },
+        {
+          "firstName": "Guillaume",
+          "lastName": "Raynaud"
+        },
+        {
+          "firstName": "Kelsey",
+          "lastName": "Rider"
+        },
+        {
+          "firstName": "Kevin",
+          "lastName": "Chappe"
+        },
+        {
+          "firstName": "Marc",
+          "lastName": "Develter"
+        },
+        {
+          "firstName": "Pablo",
+          "lastName": "Lopez"
+        },
+        {
+          "firstName": "Paul",
+          "lastName": "Seret"
+        },
+        {
+          "firstName": "Pierre",
+          "lastName": "Guilmault"
+        },
+        {
+          "firstName": "Rodrigue",
+          "lastName": "Dufaur"
+        },
+        {
+          "firstName": "Romain",
+          "lastName": "Varlet"
+        },
+        {
+          "firstName": "Sébastien",
+          "lastName": "Carrier"
+        },
+        {
+          "firstName": "Yann",
+          "lastName": "Guinaudeau"
+        },
+        {
+          "firstName": "Yoan",
+          "lastName": "Foucault"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "name": "Greyfish",
+      "division": "Grand Master Open",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Aaron",
+          "lastName": "Koenig"
+        },
+        {
+          "firstName": "Alan",
+          "lastName": "Macfarlane"
+        },
+        {
+          "firstName": "Alister",
+          "lastName": "West"
+        },
+        {
+          "firstName": "Brett",
+          "lastName": "Anderson"
+        },
+        {
+          "firstName": "Brian",
+          "lastName": "Dracup"
+        },
+        {
+          "firstName": "Colin",
+          "lastName": "Hanes"
+        },
+        {
+          "firstName": "Daniel",
+          "lastName": "Bower"
+        },
+        {
+          "firstName": "Davy",
+          "lastName": "Labardisse"
+        },
+        {
+          "firstName": "Derek",
+          "lastName": "Cheng"
+        },
+        {
+          "firstName": "Derek",
+          "lastName": "Knoechel"
+        },
+        {
+          "firstName": "Elias",
+          "lastName": "Campbell"
+        },
+        {
+          "firstName": "Farouk",
+          "lastName": "Zaba"
+        },
+        {
+          "firstName": "Francisco",
+          "lastName": "Mogollon"
+        },
+        {
+          "firstName": "Jesse",
+          "lastName": "Robertson"
+        },
+        {
+          "firstName": "Jordan",
+          "lastName": "Bower"
+        },
+        {
+          "firstName": "Lee",
+          "lastName": "MacKay"
+        },
+        {
+          "firstName": "Louis",
+          "lastName": "Lamb"
+        },
+        {
+          "firstName": "Matthew",
+          "lastName": "Deane"
+        },
+        {
+          "firstName": "Noel",
+          "lastName": "Pullen"
+        },
+        {
+          "firstName": "Patrick",
+          "lastName": "Gatien"
+        },
+        {
+          "firstName": "Philip",
+          "lastName": "Davidson"
+        },
+        {
+          "firstName": "Pierre-Yves",
+          "lastName": "Lavertu"
+        },
+        {
+          "firstName": "Shawn",
+          "lastName": "Vogels"
+        },
+        {
+          "firstName": "Tam",
+          "lastName": "Do"
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "name": "Johnny Walker",
+      "division": "Grand Master Open",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Andrew",
+          "lastName": "Mangan"
+        },
+        {
+          "firstName": "Andrew",
+          "lastName": "Sheehan"
+        },
+        {
+          "firstName": "Andrew",
+          "lastName": "Stringer"
+        },
+        {
+          "firstName": "Bob",
+          "lastName": "Krier"
+        },
+        {
+          "firstName": "Brett",
+          "lastName": "Kolinek"
+        },
+        {
+          "firstName": "Brian",
+          "lastName": "Carroll"
+        },
+        {
+          "firstName": "Chris",
+          "lastName": "Gwinner"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Kamin"
+        },
+        {
+          "firstName": "Doug",
+          "lastName": "Stenclik"
+        },
+        {
+          "firstName": "Evan",
+          "lastName": "Valdes"
+        },
+        {
+          "firstName": "Gavin",
+          "lastName": "McKibben"
+        },
+        {
+          "firstName": "Hugh",
+          "lastName": "Carey"
+        },
+        {
+          "firstName": "Jamian",
+          "lastName": "Jacobs"
+        },
+        {
+          "firstName": "Jeff",
+          "lastName": "Berget"
+        },
+        {
+          "firstName": "Joe",
+          "lastName": "Iannacone"
+        },
+        {
+          "firstName": "Joel",
+          "lastName": "Crandall"
+        },
+        {
+          "firstName": "John",
+          "lastName": "Dunlop"
+        },
+        {
+          "firstName": "Justin",
+          "lastName": "Salvia"
+        },
+        {
+          "firstName": "Kelly",
+          "lastName": "Swiryn"
+        },
+        {
+          "firstName": "Killian",
+          "lastName": "Burns"
+        },
+        {
+          "firstName": "Luke",
+          "lastName": "Perkins"
+        },
+        {
+          "firstName": "Michael",
+          "lastName": "Lun"
+        },
+        {
+          "firstName": "Ryan",
+          "lastName": "Segal"
+        },
+        {
+          "firstName": "Steven",
+          "lastName": "Rouisse"
+        },
+        {
+          "firstName": "Ted",
+          "lastName": "Barnett"
+        },
+        {
+          "firstName": "Will",
+          "lastName": "Lokke"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "name": "Kalakala",
+      "division": "Grand Master Open",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Aldan",
+          "lastName": "Shank"
+        },
+        {
+          "firstName": "Andrew",
+          "lastName": "Lovejoy"
+        },
+        {
+          "firstName": "Arnie",
+          "lastName": "Larson"
+        },
+        {
+          "firstName": "Brian",
+          "lastName": "Benjamin"
+        },
+        {
+          "firstName": "Charles",
+          "lastName": "Reis"
+        },
+        {
+          "firstName": "Charlie",
+          "lastName": "Ellis"
+        },
+        {
+          "firstName": "Chris",
+          "lastName": "Rupp"
+        },
+        {
+          "firstName": "Daniel",
+          "lastName": "Walton"
+        },
+        {
+          "firstName": "Danny",
+          "lastName": "Karlinsky"
+        },
+        {
+          "firstName": "Dave",
+          "lastName": "Bestock"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Lott"
+        },
+        {
+          "firstName": "Eric",
+          "lastName": "Feise"
+        },
+        {
+          "firstName": "Ezra",
+          "lastName": "Schiff"
+        },
+        {
+          "firstName": "Ian",
+          "lastName": "Buchanan"
+        },
+        {
+          "firstName": "John",
+          "lastName": "Goldmark"
+        },
+        {
+          "firstName": "Jon",
+          "lastName": "Ladd"
+        },
+        {
+          "firstName": "Joshua",
+          "lastName": "Lang"
+        },
+        {
+          "firstName": "Krishna",
+          "lastName": "Rao"
+        },
+        {
+          "firstName": "Michael",
+          "lastName": "Berkenwald"
+        },
+        {
+          "firstName": "Michael",
+          "lastName": "Caldwell"
+        },
+        {
+          "firstName": "Nate",
+          "lastName": "Stock"
+        },
+        {
+          "firstName": "Riley",
+          "lastName": "Meinershagen"
+        },
+        {
+          "firstName": "Robert",
+          "lastName": "Bruggner"
+        },
+        {
+          "firstName": "Stephen",
+          "lastName": "Gussin"
+        },
+        {
+          "firstName": "Tae",
+          "lastName": "Hose"
+        },
+        {
+          "firstName": "Tim",
+          "lastName": "Gehret"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "name": "Lost Boyz",
+      "division": "Grand Master Open",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Aaron",
+          "lastName": "Louis"
+        },
+        {
+          "firstName": "Adam",
+          "lastName": "Clay"
+        },
+        {
+          "firstName": "Andrew",
+          "lastName": "Meikle"
+        },
+        {
+          "firstName": "Benjamin",
+          "lastName": "St. Louis"
+        },
+        {
+          "firstName": "Chris",
+          "lastName": "Wang"
+        },
+        {
+          "firstName": "Colin",
+          "lastName": "Mattison"
+        },
+        {
+          "firstName": "Curtis",
+          "lastName": "Clack"
+        },
+        {
+          "firstName": "Darren",
+          "lastName": "DiMarco"
+        },
+        {
+          "firstName": "Gilles",
+          "lastName": "Delorme"
+        },
+        {
+          "firstName": "Grant",
+          "lastName": "Cope"
+        },
+        {
+          "firstName": "Jeremy",
+          "lastName": "Chacko"
+        },
+        {
+          "firstName": "Jonathan",
+          "lastName": "Tang"
+        },
+        {
+          "firstName": "Kyle",
+          "lastName": "Miñeque"
+        },
+        {
+          "firstName": "Kyle",
+          "lastName": "Wheaton"
+        },
+        {
+          "firstName": "Marc",
+          "lastName": "Hodges"
+        },
+        {
+          "firstName": "Marcel",
+          "lastName": "Corniellis"
+        },
+        {
+          "firstName": "Matt",
+          "lastName": "Murl"
+        },
+        {
+          "firstName": "Padraic",
+          "lastName": "Ryan"
+        },
+        {
+          "firstName": "R.T.",
+          "lastName": "Lechow"
+        },
+        {
+          "firstName": "Ryan",
+          "lastName": "Sherriff"
+        },
+        {
+          "firstName": "Sean",
+          "lastName": "Hutchins"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "name": "NSOM GM",
+      "division": "Grand Master Open",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Alexandre",
+          "lastName": "Piuze"
+        },
+        {
+          "firstName": "Alexandre",
+          "lastName": "St-Onge"
+        },
+        {
+          "firstName": "Benoit",
+          "lastName": "Theriault"
+        },
+        {
+          "firstName": "Daniel",
+          "lastName": "Lachance"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Beauchesne"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Mailhot"
+        },
+        {
+          "firstName": "Jean Levy",
+          "lastName": "Champagne"
+        },
+        {
+          "firstName": "Jean-Francois",
+          "lastName": "Bourque"
+        },
+        {
+          "firstName": "Jean-François",
+          "lastName": "Trudel"
+        },
+        {
+          "firstName": "Jon",
+          "lastName": "Hayduk"
+        },
+        {
+          "firstName": "Louis-Pierre",
+          "lastName": "Lauzon"
+        },
+        {
+          "firstName": "Luc",
+          "lastName": "Live"
+        },
+        {
+          "firstName": "Mathieu",
+          "lastName": "Brisebois-Boies"
+        },
+        {
+          "firstName": "Maxime",
+          "lastName": "Pineault"
+        },
+        {
+          "firstName": "Nicholas",
+          "lastName": "Fabel"
+        },
+        {
+          "firstName": "Pat",
+          "lastName": "Pham"
+        },
+        {
+          "firstName": "Philippe",
+          "lastName": "Boisvert"
+        },
+        {
+          "firstName": "Philippe",
+          "lastName": "Thivierge"
+        },
+        {
+          "firstName": "Pier-Alexandre",
+          "lastName": "Reid"
+        },
+        {
+          "firstName": "Shawn",
+          "lastName": "St-Jean Timmins"
+        },
+        {
+          "firstName": "Simon",
+          "lastName": "Ayotte"
+        },
+        {
+          "firstName": "Simon",
+          "lastName": "Vervaet"
+        },
+        {
+          "firstName": "Vincent",
+          "lastName": "Bergeron"
+        },
+        {
+          "firstName": "Virath",
+          "lastName": "Chamroeun"
+        },
+        {
+          "firstName": "Yan",
+          "lastName": "Bouchard"
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "name": "OUCH",
+      "division": "Grand Master Open",
+      "country": "Singapore",
+      "players": [
+        {
+          "firstName": "Aaron",
+          "lastName": "PERRYMAN"
+        },
+        {
+          "firstName": "Alexander",
+          "lastName": "LIM"
+        },
+        {
+          "firstName": "Brendan",
+          "lastName": "AWERBUCH"
+        },
+        {
+          "firstName": "Daniel",
+          "lastName": "GOEBEL"
+        },
+        {
+          "firstName": "Edwin",
+          "lastName": "BYWATER"
+        },
+        {
+          "firstName": "Emmanuel",
+          "lastName": "BENNETT"
+        },
+        {
+          "firstName": "Ignacio",
+          "lastName": "IZQUIERDO"
+        },
+        {
+          "firstName": "Jimmy",
+          "lastName": "JIH"
+        },
+        {
+          "firstName": "Kenny",
+          "lastName": "SIM"
+        },
+        {
+          "firstName": "Kian Wee",
+          "lastName": "SIM"
+        },
+        {
+          "firstName": "Laurent",
+          "lastName": "BACCONNIER"
+        },
+        {
+          "firstName": "Pierre-Etienne",
+          "lastName": "PAGE"
+        },
+        {
+          "firstName": "Reon",
+          "lastName": "TAY"
+        },
+        {
+          "firstName": "Risheng",
+          "lastName": "LIN"
+        },
+        {
+          "firstName": "Ryan",
+          "lastName": "YANG"
+        },
+        {
+          "firstName": "Wolfgang",
+          "lastName": "MAEHR"
+        },
+        {
+          "firstName": "Yu Ee",
+          "lastName": "Ong"
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "name": "Shadows",
+      "division": "Grand Master Open",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Adam",
+          "lastName": "Brown"
+        },
+        {
+          "firstName": "Andrew",
+          "lastName": "Berry"
+        },
+        {
+          "firstName": "Barrs",
+          "lastName": "Lang"
+        },
+        {
+          "firstName": "Bhavin",
+          "lastName": "Parikh"
+        },
+        {
+          "firstName": "Bob",
+          "lastName": "Madden"
+        },
+        {
+          "firstName": "Chris",
+          "lastName": "Doyle"
+        },
+        {
+          "firstName": "Colyn",
+          "lastName": "Flynn"
+        },
+        {
+          "firstName": "Dan",
+          "lastName": "Dzoan"
+        },
+        {
+          "firstName": "Doug",
+          "lastName": "Fowler"
+        },
+        {
+          "firstName": "Eric",
+          "lastName": "Hartge"
+        },
+        {
+          "firstName": "Eric",
+          "lastName": "Richardson"
+        },
+        {
+          "firstName": "Jason",
+          "lastName": "Draut"
+        },
+        {
+          "firstName": "Joel",
+          "lastName": "Conn"
+        },
+        {
+          "firstName": "Jon",
+          "lastName": "Moldover"
+        },
+        {
+          "firstName": "Jordan",
+          "lastName": "Seaberg"
+        },
+        {
+          "firstName": "Kyle",
+          "lastName": "Smith"
+        },
+        {
+          "firstName": "Louis",
+          "lastName": "Eisenberg"
+        },
+        {
+          "firstName": "Mac",
+          "lastName": "Taylor"
+        },
+        {
+          "firstName": "Matthew",
+          "lastName": "Kissmann"
+        },
+        {
+          "firstName": "Mike",
+          "lastName": "Pereira"
+        },
+        {
+          "firstName": "Rocky",
+          "lastName": "Beach"
+        },
+        {
+          "firstName": "Ryo",
+          "lastName": "Kawaoka"
+        },
+        {
+          "firstName": "Simon",
+          "lastName": "Margolis"
+        },
+        {
+          "firstName": "Spencer",
+          "lastName": "Massey"
+        },
+        {
+          "firstName": "Will",
+          "lastName": "Chen"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Stout",
+      "division": "Grand Master Open",
+      "country": "Australia",
+      "players": [
+        {
+          "firstName": "Adam",
+          "lastName": "Baker"
+        },
+        {
+          "firstName": "Adam",
+          "lastName": "Woods"
+        },
+        {
+          "firstName": "Anthony",
+          "lastName": "Dowle"
+        },
+        {
+          "firstName": "Dan",
+          "lastName": "Gladish"
+        },
+        {
+          "firstName": "Glenn",
+          "lastName": "Molnar"
+        },
+        {
+          "firstName": "Israel",
+          "lastName": "Sorondo"
+        },
+        {
+          "firstName": "Joe",
+          "lastName": "Leung"
+        },
+        {
+          "firstName": "Joe",
+          "lastName": "Tharion"
+        },
+        {
+          "firstName": "Leon",
+          "lastName": "McIntyre"
+        },
+        {
+          "firstName": "Luke",
+          "lastName": "Ledwich"
+        },
+        {
+          "firstName": "Mat",
+          "lastName": "Guenette"
+        },
+        {
+          "firstName": "Mike",
+          "lastName": "Baker"
+        },
+        {
+          "firstName": "Neil",
+          "lastName": "Roxburgh"
+        },
+        {
+          "firstName": "Owen",
+          "lastName": "Shepherd"
+        },
+        {
+          "firstName": "Paul",
+          "lastName": "Denyer"
+        },
+        {
+          "firstName": "Rhys",
+          "lastName": "Hearne"
+        },
+        {
+          "firstName": "Richard",
+          "lastName": "Moore"
+        },
+        {
+          "firstName": "Sam",
+          "lastName": "Freney"
+        },
+        {
+          "firstName": "Steve",
+          "lastName": "Baker"
+        },
+        {
+          "firstName": "Tim",
+          "lastName": "Gee"
+        },
+        {
+          "firstName": "Troy",
+          "lastName": "Booth"
+        },
+        {
+          "firstName": "Wally",
+          "lastName": "Crocker"
+        },
+        {
+          "firstName": "Yoann",
+          "lastName": "Gréau"
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "name": "SurlyGM",
+      "division": "Grand Master Open",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Andy",
+          "lastName": "Zumbusch"
+        },
+        {
+          "firstName": "Blake",
+          "lastName": "Larson"
+        },
+        {
+          "firstName": "Brandon",
+          "lastName": "Malecek"
+        },
+        {
+          "firstName": "Brent",
+          "lastName": "Allen"
+        },
+        {
+          "firstName": "Brett",
+          "lastName": "DeHoogh"
+        },
+        {
+          "firstName": "Brian",
+          "lastName": "Edgerton"
+        },
+        {
+          "firstName": "Dan",
+          "lastName": "Monfre"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Storey"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Valentine-Elam"
+        },
+        {
+          "firstName": "Hans",
+          "lastName": "Peterson"
+        },
+        {
+          "firstName": "Jake",
+          "lastName": "Taylor"
+        },
+        {
+          "firstName": "Jamey",
+          "lastName": "Kleinhenz"
+        },
+        {
+          "firstName": "Marcus",
+          "lastName": "Ellson"
+        },
+        {
+          "firstName": "Matt",
+          "lastName": "Young"
+        },
+        {
+          "firstName": "Matthew",
+          "lastName": "Brent"
+        },
+        {
+          "firstName": "Mike",
+          "lastName": "Petersen"
+        },
+        {
+          "firstName": "Nate",
+          "lastName": "Bosscher"
+        },
+        {
+          "firstName": "Nick",
+          "lastName": "Turco"
+        },
+        {
+          "firstName": "Ryan",
+          "lastName": "Oesterreich"
+        },
+        {
+          "firstName": "Sam",
+          "lastName": "O'Brien"
+        },
+        {
+          "firstName": "Sam",
+          "lastName": "Wilson-Moses"
+        },
+        {
+          "firstName": "Sean",
+          "lastName": "Breaux"
+        },
+        {
+          "firstName": "Seth",
+          "lastName": "Meyer"
+        },
+        {
+          "firstName": "Thomas",
+          "lastName": "Murray"
+        },
+        {
+          "firstName": "Tom",
+          "lastName": "Annen"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "name": "Winnipeg General Stroke",
+      "division": "Grand Master Open",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Anthony",
+          "lastName": "Slater"
+        },
+        {
+          "firstName": "Bhavesh",
+          "lastName": "Mistry"
+        },
+        {
+          "firstName": "Brad",
+          "lastName": "Davidson"
+        },
+        {
+          "firstName": "Brock",
+          "lastName": "Martens"
+        },
+        {
+          "firstName": "Colin",
+          "lastName": "Yeung"
+        },
+        {
+          "firstName": "Danny",
+          "lastName": "Nguyen"
+        },
+        {
+          "firstName": "Jeff",
+          "lastName": "Yuen"
+        },
+        {
+          "firstName": "Jonathan",
+          "lastName": "Boman"
+        },
+        {
+          "firstName": "Jonathan",
+          "lastName": "Hill"
+        },
+        {
+          "firstName": "Jonathan",
+          "lastName": "Trenholm"
+        },
+        {
+          "firstName": "Lee",
+          "lastName": "Crierie"
+        },
+        {
+          "firstName": "Luke",
+          "lastName": "Snider"
+        },
+        {
+          "firstName": "Mark",
+          "lastName": "Semenek"
+        },
+        {
+          "firstName": "Matt",
+          "lastName": "Grant"
+        },
+        {
+          "firstName": "Sean",
+          "lastName": "Udow"
+        },
+        {
+          "firstName": "Simon",
+          "lastName": "Haywood"
+        },
+        {
+          "firstName": "Stephen",
+          "lastName": "Chestnut"
+        },
+        {
+          "firstName": "Weichi",
+          "lastName": "Truong"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "name": "Zimmer",
+      "division": "Grand Master Open",
+      "country": "Great Britain",
+      "players": [
+        {
+          "firstName": "Alex",
+          "lastName": "Rogers"
+        },
+        {
+          "firstName": "Alex",
+          "lastName": "Sokolov"
+        },
+        {
+          "firstName": "Ben",
+          "lastName": "Weddell"
+        },
+        {
+          "firstName": "Christian",
+          "lastName": "Zamore"
+        },
+        {
+          "firstName": "Cyril",
+          "lastName": "Cayla"
+        },
+        {
+          "firstName": "Daniel",
+          "lastName": "Berry"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Ford"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Gate"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Moser"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Sealy"
+        },
+        {
+          "firstName": "Ferdinand",
+          "lastName": "Haas"
+        },
+        {
+          "firstName": "Francis",
+          "lastName": "Collin"
+        },
+        {
+          "firstName": "Gerrit",
+          "lastName": "Van Laethem"
+        },
+        {
+          "firstName": "James",
+          "lastName": "Burbidge"
+        },
+        {
+          "firstName": "Jonathan",
+          "lastName": "Vallet"
+        },
+        {
+          "firstName": "Lewis",
+          "lastName": "Glover"
+        },
+        {
+          "firstName": "Louis",
+          "lastName": "Sebastian"
+        },
+        {
+          "firstName": "Marc",
+          "lastName": "Huber"
+        },
+        {
+          "firstName": "Matthew",
+          "lastName": "Ford"
+        },
+        {
+          "firstName": "Michael",
+          "lastName": "Northcott"
+        },
+        {
+          "firstName": "Peter",
+          "lastName": "Wigfield"
+        },
+        {
+          "firstName": "Samuel",
+          "lastName": "Lord"
+        },
+        {
+          "firstName": "Sion",
+          "lastName": "Thaysen"
+        },
+        {
+          "firstName": "Stuart",
+          "lastName": "Greer"
+        },
+        {
+          "firstName": "William",
+          "lastName": "Cornelius"
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "name": "Glamour Shots",
+      "division": "Grand Master Women's",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Agnes",
+          "lastName": "Lee"
+        },
+        {
+          "firstName": "Alice",
+          "lastName": "White-Cyr"
+        },
+        {
+          "firstName": "Allison",
+          "lastName": "Springer"
+        },
+        {
+          "firstName": "Amy",
+          "lastName": "Haigh"
+        },
+        {
+          "firstName": "Andrea",
+          "lastName": "Jung"
+        },
+        {
+          "firstName": "Carolyn",
+          "lastName": "McCaffrey James"
+        },
+        {
+          "firstName": "Cheri",
+          "lastName": "Young"
+        },
+        {
+          "firstName": "Christine",
+          "lastName": "Beaulieu"
+        },
+        {
+          "firstName": "Colleen",
+          "lastName": "Nolan"
+        },
+        {
+          "firstName": "Dana",
+          "lastName": "Chang"
+        },
+        {
+          "firstName": "Dana",
+          "lastName": "Nelson"
+        },
+        {
+          "firstName": "Dulcy",
+          "lastName": "Docken"
+        },
+        {
+          "firstName": "Elena",
+          "lastName": "Bensheimer"
+        },
+        {
+          "firstName": "Emily",
+          "lastName": "Schwartz"
+        },
+        {
+          "firstName": "Kristen",
+          "lastName": "Rosenblum"
+        },
+        {
+          "firstName": "Laura",
+          "lastName": "Parisi"
+        },
+        {
+          "firstName": "Lauren",
+          "lastName": "Adrian"
+        },
+        {
+          "firstName": "Lindsay",
+          "lastName": "Higa"
+        },
+        {
+          "firstName": "Maren",
+          "lastName": "Saly"
+        },
+        {
+          "firstName": "Megan",
+          "lastName": "Mancini"
+        },
+        {
+          "firstName": "Melissa",
+          "lastName": "Presto"
+        },
+        {
+          "firstName": "Rachel",
+          "lastName": "Auerbach"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "Read-Brown"
+        },
+        {
+          "firstName": "Trisha",
+          "lastName": "Thoms"
+        },
+        {
+          "firstName": "Valerie",
+          "lastName": "Peacock"
+        },
+        {
+          "firstName": "Whitney",
+          "lastName": "Mount-Rubenfeld"
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "name": "Joy Huck Club",
+      "division": "Grand Master Women's",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Ada",
+          "lastName": "Leung"
+        },
+        {
+          "firstName": "Anne",
+          "lastName": "Pastrana"
+        },
+        {
+          "firstName": "Cathy",
+          "lastName": "Chu"
+        },
+        {
+          "firstName": "Christine",
+          "lastName": "Roberts"
+        },
+        {
+          "firstName": "Crystal",
+          "lastName": "Sotelo"
+        },
+        {
+          "firstName": "Cyndi",
+          "lastName": "McGillivray"
+        },
+        {
+          "firstName": "Eileen",
+          "lastName": "Lam"
+        },
+        {
+          "firstName": "Gene",
+          "lastName": "Bodzeta-Ramos"
+        },
+        {
+          "firstName": "Helen",
+          "lastName": "O'Sullivan"
+        },
+        {
+          "firstName": "Jamie",
+          "lastName": "Hoo-Fatt"
+        },
+        {
+          "firstName": "Kelly",
+          "lastName": "Choo"
+        },
+        {
+          "firstName": "Krysti",
+          "lastName": "Dodd"
+        },
+        {
+          "firstName": "Lynne",
+          "lastName": "Delorme"
+        },
+        {
+          "firstName": "Magima",
+          "lastName": "Rajthiageswaran"
+        },
+        {
+          "firstName": "Michelle",
+          "lastName": "Mallette"
+        },
+        {
+          "firstName": "Michelle",
+          "lastName": "Wang"
+        },
+        {
+          "firstName": "Sandy",
+          "lastName": "Fresco"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "Biro"
+        },
+        {
+          "firstName": "Stacy",
+          "lastName": "Meikle"
+        },
+        {
+          "firstName": "Sylvie",
+          "lastName": "Fisher"
+        },
+        {
+          "firstName": "Vanessa",
+          "lastName": "Mensink"
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "name": "Loose Cannon",
+      "division": "Grand Master Women's",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Annie",
+          "lastName": "Imperatrice"
+        },
+        {
+          "firstName": "Ashley",
+          "lastName": "Un"
+        },
+        {
+          "firstName": "Bonny",
+          "lastName": "Hodges"
+        },
+        {
+          "firstName": "Bridget",
+          "lastName": "Compton"
+        },
+        {
+          "firstName": "Christina",
+          "lastName": "Chang"
+        },
+        {
+          "firstName": "Christine",
+          "lastName": "Purtell"
+        },
+        {
+          "firstName": "Diana",
+          "lastName": "Cornell"
+        },
+        {
+          "firstName": "Elise",
+          "lastName": "Colomb"
+        },
+        {
+          "firstName": "Erin",
+          "lastName": "Crider"
+        },
+        {
+          "firstName": "Francoise",
+          "lastName": "Delisle"
+        },
+        {
+          "firstName": "Isabelle",
+          "lastName": "Lemay"
+        },
+        {
+          "firstName": "Julie",
+          "lastName": "Sussman"
+        },
+        {
+          "firstName": "Kaelin",
+          "lastName": "Mackey"
+        },
+        {
+          "firstName": "Karin",
+          "lastName": "Rafaels"
+        },
+        {
+          "firstName": "Kate",
+          "lastName": "Trenerry"
+        },
+        {
+          "firstName": "Kris",
+          "lastName": "Dietrick"
+        },
+        {
+          "firstName": "Kristin",
+          "lastName": "Thomas"
+        },
+        {
+          "firstName": "Liz",
+          "lastName": "Quann"
+        },
+        {
+          "firstName": "Meredith",
+          "lastName": "Leahy"
+        },
+        {
+          "firstName": "Nelly",
+          "lastName": "Fickett"
+        },
+        {
+          "firstName": "Rebecca",
+          "lastName": "Canetti"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "Burns"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "Cook"
+        },
+        {
+          "firstName": "Shannon",
+          "lastName": "Schriver"
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "name": "MaQramée",
+      "division": "Grand Master Women's",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "André-Anne",
+          "lastName": "Perron"
+        },
+        {
+          "firstName": "Benedicte",
+          "lastName": "Naudan"
+        },
+        {
+          "firstName": "Catherine",
+          "lastName": "Viau"
+        },
+        {
+          "firstName": "Céline",
+          "lastName": "Lambert"
+        },
+        {
+          "firstName": "Geneviève",
+          "lastName": "Dumont-Carey"
+        },
+        {
+          "firstName": "Geneviève",
+          "lastName": "Lamarche Moore"
+        },
+        {
+          "firstName": "Hannah",
+          "lastName": "Kennell"
+        },
+        {
+          "firstName": "Jennifer",
+          "lastName": "Gauthier"
+        },
+        {
+          "firstName": "Joanie-Kim",
+          "lastName": "Dolbec-Bradette"
+        },
+        {
+          "firstName": "Lauren",
+          "lastName": "Hunt"
+        },
+        {
+          "firstName": "Marie-France",
+          "lastName": "Veer"
+        },
+        {
+          "firstName": "Marie-Pier",
+          "lastName": "Rousseau"
+        },
+        {
+          "firstName": "Melyssa",
+          "lastName": "Vachon"
+        },
+        {
+          "firstName": "Nancy",
+          "lastName": "Marchand"
+        },
+        {
+          "firstName": "Natacha",
+          "lastName": "David"
+        },
+        {
+          "firstName": "Pamela",
+          "lastName": "Lachance-Touchette"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "Hamelin"
+        },
+        {
+          "firstName": "Stéphanie",
+          "lastName": "Lavoie"
+        },
+        {
+          "firstName": "Suzanne",
+          "lastName": "Wavroch"
+        },
+        {
+          "firstName": "Véronique",
+          "lastName": "Corbeil"
+        },
+        {
+          "firstName": "Véronique",
+          "lastName": "Riopel"
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "name": "Molly Blue",
+      "division": "Grand Master Women's",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Amy",
+          "lastName": "Smith"
+        },
+        {
+          "firstName": "Betsy",
+          "lastName": "Basch"
+        },
+        {
+          "firstName": "Christine",
+          "lastName": "Kamin"
+        },
+        {
+          "firstName": "Courtney",
+          "lastName": "Butler"
+        },
+        {
+          "firstName": "Courtney",
+          "lastName": "Remm"
+        },
+        {
+          "firstName": "Emily",
+          "lastName": "Hanson"
+        },
+        {
+          "firstName": "Grant",
+          "lastName": "Cashin"
+        },
+        {
+          "firstName": "Haley",
+          "lastName": "Reese"
+        },
+        {
+          "firstName": "Huldah",
+          "lastName": "Gronvall"
+        },
+        {
+          "firstName": "Jami",
+          "lastName": "Cashin"
+        },
+        {
+          "firstName": "Jana",
+          "lastName": "Krutsinger"
+        },
+        {
+          "firstName": "Jennie",
+          "lastName": "Zumbusch"
+        },
+        {
+          "firstName": "Kate",
+          "lastName": "Macri"
+        },
+        {
+          "firstName": "Kath",
+          "lastName": "Ratcliff"
+        },
+        {
+          "firstName": "Katherine",
+          "lastName": "Wooten"
+        },
+        {
+          "firstName": "Katie",
+          "lastName": "Patterson"
+        },
+        {
+          "firstName": "Kelly",
+          "lastName": "Bolt"
+        },
+        {
+          "firstName": "Leigh",
+          "lastName": "Lathinghouse"
+        },
+        {
+          "firstName": "Maggie",
+          "lastName": "Chen"
+        },
+        {
+          "firstName": "Melissa",
+          "lastName": "Devlin"
+        },
+        {
+          "firstName": "Sandy",
+          "lastName": "Pham"
+        },
+        {
+          "firstName": "Stephanie",
+          "lastName": "Schlosser"
+        },
+        {
+          "firstName": "Tina",
+          "lastName": "McDowell"
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "name": "Nostalgia",
+      "division": "Grand Master Women's",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Amanda",
+          "lastName": "Ho"
+        },
+        {
+          "firstName": "Anika",
+          "lastName": "Joshi"
+        },
+        {
+          "firstName": "Brae Anne",
+          "lastName": "McArthur"
+        },
+        {
+          "firstName": "Brittany",
+          "lastName": "Edgett"
+        },
+        {
+          "firstName": "Carisa",
+          "lastName": "Authier-Lau"
+        },
+        {
+          "firstName": "Charis",
+          "lastName": "Fung"
+        },
+        {
+          "firstName": "Connie",
+          "lastName": "Lee"
+        },
+        {
+          "firstName": "Georgina",
+          "lastName": "Lee"
+        },
+        {
+          "firstName": "Hayley",
+          "lastName": "Lueke"
+        },
+        {
+          "firstName": "Jenn",
+          "lastName": "Beck"
+        },
+        {
+          "firstName": "Jennifer",
+          "lastName": "Blaser"
+        },
+        {
+          "firstName": "Jill",
+          "lastName": "Kowalchuk"
+        },
+        {
+          "firstName": "Kim",
+          "lastName": "Taylor"
+        },
+        {
+          "firstName": "Kimberly",
+          "lastName": "Tee"
+        },
+        {
+          "firstName": "Krista",
+          "lastName": "MacDonald"
+        },
+        {
+          "firstName": "Kristie",
+          "lastName": "Smith"
+        },
+        {
+          "firstName": "Laura",
+          "lastName": "Harding"
+        },
+        {
+          "firstName": "Lindsay",
+          "lastName": "Sill"
+        },
+        {
+          "firstName": "Nicole",
+          "lastName": "Desjardins"
+        },
+        {
+          "firstName": "Petra",
+          "lastName": "Stephen"
+        },
+        {
+          "firstName": "Rhiannon",
+          "lastName": "Kuhn"
+        },
+        {
+          "firstName": "Shannon",
+          "lastName": "Leydon"
+        },
+        {
+          "firstName": "Tze",
+          "lastName": "Tay"
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "name": "Sunset",
+      "division": "Grand Master Women's",
+      "country": "Australia",
+      "players": [
+        {
+          "firstName": "Anna",
+          "lastName": "Bui Xuan Hy"
+        },
+        {
+          "firstName": "Anna",
+          "lastName": "Coussens"
+        },
+        {
+          "firstName": "Anna",
+          "lastName": "Haynes"
+        },
+        {
+          "firstName": "Asli",
+          "lastName": "Yaman"
+        },
+        {
+          "firstName": "Aurelie",
+          "lastName": "Benfield"
+        },
+        {
+          "firstName": "Barbara",
+          "lastName": "Helbich"
+        },
+        {
+          "firstName": "Catherine",
+          "lastName": "Desloges"
+        },
+        {
+          "firstName": "Emma",
+          "lastName": "Briggs"
+        },
+        {
+          "firstName": "Julia",
+          "lastName": "Birchall"
+        },
+        {
+          "firstName": "Kate",
+          "lastName": "Hine"
+        },
+        {
+          "firstName": "Kirstin",
+          "lastName": "Millard"
+        },
+        {
+          "firstName": "Meagan",
+          "lastName": "Newman"
+        },
+        {
+          "firstName": "Micha",
+          "lastName": "Plein"
+        },
+        {
+          "firstName": "Naomi",
+          "lastName": "Le Get"
+        },
+        {
+          "firstName": "Sheryn",
+          "lastName": "Ringland"
+        },
+        {
+          "firstName": "Tamara",
+          "lastName": "Davis"
+        },
+        {
+          "firstName": "Tieu Minh",
+          "lastName": "Huynh"
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "name": "Throwback",
+      "division": "Grand Master Women's",
+      "country": "Great Britain",
+      "players": [
+        {
+          "firstName": "Adrienne",
+          "lastName": "Junek"
+        },
+        {
+          "firstName": "An",
+          "lastName": "Marien"
+        },
+        {
+          "firstName": "Ange",
+          "lastName": "Wilkinson"
+        },
+        {
+          "firstName": "Catherine",
+          "lastName": "Pelletier"
+        },
+        {
+          "firstName": "Christianne",
+          "lastName": "Birtwistle"
+        },
+        {
+          "firstName": "Claerwen",
+          "lastName": "Snell"
+        },
+        {
+          "firstName": "Gemma",
+          "lastName": "Taylor"
+        },
+        {
+          "firstName": "joanne",
+          "lastName": "Kearns"
+        },
+        {
+          "firstName": "kate",
+          "lastName": "Markey"
+        },
+        {
+          "firstName": "Katja",
+          "lastName": "Ulbrich"
+        },
+        {
+          "firstName": "Kin Ling",
+          "lastName": "Sham"
+        },
+        {
+          "firstName": "Lindsay",
+          "lastName": "Wilkinson"
+        },
+        {
+          "firstName": "Magali",
+          "lastName": "Matsumiya"
+        },
+        {
+          "firstName": "Nancy",
+          "lastName": "Rawlings"
+        },
+        {
+          "firstName": "Nicky",
+          "lastName": "Thomas"
+        },
+        {
+          "firstName": "Nicole",
+          "lastName": "Cozens"
+        },
+        {
+          "firstName": "Philippa",
+          "lastName": "Hackett"
+        },
+        {
+          "firstName": "Rachel",
+          "lastName": "Dunford"
+        },
+        {
+          "firstName": "Rebecca",
+          "lastName": "Simon"
+        },
+        {
+          "firstName": "Samantha",
+          "lastName": "Kehl"
+        },
+        {
+          "firstName": "Terri",
+          "lastName": "Brandt"
+        },
+        {
+          "firstName": "Xenia",
+          "lastName": "Shevnina"
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "name": "Vintage",
+      "division": "Grand Master Women's",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Alexandra",
+          "lastName": "Perron-Marier"
+        },
+        {
+          "firstName": "Amélie",
+          "lastName": "Bleau"
+        },
+        {
+          "firstName": "Anne-Marie",
+          "lastName": "Cloutier"
+        },
+        {
+          "firstName": "Belinda",
+          "lastName": "Moy"
+        },
+        {
+          "firstName": "Caroline",
+          "lastName": "Doré"
+        },
+        {
+          "firstName": "Caroline",
+          "lastName": "Lafortune"
+        },
+        {
+          "firstName": "Catherine",
+          "lastName": "Gonthier"
+        },
+        {
+          "firstName": "Christina",
+          "lastName": "Pagé"
+        },
+        {
+          "firstName": "Isabelle",
+          "lastName": "Bigras"
+        },
+        {
+          "firstName": "Jessica",
+          "lastName": "Richard"
+        },
+        {
+          "firstName": "Jessie",
+          "lastName": "Robinson"
+        },
+        {
+          "firstName": "Julie",
+          "lastName": "Roy"
+        },
+        {
+          "firstName": "Laurence",
+          "lastName": "Demers-Rivard"
+        },
+        {
+          "firstName": "Léna",
+          "lastName": "Salgado"
+        },
+        {
+          "firstName": "Mariana",
+          "lastName": "Silva Ramirez"
+        },
+        {
+          "firstName": "Marie-Christine",
+          "lastName": "Morisset"
+        },
+        {
+          "firstName": "Marie-Ève",
+          "lastName": "Thériault"
+        },
+        {
+          "firstName": "Marie-Pier",
+          "lastName": "Bisson-Côté"
+        },
+        {
+          "firstName": "Marlène",
+          "lastName": "Boisvert"
+        },
+        {
+          "firstName": "Rachel",
+          "lastName": "Hurdle"
+        },
+        {
+          "firstName": "Stéphanie",
+          "lastName": "Bossé"
+        },
+        {
+          "firstName": "Véronique",
+          "lastName": "Pomerleau"
+        },
+        {
+          "firstName": "Vicki",
+          "lastName": "Maheux"
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "name": "Wisconsin Bitter",
+      "division": "Grand Master Women's",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Alicia",
+          "lastName": "Bosscher"
+        },
+        {
+          "firstName": "Aline",
+          "lastName": "Mondiot"
+        },
+        {
+          "firstName": "Amanda",
+          "lastName": "Johnson"
+        },
+        {
+          "firstName": "Anna",
+          "lastName": "Williams"
+        },
+        {
+          "firstName": "Anne",
+          "lastName": "Le Borgne"
+        },
+        {
+          "firstName": "Austin",
+          "lastName": "Prucha"
+        },
+        {
+          "firstName": "Brenda",
+          "lastName": "Stevens"
+        },
+        {
+          "firstName": "Chelsea",
+          "lastName": "Putnam"
+        },
+        {
+          "firstName": "Claire",
+          "lastName": "Kelley"
+        },
+        {
+          "firstName": "Eliza",
+          "lastName": "Hutchings"
+        },
+        {
+          "firstName": "Emily",
+          "lastName": "Langland"
+        },
+        {
+          "firstName": "Georgia",
+          "lastName": "Bosscher"
+        },
+        {
+          "firstName": "Jasmine",
+          "lastName": "Draper"
+        },
+        {
+          "firstName": "Kate",
+          "lastName": "Lyons"
+        },
+        {
+          "firstName": "Katey",
+          "lastName": "Forth"
+        },
+        {
+          "firstName": "Katy",
+          "lastName": "Stanton"
+        },
+        {
+          "firstName": "Laura",
+          "lastName": "Wehlitz"
+        },
+        {
+          "firstName": "Leigh",
+          "lastName": "Adams"
+        },
+        {
+          "firstName": "Melissa",
+          "lastName": "Gibbs"
+        },
+        {
+          "firstName": "Robyn",
+          "lastName": "Fennig"
+        },
+        {
+          "firstName": "Rose",
+          "lastName": "Glinka"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "Levinn"
+        },
+        {
+          "firstName": "Vivi",
+          "lastName": "Stevens"
+        },
+        {
+          "firstName": "Yvonne",
+          "lastName": "Cheng"
+        }
+      ]
+    },
+    {
+      "id": 58,
+      "name": "Beers",
+      "division": "Great Grand Master Open",
+      "country": "Japan",
+      "players": [
+        {
+          "firstName": "Atsushi",
+          "lastName": "Ohashi"
+        },
+        {
+          "firstName": "Daisuke",
+          "lastName": "Iijima"
+        },
+        {
+          "firstName": "Eisuke",
+          "lastName": "Hashizume"
+        },
+        {
+          "firstName": "Hidekazu",
+          "lastName": "Yoshitake"
+        },
+        {
+          "firstName": "Hiroaki",
+          "lastName": "Onishi"
+        },
+        {
+          "firstName": "Hiroshi",
+          "lastName": "Yokota"
+        },
+        {
+          "firstName": "Hiroto",
+          "lastName": "Yokura"
+        },
+        {
+          "firstName": "Hiroyuki",
+          "lastName": "Kobayashi"
+        },
+        {
+          "firstName": "Hitoshi",
+          "lastName": "ICHIMI"
+        },
+        {
+          "firstName": "Kazuyuki",
+          "lastName": "Kubo"
+        },
+        {
+          "firstName": "Kenji",
+          "lastName": "Nagao"
+        },
+        {
+          "firstName": "Kota",
+          "lastName": "Sasaki"
+        },
+        {
+          "firstName": "Ryusuke",
+          "lastName": "Kuwahara"
+        },
+        {
+          "firstName": "Satoshi",
+          "lastName": "Noguchi"
+        },
+        {
+          "firstName": "Shunichi",
+          "lastName": "Noda"
+        },
+        {
+          "firstName": "Takeshi",
+          "lastName": "Higo"
+        },
+        {
+          "firstName": "Takeshi",
+          "lastName": "Shima"
+        },
+        {
+          "firstName": "Tomoyuki",
+          "lastName": "Kanai"
+        },
+        {
+          "firstName": "Toru",
+          "lastName": "Yajima"
+        },
+        {
+          "firstName": "Yasuyuki",
+          "lastName": "Motoyama"
+        },
+        {
+          "firstName": "Yuta",
+          "lastName": "Naganuma"
+        }
+      ]
+    },
+    {
+      "id": 54,
+      "name": "Carbone",
+      "division": "Great Grand Master Open",
+      "country": "France",
+      "players": [
+        {
+          "firstName": "Alexis",
+          "lastName": "Boileau"
+        },
+        {
+          "firstName": "Antoine",
+          "lastName": "Rosnet"
+        },
+        {
+          "firstName": "Baptiste",
+          "lastName": "Goupillier"
+        },
+        {
+          "firstName": "Benoît",
+          "lastName": "Brosse"
+        },
+        {
+          "firstName": "Bertrand",
+          "lastName": "Michau"
+        },
+        {
+          "firstName": "Christophe",
+          "lastName": "Donnart"
+        },
+        {
+          "firstName": "Damien",
+          "lastName": "Delebecque"
+        },
+        {
+          "firstName": "Didier",
+          "lastName": "Lacheze"
+        },
+        {
+          "firstName": "Franck",
+          "lastName": "Benghanem"
+        },
+        {
+          "firstName": "Frédéric",
+          "lastName": "Male"
+        },
+        {
+          "firstName": "Frédérick",
+          "lastName": "Maggio"
+        },
+        {
+          "firstName": "Gaetan",
+          "lastName": "Forget"
+        },
+        {
+          "firstName": "Guillaume",
+          "lastName": "Trophème"
+        },
+        {
+          "firstName": "Hervé",
+          "lastName": "Bach"
+        },
+        {
+          "firstName": "Jacques",
+          "lastName": "Cochet"
+        },
+        {
+          "firstName": "Jano",
+          "lastName": "Goliard"
+        },
+        {
+          "firstName": "Jef",
+          "lastName": "Curet"
+        },
+        {
+          "firstName": "Manuel",
+          "lastName": "Schmutz"
+        },
+        {
+          "firstName": "Oliver",
+          "lastName": "Chevalier"
+        },
+        {
+          "firstName": "Olivier",
+          "lastName": "Chardaire"
+        },
+        {
+          "firstName": "Patrick",
+          "lastName": "Lassalle"
+        },
+        {
+          "firstName": "Sébastien",
+          "lastName": "Millette"
+        },
+        {
+          "firstName": "Stéphane",
+          "lastName": "Madani"
+        },
+        {
+          "firstName": "Sylvain",
+          "lastName": "Bardin"
+        },
+        {
+          "firstName": "Yann",
+          "lastName": "Courtil"
+        }
+      ]
+    },
+    {
+      "id": 56,
+      "name": "Flash",
+      "division": "Great Grand Master Open",
+      "country": "Great Britain",
+      "players": [
+        {
+          "firstName": "Adriano",
+          "lastName": "Vitali"
+        },
+        {
+          "firstName": "Aly",
+          "lastName": "Dharsee"
+        },
+        {
+          "firstName": "Ben",
+          "lastName": "Ravilious"
+        },
+        {
+          "firstName": "Derek",
+          "lastName": "Holt"
+        },
+        {
+          "firstName": "Dom",
+          "lastName": "Janssen"
+        },
+        {
+          "firstName": "Gabriele",
+          "lastName": "Sani"
+        },
+        {
+          "firstName": "Henry",
+          "lastName": "Ferland"
+        },
+        {
+          "firstName": "Hwo",
+          "lastName": "Lam"
+        },
+        {
+          "firstName": "Ian",
+          "lastName": "Scotland"
+        },
+        {
+          "firstName": "Kevin",
+          "lastName": "Lowe"
+        },
+        {
+          "firstName": "Mike",
+          "lastName": "Bird"
+        },
+        {
+          "firstName": "Neil",
+          "lastName": "Cooper"
+        },
+        {
+          "firstName": "Paul",
+          "lastName": "Holden"
+        },
+        {
+          "firstName": "Piers",
+          "lastName": "Fleming"
+        },
+        {
+          "firstName": "Rouven",
+          "lastName": "Schreck"
+        },
+        {
+          "firstName": "Ru",
+          "lastName": "Morris"
+        },
+        {
+          "firstName": "Ruaraidh",
+          "lastName": "Gillies"
+        },
+        {
+          "firstName": "Seth",
+          "lastName": "Martin"
+        },
+        {
+          "firstName": "Simon",
+          "lastName": "Church"
+        },
+        {
+          "firstName": "Steve",
+          "lastName": "Giguere"
+        }
+      ]
+    },
+    {
+      "id": 55,
+      "name": "GAUL",
+      "division": "Great Grand Master Open",
+      "country": "Germany",
+      "players": [
+        {
+          "firstName": "Andreas",
+          "lastName": "Hofmann"
+        },
+        {
+          "firstName": "Andreas",
+          "lastName": "Kahle"
+        },
+        {
+          "firstName": "Bernhard",
+          "lastName": "Frötschl"
+        },
+        {
+          "firstName": "Brian",
+          "lastName": "Hatchl"
+        },
+        {
+          "firstName": "Daniel",
+          "lastName": "Danielsson"
+        },
+        {
+          "firstName": "Dimitrij",
+          "lastName": "Surmeli"
+        },
+        {
+          "firstName": "Frank",
+          "lastName": "Linde"
+        },
+        {
+          "firstName": "Frank",
+          "lastName": "Steyer"
+        },
+        {
+          "firstName": "Fredrik",
+          "lastName": "Hedström"
+        },
+        {
+          "firstName": "Hans-Christoph",
+          "lastName": "Schwarzer"
+        },
+        {
+          "firstName": "Helmut",
+          "lastName": "Celina"
+        },
+        {
+          "firstName": "Jonas",
+          "lastName": "Colmsjö"
+        },
+        {
+          "firstName": "Kai",
+          "lastName": "Sölter"
+        },
+        {
+          "firstName": "Mark",
+          "lastName": "Worley"
+        },
+        {
+          "firstName": "Richard",
+          "lastName": "Hart"
+        },
+        {
+          "firstName": "Robert",
+          "lastName": "Luhrs"
+        },
+        {
+          "firstName": "Rüdiger",
+          "lastName": "Haubrich"
+        },
+        {
+          "firstName": "Scott",
+          "lastName": "Bolden"
+        },
+        {
+          "firstName": "Stefan",
+          "lastName": "Gollasch"
+        },
+        {
+          "firstName": "Steve",
+          "lastName": "Helvin"
+        },
+        {
+          "firstName": "Thomas",
+          "lastName": "Hörig"
+        },
+        {
+          "firstName": "Thomas",
+          "lastName": "Till"
+        },
+        {
+          "firstName": "Wei",
+          "lastName": "Lu"
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "name": "Graveyard",
+      "division": "Great Grand Master Open",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Alex",
+          "lastName": "De Frondeville"
+        },
+        {
+          "firstName": "Alexander (Sandy)",
+          "lastName": "Hartwiger"
+        },
+        {
+          "firstName": "Anthony",
+          "lastName": "Gutierrez"
+        },
+        {
+          "firstName": "Brian",
+          "lastName": "Gane"
+        },
+        {
+          "firstName": "Clayton",
+          "lastName": "Coltman"
+        },
+        {
+          "firstName": "Colin",
+          "lastName": "Cox"
+        },
+        {
+          "firstName": "Dixon",
+          "lastName": "Oates"
+        },
+        {
+          "firstName": "Doug",
+          "lastName": "Schwartz"
+        },
+        {
+          "firstName": "Ed",
+          "lastName": "Fox"
+        },
+        {
+          "firstName": "Eliot",
+          "lastName": "Linforth-Hall"
+        },
+        {
+          "firstName": "Garrett",
+          "lastName": "Dyer"
+        },
+        {
+          "firstName": "Gary",
+          "lastName": "Paskewich"
+        },
+        {
+          "firstName": "George",
+          "lastName": "Katzenbach"
+        },
+        {
+          "firstName": "Jimmy",
+          "lastName": "Holtzman"
+        },
+        {
+          "firstName": "Jimmy",
+          "lastName": "Mangum"
+        },
+        {
+          "firstName": "Lucius",
+          "lastName": "Howell"
+        },
+        {
+          "firstName": "Martin",
+          "lastName": "Vilsoe"
+        },
+        {
+          "firstName": "Michael",
+          "lastName": "Reiskind"
+        },
+        {
+          "firstName": "Mike",
+          "lastName": "Jolley"
+        },
+        {
+          "firstName": "Nat",
+          "lastName": "Taylor"
+        },
+        {
+          "firstName": "Rodney",
+          "lastName": "Guajardo"
+        },
+        {
+          "firstName": "Sean",
+          "lastName": "Britton"
+        },
+        {
+          "firstName": "Terry",
+          "lastName": "Kramer"
+        },
+        {
+          "firstName": "Tiger",
+          "lastName": "Pearson"
+        },
+        {
+          "firstName": "Troy",
+          "lastName": "Revell"
+        },
+        {
+          "firstName": "Ty",
+          "lastName": "Stevens"
+        }
+      ]
+    },
+    {
+      "id": 61,
+      "name": "Johnny Cashed",
+      "division": "Great Grand Master Open",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Arnold",
+          "lastName": "Sanchez"
+        },
+        {
+          "firstName": "Curtis",
+          "lastName": "Manning"
+        },
+        {
+          "firstName": "Darin",
+          "lastName": "DeLay"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Bacci"
+        },
+        {
+          "firstName": "Devon",
+          "lastName": "Huang"
+        },
+        {
+          "firstName": "Eric",
+          "lastName": "Albright"
+        },
+        {
+          "firstName": "Guillermo",
+          "lastName": "Iturriza"
+        },
+        {
+          "firstName": "Heath",
+          "lastName": "MacKay"
+        },
+        {
+          "firstName": "Jeremy",
+          "lastName": "Freidman"
+        },
+        {
+          "firstName": "Jim",
+          "lastName": "Nolte"
+        },
+        {
+          "firstName": "Joe",
+          "lastName": "Kleffner"
+        },
+        {
+          "firstName": "John",
+          "lastName": "Thorton"
+        },
+        {
+          "firstName": "Kevin",
+          "lastName": "Broughton"
+        },
+        {
+          "firstName": "Lenny",
+          "lastName": "Correll"
+        },
+        {
+          "firstName": "Marc",
+          "lastName": "Furigay"
+        },
+        {
+          "firstName": "Mark",
+          "lastName": "Driver"
+        },
+        {
+          "firstName": "Matthew",
+          "lastName": "Krei"
+        },
+        {
+          "firstName": "Patrick",
+          "lastName": "Alexander"
+        },
+        {
+          "firstName": "Ryan",
+          "lastName": "Balch"
+        },
+        {
+          "firstName": "Shane",
+          "lastName": "Froebe"
+        },
+        {
+          "firstName": "Steve",
+          "lastName": "Quach"
+        },
+        {
+          "firstName": "Tal",
+          "lastName": "Tversky"
+        },
+        {
+          "firstName": "Terry",
+          "lastName": "Cussen"
+        },
+        {
+          "firstName": "Tim",
+          "lastName": "Galvin"
+        },
+        {
+          "firstName": "Van",
+          "lastName": "Le"
+        },
+        {
+          "firstName": "William (I go by \"Tad\")",
+          "lastName": "Miller"
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "name": "NSOM",
+      "division": "Great Grand Master Open",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Alexis",
+          "lastName": "Papadimitriou"
+        },
+        {
+          "firstName": "Antoine",
+          "lastName": "Turgeon"
+        },
+        {
+          "firstName": "Benoit",
+          "lastName": "Blanchet-Caron"
+        },
+        {
+          "firstName": "Chris",
+          "lastName": "Monette"
+        },
+        {
+          "firstName": "Dave",
+          "lastName": "Lepage"
+        },
+        {
+          "firstName": "fadi",
+          "lastName": "Hobeila"
+        },
+        {
+          "firstName": "Francis",
+          "lastName": "Trudeau"
+        },
+        {
+          "firstName": "Hicham",
+          "lastName": "Laaouan"
+        },
+        {
+          "firstName": "Jean-Philippe",
+          "lastName": "Tremblay"
+        },
+        {
+          "firstName": "Luc",
+          "lastName": "Drouin"
+        },
+        {
+          "firstName": "Marc",
+          "lastName": "Lavoie"
+        },
+        {
+          "firstName": "Martin",
+          "lastName": "Berube"
+        },
+        {
+          "firstName": "Mathieu",
+          "lastName": "Tremblay"
+        },
+        {
+          "firstName": "Nicolas",
+          "lastName": "Lessard"
+        },
+        {
+          "firstName": "Pascal",
+          "lastName": "Genevieve"
+        },
+        {
+          "firstName": "Patrick",
+          "lastName": "Gratton"
+        },
+        {
+          "firstName": "Patrick",
+          "lastName": "Langlois"
+        },
+        {
+          "firstName": "Ryan",
+          "lastName": "Jarema"
+        },
+        {
+          "firstName": "Sacha",
+          "lastName": "Hobeila"
+        },
+        {
+          "firstName": "Stan",
+          "lastName": "Papadimitriou"
+        },
+        {
+          "firstName": "Stephane",
+          "lastName": "Jacques"
+        },
+        {
+          "firstName": "Yoan",
+          "lastName": "Lechasseur"
+        },
+        {
+          "firstName": "Yohan",
+          "lastName": "Baril"
+        }
+      ]
+    },
+    {
+      "id": 57,
+      "name": "One Wise Tribe",
+      "division": "Great Grand Master Open",
+      "country": "Italy",
+      "players": [
+        {
+          "firstName": "Andrea",
+          "lastName": "Barbieri"
+        },
+        {
+          "firstName": "Diego",
+          "lastName": "Stellino"
+        },
+        {
+          "firstName": "Enrico",
+          "lastName": "Di Vietro"
+        },
+        {
+          "firstName": "Enrico",
+          "lastName": "Valentini"
+        },
+        {
+          "firstName": "Fabrizio",
+          "lastName": "Morroia"
+        },
+        {
+          "firstName": "Francesco",
+          "lastName": "Berto"
+        },
+        {
+          "firstName": "Gabriele",
+          "lastName": "Bocchio"
+        },
+        {
+          "firstName": "Jan Edmund",
+          "lastName": "Poltock"
+        },
+        {
+          "firstName": "Lorenzo",
+          "lastName": "Eusebi"
+        },
+        {
+          "firstName": "Luca",
+          "lastName": "Vernali"
+        },
+        {
+          "firstName": "Marco",
+          "lastName": "Bonzagni"
+        },
+        {
+          "firstName": "Marco",
+          "lastName": "Nones"
+        },
+        {
+          "firstName": "Paul Joseph Herman",
+          "lastName": "Bernier"
+        },
+        {
+          "firstName": "Tommaso",
+          "lastName": "Pedini"
+        }
+      ]
+    },
+    {
+      "id": 60,
+      "name": "Surly GGM",
+      "division": "Great Grand Master Open",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Andrew",
+          "lastName": "Rutledge"
+        },
+        {
+          "firstName": "Benjamin",
+          "lastName": "Cohen"
+        },
+        {
+          "firstName": "Britt",
+          "lastName": "Atack"
+        },
+        {
+          "firstName": "Bryan",
+          "lastName": "Paradise"
+        },
+        {
+          "firstName": "Dave",
+          "lastName": "Kuettner"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Remucal"
+        },
+        {
+          "firstName": "Don",
+          "lastName": "Tom"
+        },
+        {
+          "firstName": "Donovan",
+          "lastName": "Wiebe"
+        },
+        {
+          "firstName": "Dwayne",
+          "lastName": "McFaddin"
+        },
+        {
+          "firstName": "Jadon",
+          "lastName": "Scullion"
+        },
+        {
+          "firstName": "Jeremy",
+          "lastName": "Alden"
+        },
+        {
+          "firstName": "Joe",
+          "lastName": "Cesario"
+        },
+        {
+          "firstName": "John",
+          "lastName": "Hock"
+        },
+        {
+          "firstName": "John",
+          "lastName": "Klaus"
+        },
+        {
+          "firstName": "Jon",
+          "lastName": "Remucal"
+        },
+        {
+          "firstName": "Jonathan",
+          "lastName": "Dono"
+        },
+        {
+          "firstName": "Jonathan",
+          "lastName": "Zagel"
+        },
+        {
+          "firstName": "Mark",
+          "lastName": "Enright"
+        },
+        {
+          "firstName": "Nate",
+          "lastName": "Thibedeau"
+        },
+        {
+          "firstName": "Paul",
+          "lastName": "Anderson"
+        },
+        {
+          "firstName": "Randy",
+          "lastName": "Gage"
+        },
+        {
+          "firstName": "Ricky",
+          "lastName": "Eikstadt"
+        },
+        {
+          "firstName": "Ron",
+          "lastName": "Kubalanza"
+        },
+        {
+          "firstName": "Russ",
+          "lastName": "Adams"
+        },
+        {
+          "firstName": "Steve",
+          "lastName": "Ridgely"
+        },
+        {
+          "firstName": "Yoshio",
+          "lastName": "Leeper"
+        }
+      ]
+    },
+    {
+      "id": 59,
+      "name": "Taesan",
+      "division": "Great Grand Master Open",
+      "country": "Republic of Korea",
+      "players": [
+        {
+          "firstName": "Benjamin",
+          "lastName": "Friedenson"
+        },
+        {
+          "firstName": "Bobby",
+          "lastName": "Lee"
+        },
+        {
+          "firstName": "Bryan",
+          "lastName": "Cho"
+        },
+        {
+          "firstName": "Chewy (Kyong)",
+          "lastName": "Hwangbo"
+        },
+        {
+          "firstName": "Chris",
+          "lastName": "Tait"
+        },
+        {
+          "firstName": "David",
+          "lastName": "Lindsay"
+        },
+        {
+          "firstName": "Ed",
+          "lastName": "Avery"
+        },
+        {
+          "firstName": "Jae Yong",
+          "lastName": "Oh"
+        },
+        {
+          "firstName": "Jason",
+          "lastName": "Cancel"
+        },
+        {
+          "firstName": "Jay",
+          "lastName": "Lee"
+        },
+        {
+          "firstName": "Jeremy",
+          "lastName": "Moneta"
+        },
+        {
+          "firstName": "Jim",
+          "lastName": "Chen"
+        },
+        {
+          "firstName": "Joon Hwa",
+          "lastName": "Jung"
+        },
+        {
+          "firstName": "Kevin",
+          "lastName": "Cramer"
+        },
+        {
+          "firstName": "Kyung",
+          "lastName": "Cho"
+        },
+        {
+          "firstName": "Peter",
+          "lastName": "Pak"
+        },
+        {
+          "firstName": "Phil",
+          "lastName": "Vlahakis"
+        },
+        {
+          "firstName": "Richard",
+          "lastName": "Kwun"
+        },
+        {
+          "firstName": "Robert",
+          "lastName": "Englebrecht"
+        },
+        {
+          "firstName": "Soo",
+          "lastName": "Kim"
+        },
+        {
+          "firstName": "Tom",
+          "lastName": "Shin"
+        },
+        {
+          "firstName": "William",
+          "lastName": "Brotman"
+        },
+        {
+          "firstName": "Woo Jin",
+          "lastName": "Ho"
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "name": "TOAST",
+      "division": "Great Grand Master Open",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Stephen",
+          "lastName": "Winters"
+        },
+        {
+          "firstName": "Adam",
+          "lastName": "Ketcheson"
+        },
+        {
+          "firstName": "Andrew",
+          "lastName": "Pickup"
+        },
+        {
+          "firstName": "Bryan",
+          "lastName": "Slauko"
+        },
+        {
+          "firstName": "Calvin",
+          "lastName": "Li"
+        },
+        {
+          "firstName": "Dale",
+          "lastName": "McShannock"
+        },
+        {
+          "firstName": "Ian",
+          "lastName": "Buckley"
+        },
+        {
+          "firstName": "Jason",
+          "lastName": "Saygnavong"
+        },
+        {
+          "firstName": "Jason",
+          "lastName": "Unger"
+        },
+        {
+          "firstName": "Jeff",
+          "lastName": "Bell"
+        },
+        {
+          "firstName": "Jeff",
+          "lastName": "Sill"
+        },
+        {
+          "firstName": "Jeremy",
+          "lastName": "Hebert"
+        },
+        {
+          "firstName": "Ken",
+          "lastName": "Su"
+        },
+        {
+          "firstName": "Kevin",
+          "lastName": "Walton"
+        },
+        {
+          "firstName": "Martin",
+          "lastName": "Glazer"
+        },
+        {
+          "firstName": "Matt",
+          "lastName": "Mulrooney"
+        },
+        {
+          "firstName": "Matthew",
+          "lastName": "Bourque"
+        },
+        {
+          "firstName": "Michael",
+          "lastName": "Pedersen"
+        },
+        {
+          "firstName": "Mike",
+          "lastName": "Warren"
+        },
+        {
+          "firstName": "Rolie",
+          "lastName": "Ryan"
+        },
+        {
+          "firstName": "Ryan",
+          "lastName": "Doucet"
+        },
+        {
+          "firstName": "Sammy",
+          "lastName": "Vongprachanh"
+        },
+        {
+          "firstName": "Sean",
+          "lastName": "Philips"
+        },
+        {
+          "firstName": "Simon",
+          "lastName": "Feely"
+        },
+        {
+          "firstName": "Stephen",
+          "lastName": "Mathezer"
+        },
+        {
+          "firstName": "Tim",
+          "lastName": "Vines"
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "name": "Tombstone",
+      "division": "Great Grand Master Open",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Aaron",
+          "lastName": "Pocock"
+        },
+        {
+          "firstName": "Alan",
+          "lastName": "Liu"
+        },
+        {
+          "firstName": "Alex",
+          "lastName": "Vickers"
+        },
+        {
+          "firstName": "Ben",
+          "lastName": "Elzingacheng"
+        },
+        {
+          "firstName": "Bryan",
+          "lastName": "Kaplan"
+        },
+        {
+          "firstName": "Chad",
+          "lastName": "Harris"
+        },
+        {
+          "firstName": "Chad",
+          "lastName": "Markell"
+        },
+        {
+          "firstName": "Christian",
+          "lastName": "Hajok"
+        },
+        {
+          "firstName": "Colby",
+          "lastName": "James"
+        },
+        {
+          "firstName": "Derek",
+          "lastName": "Doucet"
+        },
+        {
+          "firstName": "Drake",
+          "lastName": "Carlyle"
+        },
+        {
+          "firstName": "Jeff",
+          "lastName": "Peeters"
+        },
+        {
+          "firstName": "Jim",
+          "lastName": "Hui"
+        },
+        {
+          "firstName": "John",
+          "lastName": "Desbiens"
+        },
+        {
+          "firstName": "Lachlan",
+          "lastName": "Holmes"
+        },
+        {
+          "firstName": "Matthew",
+          "lastName": "Frederick"
+        },
+        {
+          "firstName": "Mike",
+          "lastName": "Popik"
+        },
+        {
+          "firstName": "Nate",
+          "lastName": "Crawford"
+        },
+        {
+          "firstName": "Noah",
+          "lastName": "Goldstein"
+        },
+        {
+          "firstName": "Patrick",
+          "lastName": "Legare"
+        },
+        {
+          "firstName": "Rob",
+          "lastName": "Harris"
+        },
+        {
+          "firstName": "Ryan",
+          "lastName": "Kroeker"
+        },
+        {
+          "firstName": "Sanjeev",
+          "lastName": "Khanna"
+        },
+        {
+          "firstName": "Scott",
+          "lastName": "Belair"
+        },
+        {
+          "firstName": "Scott",
+          "lastName": "Harnett"
+        }
+      ]
+    },
+    {
+      "id": 66,
+      "name": "Garden Party",
+      "division": "Great Grand Master Women's",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "AJ",
+          "lastName": "Ng"
+        },
+        {
+          "firstName": "Amy",
+          "lastName": "MacKay"
+        },
+        {
+          "firstName": "Burgle",
+          "lastName": "Mitenko"
+        },
+        {
+          "firstName": "Carissa",
+          "lastName": "Wong"
+        },
+        {
+          "firstName": "Caryn",
+          "lastName": "Brighten"
+        },
+        {
+          "firstName": "Celia",
+          "lastName": "Brogan"
+        },
+        {
+          "firstName": "Christine",
+          "lastName": "Tam"
+        },
+        {
+          "firstName": "Diana",
+          "lastName": "Gendron Fafard"
+        },
+        {
+          "firstName": "Erin",
+          "lastName": "Prescott"
+        },
+        {
+          "firstName": "Heather",
+          "lastName": "Kent"
+        },
+        {
+          "firstName": "K'ari",
+          "lastName": "Fisher"
+        },
+        {
+          "firstName": "Karen",
+          "lastName": "Street"
+        },
+        {
+          "firstName": "Katalin",
+          "lastName": "Toreky Paziuk"
+        },
+        {
+          "firstName": "Kathryn",
+          "lastName": "Slack"
+        },
+        {
+          "firstName": "Katrina",
+          "lastName": "Ao"
+        },
+        {
+          "firstName": "Kim",
+          "lastName": "Pearce"
+        },
+        {
+          "firstName": "Lexy",
+          "lastName": "Relph"
+        },
+        {
+          "firstName": "Miranda",
+          "lastName": "Tradewell"
+        },
+        {
+          "firstName": "Ryoko",
+          "lastName": "Sano"
+        },
+        {
+          "firstName": "Shannon",
+          "lastName": "Stamp"
+        },
+        {
+          "firstName": "Tia",
+          "lastName": "Saley"
+        },
+        {
+          "firstName": "Yang",
+          "lastName": "Pang"
+        }
+      ]
+    },
+    {
+      "id": 67,
+      "name": "Nor'Easter",
+      "division": "Great Grand Master Women's",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Alejandra",
+          "lastName": "Ospina"
+        },
+        {
+          "firstName": "Alyson Whitney",
+          "lastName": "Kakos"
+        },
+        {
+          "firstName": "Anne",
+          "lastName": "Lightbody"
+        },
+        {
+          "firstName": "Ashley",
+          "lastName": "Blackshore"
+        },
+        {
+          "firstName": "Brenda",
+          "lastName": "Rose"
+        },
+        {
+          "firstName": "Caroline",
+          "lastName": "Jesurum"
+        },
+        {
+          "firstName": "Christina",
+          "lastName": "Cianfrani"
+        },
+        {
+          "firstName": "Christine",
+          "lastName": "Grabowy"
+        },
+        {
+          "firstName": "Emily",
+          "lastName": "Kallin"
+        },
+        {
+          "firstName": "Heather",
+          "lastName": "Gardner"
+        },
+        {
+          "firstName": "Jacqueline",
+          "lastName": "Bourgeois"
+        },
+        {
+          "firstName": "Jamie",
+          "lastName": "Nuwer"
+        },
+        {
+          "firstName": "Johanna",
+          "lastName": "Neumann"
+        },
+        {
+          "firstName": "Karen",
+          "lastName": "Grossberg"
+        },
+        {
+          "firstName": "Kate",
+          "lastName": "Bergeron"
+        },
+        {
+          "firstName": "Kate",
+          "lastName": "Kingery"
+        },
+        {
+          "firstName": "Kelley",
+          "lastName": "Hibberd"
+        },
+        {
+          "firstName": "Lauren",
+          "lastName": "Gardner"
+        },
+        {
+          "firstName": "Lisa",
+          "lastName": "Meeden"
+        },
+        {
+          "firstName": "Megan",
+          "lastName": "Insco"
+        },
+        {
+          "firstName": "Mina",
+          "lastName": "Kim"
+        },
+        {
+          "firstName": "Neva",
+          "lastName": "Durand"
+        },
+        {
+          "firstName": "Sue Shana",
+          "lastName": "Wallace"
+        },
+        {
+          "firstName": "Trish",
+          "lastName": "York"
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "name": "PerSisters",
+      "division": "Great Grand Master Women's",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Beth",
+          "lastName": "Whiteside"
+        },
+        {
+          "firstName": "Beverly",
+          "lastName": "Barnum"
+        },
+        {
+          "firstName": "Carolyn",
+          "lastName": "Skolnick"
+        },
+        {
+          "firstName": "Cate",
+          "lastName": "Roscoe"
+        },
+        {
+          "firstName": "Cheryl",
+          "lastName": "Wold"
+        },
+        {
+          "firstName": "Darrah",
+          "lastName": "Rogers"
+        },
+        {
+          "firstName": "Deborah",
+          "lastName": "Kremins"
+        },
+        {
+          "firstName": "Elissa",
+          "lastName": "Margolin"
+        },
+        {
+          "firstName": "Frances",
+          "lastName": "Ajo"
+        },
+        {
+          "firstName": "Gina",
+          "lastName": "Wherry"
+        },
+        {
+          "firstName": "Jen",
+          "lastName": "Palmero"
+        },
+        {
+          "firstName": "Katie",
+          "lastName": "Yezzi"
+        },
+        {
+          "firstName": "Kelli",
+          "lastName": "Browne"
+        },
+        {
+          "firstName": "Kelly",
+          "lastName": "Mack"
+        },
+        {
+          "firstName": "Laura",
+          "lastName": "George"
+        },
+        {
+          "firstName": "Lisa",
+          "lastName": "Curtis"
+        },
+        {
+          "firstName": "Lyra",
+          "lastName": "Bochenek"
+        },
+        {
+          "firstName": "Melissa",
+          "lastName": "Witmer"
+        },
+        {
+          "firstName": "Michelle",
+          "lastName": "Wu"
+        },
+        {
+          "firstName": "Stephanie",
+          "lastName": "Hart"
+        },
+        {
+          "firstName": "Suzanne",
+          "lastName": "Fields"
+        }
+      ]
+    },
+    {
+      "id": 68,
+      "name": "Poachella",
+      "division": "Great Grand Master Women's",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Angie",
+          "lastName": "Chung"
+        },
+        {
+          "firstName": "Denise",
+          "lastName": "Krownbell"
+        },
+        {
+          "firstName": "Elin",
+          "lastName": "Kuffner"
+        },
+        {
+          "firstName": "Elizabeth (Zubi)",
+          "lastName": "Leps"
+        },
+        {
+          "firstName": "Erin",
+          "lastName": "Estep"
+        },
+        {
+          "firstName": "Ester",
+          "lastName": "Katsaros"
+        },
+        {
+          "firstName": "Gene",
+          "lastName": "Hsu"
+        },
+        {
+          "firstName": "Holly",
+          "lastName": "McHugh"
+        },
+        {
+          "firstName": "Ingrid",
+          "lastName": "Wertz"
+        },
+        {
+          "firstName": "Jennifer",
+          "lastName": "Schneeweis"
+        },
+        {
+          "firstName": "Julie",
+          "lastName": "Morris"
+        },
+        {
+          "firstName": "Karla",
+          "lastName": "Pak"
+        },
+        {
+          "firstName": "Katie",
+          "lastName": "Atkins"
+        },
+        {
+          "firstName": "Katie",
+          "lastName": "Gillespie"
+        },
+        {
+          "firstName": "Laura",
+          "lastName": "Sheppard"
+        },
+        {
+          "firstName": "Melissa",
+          "lastName": "DiGioia"
+        },
+        {
+          "firstName": "Naara",
+          "lastName": "Righi"
+        },
+        {
+          "firstName": "Robin",
+          "lastName": "Knipe"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "Lowry"
+        },
+        {
+          "firstName": "Sheila",
+          "lastName": "Weir"
+        },
+        {
+          "firstName": "Steffran",
+          "lastName": "Neff"
+        },
+        {
+          "firstName": "Tamara",
+          "lastName": "Convertino"
+        },
+        {
+          "firstName": "Tera",
+          "lastName": "Johnson"
+        },
+        {
+          "firstName": "Tina",
+          "lastName": "Chen"
+        },
+        {
+          "firstName": "Wendy",
+          "lastName": "Prosser"
+        },
+        {
+          "firstName": "Zeta",
+          "lastName": "Strickland"
+        }
+      ]
+    },
+    {
+      "id": 64,
+      "name": "Silver Sisters",
+      "division": "Great Grand Master Women's",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Andrea",
+          "lastName": "Bombala"
+        },
+        {
+          "firstName": "Claudine",
+          "lastName": "Cyr"
+        },
+        {
+          "firstName": "Danielle",
+          "lastName": "Enns"
+        },
+        {
+          "firstName": "Emily",
+          "lastName": "Chen"
+        },
+        {
+          "firstName": "Erin",
+          "lastName": "Eacott"
+        },
+        {
+          "firstName": "Heather",
+          "lastName": "Kelly"
+        },
+        {
+          "firstName": "Heidi",
+          "lastName": "Siu"
+        },
+        {
+          "firstName": "Jackie",
+          "lastName": "Torres"
+        },
+        {
+          "firstName": "Jen",
+          "lastName": "McMillan"
+        },
+        {
+          "firstName": "Karen",
+          "lastName": "Kavanagh"
+        },
+        {
+          "firstName": "Kim",
+          "lastName": "Davidson"
+        },
+        {
+          "firstName": "Lindsey",
+          "lastName": "Monderman"
+        },
+        {
+          "firstName": "Mary Ann",
+          "lastName": "Clark"
+        },
+        {
+          "firstName": "Maureen",
+          "lastName": "Chopra"
+        },
+        {
+          "firstName": "Megan",
+          "lastName": "Lee"
+        },
+        {
+          "firstName": "Melissa",
+          "lastName": "Vance"
+        },
+        {
+          "firstName": "Neena",
+          "lastName": "Sidhu"
+        },
+        {
+          "firstName": "Nola",
+          "lastName": "Stein"
+        },
+        {
+          "firstName": "Rochelle",
+          "lastName": "Bryerton"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "MacQuarrie"
+        },
+        {
+          "firstName": "Wendy",
+          "lastName": "Chong"
+        }
+      ]
+    },
+    {
+      "id": 63,
+      "name": "Trophy Wives",
+      "division": "Great Grand Master Women's",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Allison",
+          "lastName": "Tannis"
+        },
+        {
+          "firstName": "Barb",
+          "lastName": "Pontes"
+        },
+        {
+          "firstName": "Cathy",
+          "lastName": "Miedema"
+        },
+        {
+          "firstName": "Darlene",
+          "lastName": "Riley"
+        },
+        {
+          "firstName": "Jooeun",
+          "lastName": "Lee"
+        },
+        {
+          "firstName": "Josée",
+          "lastName": "Guibord"
+        },
+        {
+          "firstName": "Julie",
+          "lastName": "Belair"
+        },
+        {
+          "firstName": "Julie",
+          "lastName": "Findlay"
+        },
+        {
+          "firstName": "Julie",
+          "lastName": "Jee"
+        },
+        {
+          "firstName": "Kate",
+          "lastName": "Cavallaro"
+        },
+        {
+          "firstName": "Kerri",
+          "lastName": "Kightley"
+        },
+        {
+          "firstName": "Kindha",
+          "lastName": "Gorman"
+        },
+        {
+          "firstName": "Kirsten",
+          "lastName": "Querbach"
+        },
+        {
+          "firstName": "Laura",
+          "lastName": "Millis"
+        },
+        {
+          "firstName": "Laura",
+          "lastName": "Storey"
+        },
+        {
+          "firstName": "Marianne",
+          "lastName": "Long"
+        },
+        {
+          "firstName": "Nadine",
+          "lastName": "Cann"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "McDonald"
+        },
+        {
+          "firstName": "Shannon",
+          "lastName": "Watt"
+        },
+        {
+          "firstName": "Sherri",
+          "lastName": "Ross"
+        },
+        {
+          "firstName": "Stacey",
+          "lastName": "Blouin"
+        },
+        {
+          "firstName": "Tanara",
+          "lastName": "Ferguson"
+        },
+        {
+          "firstName": "Valérie",
+          "lastName": "Shannon"
+        },
+        {
+          "firstName": "Vanessa",
+          "lastName": "Lyon"
+        }
+      ]
+    },
+    {
+      "id": 65,
+      "name": "Vintage",
+      "division": "Great Grand Master Women's",
+      "country": "Canada",
+      "players": [
+        {
+          "firstName": "Agnes",
+          "lastName": "Monseur"
+        },
+        {
+          "firstName": "Aline",
+          "lastName": "Portwine"
+        },
+        {
+          "firstName": "Anick",
+          "lastName": "Turcotte"
+        },
+        {
+          "firstName": "Anne",
+          "lastName": "Robitaille"
+        },
+        {
+          "firstName": "Aurélie",
+          "lastName": "Reynaud"
+        },
+        {
+          "firstName": "Brigitte",
+          "lastName": "Boisvert"
+        },
+        {
+          "firstName": "Caroline",
+          "lastName": "Leduc"
+        },
+        {
+          "firstName": "Chantal",
+          "lastName": "Dussault"
+        },
+        {
+          "firstName": "Claudie",
+          "lastName": "Turcotte"
+        },
+        {
+          "firstName": "Geneviève",
+          "lastName": "Després"
+        },
+        {
+          "firstName": "Jessika",
+          "lastName": "Valence"
+        },
+        {
+          "firstName": "Joëlle",
+          "lastName": "Clément"
+        },
+        {
+          "firstName": "Julie",
+          "lastName": "Blais"
+        },
+        {
+          "firstName": "Julie",
+          "lastName": "Tremblay-Mons"
+        },
+        {
+          "firstName": "Murielle",
+          "lastName": "Chapuis"
+        },
+        {
+          "firstName": "Renée",
+          "lastName": "Lefebvre"
+        },
+        {
+          "firstName": "Rosemary",
+          "lastName": "Carlton"
+        },
+        {
+          "firstName": "Sayeh",
+          "lastName": "Jolan"
+        },
+        {
+          "firstName": "Stephanie",
+          "lastName": "Verbit"
+        },
+        {
+          "firstName": "Susan",
+          "lastName": "Piercey"
+        },
+        {
+          "firstName": "Susanne",
+          "lastName": "Bechstedt"
+        },
+        {
+          "firstName": "Virginie",
+          "lastName": "Harris"
+        }
+      ]
+    },
+    {
+      "id": 69,
+      "name": "Well Done",
+      "division": "Great Grand Master Women's",
+      "country": "United States of America",
+      "players": [
+        {
+          "firstName": "Alicia",
+          "lastName": "Cymbala"
+        },
+        {
+          "firstName": "Allison",
+          "lastName": "Boyd"
+        },
+        {
+          "firstName": "Betsy",
+          "lastName": "Andrews"
+        },
+        {
+          "firstName": "Cathy",
+          "lastName": "Lee-Miller"
+        },
+        {
+          "firstName": "Christa",
+          "lastName": "June"
+        },
+        {
+          "firstName": "Darcy",
+          "lastName": "Ellsworth-Yow"
+        },
+        {
+          "firstName": "Denise",
+          "lastName": "Massart"
+        },
+        {
+          "firstName": "Elise",
+          "lastName": "Jones"
+        },
+        {
+          "firstName": "Ellen",
+          "lastName": "Kohler"
+        },
+        {
+          "firstName": "Ellen",
+          "lastName": "Schieber"
+        },
+        {
+          "firstName": "Kate",
+          "lastName": "Galt"
+        },
+        {
+          "firstName": "Keenan",
+          "lastName": "Keenan"
+        },
+        {
+          "firstName": "Kristin",
+          "lastName": "Hardie"
+        },
+        {
+          "firstName": "Lara",
+          "lastName": "Douglas"
+        },
+        {
+          "firstName": "Melissa",
+          "lastName": "Iwaszko"
+        },
+        {
+          "firstName": "Monica",
+          "lastName": "Kappes"
+        },
+        {
+          "firstName": "Nancy",
+          "lastName": "Gonder"
+        },
+        {
+          "firstName": "Rebecca",
+          "lastName": "Mia"
+        },
+        {
+          "firstName": "Renee",
+          "lastName": "Lambo-Barnes"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "Camastro"
+        },
+        {
+          "firstName": "Suzanne",
+          "lastName": "Jones"
+        }
+      ]
+    }
+  ]
+}

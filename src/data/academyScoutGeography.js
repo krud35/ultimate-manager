@@ -22,13 +22,13 @@ export const ACADEMY_EUROPE_REGIONS = [
     id: 'northernEurope',
     labelPl: 'Europa Północna',
     labelEn: 'Northern Europe',
-    countries: ['gb', 'ie', 'dk', 'fi', 'no'],
+    countries: ['gb', 'ie', 'dk', 'fi', 'no', 'se'],
   },
   {
     id: 'westernEurope',
     labelPl: 'Europa Zachodnia',
     labelEn: 'Western Europe',
-    countries: ['fr', 'be', 'ch', 'de', 'at'],
+    countries: ['fr', 'be', 'nl', 'ch', 'de', 'at'],
   },
   {
     id: 'southernEurope',
@@ -45,6 +45,8 @@ export const ACADEMY_EUROPE_REGIONS = [
 ]
 
 export const ACADEMY_COUNTRIES = {
+  nl: { continent: 'europe', labelPl: 'Holandia', labelEn: 'Netherlands', nameEn: 'Netherlands', strength: 65 },
+  se: { continent: 'europe', labelPl: 'Szwecja', labelEn: 'Sweden', nameEn: 'Sweden', strength: 65 },
   gb: { continent: 'europe', labelPl: 'Wielka Brytania', labelEn: 'United Kingdom', nameEn: 'Great Britain', strength: 78 },
   ie: { continent: 'europe', labelPl: 'Irlandia', labelEn: 'Ireland', nameEn: 'Ireland', strength: 74 },
   pt: { continent: 'europe', labelPl: 'Portugalia', labelEn: 'Portugal', nameEn: 'Portugal', strength: 35 },
@@ -99,6 +101,14 @@ export const ACADEMY_COUNTRIES = {
 }
 
 export const ACADEMY_NATIONALITY_NAMES = {
+  nl: {
+    firstNames: ['Daan', 'Sem', 'Luuk', 'Bram', 'Thijs', 'Lars', 'Jesse', 'Finn', 'Niek', 'Joost', 'Pieter', 'Floris', 'Sven', 'Joris'],
+    lastNames: ['De Jong', 'Jansen', 'De Vries', 'Van den Berg', 'Van Dijk', 'Bakker', 'Visser', 'Smit', 'Meijer', 'De Boer', 'Mulder', 'De Groot', 'Bos', 'Vos'],
+  },
+  se: {
+    firstNames: ['Erik', 'Johan', 'Oskar', 'Elias', 'Viktor', 'Lukas', 'Nils', 'Axel', 'Hugo', 'Emil', 'Anton', 'Gustav', 'Albin', 'Isak'],
+    lastNames: ['Andersson', 'Johansson', 'Karlsson', 'Nilsson', 'Eriksson', 'Larsson', 'Olsson', 'Persson', 'Svensson', 'Gustafsson', 'Lindberg', 'Lindström', 'Bergström', 'Lundberg'],
+  },
   gb: {
     firstNames: ['Oliver', 'George', 'Harry', 'Jack', 'Charlie', 'Thomas', 'Freddie', 'Archie', 'Alfie', 'James', 'Oscar', 'Henry', 'William', 'Joshua'],
     lastNames: ['Smith', 'Jones', 'Taylor', 'Brown', 'Evans', 'Wilson', 'Thomas', 'Roberts', 'Walker', 'Wright', 'Robinson', 'Hughes', 'Green', 'Baker'],
