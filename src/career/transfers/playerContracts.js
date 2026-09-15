@@ -53,35 +53,35 @@ export const CONTRACT_BONUS_DEFS = [
     id: 'goals_season',
     labelPl: 'Bonus za gole (sezon)',
     labelEn: 'Goals bonus (season)',
-    defaultAmount: 16000,
+    defaultAmount: 160000,
     defaultTarget: 15,
   },
   {
     id: 'assists_season',
     labelPl: 'Bonus za asysty (sezon)',
     labelEn: 'Assists bonus (season)',
-    defaultAmount: 12000,
+    defaultAmount: 120000,
     defaultTarget: 12,
   },
   {
     id: 'championship',
     labelPl: 'Bonus za mistrzostwo',
     labelEn: 'Championship bonus',
-    defaultAmount: 50000,
+    defaultAmount: 500000,
     defaultTarget: null,
   },
   {
     id: 'cup_win',
     labelPl: 'Bonus za puchar',
     labelEn: 'Cup win bonus',
-    defaultAmount: 30000,
+    defaultAmount: 300000,
     defaultTarget: null,
   },
   {
     id: 'appearances',
     labelPl: 'Bonus za występy',
     labelEn: 'Appearances bonus',
-    defaultAmount: 10000,
+    defaultAmount: 100000,
     defaultTarget: 20,
   },
 ]
@@ -143,7 +143,7 @@ function clamp(n, lo, hi) {
 
 /**
  * Bazowa tygodniówka z OVR (USD):
- * 65→~288, 70→~462, 75→~746, 80→1200, 85→~1932, 90→~3112.
+ * 65→~2800, 70→~5400, 75→~10400, 80→20000, 85→~38500, 90→~74100.
  */
 export function weeklyWageFromOvr(ovr) {
   const x = Math.max(50, Math.min(99, Number(ovr) || 50))

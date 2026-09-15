@@ -11,7 +11,7 @@ import { formatUsd } from './transfers/moneyFormat.js'
 import { standingsTable } from '../league/standings.js'
 
 /** Premia mistrza (1. miejsce) wg poziomu piramidy. */
-const LEAGUE_PLACEMENT_BASE_BY_TIER = { 1: 140_000, 2: 55_000, 3: 18_000 }
+const LEAGUE_PLACEMENT_BASE_BY_TIER = { 1: 3_500_000, 2: 700_000, 3: 100_000 }
 
 /** 1.0 na 1. miejscu → ~0.06 na ostatnim (16.), łagodny spadek. */
 function placementCurveMult(place, totalTeams) {
@@ -95,13 +95,13 @@ const CUP_ROUND_ORDER = ['round1', 'roundOf32', 'roundOf16', 'quarterfinal', 'se
 
 /** Płaska premia (nie skalowana poziomem) — merytoryczna nagroda za rundę pucharu. */
 const CUP_ROUND_PRIZE = {
-  champion: 60_000,
-  final: 30_000, // finalista (przegrany finał)
-  semifinal: 15_000, // odpadł w półfinale
-  quarterfinal: 8_000,
-  roundOf16: 4_000,
-  roundOf32: 2_000,
-  round1: 800,
+  champion: 1_500_000,
+  final: 750_000, // finalista (przegrany finał)
+  semifinal: 375_000, // odpadł w półfinale
+  quarterfinal: 200_000,
+  roundOf16: 100_000,
+  roundOf32: 50_000,
+  round1: 20_000,
 }
 
 function teamCupOutcome(cup, teamId) {

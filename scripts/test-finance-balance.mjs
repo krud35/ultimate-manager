@@ -6,6 +6,8 @@ import { applyPostMatchFinances, computeTravelCost } from '../src/career/clubFac
 import { clubCash, reviewClubBudgets, processMonthlyOwnerFunding, seasonWageReserve, clubBudgetAllocation } from '../src/career/clubEconomy.js'
 import { scaleEventMoneyText, currentRandomEventChoices, applyRandomEventChoice } from '../src/career/randomEvents.js'
 import { matchCommercials } from '../src/career/economyBalance.js'
+import { rollTransferBudget } from '../src/career/transfers/clubFinances.js'
+import { sponsorAnnualBase } from '../src/career/clubSponsors.js'
 import { createRng } from '../src/matchEngine/rng.js'
 import { completeTransferBetweenClubs } from '../src/career/transfers/transferEngine.js'
 import { setMoneyCurrency, formatUsd } from '../src/career/transfers/moneyFormat.js'
@@ -17,18 +19,28 @@ const sample = () => {
   const world = structuredClone(base), [home, away] = Object.values(world.teamsById)
   return { world, home, away }
 }
-test('Wage curve rewards quality without exponential superstar runaway', () => {
-  assert.equal(weeklyWageFromOvr(80), 1200)
-  assert(weeklyWageFromOvr(90) < 3200)
-  assert(weeklyWageFromOvr(99) < 8000)
+test('Football wage curve gives elite players a much larger premium', () => {
+  assert.equal(weeklyWageFromOvr(80), 20_000)
+  assert(weeklyWageFromOvr(90) > 70_000 && weeklyWageFromOvr(90) < 80_000)
+  assert(weeklyWageFromOvr(99) > 200_000 && weeklyWageFromOvr(99) < 250_000)
   for (let ovr=68; ovr<99; ovr++) assert(weeklyWageFromOvr(ovr+1) > weeklyWageFromOvr(ovr))
 })
 test('Transfer prices react to remaining contract, age and potential', () => {
   const p = { age: 25, potential: 85, contract: { weeksRemaining: 156 } }
   const full = computeMarketValue(p, 80)
-  assert(full > 250_000 && full < 600_000)
+  assert(full > 7_000_000 && full < 10_000_000)
   assert(computeMarketValue({ ...p, contract: { weeksRemaining: 8 } },80) < full * 0.6)
   assert(computeMarketValue({ ...p, age: 34 },80) < full)
+})
+
+test('Club reputation dominates budget luck and compounds sponsor income', () => {
+  const weak = { id: 'weak', reputation: 45 }, strong = { id: 'strong', reputation: 85 }
+  for (let seed = 0; seed < 50; seed++) {
+    assert(rollTransferBudget(strong.id, seed, strong) > rollTransferBudget(weak.id, seed, weak) * 5)
+  }
+  assert(sponsorAnnualBase(85) > sponsorAnnualBase(45) * 8)
+  assert(sponsorAnnualBase(15) > 0)
+  assert(weeklyWageFromOvr(90) / weeklyWageFromOvr(70) > 13)
 })
 test('Home tickets and goods reconcile with costs; repeated settlement pays nothing', () => {
   const { home, away } = sample()
@@ -62,11 +74,11 @@ test('Travel uses a capped travelling squad, not every registered player', () =>
   assert.equal(cost.delegation,28)
 })
 test('Cash-rich clubs do not receive automatic owner profits; old wages survive migration', () => {
-  const { world, home } = sample(); home.finances.cash=10_000_000
+  const { world, home } = sample(); home.finances.cash=1_000_000_000
   const wages=home.players.map(p=>p.contract.weeklyWage)
   processMonthlyOwnerFunding(world,'2025-08-01')
   assert.equal(home.finances.ownerAnnualGrant,0)
-  assert.equal(clubCash(home),10_000_000)
+  assert.equal(clubCash(home),1_000_000_000)
   assert.deepEqual(home.players.map(p=>p.contract.weeklyWage),wages)
   reviewClubBudgets(home,2026)
   assert.equal(home.finances.ownerAnnualGrant,0)
@@ -88,7 +100,7 @@ test('Event prices shown in choices match the actual scaled payment, once', () =
 test('Rejected wage demands do not create transfer payments or refunds', () => {
   const { world, home, away } = sample()
   home.players = home.players.slice(0, 24)
-  home.finances.cash = 10_000_000
+  home.finances.cash = 1_000_000_000
   home.finances.transferLimit = 5_000_000
   home.finances.seasonPayrollBudget = 0
   clubBudgetAllocation(home)

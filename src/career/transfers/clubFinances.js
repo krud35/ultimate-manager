@@ -1,3 +1,4 @@
+import { clubFinancialPower } from '../economyBalance.js'
 import { ensureClubEconomy, clubCash, postClubCash, reviewClubBudgets, availableClubCash, clubBudgetAllocation, setClubBudgetAllocation } from '../clubEconomy.js'
 /**
  * Budżety transferowe i polityka transferowa klubów.
@@ -65,24 +66,14 @@ export const TRANSFER_POLICY_PRESETS = [
   },
 ]
 
-/**
- * Tier budżetowy na wzór Ekstraklasy (budżet transferowy sezonu, USD).
- * S ≈ Legia/Lech, A ≈ Raków/Pogoń, B ≈ środek tabeli, C ≈ doły.
- */
-const BUDGET_TIERS = [
-  { id: 'S', weight: 2, min: 650_000, max: 1_500_000 },
-  { id: 'A', weight: 4, min: 400_000, max: 900_000 },
-  { id: 'B', weight: 6, min: 180_000, max: 450_000 },
-  { id: 'C', weight: 4, min: 70_000, max: 180_000 },
-]
 
 /**
  * Piramida Ligi Europejskiej: Liga 1 wyraźnie bogatsza od Ligi 2, ta wyraźnie bogatsza
- * od Ligi 3 — mnożnik na rozłożenie budżetowe powyżej (S/A/B/C), więc w ramach poziomu
+ * od Ligi 3 — mnożnik budżetu wynikającego z reputacji, więc w ramach poziomu
  * nadal jest rozrzut, ale całe poziomy różnią się wyraźnie między sobą. Zwraca 1 (brak
  * zmiany) dla drużyn spoza Ligi Europejskiej (`eucsTeamTier` → null dla id UFA).
  */
-const EUCS_TIER_BUDGET_MULT = { 1: 1.7, 2: 1.0, 3: 0.55 }
+const EUCS_TIER_BUDGET_MULT = { 1: 1.8, 2: 0.75, 3: 0.25 }
 
 function eucsBudgetMultFor(team) {
   const tier = currentEucsTier(team)
@@ -99,25 +90,11 @@ function hashString(str) {
   return h >>> 0
 }
 
-function pickTier(rng) {
-  const total = BUDGET_TIERS.reduce((s, t) => s + t.weight, 0)
-  let roll = rng.float() * total
-  for (const tier of BUDGET_TIERS) {
-    roll -= tier.weight
-    if (roll <= 0) return tier
-  }
-  return BUDGET_TIERS[BUDGET_TIERS.length - 1]
-}
-
-function rollInRange(rng, min, max) {
-  return Math.round(min + rng.float() * (max - min))
-}
-
 /** Losowy budżet sezonu dla jednego klubu (USD). */
 export function rollTransferBudget(teamId, seedBase = 0, team = { id: teamId }) {
   const rng = createRng(hashString(`${seedBase}|budget|${teamId}`))
-  const tier = pickTier(rng)
-  const raw = 2 * rollInRange(rng, tier.min, tier.max) * eucsBudgetMultFor(team)
+  // Reputation drives wealth; seeded variation stays within ±15%.
+  const raw = 4_000_000 * clubFinancialPower(team) * (0.85 + rng.float() * 0.3) * eucsBudgetMultFor(team)
   // Zaokrąglenie do 10k — „okrągłe” kwoty jak w raportach klubowych.
   return Math.round(raw / 10_000) * 10_000
 }
@@ -203,16 +180,11 @@ export function canBuyPlayers(team) {
   return getTransferBudget(team) > 0
 }
 
-/**
- * Ostrzeżenie zarządu — budżet na minusie, ale jeszcze bez walkowerów.
- * Próg krytyczny (walkower 15–0) obniżony z -2.5M: przy starym progu praktycznie
- * nie dało się go osiągnąć, bo prawie każdy wydatek jest wcześniej blokowany
- * sprawdzeniem „czy stać” — sam mechanizm bankructwa był martwym kodem.
- */
-export const FINANCIAL_WARNING_THRESHOLD = -75_000
+/** Ostrzeżenie zarządu przy długu 1,5 mln w nowej skali finansów. */
+export const FINANCIAL_WARNING_THRESHOLD = -1_500_000
 
 /** Próg bankructwa — forfeit 15–0 do odzyskania środków. */
-export const FORFEIT_BUDGET_THRESHOLD = -400_000
+export const FORFEIT_BUDGET_THRESHOLD = -8_000_000
 
 /** Dokąd sięga jednorazowa (raz na sezon) dotacja ratunkowa zarządu. */
 const BOARD_BAILOUT_TARGET = FINANCIAL_WARNING_THRESHOLD

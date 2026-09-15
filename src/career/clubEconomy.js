@@ -1,4 +1,4 @@
-import { FINANCE_BALANCE_VERSION, referenceClubCosts, estimatedAnnualMatchNet } from './economyBalance.js'
+import { FINANCE_BALANCE_VERSION, referenceClubCosts, estimatedAnnualMatchNet, TV_MONTHLY_BY_TIER } from './economyBalance.js'
 import { currentEucsTier } from './competitionMembership.js'
 
 export const ECONOMY_VERSION = 2
@@ -179,7 +179,7 @@ export function syncLoanFinancialCommitments(world) {
 
 export function annualOperatingIncome(team, { cashBasis = false } = {}) {
   const f = ensureClubEconomy(team)
-  const tv = ({ 1: 360_000, 2: 144_000, 3: 48_000 })[currentEucsTier(team)] ?? 0
+  const tv = (TV_MONTHLY_BY_TIER[currentEucsTier(team)] ?? 0) * 12
   const sponsors = ['main', 'secondary'].reduce((sum, slot) => {
     const c = team.sponsors?.[slot]
     if (!c) return sum
@@ -233,7 +233,7 @@ export function reviewClubBudgets(team, seasonKey) {
   const costs = (contractualWeeklyBill(team) + (f.weeklyOperations ?? 0)) * 52
   const year = Number(String(seasonKey).match(/20\d{2}/)?.[0] ?? f.transitionYear ?? 2025)
   const bridge = Math.max(0, (f.transitionPayroll ?? 0) - reference) * Math.max(0, 1 - (year - (f.transitionYear ?? year)) / 4)
-  const supportedCosts = Math.max(reference * 0.75, Math.min(reference * 1.15 + bridge, costs))
+  const supportedCosts = Math.max(reference * 0.9, Math.min(reference * 1.15 + bridge, costs))
   const surplus = Math.max(0, f.cash - supportedCosts * 1.4)
   f.ownerAnnualGrant = Math.round(Math.max(0, supportedCosts * 1.06 - nonOwnerIncome - surplus * 0.5))
   f.ownerBaseGrant = Math.round(Math.max(0, reference - nonOwnerIncome))

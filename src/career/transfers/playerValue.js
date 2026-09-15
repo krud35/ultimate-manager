@@ -8,7 +8,7 @@ import { getOverallRating } from '../../models/playerStats.js'
 
 /**
  * Baza to 5,5 rocznych pensji referencyjnych; wiek, potencjał i pozostały
- * kontrakt modyfikują cenę. OVR 80 daje bazę 343 200, OVR 90 około 890 tys.
+ * kontrakt modyfikują cenę. OVR 80 daje bazę 5,72 mln, OVR 90 około 21,2 mln.
  * @param {number} ovr
  * @returns {number} surowa wartość w USD
  */

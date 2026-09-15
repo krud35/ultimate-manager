@@ -18,9 +18,9 @@ const base = createWorldFromTemplate(2025)
 function make() {
   const world = structuredClone(base)
   const team = world.teamsById[world.teamIds[0]]
-  team.finances.cash = 10_000_000
-  team.finances.transferLimit = 10_000_000
-  team.finances.openingCash = 10_000_000
+  team.finances.cash = 1_000_000_000
+  team.finances.transferLimit = 1_000_000_000
+  team.finances.openingCash = 1_000_000_000
   team.finances.totalIncome = 0
   team.finances.totalExpenses = 0
   team.finances.seasonPayrollBudget = 3_000_000

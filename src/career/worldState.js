@@ -142,6 +142,7 @@ export function createWorldFromTemplate(templateSeasonYear = 2025, options = {})
     freeAgents: [],
     retiredPlayers: [],
   }
+  ensureWorldReputation(world)
   ensureWorldFinances(world, { seed: financeSeed, force: true })
   ensureWorldContracts(world, { seed: financeSeed, force: true, syncBudgets: true })
   ensureWorldReputation(world)

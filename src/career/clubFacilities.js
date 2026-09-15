@@ -432,7 +432,7 @@ export function facilityUpgradeCost(facilityId, level) {
     scoutingDept: 1.0,
     academy: 1.05,
   }[facilityId] ?? 1
-  const raw = 24_000 * tier * 1.46 ** (lv - 1)
+  const raw = 480_000 * tier * 1.60 ** (lv - 1)
   return Math.round(raw / 1000) * 1000
 }
 

@@ -1,3 +1,4 @@
+import { clubFinancialPower } from './economyBalance.js'
 /**
  * Sponsorzy klubu: slot główny + drugi, oferty z różnymi modelami wypłat.
  * Oferta 1 (upfront) sumarycznie < 2 (sezonowa) < 3 (miesięczna).
@@ -91,8 +92,8 @@ export const SPONSOR_INCOME_BOOST = 3
  */
 export function sponsorAnnualBase(reputation, slot = 'main') {
   const rep = Math.max(15, Math.min(99, Math.round(reputation ?? 55)))
-  // Bez boosta: ~$28k przy rep 30, ~$95k przy 55, ~$180k przy 90 (main)
-  const core = (18_000 + (rep - 25) * 2_400) * SPONSOR_INCOME_BOOST
+  // Exponential commercial reach: established clubs command larger deals.
+  const core = 500_000 * clubFinancialPower({ reputation: rep }) * SPONSOR_INCOME_BOOST
   const mult = slot === 'main' ? 1 : 0.55
   return roundMoney(core * mult)
 }

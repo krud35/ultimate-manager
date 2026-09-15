@@ -1,20 +1,20 @@
 [
   {
     "clubs": 16,
-    "minCash": 3092216,
-    "medianCash": 3323088,
-    "minTransfer": 570940,
-    "medianTransfer": 1134588,
-    "medianPlayerValue": 332000,
+    "minCash": 45693524,
+    "medianCash": 65329056,
+    "minTransfer": 14471060,
+    "medianTransfer": 21670000,
+    "medianPlayerValue": 4973000,
     "fundedClubs": 16
   },
   {
     "clubs": 48,
-    "minCash": 1041740,
-    "medianCash": 2338864,
-    "minTransfer": 306012,
-    "medianTransfer": 1017264,
-    "medianPlayerValue": 266000,
+    "minCash": 10092644,
+    "medianCash": 31412144,
+    "minTransfer": 2113764,
+    "medianTransfer": 10434576,
+    "medianPlayerValue": 3666000,
     "fundedClubs": 48
   }
 ]
