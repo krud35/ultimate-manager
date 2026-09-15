@@ -63,7 +63,7 @@ const pl = {
   negotiateHint:
     'Kluby niechętnie sprzedają najlepszych. Oferta bliska lub powyżej oficjalnej wyceny zwiększa szansę, ale nigdy nie gwarantuje sukcesu.',
 
-  yourOffer: 'Twoja oferta (USD)',
+  yourOffer: (currency) => `Twoja oferta (${currency === 'EUR' ? '€' : 'USD'})`,
 
   setValue: 'Ustaw wycenę',
 
@@ -311,7 +311,7 @@ const en = {
   negotiateHint:
     'Clubs are reluctant to sell stars. An offer near or above official valuation improves odds but never guarantees success.',
 
-  yourOffer: 'Your offer (USD)',
+  yourOffer: (currency) => `Your offer (${currency === 'EUR' ? '€' : 'USD'})`,
 
   setValue: 'Set valuation',
 

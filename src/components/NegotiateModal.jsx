@@ -5,11 +5,23 @@ import { transfersStrings } from '../ui/strings/transfers'
 import {
   formatUsd,
   formatUsdCompact,
+  getMoneyCurrency,
   computePlayerContractDemands,
   previewContractOffer,
   CONTRACT_BONUS_DEFS,
   CONTRACT_PROMISE_DEFS,
 } from '../career'
+
+// Oferta jest wyświetlana ze separatorami, ale do silnika negocjacji trafia
+// zawsze czysta liczba całkowita.
+function formatOfferInput(value) {
+  const digits = String(value ?? '').replace(/\D/g, '').replace(/^0+(?=\d)/, '')
+  return digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''
+}
+
+function parseOfferInput(value) {
+  return Math.round(Number(String(value ?? '').replace(/\D/g, '')) || 0)
+}
 
 /**
  * Okno negocjacji — wolny agent podpisuje od razu (kontrakt), zawodnik klubowy
@@ -20,7 +32,7 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
   const { lang } = useUiLang()
   const t = transfersStrings(lang)
   const isFa = !!row?.freeAgent
-  const [offer, setOffer] = useState(() => String(row?.marketValue ?? 0))
+  const [offer, setOffer] = useState(() => formatOfferInput(row?.marketValue ?? 0))
   const [wage, setWage] = useState(() => {
     if (!row?.player) return '500'
     const d = computePlayerContractDemands({
@@ -50,7 +62,8 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
 
   if (!row) return null
 
-  const offerNum = Math.round(Number(offer) || 0)
+  const offerNum = parseOfferInput(offer)
+  const currency = getMoneyCurrency()
   const overBudget = !isFa && offerNum > budget
   const preview = previewContractOffer(
     Math.round(Number(wage) || 0),
@@ -202,13 +215,13 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
             </p>
             <div className="mt-4 space-y-3">
               <label className="block text-sm text-ufa-text">
-                {t.yourOffer}
+                {t.yourOffer(currency)}
                 <input
-                  type="number"
-                  min={0}
-                  step={1000}
+                  type="text"
+                  inputMode="numeric"
+                  aria-label={t.yourOffer(currency)}
                   value={offer}
-                  onChange={(e) => setOffer(e.target.value)}
+                  onChange={(e) => setOffer(formatOfferInput(e.target.value))}
                   className="mt-1 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text tabular-nums"
                 />
               </label>
@@ -224,7 +237,7 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
                 </button>
                 <button
                   type="button"
-                  onClick={() => setOffer(String(row.marketValue))}
+                  onClick={() => setOffer(formatOfferInput(row.marketValue))}
                   className="rounded-md border border-ufa-border px-3 py-2 text-sm text-ufa-text hover:bg-ufa-panel-hover"
                 >
                   {t.setValue}
