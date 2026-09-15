@@ -154,5 +154,6 @@ export function estimateWorldCost(input) {
   const internationalCost = Object.values(config.international).filter(Boolean).length * 4
   const score = playableClubs * 4 + backgroundClubs * .6 + internationalCost
   return { playableClubs, backgroundClubs, clubs: playableClubs + backgroundClubs, players, score,
+    gameSpeed: score < 400 ? 'fast' : score < 900 ? 'medium' : 'low',
     load: score < 150 ? 'low' : score < 400 ? 'medium' : 'high', relativeSpeed: Math.round(100 / Math.max(1, score / 80)) }
 }

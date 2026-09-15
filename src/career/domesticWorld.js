@@ -36,7 +36,7 @@ export function buildDomesticWorldTemplate(input, year, seed) {
   const international = Object.entries(config.international).some(([key, enabled]) => key !== 'nationals' && enabled)
   for (const league of DOMESTIC_LEAGUES) {
     const mode = config.leagues[league.id]
-    const entries = mode === 'off' ? (international && league.tier === 1 ? league.teams.slice(0, 1) : []) : league.teams
+    const entries = mode === 'off' && config.simulationModel !== 'focused' ? (international && league.tier === 1 ? league.teams.slice(0, 1) : []) : league.teams
     for (const source of entries) {
       const rng = createRng(seed + clubs.length * 1709)
       const players = []

@@ -447,6 +447,7 @@ export function applyDailyDevelopment(league, options = {}) {
 
   for (const team of Object.values(teamsById)) {
     const isPlayer = team.id === playerTeamId
+    if (team.simulationMode === 'off' && !team.backgroundSimulation && !team.detailedCupAttention) continue
     const compactBackground = team.backgroundSimulation && !team.detailedCupAttention
     const weekday = isoDate ? parseISODate(isoDate).getDay() : -1
 

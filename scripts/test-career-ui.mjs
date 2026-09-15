@@ -8,9 +8,9 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 const outfile = path.resolve('artifacts/.career-ui-render-test.mjs')
-await build({ stdin: { contents: `export {default as CountryChoice} from './src/components/WorldCountryChoice.jsx'; export {default as App} from './src/App.jsx'; export {default as Staff} from './src/components/StaffManagementPanel.jsx'; export {default as Finances} from './src/components/ClubFinancesView.jsx'; export {default as Menu} from './src/components/MainMenuScreen.jsx'; export {default as Wizard} from './src/components/NewCareerScreen.jsx'; export {default as Leagues} from './src/components/DomesticLeaguesView.jsx'; export {default as Cup} from './src/components/CupView.jsx'; export {UiLangProvider} from './src/ui/UiLangContext.jsx'; export {MANAGER_BACKGROUND_QUESTIONS} from './src/career/managerProfiles.js';`, resolveDir: process.cwd() }, outfile, bundle: true, platform: 'node', format: 'esm', jsx: 'automatic', external: ['react', 'react-dom', 'react/jsx-runtime'], loader: { '.css': 'empty' } })
+await build({ stdin: { contents: `export {default as SimulationOptions} from './src/components/WorldSimulationOptions.jsx'; export {default as CountryChoice} from './src/components/WorldCountryChoice.jsx'; export {default as App} from './src/App.jsx'; export {default as Staff} from './src/components/StaffManagementPanel.jsx'; export {default as Finances} from './src/components/ClubFinancesView.jsx'; export {default as Menu} from './src/components/MainMenuScreen.jsx'; export {default as Wizard} from './src/components/NewCareerScreen.jsx'; export {default as Leagues} from './src/components/DomesticLeaguesView.jsx'; export {default as Cup} from './src/components/CupView.jsx'; export {UiLangProvider} from './src/ui/UiLangContext.jsx'; export {MANAGER_BACKGROUND_QUESTIONS} from './src/career/managerProfiles.js';`, resolveDir: process.cwd() }, outfile, bundle: true, platform: 'node', format: 'esm', jsx: 'automatic', external: ['react', 'react-dom', 'react/jsx-runtime'], loader: { '.css': 'empty' } })
 try {
-  const { CountryChoice, App, Staff, Finances, Menu, Wizard, Leagues, Cup, UiLangProvider, MANAGER_BACKGROUND_QUESTIONS } = await import(pathToFileURL(outfile).href)
+  const { SimulationOptions, CountryChoice, App, Staff, Finances, Menu, Wizard, Leagues, Cup, UiLangProvider, MANAGER_BACKGROUND_QUESTIONS } = await import(pathToFileURL(outfile).href)
   const render = (component, props) => renderToStaticMarkup(React.createElement(UiLangProvider, null, React.createElement(component, props)))
   const country=DOMESTIC_COUNTRIES.find(c=>c.id==='fr')
   const selected=setCountryDepth(setCountryMode(defaultWorldConfig(),'fr','playable'),'fr',2)
@@ -22,6 +22,12 @@ try {
   }
   const focused=normalizeWorldConfig({simulationModel:'focused',mainCountryId:'fr',additionalCountryIds:['pl','au','gb']})
   const focusedHtml=render(CountryChoice,{country,config:focused,lang:'en',onChange:()=>{}})
+  const disabledOptions=render(SimulationOptions,{config:{...focused,backgroundSimulation:false},lang:'en',onChange:()=>{}})
+  assert.match(disabledOptions,/Game speed:/)
+  assert.match(disabledOptions,/Recommended: at least medium/)
+  assert.match(disabledOptions,/Simulate background leagues/)
+  assert.match(disabledOptions,/Inactive leagues have no domestic matches/)
+  assert.doesNotMatch(disabledOptions,/Estimated load/)
   assert.match(focusedHtml,/Main league/)
   assert.match(focusedHtml,/Additional active/)
   assert.match(focusedHtml,/Background/)

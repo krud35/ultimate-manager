@@ -537,3 +537,13 @@ body {
     animation-duration: 1ms;
   }
 }
+.world-country-choice[data-selection='main'] {
+  border-color: var(--um-accent);
+  box-shadow: 0 0 0 2px var(--um-accent);
+  background-color: color-mix(in srgb, var(--um-accent) 20%, var(--um-panel));
+}
+
+.world-country-choice[data-selection='active'] {
+  border-color: color-mix(in srgb, var(--um-accent) 65%, var(--um-border));
+  background-color: color-mix(in srgb, var(--um-accent) 8%, var(--um-panel));
+}
