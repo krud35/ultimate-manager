@@ -18,7 +18,12 @@ import { adjustTransferBudget, formatUsd, getTransferBudget } from './transfers/
 import { mergeMatchBoxScore } from '../league/leagueStats.js'
 import { UI_LANG } from '../ui/locale.js'
 import { ensureTransferNewsState, transferNewsForTick } from './ultiworldTransfers.js'
-import { academyCountryLabel } from '../data/academyScoutGeography.js'
+import {
+  ACADEMY_COUNTRIES,
+  academyCountryByEnglishName,
+  academyCountryLabel,
+} from '../data/academyScoutGeography.js'
+import { eucsTeamCountry } from '../data/eucsLeagueTeams.js'
 import { countryIdFromPseudoTeamId } from './nationalTeamQualifying.js'
 
 const ARTICLES_MAX = 80
@@ -583,6 +588,24 @@ function pyramidRecordsByTeam(career, league) {
 }
 
 /**
+ * Kraj klubu jako id z ACADEMY_COUNTRIES. Kluby niosą go w dwóch formatach — `countryId`
+ * (ligi krajowe) albo pełna angielska nazwa w `country` / danych EUCS — więc sprawdzamy oba.
+ * Bez znanego kraju zwraca null: kluby UFA go nie mają, a zgadywanie (np. „USA”) myliłoby
+ * przy Toronto czy Montrealu.
+ */
+function clubCountryId(team) {
+  if (ACADEMY_COUNTRIES[team?.countryId]) return team.countryId
+  const name = team?.country ?? eucsTeamCountry(team?.id)
+  if (!name) return null
+  if (ACADEMY_COUNTRIES[name]) return name
+  return (
+    academyCountryByEnglishName(name)?.id ??
+    Object.keys(ACADEMY_COUNTRIES).find((id) => ACADEMY_COUNTRIES[id].labelEn === name) ??
+    null
+  )
+}
+
+/**
  * Ranking siły wszystkich drużyn świata (posortowany malejąco po ELO).
  * ELO startuje z jakości składu, ale od tego momentu żyje własnym życiem — zmieniają go
  * tylko wyniki meczów (patrz models/teamElo.js), więc drużyna w dołku formy realnie spada,
@@ -602,6 +625,7 @@ export function computePowerRankings(career, league) {
       wins: record?.wins ?? 0,
       losses: record?.losses ?? 0,
       tier: record?.tier ?? null,
+      countryId: clubCountryId(team),
     })
   }
   rows.sort((a, b) => b.score - a.score)
@@ -626,7 +650,8 @@ function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, n
       const mark = movementMark(prevSnapshot?.[r.teamId], r.rank, UI_LANG.PL)
       const flag = r.teamId === career.playerTeamId ? ' (Ty)' : ''
       const tier = r.tier ? ` · L${r.tier}` : ''
-      return `${r.rank}. ${label}${tier}${flag} — ELO ${r.score} (${r.wins}-${r.losses}) ${mark}`
+      const country = r.countryId ? ` (${academyCountryLabel(r.countryId, 'pl')})` : ''
+      return `${r.rank}. ${label}${country}${tier}${flag} — ELO ${r.score} (${r.wins}-${r.losses}) ${mark}`
     })
     .join('\n')
   const linesEn = rankings
@@ -635,7 +660,8 @@ function powerRankingsArticle(career, league, monthIso, simDate, prevSnapshot, n
       const mark = movementMark(prevSnapshot?.[r.teamId], r.rank, UI_LANG.EN)
       const flag = r.teamId === career.playerTeamId ? ' (You)' : ''
       const tier = r.tier ? ` · L${r.tier}` : ''
-      return `${r.rank}. ${label}${tier}${flag} — ELO ${r.score} (${r.wins}-${r.losses}) ${mark}`
+      const country = r.countryId ? ` (${academyCountryLabel(r.countryId, 'en')})` : ''
+      return `${r.rank}. ${label}${country}${tier}${flag} — ELO ${r.score} (${r.wins}-${r.losses}) ${mark}`
     })
     .join('\n')
 
