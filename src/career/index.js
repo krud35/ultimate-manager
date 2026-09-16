@@ -210,6 +210,8 @@ export {
   isImportantInboxMessage,
   hasImportantInboxMessage,
   firstImportantInboxMessage,
+  isPausingInboxMessage,
+  firstPausingInboxMessage,
 } from './inbox.js'
 export {
   cupFinalWatchableMessage,

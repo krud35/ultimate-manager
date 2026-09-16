@@ -49,8 +49,8 @@ import {
   setMoneyCurrency,
   signSponsorOfferFromInbox,
   supersedeSponsorOfferMessages,
-  firstImportantInboxMessage,
   isImportantInboxMessage,
+  firstPausingInboxMessage,
   queueIncomingBidCounter,
   queueSalePlayerDecision,
   queueOutgoingPlayerContract,
@@ -602,8 +602,11 @@ export default function App() {
 
   // "Dalej" — symuluje kolejne dni jeden po drugim (jak w typowych grach managerskich),
   // aż napotka coś wymagającego uwagi gracza: mecz, kontuzję, ofertę transferową/
-  // sponsorską, decyzję ze zdarzenia losowego albo alarm finansowy. Raporty treningowe
-  // i artykuły Ultiworld nie przerywają symulacji — lecą w tle.
+  // sponsorską, decyzję ze zdarzenia losowego albo alarm finansowy — patrz
+  // isImportantInboxMessage. Cotygodniowy raport treningowy też zatrzymuje "Dalej"
+  // (żeby manager go zauważył), ale bez wchodzenia w "Wymaganą akcję" — patrz
+  // isPausingInboxMessage. Pojedyncze raporty treningowe i artykuły Ultiworld
+  // nie przerywają symulacji w ogóle — lecą w tle.
   const handleAdvanceDay = useCallback(async () => {
     if (!career?.league || simProgress || calendarSim) return
     if (career.phase === 'season_complete') {
@@ -652,9 +655,13 @@ export default function App() {
             blockedFixture = result.playerFixture
             break
           }
-          const blocker = firstImportantInboxMessage(step.inboxMessages)
+          const blocker = firstPausingInboxMessage(step.inboxMessages)
           if (blocker) {
-            blockingMessageId = blocker.id
+            // Pauza-only wiadomości (np. cotygodniowy raport treningowy) zatrzymują
+            // "Dalej", żeby manager je zauważył, ale nie wchodzą w stan "Wymagana
+            // akcja" — nic w nich nie wymaga rozstrzygnięcia, więc kolejne "Dalej"
+            // ma po prostu kontynuować (patrz isImportantInboxMessage/isPausingInboxMessage).
+            blockingMessageId = isImportantInboxMessage(blocker) ? blocker.id : null
             break
           }
           if (isOfficialSeasonEnded(dayLeague) || dayLeague.status === 'complete') {

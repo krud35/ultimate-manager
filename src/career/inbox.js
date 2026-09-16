@@ -110,6 +110,18 @@ const SILENT_CLUB_NEWS_KINDS = new Set([
   'promise_broken',
   'nationalTeamQualifying',
   'nationalTeamTournament',
+  'weekly_training_report',
+])
+
+// club_news payload.kind values that carry nothing to resolve (no button, no
+// payload.status) but are still worth a one-time pause in "Dalej" so the manager
+// actually notices them — e.g. the weekly training summary. Unlike
+// SILENT_CLUB_NEWS_KINDS they DO stop the loop (see isPausingInboxMessage), but
+// unlike isImportantInboxMessage they never arm the persistent "Action Required"
+// state, since nothing about them ever changes to un-block it (same trap as the
+// club_news kinds above got moved into SILENT_CLUB_NEWS_KINDS to avoid).
+const PAUSE_ONLY_CLUB_NEWS_KINDS = new Set([
+  'weekly_training_report',
 ])
 
 // Pure info/report inbox types — never worth interrupting the loop.
@@ -184,6 +196,28 @@ export function hasImportantInboxMessage(messages) {
 /** Pierwsza "blokująca" wiadomość z listy — do podświetlenia w skrzynce po zatrzymaniu symulacji. */
 export function firstImportantInboxMessage(messages) {
   return (messages ?? []).find(isImportantInboxMessage) ?? null
+}
+
+/**
+ * Czy ta wiadomość powinna zatrzymać ciągłe symulowanie ("Dalej"), nawet gdy nie
+ * wymaga żadnej decyzji z poziomu skrzynki? Nadzbiór `isImportantInboxMessage` —
+ * obejmuje dodatkowo raporty typu "przeczytaj i jedź dalej" (cotygodniowy raport
+ * treningowy), gdzie manager ma zauważyć wiadomość, ale kolejne "Dalej" ma po
+ * prostu kontynuować, a nie wchodzić w stan "Wymagana akcja" (o tym nadal
+ * decyduje wyłącznie `isImportantInboxMessage`).
+ */
+export function isPausingInboxMessage(message) {
+  if (!message) return false
+  if (isImportantInboxMessage(message)) return true
+  if (message.type === INBOX_TYPES.CLUB_NEWS) {
+    return PAUSE_ONLY_CLUB_NEWS_KINDS.has(message.payload?.kind)
+  }
+  return false
+}
+
+/** Pierwsza wiadomość warta zatrzymania "Dalej" — patrz `isPausingInboxMessage`. */
+export function firstPausingInboxMessage(messages) {
+  return (messages ?? []).find(isPausingInboxMessage) ?? null
 }
 
 function newMessageId(prefix = 'msg') {

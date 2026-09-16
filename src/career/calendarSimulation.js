@@ -101,7 +101,7 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
       const rows=(trainingTeam.teamTraining.sessionLog??[]).filter(r=>r.date>trainingDateAdd(reportDate,-7)&&r.date<=reportDate)
       const gains=rows.reduce((sum,r)=>sum+(r.skillBumps??0),0),adjustments=rows.reduce((sum,r)=>sum+(r.adjustments?.length??0),0)
       trainingTeam.teamTraining.lastSummaryDate=reportDate
-      inboxMessages.push({id:`training-week-${reportDate}`,date:reportDate,read:false,type:'club_news',title:'Tygodniowy raport treningowy',titleEn:'Weekly training report',body:`Sesje: ${rows.length}. Przyrosty umiejętności: ${gains}. Indywidualne odciążenia / ograniczenia: ${adjustments}. Szczegóły i prognoza świeżości są w Treningu.`,bodyEn:`Sessions: ${rows.length}. Skill gains: ${gains}. Individual rest / restrictions: ${adjustments}. See Training for details and the freshness forecast.`})
+      inboxMessages.push({id:`training-week-${reportDate}`,date:reportDate,read:false,type:'club_news',title:'Tygodniowy raport treningowy',titleEn:'Weekly training report',body:`Sesje: ${rows.length}. Przyrosty umiejętności: ${gains}. Indywidualne odciążenia / ograniczenia: ${adjustments}. Szczegóły i prognoza świeżości są w Treningu.`,bodyEn:`Sessions: ${rows.length}. Skill gains: ${gains}. Individual rest / restrictions: ${adjustments}. See Training for details and the freshness forecast.`,payload:{kind:'weekly_training_report'}})
     }
     weeklyTeamTrainingMaintenance(nextLeague, {
       playerTeamId: career.playerTeamId,
