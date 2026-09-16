@@ -51,12 +51,12 @@ test('Regional league identities do not replace the home country or live divisio
   regional.tier=2
   assert.equal(clubFinancialMarket(regional).tier,2)
 })
-test('TV forecast equals actual payments and pays only once per month', () => {
+test('TV base is forecast annually and monthly calls no longer pay cash', () => {
   const team=club('pl',2), world={teamsById:{[team.id]:team}}
   const expected=clubMonthlyTvIncome(team), before=clubCash(team)
-  assert.equal(annualOperatingIncome(team) - estimatedAnnualMatchNet(team) - team.finances.ownerAnnualGrant, expected * 12)
-  assert.equal(processMonthlyTvPayouts(world,'2025-08-01')[0].amount,expected)
-  assert.equal(clubCash(team),before+expected)
+  assert.equal(annualOperatingIncome(team) - estimatedAnnualMatchNet(team) - team.finances.ownerAnnualGrant, expected * 12 * .7)
+  assert.deepEqual(processMonthlyTvPayouts(world,'2025-08-01'),[])
+  assert.equal(clubCash(team),before)
   assert.deepEqual(processMonthlyTvPayouts(world,'2025-08-01'),[])
   assert.deepEqual(processMonthlyTvPayouts(world,'2025-08-02'),[])
 })

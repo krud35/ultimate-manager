@@ -4,7 +4,6 @@ import { clubFinanceForecast } from '../career/clubEconomy.js'
 import { ensureClubManagement } from '../career/clubManagement.js'
 import { formatUsd } from '../career/transfers/moneyFormat.js'
 import { clubFinancialMarket } from '../career/financialMarkets.js'
-import { clubMonthlyTvIncome } from '../career/economyBalance.js'
 import { ACADEMY_COUNTRIES } from '../data/academyScoutGeography.js'
 
 export default function ClubFinancesView({ team, world, league, seasonYear, currentDate, lang, onChange }) {
@@ -18,7 +17,8 @@ export default function ClubFinancesView({ team, world, league, seasonYear, curr
     <h2 className='text-2xl font-semibold text-ufa-text'>{en ? 'Club finances' : 'Finanse klubu'}</h2>
     {market.domestic && <div className="rounded-sm bg-ufa-bg/60 p-3 text-xs space-y-1">
       <h3 className="font-semibold">{en ? 'Local financial market' : 'Lokalny rynek finansowy'}: {country?.[en ? 'labelEn' : 'labelPl'] ?? team.country ?? '—'} · {en ? 'Division' : 'Dywizja'} {market.tier}</h3>
-      <p>{en ? 'Monthly TV rights' : 'Prawa TV / miesiąc'}: {formatUsd(clubMonthlyTvIncome(team))}</p>
+      <p>{en ? 'TV rights: equal season-end share' : 'Prawa TV: równa część na koniec sezonu'}: {formatUsd(f.tvForecast.equal)} · {f.tvForecast.date}</p>
+      <p>{en ? '70% shared equally, 30% awarded by final league position. Position bonus excluded from forecast.' : '70% puli dzielone po równo, 30% według końcowego miejsca w lidze. Prognoza nie uwzględnia premii za miejsce.'}</p>
       <p className="text-ufa-muted">{en ? 'Country and division affect transfer funding, sponsor offers, new wages and match income. Promotion and relegation change future funding; signed contracts remain binding.' : 'Kraj i dywizja wpływają na środki transferowe, oferty sponsorów, nowe płace i wpływy z meczów. Awans i spadek zmieniają przyszłe finansowanie; podpisane umowy pozostają ważne.'}</p>
     </div>}
     <ClubFinanceSummary team={team} lang={lang} onChange={onChange} />

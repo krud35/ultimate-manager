@@ -2,7 +2,7 @@
 import { clubFinancialMarket } from './financialMarkets.js'
 import { currentEucsTier } from './competitionMembership.js'
 
-export const FINANCE_BALANCE_VERSION = 4
+export const FINANCE_BALANCE_VERSION = 5
 export const referenceWeeklyWage = ovr => 20_000 * 1.14 ** (Math.max(50, Math.min(99, Number(ovr) || 50)) - 80)
 export const staffWeeklyCosts = { 0: 0, 1: 2400, 2: 8000, 3: 24000 }
 export const TV_MONTHLY_BY_TIER = { 1: 1_500_000, 2: 300_000, 3: 50_000 }

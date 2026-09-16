@@ -11,7 +11,7 @@ import { processSeasonRetirements } from '../src/career/retirement.js'
 import { queueScoutMission, advanceAcademyCampaigns, academyReportDate, resolveScoutMissions } from '../src/career/scouting.js'
 import { syncCompetitionMembership } from '../src/career/competitionMembership.js'
 import { eucsTeamsForTier } from '../src/data/eucsLeagueTeams.js'
-import { processMonthlyTvPayouts } from '../src/career/tvMoney.js'
+import { processMonthlyTvPayouts, processSeasonEndTvPayouts } from '../src/career/tvMoney.js'
 import { rollTransferBudget, ensureTeamFinances } from '../src/career/transfers/clubFinances.js'
 import { processWeeklyWages } from '../src/career/transfers/playerContracts.js'
 import { processContractExpirations } from '../src/career/transfers/contractLifecycle.js'
@@ -112,7 +112,9 @@ await test('live tiers determine TV and budgets; old saves recover membership', 
   syncCompetitionMembership(world, { tier1Ids: [id], tier2Ids: [], tier3Ids: [] })
   ensureTeamFinances(team, { seed: 123, force: true })
   assert(team.finances.transferBudget > before * 2)
-  assert.equal(processMonthlyTvPayouts(world, '2026-08-01')[0].amount, 30_000)
+  const league = { id: 'tv-test', tier: 1, teamIds: [id], standings: { [id]: { teamId: id, wins: 1, losses: 0, pointsFor: 15, pointsAgainst: 0 } } }
+  assert.equal(processSeasonEndTvPayouts(world, league, 2026)[0].amount, 18_000_000)
+  assert.equal(processSeasonEndTvPayouts(world, league, 2026).length, 0)
   assert.equal(processMonthlyTvPayouts(world, '2026-08-01').length, 0)
   const c = clone(), existing = c.playerTeamId
   c.league.eucsPyramid = { tier1Ids: [], tier2Ids: [existing], tier3Ids: [] }

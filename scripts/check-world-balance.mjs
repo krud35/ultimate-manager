@@ -12,7 +12,7 @@ import { processWeeklyFinancialHealth } from '../src/career/transfers/clubFinanc
 import { processContractExpirations } from '../src/career/transfers/contractLifecycle.js'
 import { processLoanReturns } from '../src/career/transfers/loans.js'
 import { simulateAiTransferActivity } from '../src/career/transfers/aiMarket.js'
-import { processMonthlyTvPayouts } from '../src/career/tvMoney.js'
+import { processSeasonEndTvPayouts } from '../src/career/tvMoney.js'
 import { processMonthlySponsorPayouts, processSeasonStartSponsorPayouts, processSeasonEndSponsorPayouts } from '../src/career/clubSponsors.js'
 import { ageWorldPlayersOneYear, applyOffseasonDevelopment } from '../src/career/playerDevelopment.js'
 import { processSeasonRetirements } from '../src/career/retirement.js'
@@ -36,7 +36,7 @@ for (const size of (process.env.BALANCE_SIZES ?? '16,48').split(',').map(Number)
       const date = day.toISOString().slice(0,10), weekTick = day.getUTCDay() === 0
       career.league.currentDate = date
       processMonthlyOwnerFunding(world, date)
-      processMonthlySponsorPayouts(world, date); processMonthlyTvPayouts(world, date)
+      processMonthlySponsorPayouts(world, date)
       const managed = processClubManagement(career, date, { weekTick })
       career.transferLog = managed.transferLog
       processLoanReturns(career, { date })
@@ -48,6 +48,15 @@ for (const size of (process.env.BALANCE_SIZES ?? '16,48').split(',').map(Number)
       const market = simulateAiTransferActivity(career, { date, seed: seed + days++ })
       career.transferLog = market.transferLog ?? career.transferLog
       career.loanLog = market.loanLog ?? career.loanLog
+    }
+    // Synthetic league standings use the stable team order; distribute the full annual TV pool.
+    for (let group = 0; group < teams.length; group += 16) {
+      const members = teams.slice(group, group + 16)
+      processSeasonEndTvPayouts(world, {
+        id: `stress-${group}`, tier: size === 48 ? group / 16 + 1 : undefined,
+        teamIds: members.map(t => t.id),
+        standings: Object.fromEntries(members.map((t, i) => [t.id, { teamId: t.id, wins: members.length - i, pointsFor: 0, pointsAgainst: 0 }])),
+      }, year)
     }
     processSeasonEndSponsorPayouts(world, career.league, year)
     ageWorldPlayersOneYear(world)

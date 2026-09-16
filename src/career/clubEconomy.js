@@ -1,5 +1,6 @@
 import { FINANCE_BALANCE_VERSION, referenceClubCosts, estimatedAnnualMatchNet, matchCommercials, clubMonthlyTvIncome } from './economyBalance.js'
 import { clubFinancialMarket } from './financialMarkets.js'
+import { leagueTvAllocation, tvSeasonKey, legacyTvAdvance, TV_EQUAL_SHARE } from './tvAllocation.js'
 import { currentEucsTier } from './competitionMembership.js'
 
 export const ECONOMY_VERSION = 2
@@ -180,7 +181,7 @@ export function syncLoanFinancialCommitments(world) {
 
 export function annualOperatingIncome(team, { cashBasis = false } = {}) {
   const f = ensureClubEconomy(team)
-  const tv = clubMonthlyTvIncome(team) * 12
+  const tv = clubMonthlyTvIncome(team) * 12 * TV_EQUAL_SHARE
   const sponsors = ['main', 'secondary'].reduce((sum, slot) => {
     const c = team.sponsors?.[slot]
     if (!c) return sum
@@ -226,22 +227,32 @@ export function clubFinanceForecast(team, options = {}) {
   const weeklyWages = contractualWeeklyBill(team)
   const weeklyOperations = f.weeklyOperations ?? 0
   const matchForecast = scheduledMatchForecast(team, options)
+  const today = options.currentDate ?? options.league?.currentDate ?? team.managementDate ?? `${team.financeSeasonYear ?? 2025}-08-01`
+  const year = Number(today.slice(0,4)) - (Number(today.slice(5,7)) < 8 ? 1 : 0)
+  const competition = [options.league, ...(options.league?.otherLeagues ?? [])].find(l => l && (l.teamIds?.includes(team.id) || l.standings?.[team.id]))
+  const tvWorld = options.world ?? { teamsById: options.league?.teamsById ?? { [team.id]: team } }
+  const allocation = competition ? leagueTvAllocation(tvWorld, competition).find(row => row.teamId === team.id) : null
+  const tvPaid = competition && f.tvSettlements?.[tvSeasonKey(competition, year)]
+  const tvEqual = allocation?.equal ?? Math.floor(clubMonthlyTvIncome(team) * 12 * TV_EQUAL_SHARE)
+  const tvForecast = { date: `${year+1}-07-31`, equal: tvEqual, amount: tvPaid ? 0 : Math.max(0, tvEqual - legacyTvAdvance(team, year, competition)), paid: !!tvPaid }
   const operatingIncome = annualOperatingIncome(team, { cashBasis: true })
-  const nonMatchIncome = operatingIncome - estimatedAnnualMatchNet(team)
-  const annualIncome = matchForecast ? nonMatchIncome + matchForecast.net : operatingIncome
+  const nonMatchIncome = operatingIncome - estimatedAnnualMatchNet(team) - clubMonthlyTvIncome(team) * 12 * TV_EQUAL_SHARE
+  const annualMatchIncome = matchForecast?.net ?? estimatedAnnualMatchNet(team)
+  const annualIncome = nonMatchIncome + annualMatchIncome + tvForecast.amount
   const annualCosts = (weeklyWages + weeklyOperations) * 52
   const commitments = (team.players ?? []).reduce((sum, p) => sum + (p.loan ? 0 :
     (p.contract?.weeklyWage ?? 0) * (p.contract?.weeksRemaining ?? 0)), 0) +
     (f.outgoingLoanLiability ?? 0) + (f.incomingLoanLiability ?? 0)
-  return { cash: f.cash, weeklyWages, weeklyOperations, annualIncome, annualCosts, matchForecast,
+  return { cash: f.cash, weeklyWages, weeklyOperations, annualIncome, annualCosts, matchForecast, tvForecast,
     projectedCash: Math.round(f.cash + annualIncome - annualCosts), commitments: Math.round(commitments),
     weeklyWageLimit: f.weeklyWageLimit, debt: Math.max(0, -f.cash),
     months: Array.from({ length: 12 }, (_, i) => {
-      if (!matchForecast) return { month: i + 1, cash: Math.round(f.cash + (annualIncome - annualCosts) * (i + 1) / 12) }
-      const end = new Date(`${matchForecast.from}T12:00:00Z`)
+      const end = new Date(`${today}T12:00:00Z`)
       end.setUTCMonth(end.getUTCMonth() + i + 1)
-      const matchNet = matchForecast.matches.filter(m => m.date <= end.toISOString().slice(0, 10)).reduce((sum, m) => sum + m.net, 0)
-      return { month: i + 1, cash: Math.round(f.cash + (nonMatchIncome - annualCosts) * (i + 1) / 12 + matchNet) }
+      const endDate = end.toISOString().slice(0, 10)
+      const matchNet = matchForecast ? matchForecast.matches.filter(m => m.date <= endDate).reduce((sum, m) => sum + m.net, 0) : annualMatchIncome * (i+1) / 12
+      const tv = endDate >= tvForecast.date ? tvForecast.amount : 0
+      return { month: i + 1, cash: Math.round(f.cash + (nonMatchIncome - annualCosts) * (i + 1) / 12 + matchNet + tv) }
     }) }
 }
 

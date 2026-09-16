@@ -1,70 +1,33 @@
-/**
- * Pieniądze telewizyjne — pasywny, comiesięczny przychód klubów Ligi Europejskiej,
- * skalowany poziomem piramidy (Liga 1 dostaje zdecydowanie najwięcej — jak w realnych
- * kontraktach TV). Dotyczy tylko drużyn Ligi Europejskiej (`eucsTeamTier` → null dla
- * id UFA → brak wypłaty), więc UFA zostaje bez zmian.
- *
- * Wzorowane 1:1 na cyklu wypłat sponsorskich (`clubSponsors.js`) — ta sama kadencja
- * (1. dzień miesiąca), ta sama para funkcji (pojedyncza data / zakres dat).
- */
-
+/** TV rights are settled once at the end of the season. */
 import { adjustTransferBudget } from './transfers/clubFinances.js'
 import { formatUsd } from './transfers/moneyFormat.js'
-import { TV_MONTHLY_BY_TIER, clubMonthlyTvIncome } from './economyBalance.js'
+import { TV_MONTHLY_BY_TIER } from './economyBalance.js'
+import { leagueTvAllocation, tvSeasonKey, legacyTvAdvance } from './tvAllocation.js'
 
-/** Miesięczna kwota wg poziomu piramidy (EUR w kontekście Ligi Europejskiej). */
+// Compatibility for old integrations: monthly calls never transfer cash.
 export const TV_MONEY_MONTHLY_BY_TIER = TV_MONTHLY_BY_TIER
+export function processMonthlyTvPayouts() { return [] }
+export function processMonthlyTvPayoutsForRange() { return [] }
 
-function tvMonthlyAmountFor(team) {
-  return clubMonthlyTvIncome(team)
-}
-
-/**
- * Wypłata TV na 1. dzień miesiąca dla wszystkich drużyn Ligi Europejskiej w `world`.
- * Bezpieczne wołać wielokrotnie — jak sponsorzy, chroni się przez `lastMonthlyYm`.
- * @returns {{ teamId: string, amount: number }[]}
- */
-export function processMonthlyTvPayouts(world, dateIso) {
-  if (!world?.teamsById || !dateIso) return []
-  const ym = String(dateIso).slice(0, 7)
-  const day = Number(String(dateIso).slice(8, 10))
-  if (day !== 1) return []
-
+export function processSeasonEndTvPayouts(world, league, seasonYear, date = `${Number(seasonYear)+1}-07-31`) {
+  if (!world?.teamsById || !league || !Number.isFinite(Number(seasonYear)) || date < `${Number(seasonYear)+1}-07-31`) return []
+  const fixtures = (league.fixtures ?? []).filter(f => f.competition === 'league' || !f.competition)
+  if (fixtures.some(f => !f.bye && f.status !== 'completed')) return []
+  const key = tvSeasonKey(league, seasonYear)
   const results = []
-  const ids = world.teamIds ?? Object.keys(world.teamsById)
-  for (const id of ids) {
-    const team = world.teamsById[id]
-    if (!team) continue
-    const amount = tvMonthlyAmountFor(team)
-    if (amount <= 0) continue
-    if (!team.finances) team.finances = { transferBudget: 0, salaryBudget: 0 }
-    if (team.finances._tvLastMonthlyYm === ym) continue
-    adjustTransferBudget(team, amount, 'tv', dateIso)
-    team.finances._tvLastMonthlyYm = ym
-    results.push({ teamId: id, amount })
+  for (const row of leagueTvAllocation(world, league)) {
+    const team = world.teamsById[row.teamId]
+    team.finances ??= {}
+    if (team.finances.tvSettlements?.[key]) continue
+    const advance = legacyTvAdvance(team, seasonYear, league)
+    const amount = Math.max(0, row.amount - advance)
+    if (amount > 0) adjustTransferBudget(team, amount, 'tv', date)
+    team.finances.tvSettlements ??= {}
+    team.finances.tvSettlements[key] = { ...row, advance, amount, date }
+    if (amount > 0) results.push({ ...row, advance, amount })
   }
   return results
 }
-
-/** Wypłaty TV dla każdego 1. dnia w zakresie dat (włącznie). */
-export function processMonthlyTvPayoutsForRange(world, startIso, endIso) {
-  if (!world?.teamsById || !startIso || !endIso) return []
-  const results = []
-  const start = new Date(`${String(startIso).slice(0, 10)}T12:00:00`)
-  const end = new Date(`${String(endIso).slice(0, 10)}T12:00:00`)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return []
-
-  const cursor = new Date(start)
-  while (cursor <= end) {
-    if (cursor.getDate() === 1) {
-      const iso = cursor.toISOString().slice(0, 10)
-      results.push(...processMonthlyTvPayouts(world, iso))
-    }
-    cursor.setDate(cursor.getDate() + 1)
-  }
-  return results
-}
-
 function newTvMessageId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return `msg-tv-${crypto.randomUUID()}`
@@ -90,9 +53,9 @@ export function messagesFromTvPayouts(payouts, career, { date = null } = {}) {
       read: false,
       title: 'Wypłata telewizyjna',
       titleEn: 'TV rights payout',
-      body: `Na konto klubu wpłynęło ${formatUsd(mine.amount)} z praw telewizyjnych ligi.`,
-      bodyEn: `${formatUsd(mine.amount)} hit the club account from the league's TV rights deal.`,
-      payload: { kind: 'tv_payout', amount: mine.amount },
+      body: `Rozliczenie praw TV za sezon: część równa ${formatUsd(mine.equal)}, premia za ${mine.place}. miejsce ${formatUsd(mine.bonus)}. Wcześniejsze zaliczki: ${formatUsd(mine.advance ?? 0)}. Wypłata: ${formatUsd(mine.amount)}.`,
+      bodyEn: `Season TV settlement: equal share ${formatUsd(mine.equal)}, bonus for place ${mine.place}: ${formatUsd(mine.bonus)}. Previous advances: ${formatUsd(mine.advance ?? 0)}. Paid: ${formatUsd(mine.amount)}.`,
+      payload: { kind: 'tv_payout', ...mine },
     },
   ]
 }

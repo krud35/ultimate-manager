@@ -300,6 +300,7 @@ export {
   TV_MONEY_MONTHLY_BY_TIER,
   processMonthlyTvPayouts,
   processMonthlyTvPayoutsForRange,
+  processSeasonEndTvPayouts,
   messagesFromTvPayouts,
 } from './tvMoney.js'
 export {

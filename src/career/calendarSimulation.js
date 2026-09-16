@@ -25,8 +25,6 @@ import {
   processWeeklyWages,
   processMonthlySponsorPayouts,
   messagesFromSponsorPayouts,
-  processMonthlyTvPayouts,
-  messagesFromTvPayouts,
   processDelayedTransferReplies,
   processWeeklyFinancialHealth,
   messagesFromFinancialHealth,
@@ -171,12 +169,6 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
     inboxMessages.push(
       ...messagesFromSponsorPayouts(monthly, { ...career, league: nextLeague, world }, {
         kind: 'monthly',
-        date: offerDate,
-      }),
-    )
-    const monthlyTv = processMonthlyTvPayouts(world, offerDate)
-    inboxMessages.push(
-      ...messagesFromTvPayouts(monthlyTv, { ...career, league: nextLeague, world }, {
         date: offerDate,
       }),
     )

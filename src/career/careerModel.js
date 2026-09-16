@@ -1,6 +1,7 @@
 import { applyPendingSimulationScope } from './simulationScope.js'
 import { addManagerWelcome } from './managerCareer.js'
 import { buildDomesticWorldTemplate, createDomesticSeason, finishDomesticSeason, replenishCupRepresentatives } from './domesticWorld.js'
+import { processSeasonEndTvPayouts, messagesFromTvPayouts } from './tvMoney.js'
 import { ensureWorldManagers, recordManagerResults } from './managerProfiles.js'
 import { initializeInternationalClubCups, snapshotInternationalQualification } from './internationalClubCups.js'
 import { reconcileDomesticCalendar } from '../league/domesticCalendar.js'
@@ -635,6 +636,12 @@ export function finalizeSeason(career) {
     })
     const cupMsg = messageFromCupPlacementPrize(probe, { date: career.league?.currentDate })
     if (cupMsg) prizeInbox.push(cupMsg)
+  }
+
+  if (worldAfterCycle) {
+    const tv = [career.league, ...(career.league.otherLeagues ?? [])].flatMap(league =>
+      processSeasonEndTvPayouts(worldAfterCycle, league, career.seasonYear, career.league.currentDate))
+    prizeInbox.push(...messagesFromTvPayouts(tv, career, { date: career.league.currentDate }))
   }
 
   // Bonusy kontraktowe zawodników (spełnione warunki) + kara morale za złamane obietnice.
