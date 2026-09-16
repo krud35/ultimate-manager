@@ -60,7 +60,7 @@ for (const tier of [1, 2, 3]) {
     for (const team of template.teams) {
       const values = team.players.map(p => { checkSkills(p.skills); return getOverallRating(p.skills) })
       const average = mean(values)
-      assert(Math.abs(average - EUCS_ROSTER_BALANCE[tier].mean) <= 3.1, 'Bounded club strength')
+      assert(Math.abs(average - EUCS_ROSTER_BALANCE[tier].mean) <= 5, 'Club baseline allows hierarchy and exceptional individuals')
       ratings.push(...values)
       teamMeans.push(average)
       values.sort((a, b) => b - a)
@@ -76,10 +76,12 @@ for (const tier of [1, 2, 3]) {
   }
   const average = mean(ratings)
   const elitePct = ratings.filter(v => v >= 90).length / ratings.length * 100
-  assert(Math.abs(average - EUCS_ROSTER_BALANCE[tier].mean) < 0.4)
-  const bounds = { 1: [4, 6], 2: [1, 2], 3: [0, 0.5] }[tier]
+  assert(Math.abs(average - EUCS_ROSTER_BALANCE[tier].mean) < 1)
+  const bounds = { 1: [1, 2.2], 2: [0.1, 0.9], 3: [0, 0.3] }[tier]
   assert(elitePct >= bounds[0] && elitePct <= bounds[1], `Tier ${tier} elite share ${elitePct}`)
-  summary.push({ tier, players: ratings.length, mean: +average.toFixed(2), elitePct: +elitePct.toFixed(2),
+  const generationalPct = ratings.filter(v => v >= 93).length / ratings.length * 100
+  assert(generationalPct <= 0.3, `Rare 93+ players: ${generationalPct}`)
+  summary.push({ tier, players: ratings.length, mean: +average.toFixed(2), elitePct: +elitePct.toFixed(2), generationalPct: +generationalPct.toFixed(2),
     top7: +mean(top7).toFixed(2), top14: +mean(top14).toFixed(2), bench: +mean(bench).toFixed(2),
     minTeam: +Math.min(...teamMeans).toFixed(2), maxTeam: +Math.max(...teamMeans).toFixed(2) })
 }

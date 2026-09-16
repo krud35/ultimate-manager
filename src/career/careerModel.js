@@ -290,6 +290,12 @@ function createEucsCareer(slotIndex, options) {
       tacticalIdentity: template.tacticalByTeamId?.[t.id] ?? null,
     })),
   })
+  if (options.worldConfig) {
+    world.worldConfig = { international: {
+      nationals: options.worldConfig.international?.nationals !== false,
+      europe: false, paucc: false, aoucc: false, wucc: false,
+    } }
+  }
   rollAiCoachProfilesForWorld(world, playerTeamId, financeSeed)
   initWorldPlayerStats(world, { playerTeamId })
   initWorldPlayerDevelopment(world, { playerTeamId })
@@ -370,6 +376,8 @@ function createEucsCareer(slotIndex, options) {
     phase: 'active',
     rosterMode: 'random',
     competition: 'eucs',
+    managerProfile: options.managerProfile ?? null,
+    worldConfig: world.worldConfig,
     pyramid: { tier },
     usedFictionalFill: false,
     fictionalTeamCount: 0,
@@ -399,6 +407,7 @@ function createEucsCareer(slotIndex, options) {
   // bywa od razu rokiem turniejowym (ME 2027 startuje bez kwalifikacji, kariera zaczyna
   // się za późno na sezon kwalifikacyjny przed nim), więc trzeba to sprawdzić już tutaj,
   // nie tylko przy starcie kolejnego sezonu (startNextSeasonEucs).
+  ensureWorldManagers(world, { managerProfile: options.managerProfile, playerTeamId, seasonYear, currentDate: league.currentDate })
   ensureCareerNationalTeams(draftCareer)
   maybeStartNationalTeamSeason(draftCareer, { seasonYear, calendar: league.calendar })
 

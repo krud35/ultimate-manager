@@ -14,6 +14,7 @@ import TeamStartPreviewModal, {
   buildTeamStartPreview,
 } from './TeamStartPreviewModal'
 import EucsTeamPreviewModal from './EucsTeamPreviewModal'
+import { EUCS_STARTING_SEASON_YEAR } from '../career/constants'
 
 export default function UfaCareerSetup({
   slotIndex,
@@ -24,13 +25,14 @@ export default function UfaCareerSetup({
   externalError = '',
   initialManagerName = '',
   embedded = false,
+  initialCompetition = 'ufa',
 }) {
   const t = careerFlowStrings(lang)
   const years = HISTORICAL_YEARS.length ? HISTORICAL_YEARS : [2025]
   const defaultYear = years.includes(2025) ? 2025 : years[years.length - 1]
 
   const [managerName, setManagerName] = useState(initialManagerName)
-  const [competition, setCompetition] = useState('ufa')
+  const [competition, setCompetition] = useState(initialCompetition)
   const [eucsTeamId, setEucsTeamId] = useState('')
   const [eucsPreviewTeamId, setEucsPreviewTeamId] = useState(null)
   const [eucsPreviewAnchorTop, setEucsPreviewAnchorTop] = useState(null)
@@ -156,6 +158,8 @@ export default function UfaCareerSetup({
         slotIndex,
         managerName: name,
         playerTeamId: eucsTeamId,
+        playerTeamName: eucsTiers.flatMap(({ teams }) => teams).find(team => team.id === eucsTeamId)?.name,
+        seasonYear: EUCS_STARTING_SEASON_YEAR,
         competition: 'eucs',
       })
       return

@@ -46,8 +46,8 @@ function initialAge(rng) {
   return min + Math.floor(rng() * width)
 }
 
-/** New UltiLeague rosters only. Ensure several options for both seven-player lines. */
-export function assignRosterArchetypes(players, tier, rng, coverage) {
+/** New senior rosters only. Ensure several options for both seven-player lines. */
+export function assignRosterArchetypes(players, tier, rng, coverage, { preserveAge = false } = {}) {
   const n = players.length
   const handlers = Math.max(3, Math.round(n * 0.25))
   const cutters = Math.max(4, Math.round(n * 0.32))
@@ -70,7 +70,7 @@ export function assignRosterArchetypes(players, tier, rng, coverage) {
   const assignments = shuffle(roles.slice(0, n), rng)
   players.forEach((p, index) => {
     p.archetype = assignments[index]
-    p.age = initialAge(rng)
+    if (!preserveAge || !Number.isFinite(p.age)) p.age = initialAge(rng)
     // Talent is independent of playing role and personality. League shifts the
     // probability distribution, not everyone's remaining development by +4/+6.
     p.generationTalent = Math.max(0, Math.min(1, rng() + (2 - tier) * 0.08))

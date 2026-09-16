@@ -8,9 +8,9 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 const outfile = path.resolve('artifacts/.career-ui-render-test.mjs')
-await build({ stdin: { contents: `export {default as SimulationOptions} from './src/components/WorldSimulationOptions.jsx'; export {default as CountryChoice} from './src/components/WorldCountryChoice.jsx'; export {default as App} from './src/App.jsx'; export {default as Staff} from './src/components/StaffManagementPanel.jsx'; export {default as Finances} from './src/components/ClubFinancesView.jsx'; export {default as Menu} from './src/components/MainMenuScreen.jsx'; export {default as Wizard} from './src/components/NewCareerScreen.jsx'; export {default as Leagues} from './src/components/DomesticLeaguesView.jsx'; export {default as Cup} from './src/components/CupView.jsx'; export {UiLangProvider} from './src/ui/UiLangContext.jsx'; export {MANAGER_BACKGROUND_QUESTIONS} from './src/career/managerProfiles.js';`, resolveDir: process.cwd() }, outfile, bundle: true, platform: 'node', format: 'esm', jsx: 'automatic', external: ['react', 'react-dom', 'react/jsx-runtime'], loader: { '.css': 'empty' } })
+await build({ stdin: { contents: `export {default as SimulationOptions} from './src/components/WorldSimulationOptions.jsx'; export {default as CountryChoice} from './src/components/WorldCountryChoice.jsx'; export {default as App} from './src/App.jsx'; export {default as Staff} from './src/components/StaffManagementPanel.jsx'; export {default as Finances} from './src/components/ClubFinancesView.jsx'; export {default as Menu} from './src/components/MainMenuScreen.jsx'; export {default as LeagueSetup} from './src/components/UfaCareerSetup.jsx'; export {default as Wizard} from './src/components/NewCareerScreen.jsx'; export {default as Leagues} from './src/components/DomesticLeaguesView.jsx'; export {default as Cup} from './src/components/CupView.jsx'; export {UiLangProvider} from './src/ui/UiLangContext.jsx'; export {MANAGER_BACKGROUND_QUESTIONS} from './src/career/managerProfiles.js';`, resolveDir: process.cwd() }, outfile, bundle: true, platform: 'node', format: 'esm', jsx: 'automatic', external: ['react', 'react-dom', 'react/jsx-runtime'], loader: { '.css': 'empty' } })
 try {
-  const { SimulationOptions, CountryChoice, App, Staff, Finances, Menu, Wizard, Leagues, Cup, UiLangProvider, MANAGER_BACKGROUND_QUESTIONS } = await import(pathToFileURL(outfile).href)
+  const { SimulationOptions, CountryChoice, App, Staff, Finances, Menu, Wizard, LeagueSetup, Leagues, Cup, UiLangProvider, MANAGER_BACKGROUND_QUESTIONS } = await import(pathToFileURL(outfile).href)
   const render = (component, props) => renderToStaticMarkup(React.createElement(UiLangProvider, null, React.createElement(component, props)))
   const country=DOMESTIC_COUNTRIES.find(c=>c.id==='fr')
   const selected=setCountryDepth(setCountryMode(defaultWorldConfig(),'fr','playable'),'fr',2)
@@ -36,6 +36,12 @@ try {
   assert.match(menu, /disabled=""[^>]*>Wczytaj grę/)
   assert.match(render(App, {}), /Zacznij nową grę|Start a new game/)
   for (const lang of ['pl', 'en']) {
+    const eucsSetup = render(LeagueSetup, { lang, slotIndex: 0, embedded: true, initialCompetition: 'eucs' })
+    for (const tier of [1, 2, 3]) assert.ok(eucsSetup.includes('UltiLeague ' + tier))
+    assert.match(eucsSetup, /Mooncatchers/)
+    assert.doesNotMatch(eucsSetup, /Toronto Rush/)
+    const ufaSetup = render(LeagueSetup, { lang, slotIndex: 0, embedded: true, initialCompetition: 'ufa' })
+    assert.doesNotMatch(ufaSetup, /Mooncatchers/)
     const wizard = render(Wizard, { lang, slotIndex: 0 })
     assert.match(wizard, /given-name/)
     assert.match(wizard, /family-name/)

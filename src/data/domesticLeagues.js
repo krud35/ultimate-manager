@@ -149,11 +149,12 @@ export function estimateWorldCost(input) {
     if (mode === 'off') continue
     if (mode === 'playable') playableClubs += league.teams.length
     else backgroundClubs += league.teams.length
-    players += league.teams.reduce((n, t) => n + Math.max(24, t.rawPlayers.length), 0)
+    // Missing rosters average 22.5 players (uniform 16–29); known rosters fill to 16.
+    players += league.teams.reduce((n, t) => n + (t.rawPlayers.length ? Math.max(16, t.rawPlayers.length) : 22.5), 0)
   }
   const internationalCost = Object.values(config.international).filter(Boolean).length * 4
   const score = playableClubs * 4 + backgroundClubs * .6 + internationalCost
-  return { playableClubs, backgroundClubs, clubs: playableClubs + backgroundClubs, players, score,
+  return { playableClubs, backgroundClubs, clubs: playableClubs + backgroundClubs, players: Math.round(players), score,
     gameSpeed: score < 400 ? 'fast' : score < 900 ? 'medium' : 'low',
     load: score < 150 ? 'low' : score < 400 ? 'medium' : 'high', relativeSpeed: Math.round(100 / Math.max(1, score / 80)) }
 }

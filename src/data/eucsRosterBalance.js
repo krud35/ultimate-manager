@@ -2,12 +2,12 @@ import { ROSTER_STRUCTURE_WEIGHTS, sampleRosterWeight, rosterQualityOffset } fro
 import { PLAYER_ARCHETYPES } from '../models/playerArchetypes.js'
 import { clampOverallTarget, scaleSkillsToTargetOvr } from '../models/playerStats.js'
 
-// Population targets for NEW careers. Keep skillsGen unchanged: existing saves
+// Club baselines for NEW careers. Keep skillsGen unchanged: existing saves
 // must not reroll their rosters when this balance configuration changes.
 export const EUCS_ROSTER_BALANCE = {
-  1: { mean: 81, elite: [91, 95], good: [84, 88] },
-  2: { mean: 76, elite: [87, 92], good: [79, 83] },
-  3: { mean: 71, elite: [80, 86], good: [74, 78] },
+  1: { mean: 81 },
+  2: { mean: 76 },
+  3: { mean: 71 },
 }
 
 /** Small samples shrink towards the tier average; placeholders carry no signal.
@@ -25,15 +25,20 @@ export function eucsResultAdjustment(team, tierTeams) {
   return Math.max(-2.5, Math.min(2.5, (team.winPct - mean) / 50 * 5 * confidence))
 }
 
-/** Variable roster hierarchy; explicitly calibrate its mean and upper tail.
- * A common shift of target ratings compensates for roster size and the OVR floor.
- */
+/** Compatibility entry point for the European pyramid; existing saves never reroll. */
 export function applyEucsOvrDistribution(players, tier, adjustment, rng, coverage) {
   const profile = EUCS_ROSTER_BALANCE[tier]
   if (!profile) throw new RangeError(`Unknown UltiLeague tier: ${tier}`)
+  return applyClubOvrDistribution(players, { tier, strength: profile.mean + adjustment, rng, coverage })
+}
+
+/** Club-relative hierarchy with an independent, rare world-class draw.
+ * Strength is a baseline, not an exact mean to enforce by inflating everyone.
+ */
+export function applyClubOvrDistribution(players, { tier, strength, rng, coverage }) {
   if (!players.length) return
   const n = players.length
-  const shape = sampleRosterWeight(ROSTER_STRUCTURE_WEIGHTS, tier, rng)
+  const shape = sampleRosterWeight(ROSTER_STRUCTURE_WEIGHTS, Math.min(3, Math.max(1, tier)), rng)
   const order = players.map(p => ({ p, quality: (p.generationTalent ?? 0.5) * 0.55
     + (p.age >= 23 && p.age <= 30 ? 0.15 : p.age <= 21 ? -0.08 : 0) + rng() * 0.3 }))
     .sort((a, b) => b.quality - a.quality)
@@ -53,24 +58,24 @@ export function applyEucsOvrDistribution(players, tier, adjustment, rng, coverag
       order.splice(start, 0, ...selected)
     }
   }
-  const spread = tier === 1 ? 0.85 : 1
-  const targets = order.map((_, i) => profile.mean + spread * rosterQualityOffset(shape, i, n) + (rng() - 0.5) * 1.5)
-  const meanTarget = profile.mean + adjustment
-  let low = -30
-  let high = 30
-  let best = null
-  let error = Infinity
-  for (let pass = 0; pass < 40; pass += 1) {
-    const delta = (low + high) / 2
-    const ratings = targets.map(t => clampOverallTarget(t + delta))
-    const mean = ratings.reduce((sum, r) => sum + r, 0) / n
-    if (Math.abs(mean - meanTarget) < error) {
-      best = ratings
-      error = Math.abs(mean - meanTarget)
+  const offsets = order.map((_, i) => 0.6 * rosterQualityOffset(shape, i, n))
+  // A small correction keeps shapes comparable without forcing an exact average.
+  const center = Math.max(-1.5, Math.min(1.5, offsets.reduce((sum, v) => sum + v, 0) / n))
+  const rarity = Math.max(0.15, Math.min(1, (strength - 71) / 10)) * 0.55 ** (tier - 1)
+  order.forEach(({ p }, i) => {
+    let target = strength + offsets[i] - center + (rng() - 0.5) * 1.5
+    // Smoothly compress the ordinary upper tail below 89, avoiding a pile at a hard cap.
+    if (target > 86) target = 86 + (target - 86) / (1 + (target - 86) / 3)
+    const exceptionalRoll = rng()
+    p.generationClass = 'regular'
+    if (exceptionalRoll < 0.0015 * rarity) {
+      target = 93 + Math.floor(rng() * 3)
+      p.generationClass = 'generational'
+    } else if (exceptionalRoll < 0.018 * rarity) {
+      target = 90 + Math.floor(rng() * 3)
+      p.generationClass = 'world_class'
     }
-    if (mean < meanTarget) low = delta
-    else high = delta
-  }
-  order.forEach(({ p }, i) => { p.skills = scaleSkillsToTargetOvr(p.skills, best[i]) })
+    p.skills = scaleSkillsToTargetOvr(p.skills, clampOverallTarget(target))
+  })
   return shape
 }

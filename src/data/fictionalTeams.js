@@ -130,7 +130,7 @@ export function createFictionalTeams(count, seedKey, usedIds = new Set()) {
 
   return picked.map((franchise) => {
     const teamRng = mulberry32(hashSeed(`${seedKey}:${franchise.id}`))
-    const rosterSize = 22 + Math.floor(teamRng() * 8)
+    const rosterSize = 16 + Math.floor(teamRng() * 14)
     const players = []
     for (let i = 0; i < rosterSize; i += 1) {
       players.push(inventRawPlayer(teamRng, i))

@@ -24,10 +24,10 @@ assert.equal(league.matchHistory.length, 1)
 
 home.simulationMode = 'off'; home.countryId = 'pl'; home.players = home.players.slice(0, 5)
 replenishCupRepresentatives(world, 2027)
-assert.equal(home.players.length, 24)
-assert.equal(new Set(home.players.map(p => p.id)).size, 24)
+assert.equal(home.players.length, 16)
+assert.equal(new Set(home.players.map(p => p.id)).size, 16)
 replenishCupRepresentatives(world, 2027)
-assert.equal(home.players.length, 24)
+assert.equal(home.players.length, 16)
 
 const cup = { format: 'domestic', status: 'complete', championTeamId: home.id, matches: [{ homeTeamId: home.id, awayTeamId: away.id, round: 'final', status: 'completed' }] }
 const prizes = applyCupPlacementPrizes(cup, world.teamsById)

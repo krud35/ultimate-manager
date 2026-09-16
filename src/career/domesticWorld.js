@@ -4,19 +4,40 @@ import { DOMESTIC_LEAGUES, normalizeWorldConfig, domesticKey } from '../data/dom
 import { ACADEMY_COUNTRIES } from '../data/academyScoutGeography.js'
 import { createAcademyProspect } from './academy.js'
 import { createRng } from '../matchEngine/rng.js'
-import { applyRandomOvrBands } from '../data/randomRosterSkills.js'
+import { rollRandomSkillsForRoster } from '../data/randomRosterSkills.js'
+import { applyClubOvrDistribution } from '../data/eucsRosterBalance.js'
+import { sampleRosterCoverage } from '../data/rosterStructures.js'
+import { assignRosterArchetypes, finalizeGeneratedPotential } from '../models/playerArchetypes.js'
+import { ensurePlayerTraits } from '../models/playerTraits.js'
 import { createStandings, standingsTable } from '../league/standings.js'
 import { buildDomesticCalendar, domesticFixtures, reconcileDomesticCalendar } from '../league/domesticCalendar.js'
 import { createDomesticCup } from '../league/domesticCup.js'
 import { syncCupMatchesIntoFixtures } from '../league/cupBracket.js'
 import { ensurePlayerContract } from './transfers/playerContracts.js'
 
+/** Shared senior model, applied once when creating a new club. */
+function initializeDomesticRoster(players, source, seed, rng) {
+  const tier = source.tier ?? 1
+  const profileTier = Math.min(3, Math.max(1, tier))
+  const random = () => rng.float()
+  const rosterCoverage = sampleRosterCoverage(profileTier, random)
+  rollRandomSkillsForRoster(players, `${seed}|${source.id}|senior-v2`)
+  assignRosterArchetypes(players, profileTier, random, rosterCoverage, { preserveAge: true })
+  const countryStrength = ACADEMY_COUNTRIES[source.countryId]?.strength ?? 55
+  const strength = Math.max(67, Math.min(83, 78 + (countryStrength - 55) / 10 - (tier - 1) * 5))
+    + Math.max(-2.5, Math.min(2.5, source.skillAdjustment ?? 0)) + (random() - 0.5) * 2
+  const rosterShape = applyClubOvrDistribution(players, { tier, strength, rng: random, coverage: rosterCoverage })
+  finalizeGeneratedPotential(players)
+  for (const player of players) ensurePlayerTraits(player, { force: true })
+  return { rosterShape, rosterCoverage }
+}
+
 /** Off leagues keep only their cup representative; replace retired roster members annually. */
 export function replenishCupRepresentatives(world, year) {
   for (const team of Object.values(world.teamsById)) {
     if (team.simulationMode !== 'off') continue
     const rng = createRng(year * 1709 + team.id.length * 31)
-    while (team.players.length < 24) {
+    while (team.players.length < 16) {
       const player = createAcademyProspect(() => rng.float(), { teamId: team.id, seasonYear: year, countryId: team.countryId, source: 'cup-representative', index: team.players.length })
       Object.assign(player, { inAcademy: false, status: 'club', age: 19 + Math.floor(rng.float() * 10) })
       ensurePlayerContract(player, { seasonYear: year })
@@ -40,6 +61,7 @@ export function buildDomesticWorldTemplate(input, year, seed) {
     for (const source of entries) {
       const rng = createRng(seed + clubs.length * 1709)
       const players = []
+      const targetSize = source.rawPlayers.length ? 16 : rng.int(16, 29)
       for (const record of source.rawPlayers) {
         const key = domesticKey(`${record.firstName} ${record.lastName}`)
         if (seenPlayers.has(key)) { importConflicts.push({ name: key, retainedAt: seenPlayers.get(key), skippedAt: source.id }); continue }
@@ -50,15 +72,15 @@ export function buildDomesticWorldTemplate(input, year, seed) {
           domesticReference: { ...record, generatedAgeAndAbilities: true }, inAcademy: false, status: 'club', contract: null })
         players.push(p)
       }
-      while (players.length < 24) {
+      while (players.length < targetSize) {
         const p = createAcademyProspect(() => rng.float(), { teamId: source.id, seasonYear: year, countryId: source.countryId, source: 'domestic-fill', index: players.length })
         Object.assign(p, { age: 18 + Math.floor(rng.float() * 18), inAcademy: false, status: 'club', contract: null })
         players.push(p)
       }
-      applyRandomOvrBands(players, `${seed}|${source.id}`, Math.max(-5, (ACADEMY_COUNTRIES[source.countryId].strength - 55) / 10 - (source.tier - 1) * 2) + (source.skillAdjustment ?? 0))
+      const rosterProfile = initializeDomesticRoster(players, source, seed, rng)
       const identity = { ...source }
       delete identity.rawPlayers
-      clubs.push({ ...identity, players, namePl: source.name, nameEn: source.name, shortName: source.name.slice(0, 3).toUpperCase(),
+      clubs.push({ ...identity, ...rosterProfile, players, namePl: source.name, nameEn: source.name, shortName: source.name.slice(0, 3).toUpperCase(),
         primaryColor: ['#0369a1', '#166534', '#b91c1c', '#7c3aed'][clubs.length % 4], awayColor: '#f1f5f9', simulationMode: mode === "background" ? "off" : mode, backgroundSimulation: mode === "background" })
     }
   }
@@ -66,11 +88,12 @@ export function buildDomesticWorldTemplate(input, year, seed) {
   if (config.international.wucc) for (const [countryId, meta] of Object.entries(ACADEMY_COUNTRIES).filter(([, c]) => c.continent === 'africa')) {
     if (clubs.some(t => t.countryId === countryId)) continue
     const id = `cup-representative-${countryId}`, rng = createRng(seed + clubs.length * 1709)
-    const players = Array.from({ length: 24 }, (_, index) => {
+    const players = Array.from({ length: rng.int(16, 29) }, (_, index) => {
       const player = createAcademyProspect(() => rng.float(), { teamId: id, seasonYear: year, countryId, source: 'cup-representative', index })
       return { ...player, age: 19 + Math.floor(rng.float() * 15), inAcademy: false, status: 'club', contract: null }
     })
-    clubs.push({ id, name: `${meta.labelEn} Cup Representative`, nameEn: `${meta.labelEn} Cup Representative`, namePl: `Reprezentant pucharowy: ${meta.labelPl}`, countryId, country: meta.nameEn, tier: 1, simulationMode: 'off', isFictional: true, players })
+    const rosterProfile = initializeDomesticRoster(players, { id, countryId, tier: 1 }, seed, rng)
+    clubs.push({ id, ...rosterProfile, name: `${meta.labelEn} Cup Representative`, nameEn: `${meta.labelEn} Cup Representative`, namePl: `Reprezentant pucharowy: ${meta.labelPl}`, countryId, country: meta.nameEn, tier: 1, simulationMode: 'off', isFictional: true, players })
   }
   return { teams: clubs, worldConfig: config, importConflicts, usedFictionalFill: false }
 }

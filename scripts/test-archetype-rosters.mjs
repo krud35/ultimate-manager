@@ -11,7 +11,7 @@ const shapes = new Set()
 const ages = []
 for (const tier of [1, 2, 3]) for (let seed = 1; seed <= 10; seed++) {
   for (const team of buildEucsLeagueTemplate({ tier, seed }).teams) {
-    assert(team.players.length >= 21)
+    assert(team.players.length >= 16)
     assert.equal(new Set(team.players.map(p => p.id)).size, team.players.length)
     assert.deepEqual(eucsTeamRosterPreview(team.id, seed), team.players.map(({ jersey, firstName, lastName }) => ({ jersey, firstName, lastName })))
     shapes.add(team.rosterShape)

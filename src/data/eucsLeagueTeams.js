@@ -183,7 +183,7 @@ function inventRawPlayer(rng, index) {
 /** Deterministic reserves shared by preview and career generation. */
 function fillReserveRows(rawRows, teamId, seed) {
     const reserveRng = mulberry32(hashSeed(seed, teamId, 'reserve-fill-v1'))
-    while (rawRows.length < 21) {
+    while (rawRows.length < 16) {
       const row = inventRawPlayer(reserveRng, rawRows.length)
       row.jersey = Math.max(0, ...rawRows.map(p => p.jersey ?? 0)) + 1
       row.generatedReserve = true
@@ -207,7 +207,7 @@ export function eucsTeamRosterPreview(teamId, seed) {
     return fillReserveRows(realRows, teamId, effectiveSeed).map((p) => ({ jersey: p.jersey, firstName: p.firstName, lastName: p.lastName }))
   }
   const teamRng = mulberry32(hashSeed(effectiveSeed, raw.id, 'roster'))
-  const rosterSize = 22 + Math.floor(teamRng() * 8)
+  const rosterSize = 16 + Math.floor(teamRng() * 14)
   const rows = []
   for (let i = 0; i < rosterSize; i += 1) {
     const p = inventRawPlayer(teamRng, i)
@@ -261,7 +261,7 @@ export function buildEucsLeagueTemplate(options) {
       rawRows = realRows
     } else {
       const teamRng = mulberry32(hashSeed(seed, rawTeam.id, 'roster'))
-      const rosterSize = 22 + Math.floor(teamRng() * 8)
+      const rosterSize = 16 + Math.floor(teamRng() * 14)
       rawRows = []
       for (let i = 0; i < rosterSize; i += 1) {
         rawRows.push(inventRawPlayer(teamRng, i))
