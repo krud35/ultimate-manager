@@ -4,7 +4,7 @@ import { playerTravelSec, selectDiscIntercept } from './discIntercept.js'
 import { sampleContinuedDisc } from './discTrajectory.js'
 import { perceivePlayers } from './playerPerception.js'
 import { continuationValue } from './teamCoordination.js'
-import { attackDirectionX, opponentGoalLineM } from '../fieldDimensions.js'
+import { attackDirectionX, opponentGoalLineM, fieldCenterY } from '../fieldDimensions.js'
 import { THROW_TYPE, throwProfile } from '../throwTypes.js'
 
 /**
@@ -639,6 +639,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     rng,
     setupElapsedMs = 0,
     postCatchReorg = false,
+    pullFlow = false,
     lastThrowerId = null,
     afterTurnover = false,
     hardStallCount = stallCount,
@@ -859,6 +860,10 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     }
 
     let score = situation.throwWindowScore
+    if (pullFlow && isDump && distFromThrower <= 18 && forwardProgress >= -1) {
+      const centering = Math.abs((throwerPos?.y ?? disc.y) - fieldCenterY()) - Math.abs(catchPt.y - fieldCenterY())
+      score += 25 + Math.min(12, Math.max(0, forwardProgress)) + Math.max(0, centering)
+    }
     if (continuationWindow && isContinuationCut) {
       score += 22 + speed * 4
       if (agent.state === CUTTER_STATE.ACTIVE_CUT) score += 12

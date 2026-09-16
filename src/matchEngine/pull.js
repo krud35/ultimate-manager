@@ -1,4 +1,4 @@
-import { subStat as getSubStat } from './ai/statFormulas.js'
+import { getSubStat } from '../models/playerStats.js'
 import { FIELD_DIMENSIONS as F, attackDirectionX, clampFieldX, clampFieldY } from './fieldDimensions.js'
 import { layoutPlayersOnField, discPositionFromFieldMeters } from './fieldViz.js'
 import { normalizeWind } from './wind.js'
@@ -9,100 +9,169 @@ import { offenseLineSlotsForAttackStyle } from './offenseLineSlots.js'
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 const inside = p => p.x >= 0 && p.x <= F.lengthM && p.y >= 0 && p.y <= F.widthM
+const pulling = p => getSubStat(p?.skills, 'throwing', 'pulling')
+export const selectPuller = lineup => [...lineup].sort((a, b) => pulling(b) - pulling(a))[0]
 
-/** Pulls are not pass attempts: a grounded pull keeps receiving possession. */
+/** Exact first crossing of the boundary, including a roller crossing two edges in one tick. */
+export function pullBoundaryExit(from, to) {
+  const dx = to.x - from.x, dy = to.y - from.y
+  const times = []
+  if (to.x < 0) times.push((0 - from.x) / dx)
+  if (to.x > F.lengthM) times.push((F.lengthM - from.x) / dx)
+  if (to.y < 0) times.push((0 - from.y) / dy)
+  if (to.y > F.widthM) times.push((F.widthM - from.y) / dy)
+  const t = Math.min(1, ...times.filter(t => t >= 0 && t <= 1))
+  return { x: from.x + dx * t, y: from.y + dy * t }
+}
+
+/** Choose the intended pull first, then execute it within the puller's range and control. */
+export function planPull({ puller, possessionTeam, rng, wind, pullType = 'auto' }) {
+  const sign = attackDirectionX(possessionTeam)
+  const start = { x: sign > 0 ? F.lengthM - F.endzoneM : F.endzoneM, y: F.widthM / 2 }
+  const skill = clamp(pulling(puller) / 100, 0, 1)
+  const w = normalizeWind(wind)
+  const wx = Math.cos(w.directionDeg * Math.PI / 180) * w.speedMps
+  const wy = Math.sin(w.directionDeg * Math.PI / 180) * w.speedMps
+  const tail = -sign * wx
+  const typeRoll = rng.float()
+  const type = ['roller', 'hanging'].includes(pullType) ? pullType
+    : typeRoll < (w.speedMps > 5 ? .32 : .07) ? 'roller' : 'hanging'
+  const roller = type === 'roller'
+  const side = wy ? Math.sign(wy) : (rng.float() < .5 ? -1 : 1)
+  const maxDistanceM = clamp(38 + skill * 42 + tail * 1.3, 22, 86)
+  const intendedDistanceM = Math.min(roller ? 61 : 72, maxDistanceM)
+  const distanceErrorM = (rng.float() - .5) * (3 + (1 - skill) * 22)
+  const distanceM = clamp(intendedDistanceM + distanceErrorM, 18, maxDistanceM)
+  const intendedHangMs = (roller ? 2300 : 5800) + tail * 60
+  const hangMs = Math.round(clamp(intendedHangMs + (rng.float() - .5) * (200 + (1 - skill) * 2000), 1600, 7000))
+  const aim = { x: start.x - sign * intendedDistanceM, y: roller ? F.widthM / 2 + side * 9 : F.widthM / 2 }
+  const lateralErrorM = (rng.float() - .5) * (3 + (1 - skill) * 30) + wy * (1 - skill) * 1.6
+  const landing = { x: start.x - sign * distanceM, y: aim.y + lateralErrorM }
+  const rollSpeed = roller ? 6 + skill * 4 : 0
+  return { type, roller, start, aim, landing, maxDistanceM, intendedDistanceM, distanceM,
+    intendedHangMs, hangMs, distanceErrorM, lateralErrorM, peakHeightM: roller ? 3 : 12,
+    rollVelocity: { x: -sign * rollSpeed * .75, y: side * rollSpeed * .66 + wy * .1 } }
+}
+
+/** Pulls are not pass attempts; landing on the ground keeps receiving possession. */
 export function simulatePull({ offenseLineup, defenseLineup, possessionTeam, offenseTactics,
-  defenseTactics, attackStyle, defenseStyle, rng, wind, collectFrames = true }) {
+  defenseTactics, attackStyle, defenseStyle, rng, wind, collectFrames = true, pullType = defenseTactics?.pullType ?? 'auto' }) {
   const sign = attackDirectionX(possessionTeam)
   const ownLine = sign > 0 ? F.endzoneM : F.lengthM - F.endzoneM
-  const pullLine = F.lengthM - ownLine
-  const puller = [...defenseLineup].sort((a,b) => getSubStat(b,'throwing','pulling') - getSubStat(a,'throwing','pulling'))[0]
-  const receiver = [...offenseLineup].sort((a,b) => {
-    const score = p => (resolvePlayerSubRole(offenseTactics,p.id,offenseLineSlotsForAttackStyle(attackStyle)[offenseLineup.indexOf(p)]) === 'primary_handler' ? 100 : 0)
-      + (p.position === 'Handler' || p.role === 'handler' ? 30 : 0) + getSubStat(p,'offensive','discReading')
-    return score(b)-score(a)
+  const slots = offenseLineSlotsForAttackStyle(attackStyle)
+  const subRole = p => resolvePlayerSubRole(offenseTactics, p.id, slots[offenseLineup.indexOf(p)])
+  const puller = selectPuller(defenseLineup)
+  const receiver = [...offenseLineup].sort((a, b) => {
+    const score = p => (subRole(p) === 'primary_handler' ? 100 : 0) + getSubStat(p.skills, 'offensive', 'discReading')
+    return score(b) - score(a)
   })[0]
-  const skill = clamp(getSubStat(puller,'throwing','pulling') / 100, 0, 1)
-  const w = normalizeWind(wind)
-  const wx = Math.cos(w.directionDeg * Math.PI/180)*w.speedMps
-  const wy = Math.sin(w.directionDeg * Math.PI/180)*w.speedMps
-  const tail = -sign*wx
-  const roller = rng.float() < (w.speedMps > 5 ? 0.32 : 0.07)
-  const distance = clamp(40 + skill*34 + tail*1.3 + (rng.float()-.5)*14, 28, 84)
-  const hangMs = Math.round((roller ? 2 + skill : 3.2 + skill*3 + tail*.06)*1000)
-  // Aim safely inside. Residual wind/error, rather than an arbitrary OB coin flip.
-  const landing = { x: pullLine-sign*distance,
-    y: F.widthM/2 + (rng.float()-.5)*(4+(1-skill)*38) + wy*(1-skill)*1.6 }
-  const start = {x:pullLine,y:F.widthM/2}
-  let disc = {...start,z:1.1,state:'HELD'}
-  const offenseLayout = layoutPlayersOnField(offenseLineup,possessionTeam,clampFieldX(landing.x),true,
-    {attackStyle,throwerId:receiver.id,attackSign:sign,discYMeters:clampFieldY(landing.y)})
-  const defenseLayout = layoutPlayersOnField(defenseLineup,possessionTeam === 'home' ? 'away' : 'home',clampFieldX(landing.x),false,
-    {defenseStyle,offenseLayout,attackSign:sign,personMark:!String(defenseStyle).includes('zone'),defenseTactics})
-  const agents = [...offenseLayout.map((p,i)=>({...p,player:offenseLineup.find(q=>q.id===p.id),
-    role:'offense',x:ownLine,y:(i+1)*F.widthM/8,vx:0,vy:0})),
-    ...defenseLayout.map((p,i)=>({...p,player:defenseLineup.find(q=>q.id===p.id),
-      role:'defense',x:pullLine,y:p.id===puller.id?start.y:(i+1)*F.widthM/8,vx:0,vy:0}))]
-  const targets = new Map([...offenseLayout,...defenseLayout].map(p=>[p.id,p]))
-  const frames=[]
-  const snapshot = ms => { if(collectFrames) frames.push({ms,disc:{...disc},stallCount:0,
-    players:agents.map(a=>({id:a.id,teamId:a.teamId,x:a.x,y:a.y,z:0,vx:a.vx,vy:a.vy,
-      role:a.fieldRole,cutterState:'WAITING'}))}) }
-  const releaseMs=1000
-  let outcome=null, settleMs=0, restart=null, rollV=roller?5+skill*5:0
-  let elapsed=0
+  const plan = planPull({ puller, possessionTeam, rng, wind, pullType })
+  const { start, landing, roller, hangMs } = plan
+  const legalPivot = p => ({ x: sign * (p.x - ownLine) < 0 ? ownLine : p.x, y: p.y })
+  const targetsFor = (anchor, flowing) => {
+    const offense = layoutPlayersOnField(offenseLineup, possessionTeam, anchor.x, true,
+      { attackStyle, throwerId: receiver.id, attackSign: sign, discYMeters: anchor.y })
+    if (flowing) for (const p of offense) {
+      if (p.id === receiver.id) continue
+      const player = offenseLineup.find(a => a.id === p.id)
+      if (subRole(player)?.endsWith('_handler')) {
+        const side = offenseLineup.indexOf(player) % 2 ? -1 : 1
+        p.x = clampFieldX(anchor.x + sign * 7)
+        p.y = clampFieldY(anchor.y * .4 + F.widthM / 2 * .6 + side * 6)
+      } else p.x = clampFieldX(p.x + sign * 10)
+    }
+    const defense = layoutPlayersOnField(defenseLineup, possessionTeam === 'home' ? 'away' : 'home', anchor.x, false,
+      { defenseStyle, offenseLayout: offense, attackSign: sign, personMark: !String(defenseStyle).includes('zone'), defenseTactics })
+    return [...offense, ...defense]
+  }
+  let targets = new Map(targetsFor(legalPivot({ x: clampFieldX(landing.x), y: clampFieldY(landing.y) }), true).map(p => [p.id, p]))
+  const agents = [...targets.values()].map((p, i) => {
+    const offense = i < offenseLineup.length
+    return { ...p, player: (offense ? offenseLineup : defenseLineup).find(a => a.id === p.id),
+      role: offense ? 'offense' : 'defense', x: offense ? ownLine : start.x,
+      y: p.id === puller.id ? start.y : (i % 7 + 1) * F.widthM / 8, vx: 0, vy: 0 }
+  })
+  let disc = { ...start, z: 1.1, state: 'HELD' }
+  const frames = []
+  const snapshot = ms => {
+    if (collectFrames) frames.push({ ms, disc: { ...disc }, stallCount: 0,
+      players: agents.map(a => ({ id: a.id, teamId: a.teamId, x: a.x, y: a.y, z: 0, vx: a.vx, vy: a.vy,
+        role: a.fieldRole, cutterState: 'WAITING' })) })
+  }
+  const releaseMs = 1000
+  let outcome = null, restart = null, exitPoint = null, catchMs = null, landingMs = null, elapsed = 0
+  let rollVelocity = { ...plan.rollVelocity }
+  const setRestart = (kind, point) => {
+    outcome = kind
+    restart = kind === 'roll_out' ? { ...point } : legalPivot(point)
+    // Only a brick pauses for a fully established formation. Ground pickup proceeds as soon as reached.
+    targets = new Map(targetsFor(restart, kind === 'caught').map(p => [p.id, p]))
+  }
   snapshot(0)
-  for(elapsed=100;elapsed<=22000;elapsed+=100){
-    if(elapsed<=releaseMs){snapshot(elapsed);continue}
-    const t=clamp((elapsed-releaseMs)/hangMs,0,1)
-    if(!outcome){
-      disc={x:start.x+(landing.x-start.x)*t,y:start.y+(landing.y-start.y)*t,
-        z:Math.max(0,1.1*(1-t)+(roller?3:9+skill*4)*4*t*(1-t)),state:'IN_FLIGHT'}
-    } else if(outcome==='rolling'){
-      disc.x-=sign*rollV*.1
-      disc.y+=wy*.018
-      rollV=Math.max(0,rollV-.35)
-      disc.z=0;disc.state='ON_GROUND'
-      if(!inside(disc)||rollV===0){outcome='ground';settleMs=elapsed}
+  for (elapsed = 100; elapsed <= 30000; elapsed += 100) {
+    if (elapsed <= releaseMs) { snapshot(elapsed); continue }
+    const t = clamp((elapsed - releaseMs) / hangMs, 0, 1)
+    if (!outcome) {
+      disc = { x: start.x + (landing.x - start.x) * t, y: start.y + (landing.y - start.y) * t,
+        z: Math.max(0, 1.1 * (1 - t) + plan.peakHeightM * 4 * t * (1 - t)), state: 'IN_FLIGHT' }
+    } else if (outcome === 'rolling') {
+      const before = { ...disc }
+      disc.x += rollVelocity.x * .1
+      disc.y += rollVelocity.y * .1
+      const speed = Math.hypot(rollVelocity.x, rollVelocity.y)
+      const scale = Math.max(0, speed - .3) / Math.max(.001, speed)
+      rollVelocity = { x: rollVelocity.x * scale, y: rollVelocity.y * scale }
+      if (!inside(disc)) {
+        exitPoint = pullBoundaryExit(before, disc)
+        disc = { ...exitPoint, z: 0, state: 'ON_GROUND' }
+        setRestart('roll_out', exitPoint)
+      } else if (speed <= .3) setRestart('ground', { x: disc.x, y: disc.y })
     }
-    for(const a of agents){
-      const receiverAgent=a.id===receiver.id
-      let target=receiverAgent?{x:clampFieldX(landing.x),y:clampFieldY(landing.y)}:targets.get(a.id)
-      if(restart&&receiverAgent) target=restart
-      if(outcome==='rolling'&&receiverAgent) target={x:clampFieldX(disc.x),y:clampFieldY(disc.y)}
-      const dist=Math.hypot(target.x-a.x,target.y-a.y)
-      Object.assign(a,integrateAgentMotion(a,target.x,target.y,Math.min(maxSpeedMps(a.player),dist*3),.1,true,a.role))
+    for (const a of agents) {
+      let target = targets.get(a.id)
+      if (a.id === receiver.id) target = restart ?? { x: clampFieldX(disc.state === 'ON_GROUND' ? disc.x : landing.x),
+        y: clampFieldY(disc.state === 'ON_GROUND' ? disc.y : landing.y) }
+      const distance = Math.hypot(target.x - a.x, target.y - a.y)
+      Object.assign(a, integrateAgentMotion(a, target.x, target.y, Math.min(maxSpeedMps(a.player), distance * 3), .1, true, a.role))
     }
-    const r=agents.find(a=>a.id===receiver.id)
-    if(!outcome && t > .8 && inside(disc) && disc.z <= 2 && Math.hypot(r.x-disc.x,r.y-disc.y)<1.6) {
-      outcome='caught';settleMs=elapsed
+    const r = agents.find(a => a.id === receiver.id)
+    if (!outcome && t > .8 && t < 1 && inside(disc) && disc.z <= 2 && Math.hypot(r.x - disc.x, r.y - disc.y) < 1.6) {
+      catchMs = elapsed
+      setRestart('caught', { x: r.x, y: r.y })
     }
-    if(!outcome&&t>=1){
-      if(!inside(landing)){outcome='brick';settleMs=elapsed}
-      else if(Math.hypot(r.x-disc.x,r.y-disc.y)<1.6){outcome='caught';settleMs=elapsed}
-      else {outcome=roller?'rolling':'ground';settleMs=elapsed;disc.state='ON_GROUND'}
+    if (!outcome && t >= 1) {
+      landingMs = elapsed
+      disc.z = 0
+      disc.state = 'ON_GROUND'
+      if (!inside(landing)) setRestart('brick', { x: ownLine + sign * 18, y: F.widthM / 2 })
+      else if (roller) {
+        outcome = 'rolling'
+        targets = new Map(targetsFor(legalPivot(landing), false).map(p => [p.id, p]))
+      } else setRestart('ground', landing)
     }
-    if(outcome&&outcome!=='rolling'){
-      restart ??= outcome==='brick' ? {x:ownLine+sign*18,y:F.widthM/2}
-        : {x:clampFieldX(disc.x),y:clampFieldY(disc.y)}
-      // A disc in the receiving end zone comes to the goal line before play.
-      if(sign*(restart.x-ownLine)<0) restart.x=ownLine
-      if(outcome==='caught') disc={x:r.x,y:r.y,z:1.1,state:'HELD'}
-      if(outcome==='brick') disc={...restart,z:0,state:'ON_GROUND'}
-      const arrived=Math.hypot(r.x-restart.x,r.y-restart.y)<.5 && Math.hypot(r.vx,r.vy)<1
-      if(arrived && elapsed-settleMs >= (outcome==='caught'?100:700)){
-        r.x=restart.x;r.y=restart.y;r.vx=0;r.vy=0
-        disc={...restart,z:1.1,state:'HELD'};snapshot(elapsed);break
+    if (restart) {
+      if (outcome === 'caught') disc = { x: r.x, y: r.y, z: 1.1, state: 'HELD' }
+      if (outcome === 'brick') disc = { ...restart, z: 0, state: 'ON_GROUND' }
+      const receiverReady = Math.hypot(r.x - restart.x, r.y - restart.y) < .55
+      const setupReady = outcome !== 'brick' || agents.every(a => {
+        const target = a.id === receiver.id ? restart : targets.get(a.id)
+        return Math.hypot(a.x - target.x, a.y - target.y) < 1.5
+      })
+      if (receiverReady && setupReady) {
+        r.x = restart.x; r.y = restart.y
+        disc = { ...restart, z: 1.1, state: 'HELD' }
+        snapshot(elapsed)
+        break
       }
     }
     snapshot(elapsed)
   }
-  restart ??= {x:ownLine+sign*18,y:F.widthM/2}
-  const endStates=new Map(agents.map(a=>[a.id,{id:a.id,x:a.x,y:a.y,vx:a.vx,vy:a.vy,
-    role:a.role,state:'WAITING',stateMs:0,targetX:a.x,targetY:a.y}]))
-  return {pullerId:puller.id,receiverId:receiver.id,receiver,outcome,roller,hangMs,landing,restart,
-    discPosition:discPositionFromFieldMeters(restart.x,possessionTeam),discYMeters:restart.y,endStates,
-    motionTrace:{frames,tickMs:100,throwMs:releaseMs,totalMs:Math.min(elapsed,22000),
-      flightMs:Math.min(elapsed,22000)-releaseMs,preservePositions:true},
-    distanceM:distance}
+  if (!restart || elapsed > 30000) throw new Error('Pull did not reach a playable restart')
+  const endStates = new Map(agents.map(a => [a.id, { id: a.id, x: a.x, y: a.y, vx: a.vx, vy: a.vy,
+    role: a.role, state: 'WAITING', stateMs: 0, targetX: targets.get(a.id).x, targetY: targets.get(a.id).y }]))
+  return { pullerId: puller.id, receiverId: receiver.id, receiver, outcome, roller, hangMs, landing, restart,
+    exitPoint, catchMs, landingMs, plan, staticRestart: outcome !== 'caught',
+    discPosition: discPositionFromFieldMeters(restart.x, possessionTeam), discYMeters: restart.y, endStates,
+    motionTrace: { frames, tickMs: 100, throwMs: releaseMs, totalMs: elapsed,
+      flightMs: elapsed - releaseMs, preservePositions: true }, distanceM: plan.distanceM }
 }

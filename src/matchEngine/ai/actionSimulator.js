@@ -807,6 +807,7 @@ export function runContinuousThrowSimulation({
   maxTicks = null,
   staminaMaps = null,
   seedStates = null,
+  pullTransitionMs = 0,
   postResetClearout = false,
   lastThrowerId = null,
   afterTurnover = false,
@@ -1212,9 +1213,15 @@ export function runContinuousThrowSimulation({
             isThrower: false,
           }
         }
-        // Rzucający zostaje przy punkcie wypuszczenia — jego zachowanie po rzucie to
-        // osobna sprawa i nie zmieniamy go przy okazji.
+        // During the pull transition, a handler follows the pass into a new offer.
+        // Other possessions retain the existing release-position behavior.
         if (agent.id === thrower.id || agent.isThrower) {
+          if (ms < pullTransitionMs && agent.isDump &&
+            defenseAgents.every(a => Math.hypot(a.x - spaceAnchor.x, a.y - spaceAnchor.y) > 8)) {
+            return { ...tickCutterBrain(agent, { dtSec: DT_SEC, disc: spaceAnchor, throwerPos: spaceAnchor,
+              possessionTeam, forceSide, situation: {}, rng, stackIndex: agent.stackIndex,
+              isDump: true, pullFlow: true, offenseTactics: offenseTeam?.tactics }), isThrower: true }
+          }
           return {
             ...tickOffenseAgentDuringFlight(agent, {
               discSample,
@@ -1249,6 +1256,7 @@ export function runContinuousThrowSimulation({
             dtSec: DT_SEC,
             // Cutterzy odnoszą się do miejsca, gdzie dysk BĘDZIE — tam zacznie się gra.
             disc: spaceAnchor,
+            pullFlow: ms < pullTransitionMs && defenseAgents.every(a => Math.hypot(a.x - spaceAnchor.x, a.y - spaceAnchor.y) > 8),
             // Czy dysk jest w powietrzu i czy leci DO MNIE — cutter po rozpoczęciu
             // deep cutu ogląda się i na tej podstawie biegnie dalej albo zawraca.
             discInFlight: !!flight,
@@ -1570,6 +1578,7 @@ export function runContinuousThrowSimulation({
       flight.elapsedMs += SIM_TICK_MS
     } else {
       const throwerPos = { x: discX, y: discY }
+      const pullFlow = ms < pullTransitionMs && defenseAgents.every(a => Math.hypot(a.x - discX, a.y - discY) > 8)
       assignActiveCutters(offenseAgents, maxConcurrentCutters(attackStyle), ms, postCatchReorg)
       const activeCutterCount = offenseAgents.filter(
         (a) =>
@@ -1617,6 +1626,7 @@ export function runContinuousThrowSimulation({
             isThrower: false,
             isDump: agent.isDump,
             postCatchReorg,
+            pullFlow,
             lastThrowerId,
             throwerId: thrower.id,
             throwerPos,
@@ -1734,6 +1744,7 @@ export function runContinuousThrowSimulation({
           wind,
           rng,
           setupElapsedMs: ms - (pickupEndMs ?? 0),
+          pullFlow: ms < pullTransitionMs && defenseAgents.every(a => Math.hypot(a.x - discX, a.y - discY) > 8),
           postCatchReorg,
           lastThrowerId,
           afterTurnover,
@@ -1768,7 +1779,9 @@ export function runContinuousThrowSimulation({
         throwerPatienceBonusMs(thrower)) *
         (throwerCoach.releaseGateMult ?? 1) * (throwerCoach.decisionTimeMult ?? 1)
       // Jitter w górę częściej niż w dół — rzadziej „przyśpieszamy” set play.
-      const releaseGateMs = gateBase * (0.95 + rng.float() * 0.25)
+      const unpressuredPull = ms < pullTransitionMs && option?.isDump && option?.situation?.separation >= 4
+        && defenseAgents.every(a => Math.hypot(a.x - discX, a.y - discY) > 8)
+      const releaseGateMs = (unpressuredPull ? Math.min(gateBase, 350) : gateBase) * (0.95 + rng.float() * 0.25)
       if (option && !throwingFakePhase(ms - (pickupEndMs ?? 0), throwerCoach.fakeFrequency) && ms - (pickupEndMs ?? 0) >= Math.max(0, releaseGateMs)) {
         // A cached look can schedule the release, but cannot authorize it.
         // Re-scan next tick using current observations, without revealing hidden players.

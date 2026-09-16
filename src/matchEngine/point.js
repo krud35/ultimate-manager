@@ -221,6 +221,7 @@ export function simulatePoint({
   /** Pozycje ofensywy między rzutami (po złapaniu — bez snapu do stacka). */
   /** Stan zawodników z końca poprzedniego rzutu — zapewnia płynne przejście między rzutami. */
   let liveAgentStates = pull.endStates
+  let pullTransitionMs = pull.outcome === 'caught' ? 8000 : 0
   /** Po dump/reset (+0m) — wymuszone głębokie cięcia w następnej symulacji setupu. */
   let postResetClearout = false
   /** Ile podań z rzędu nie dało postępu — podbija agresję mimo zerowania stalla. */
@@ -333,6 +334,7 @@ export function simulatePoint({
     stallCount = 0
     stallClock = { markerId: null, elapsedMs: 0 }
     pickupPending = !securedBy
+    pullTransitionMs = 0
     discYMeters = discY
     resetChain = 0
     postResetClearout = false
@@ -463,6 +465,7 @@ export function simulatePoint({
       wind,
       staminaMaps: geoStaminaMaps(simStaminaMaps),
       seedStates: liveAgentStates,
+      pullTransitionMs,
       postResetClearout,
       lastThrowerId,
       afterTurnover: transitionPasses > 0,
@@ -643,6 +646,7 @@ export function simulatePoint({
     })
     postResetClearout = false
     liveAgentStates = sim.endStates ?? liveAgentStates
+    pullTransitionMs = Math.max(0, pullTransitionMs - (sim.motionTrace?.totalMs ?? sim.totalMs ?? 0))
     holdMs = sim.holdMsAtEnd ?? holdMs
     stallClock = sim.stallClock ?? stallClock
     pickupPending = sim.pickupPending ?? false

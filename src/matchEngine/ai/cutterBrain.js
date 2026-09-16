@@ -671,6 +671,7 @@ export function tickCutterBrain(agent, tickCtx) {
     offenseTactics = null,
     discInFlight = false,
     flightIsForMe = false,
+    pullFlow = false,
   } = tickCtx
 
   if (isThrower) {
@@ -703,17 +704,27 @@ export function tickCutterBrain(agent, tickCtx) {
       ),
       disc,
       attackSign,
-      coachMods.stackDepthBiasM ?? 0,
+      (coachMods.stackDepthBiasM ?? 0) + (pullFlow && !isDump ? 10 : 0),
       isDump,
     )
 
+  // Handlers offer short forward/centering passes while the pull coverage is still arriving.
+  if (pullFlow && isDump) {
+    const side = stackIndex % 2 ? -1 : 1
+    const targetX = clampFieldX((throwerPos?.x ?? disc.x) + attackSign * 7)
+    const targetY = clampFieldY((throwerPos?.y ?? disc.y) * .4 + fieldCenterY() * .6 + side * 6)
+    const distance = Math.hypot(targetX - agent.x, targetY - agent.y)
+    return { ...agent, ...integrateAgentMotion(agent, targetX, targetY,
+      Math.min(maxSpeedMps(agent.player), distance * 3), dtSec, true, 'offense'),
+      targetX, targetY, state: CUTTER_STATE.ACTIVE_CUT, stateMs: 0, continuationCut: true }
+  }
   // Reserve a stable formation slot before any offer or reorganization branch.
   if (agent.isActive === false && !isDump && !flightIsForMe) {
-    const slot = agent.structureSlot ?? structuralTarget()
+    const slot = agent.structureFlow === pullFlow ? agent.structureSlot ?? structuralTarget() : structuralTarget()
     const distance = Math.hypot(slot.x - agent.x, slot.y - agent.y)
     const moved = integrateAgentMotion(agent, slot.x, slot.y,
       distance < 0.6 ? 0 : repositionSpeedMps(agent.player ?? agent, distance), dtSec, true, 'offense')
-    return { ...agent, ...moved, structureSlot: slot, state: CUTTER_STATE.WAITING,
+    return { ...agent, ...moved, structureSlot: slot, structureFlow: pullFlow, state: CUTTER_STATE.WAITING,
       stateMs: 0, targetX: slot.x, targetY: slot.y, continuationCut: false, forceClearout: false }
   }
 

@@ -888,7 +888,7 @@ function sampleTracks(tracks, timeMs, setupMs, tacticalAll = null) {
     const tactical = tacticalById.get(id) ?? tacticalById.get(Number(id))
     seen.add(id)
     players.push({
-      id: Number.isFinite(Number(id)) ? Number(id) : id,
+      id: tactical?.id ?? track.id ?? (Number.isFinite(Number(id)) ? Number(id) : id),
       fieldId: track.fieldId ?? id,
       teamId: track.teamId,
       label: track.label,
@@ -1422,7 +1422,7 @@ export function buildThrowActionClip(
   )
 
   const initial = normalizeInitialPlayerPositions(initialPlayerPositions)
-  const repositionMs = initial ? REPOSITION_PHASE_MS : 0
+  const repositionMs = initial && !attemptEv.motionTrace?.preservePositions ? REPOSITION_PHASE_MS : 0
   const holdStartMs = attemptEv.holdStartMs ?? attemptEv.motionTrace?.holdStartMs ?? 0
   const throwMsForStall = attemptEv.motionTrace?.throwMs ?? null
   // Czas setupu = realny czas do rzutu (żeby stall tickał 1 s = 1).
@@ -1953,12 +1953,18 @@ export function buildFieldActionClip(
   if (pullEvent?.motionTrace?.frames?.length) {
     const original = pullEvent.motionTrace
     const frozen = ev.type === 'point_start' ? original.frames[0] : original.frames.at(-1)
-    const trace = ev.type === 'pull' ? original : { ...original, totalMs: 100, throwMs: 100, flightMs: 0,
-      frames: [{ ...frozen, ms: 0 }, { ...frozen, ms: 100 }] }
+    const pauseMs = ev.type === 'possession' && pullEvent.outcome === 'caught' ? 0 : 100
+    const trace = ev.type === 'pull' ? original : { ...original, totalMs: pauseMs, throwMs: pauseMs, flightMs: 0,
+      frames: [{ ...frozen, ms: 0 }, { ...frozen, ms: pauseMs }] }
     const first = trace.frames[0], last = trace.frames.at(-1)
     const roster = [...(homeTeam?.players ?? []), ...(awayTeam?.players ?? [])]
-    const tacticalAll = last.players.map(p => ({ ...p, fieldRole: p.role,
-      label: String(roster.find(r => r.id === p.id)?.jersey ?? '') }))
+    const tacticalAll = last.players.map(p => {
+      const homeIndex = lineups.homeLineupIds?.indexOf(p.id) ?? -1
+      const awayIndex = lineups.awayLineupIds?.indexOf(p.id) ?? -1
+      const teamId = homeIndex >= 0 ? 'home' : awayIndex >= 0 ? 'away' : p.teamId
+      return { ...p, teamId, fieldId: fieldSlotId(teamId, Math.max(0, homeIndex, awayIndex)),
+        fieldRole: p.role, label: String(roster.find(r => r.id === p.id)?.jersey ?? '') }
+    })
     const tracks = Object.fromEntries(tacticalAll.map(p => [p.id, { ...p, defaultMotion: 'stack',
       keyframes: trace.frames.map(f => ({ ...f.players.find(a => a.id === p.id), ms: f.ms, ease: 'linear' })) }]))
     return { kind: 'pull', tacticalAll, tracks, motionTrace: trace,
@@ -2456,6 +2462,7 @@ export function fieldStateToRenderFrame(fieldState) {
 
 export function playbackStepAdvanceDelta(pointEvents, stepIndex) {
   const ev = pointEvents[stepIndex]
+  if (ev?.type === 'pull' && ev.outcome === 'caught' && pointEvents[stepIndex + 1]?.type === 'possession') return 2
   if (ev?.type === 'throw_attempt') return 2
   return 1
 }
