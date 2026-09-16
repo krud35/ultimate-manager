@@ -247,6 +247,14 @@ function IconShirt({ className }) {
     </svg>
   )
 }
+function IconTactics({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <circle cx="6" cy="17" r="2.5" />
+      <path d="M6 14.5V10a4 4 0 0 1 4-4h9M15 3l4 3-4 3M15 14l5 5M20 14l-5 5" />
+    </svg>
+  )
+}
 function IconTrophy({ className }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
@@ -1926,10 +1934,10 @@ export default function App() {
       <nav className="um-mobile-nav" aria-label={tShell.navAria}>
         {[
           { id: 'hub', label: uiLang === 'en' ? 'Home' : 'Centrum', Icon: IconHome },
-          { id: 'roster', label: uiLang === 'en' ? 'Roster' : 'Skład', Icon: IconShirt },
+          { id: 'tactics', label: uiLang === 'en' ? 'Tactics' : 'Taktyka', Icon: IconTactics },
           { id: 'match', label: uiLang === 'en' ? 'Match' : 'Mecz', Icon: IconTrophy },
         ].map(({ id, label, Icon }) => <button key={id} type="button" disabled={matchInProgress && id !== 'match'} aria-current={activeTab === id ? 'page' : undefined} onClick={() => navigateTo(id)}><Icon /><span>{label}</span></button>)}
-        <button type="button" disabled={matchInProgress} aria-expanded={mobileMenuOpen} aria-current={!['hub', 'roster', 'match'].includes(activeTab) ? 'page' : undefined} onClick={() => setMobileMenuOpen(true)}><IconDots /><span>Menu</span></button>
+        <button type="button" disabled={matchInProgress} aria-expanded={mobileMenuOpen} aria-current={!['hub', 'tactics', 'match'].includes(activeTab) ? 'page' : undefined} onClick={() => setMobileMenuOpen(true)}><IconDots /><span>Menu</span></button>
       </nav>
       <MobileMenu open={mobileMenuOpen} onClose={closeMobileMenu} categories={NAV_CATEGORIES} activeTab={activeTab} lang={uiLang} setLang={setUiLang} navigate={navigateTo} onExit={handleExitToSlots} onSearch={() => setPaletteOpen(true)} disabled={matchInProgress} />
 
