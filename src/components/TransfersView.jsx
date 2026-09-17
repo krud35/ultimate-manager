@@ -247,7 +247,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
   }
 
   return (
-    <div className="space-y-6 league-fade-in">
+    <div className="min-w-0 space-y-6 league-fade-in">
       <div className="um-section  ">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -358,7 +358,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
                       <span className="text-ufa-muted"> · {l.parentTeamName}</span>
                     </span>
                     {l.status === 'pending_buy_decision' && l.buyClause ? (
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
                           onClick={() => handleLoanBuyClauseDecision(l.playerId, true)}
@@ -387,17 +387,17 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
         </section>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
-        <div className="um-section  ">
+      <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="um-section min-w-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <h3 className="text-xl font-semibold text-ufa-text">{t.marketTitle}</h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap [&>input]:min-w-0 [&>input]:max-w-full [&>select]:min-w-0 [&>select]:max-w-full">
               <input
                 type="search"
                 placeholder={t.searchPlaceholder}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-1.5 text-sm text-ufa-text min-w-[180px]"
+                className="rounded-md border border-ufa-border bg-ufa-bg px-3 py-1.5 text-sm text-ufa-text"
               />
               <select
                 value={teamFilter}
@@ -445,7 +445,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
             </div>
           </div>
 
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4 max-w-full overflow-x-auto" role="region" aria-label={t.marketTitle} tabIndex={0}>
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="text-xs uppercase tracking-wide text-ufa-muted">
                 <tr className="border-b border-ufa-border">
@@ -570,7 +570,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
           )}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           <div className="um-section  ">
             <h3 className="text-xl font-semibold text-ufa-text">{t.yourRosterValues}</h3>
             <ul className="mt-3 max-h-80 space-y-2 overflow-y-auto text-sm">
@@ -641,7 +641,7 @@ export default function TransfersView({ career, onCareerUpdate, scope = 'club' }
           </div>
         </div>
 
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 max-w-full overflow-x-auto" role="region" aria-label={t.history} tabIndex={0}>
           <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-ufa-muted">
               <tr className="border-b border-ufa-border">
