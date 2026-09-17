@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { DOMESTIC_LEAGUES } from '../src/data/domesticLeagues.js'
 import { buildDomesticWorldTemplate } from '../src/career/domesticWorld.js'
 import { createFictionalTeams } from '../src/data/fictionalTeams.js'
+import { getOverallRating } from '../src/models/playerStats.js'
 
 // Exercise missing, partial, already sufficient and oversized imported rosters.
 const league = DOMESTIC_LEAGUES.find(l => l.countryId === 'pl' && l.tier === 1)
@@ -23,6 +24,10 @@ try {
     assert(lengths[0] >= 16 && lengths[0] <= 29)
     observed.add(lengths[0])
     assert.deepEqual(lengths.slice(1), [16, 20, 32])
+    const imported = teams[1].players.filter(p => p.domesticReference)
+    const reserves = teams[1].players.filter(p => p.generatedReserve)
+    assert.equal(reserves.length, 6)
+    assert(Math.min(...imported.map(p => getOverallRating(p.skills))) > Math.max(...reserves.map(p => getOverallRating(p.skills))))
     for (let index = 1; index < sizes.length; index++) {
       assert.equal(teams[index].players.filter(p => p.domesticReference).length, sizes[index])
     }

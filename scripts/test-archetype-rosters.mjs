@@ -12,6 +12,12 @@ const ages = []
 for (const tier of [1, 2, 3]) for (let seed = 1; seed <= 10; seed++) {
   for (const team of buildEucsLeagueTemplate({ tier, seed }).teams) {
     assert(team.players.length >= 16)
+    const reserves = team.players.filter(p => p.generatedReserve)
+    const imported = team.players.filter(p => !p.generatedReserve)
+    if (reserves.length && imported.length) {
+      assert(Math.min(...imported.map(p => getOverallRating(p.skills))) > Math.max(...reserves.map(p => getOverallRating(p.skills))))
+      assert(reserves.every(p => p.generationClass === 'regular'))
+    }
     assert.equal(new Set(team.players.map(p => p.id)).size, team.players.length)
     assert.deepEqual(eucsTeamRosterPreview(team.id, seed), team.players.map(({ jersey, firstName, lastName }) => ({ jersey, firstName, lastName })))
     shapes.add(team.rosterShape)

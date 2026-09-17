@@ -74,7 +74,7 @@ export function buildDomesticWorldTemplate(input, year, seed) {
       }
       while (players.length < targetSize) {
         const p = createAcademyProspect(() => rng.float(), { teamId: source.id, seasonYear: year, countryId: source.countryId, source: 'domestic-fill', index: players.length })
-        Object.assign(p, { age: 18 + Math.floor(rng.float() * 18), inAcademy: false, status: 'club', contract: null })
+        Object.assign(p, { age: 18 + Math.floor(rng.float() * 18), generatedReserve: true, inAcademy: false, status: 'club', contract: null })
         players.push(p)
       }
       const rosterProfile = initializeDomesticRoster(players, source, seed, rng)

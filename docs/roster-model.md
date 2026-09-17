@@ -14,6 +14,13 @@ nowych zawodników podczas ładowania. Historyczne i losowe UFA zachowują swój
    Przy braku rosteru liczba zawodników jest losowana równomiernie z zakresu 16–29.
    Ligi krajowe również uzupełniają istniejące rostery do 16, a nowe losują w zakresie
    16–29. Większe rzeczywiste rostery nie są przycinane. Zapisane składy nie są zmniejszane.
+   W składach mieszanych prawdziwe nazwiska otrzymują wszystkie najwyższe sloty OVR,
+   w tym wyjątkowe losowania 90+. Każde uzupełnienie ma startowe OVR co najmniej o 1
+   niższe od najsłabszego prawdziwego zawodnika oraz najwyżej 89; jego klasa to `regular`.
+   Przy dolnym limicie OVR prawdziwi zawodnicy otrzymują minimum 66, aby zachować tę
+   różnicę wobec rezerw z OVR 65. Priorytet nazwisk jest ważniejszy niż kompletność
+   rodzin ról w pierwszych dwóch siódemkach. W całkowicie generowanych składach
+   nadal występuje pełna hierarchia i możliwość wyjątkowych zawodników.
 2. Około 25% handlerów, 32% cutterów i 25% obrońców; reszta uniwersalna. Osiem
    archetypów obejmuje trzy rodzaje handlerów, dwa cutterów, dwóch obrońców i uniwersalny.
    To predyspozycje umiejętności, bez narzucania pozycji w taktyce.
@@ -40,7 +47,9 @@ nowych zawodników podczas ładowania. Historyczne i losowe UFA zachowują swój
    Tylko osobne losowanie daje startowe OVR 90–95: przy bazie 81 lub wyższej i
    pierwszym poziomie 1,65% na 90–92 oraz 0,15% na 93–95. Mnożnik szans to
    `clamp((poziom klubu - 71)/10, 0.15, 1) * 0.55^(poziom ligi - 1)`.
-   Żaden klub ani profil nie ma gwarantowanej gwiazdy. `generationClass` zapisuje
+   W mieszanych rosterach po losowaniu sortujemy sloty siły: najpierw przydział
+   prawdziwym nazwiskom, później słabszym uzupełnieniom. Żaden klub ani profil nie ma
+   gwarantowanej gwiazdy. `generationClass` zapisuje
    wynik losowania (`regular`, `world_class`, `generational`), nie limit rozwoju.
 6. Indywidualny sufit talentu 74–95, z niewielką zmianą rozkładu zależną od ligi.
    Aktualna siła jest dolną granicą sufitu. Pozostały rozwój zależy od wieku i talentu,
@@ -72,7 +81,7 @@ szczególnie w lidze 3. Rzadki wyjątkowy zawodnik może zmienić układ wylosow
 Konfiguracja: src/data/rosterStructures.js. Metadane rosterShape i rosterCoverage
 są zapisywane z klubem. Zmiana dotyczy tylko nowych karier.
 
-## Weryfikacja obecnych struktur
+## Weryfikacja struktur przed dodaniem priorytetu prawdziwych nazwisk
 
 Po zmianie modelu: 30 seedów, 29 910 profili UltiLeague. Całość to średnia zawodników; TOP 7, TOP 14 i ławka
 (miejsca od 15.) są średnimi odpowiednich średnich klubowych.
@@ -128,6 +137,7 @@ z większej próby i rzeczywistych mieszanych linii; jednorodne drużyny są tyl
 
 ```text
 node scripts/test-roster-structures.mjs
+node --import ./scripts/register-world-tests.mjs scripts/test-imported-roster-priority.mjs
 node --import ./scripts/register-world-tests.mjs scripts/test-club-strength-model.mjs
 node --import ./scripts/register-world-tests.mjs scripts/test-roster-sizes.mjs
 node --import ./scripts/register-world-tests.mjs scripts/test-roster-generation.mjs

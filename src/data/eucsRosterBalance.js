@@ -58,24 +58,43 @@ export function applyClubOvrDistribution(players, { tier, strength, rng, coverag
       order.splice(start, 0, ...selected)
     }
   }
+  const realCount = order.filter(({ p }) => !p.generatedReserve).length
+  const mixedRoster = realCount > 0 && realCount < n
+  // Source identity takes precedence over role coverage in a partially imported roster.
+  if (mixedRoster) order.sort((a, b) => Number(!!a.p.generatedReserve) - Number(!!b.p.generatedReserve))
   const offsets = order.map((_, i) => 0.6 * rosterQualityOffset(shape, i, n))
   // A small correction keeps shapes comparable without forcing an exact average.
   const center = Math.max(-1.5, Math.min(1.5, offsets.reduce((sum, v) => sum + v, 0) / n))
   const rarity = Math.max(0.15, Math.min(1, (strength - 71) / 10)) * 0.55 ** (tier - 1)
-  order.forEach(({ p }, i) => {
+  const slots = order.map((_, i) => {
     let target = strength + offsets[i] - center + (rng() - 0.5) * 1.5
     // Smoothly compress the ordinary upper tail below 89, avoiding a pile at a hard cap.
     if (target > 86) target = 86 + (target - 86) / (1 + (target - 86) / 3)
     const exceptionalRoll = rng()
-    p.generationClass = 'regular'
+    let generationClass = 'regular'
     if (exceptionalRoll < 0.0015 * rarity) {
       target = 93 + Math.floor(rng() * 3)
-      p.generationClass = 'generational'
+      generationClass = 'generational'
     } else if (exceptionalRoll < 0.018 * rarity) {
       target = 90 + Math.floor(rng() * 3)
-      p.generationClass = 'world_class'
+      generationClass = 'world_class'
     }
-    p.skills = scaleSkillsToTargetOvr(p.skills, clampOverallTarget(target))
+    return { target: clampOverallTarget(target), generationClass }
+  })
+  if (mixedRoster) {
+    // Assign every top slot (including rare exceptional draws) to imported names first.
+    slots.sort((a, b) => b.target - a.target)
+    const floor = clampOverallTarget(0)
+    for (let i = 0; i < realCount; i++) slots[i].target = Math.max(floor + 1, slots[i].target)
+    const reserveCeiling = Math.min(89, slots[realCount - 1].target - 1)
+    for (let i = realCount; i < n; i++) {
+      slots[i].target = Math.min(slots[i].target, reserveCeiling)
+      slots[i].generationClass = 'regular'
+    }
+  }
+  order.forEach(({ p }, i) => {
+    p.generationClass = slots[i].generationClass
+    p.skills = scaleSkillsToTargetOvr(p.skills, slots[i].target)
   })
   return shape
 }
