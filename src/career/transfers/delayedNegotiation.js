@@ -550,6 +550,9 @@ export function processDelayedTransferReplies(career, { date = null } = {}) {
     const m = inbox[i]
     const p = m?.payload
     if (m?.type !== INBOX_TYPES.TRANSFER_OFFER) continue
+    // Replies preserve the original status for history, including in existing saves.
+    // Once superseded, an offer must never be resolved again.
+    if (p?.superseded) continue
     if (p?.status !== 'awaiting_reply') continue
     if (!p.replyDate || p.replyDate > today) continue
 

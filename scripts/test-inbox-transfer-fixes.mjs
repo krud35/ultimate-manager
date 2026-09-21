@@ -120,6 +120,8 @@ test('sale_player_decision resolves to a terminal state (accepted or rejected), 
 
   // Re-resolving the same (now closed) date must not touch this thread again.
   const again = processDelayedTransferReplies({ ...career, inbox: resolved.inbox, world: resolved.world ?? career.world }, { date: replyDate })
+  assert.equal(again.resolved, 0, 'a closed negotiation must not be resolved again')
+  assert.deepEqual(again.inbox, resolved.inbox, 'reprocessing must not generate duplicate replies')
   const stillClosed = again.inbox.find((m) => m.id === queued.message.id)
   assert.equal(stillClosed?.payload?.superseded, true)
   const stillFollowUp = again.inbox.find((m) => m.id === followUp.id)
