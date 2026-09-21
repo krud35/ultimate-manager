@@ -1,0 +1,427 @@
+{
+  "benchmarkVersion": 2,
+  "scenario": "domestic",
+  "profiling": false,
+  "daysRequested": 30,
+  "matchesRequested": 3,
+  "repeats": 1,
+  "enabled": [
+    "create",
+    "calendar"
+  ],
+  "saveSlots": [
+    1,
+    3
+  ],
+  "generatedAt": "2026-09-21T21:17:08.517Z",
+  "seed": 20260921,
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "Intel(R) Core(TM) Ultra 5 125U",
+    "logicalCpus": 14,
+    "ramGiB": 15.258289337158203,
+    "commit": "34bdbd4ec8f858088f917b9198be8ad3ad1e6a32"
+  },
+  "notes": [
+    "Headless Node CPU benchmark, not browser FPS or Android measurements.",
+    "Generated careers only; localStorage is memory-only. Disk/quota and browser Worker messaging are NOT timed.",
+    "Scheduled career autosave is suppressed during creation; serialization/compression/loading measured separately.",
+    "Math.random is seeded per scenario; wall-clock timestamps are not frozen.",
+    "Calendar uses advanceCareerDay(autoSimulatePlayer=true,allowRandomEvents=false), matching fast-forward day logic, without UI waits or checkpoint saves.",
+    "CPU profiles are separate diagnostic runs. Inclusive times overlap and must not be summed.",
+    "Three-slot save uses three copies of the same career: size/scaling stress test, not three independently aged careers."
+  ],
+  "stages": {
+    "create": {
+      "elapsedMs": 38877.7302,
+      "samplesMs": [
+        38877.3414
+      ],
+      "stats": {
+        "n": 1,
+        "sumMs": 38877.3414,
+        "meanMs": 38877.3414,
+        "medianMs": 38877.3414,
+        "p95Ms": 38877.3414,
+        "maxMs": 38877.3414
+      },
+      "coldMs": 38877.3414,
+      "warm": {
+        "n": 0,
+        "sumMs": 0,
+        "meanMs": 0,
+        "medianMs": 0,
+        "p95Ms": 0,
+        "maxMs": 0
+      },
+      "teamCount": 604,
+      "seniorPlayers": 13541,
+      "startDate": "2026-08-01",
+      "playerTeamId": "dom-pl-2b",
+      "worldConfig": {
+        "leagues": {
+          "au-1": "background",
+          "au-2": "background",
+          "baltic-1": "background",
+          "be-1": "background",
+          "be-2": "background",
+          "br-1": "background",
+          "ca-1": "background",
+          "centralEurope-1": "background",
+          "ch-1": "background",
+          "cn-1": "background",
+          "co-1": "background",
+          "cz-1": "background",
+          "de-1": "background",
+          "fr-1": "background",
+          "fr-2": "background",
+          "fr-3-nord": "background",
+          "fr-3-ouest": "background",
+          "fr-3-est": "background",
+          "fr-3-sud": "background",
+          "gb-1": "background",
+          "gb-2": "background",
+          "iberia-1": "background",
+          "ie-1": "background",
+          "in-1": "background",
+          "in-2": "background",
+          "it-1": "background",
+          "it-2": "background",
+          "jp-1": "background",
+          "nl-1": "background",
+          "nordic-1": "background",
+          "nz-1": "background",
+          "ph-1": "background",
+          "pl-1": "playable",
+          "sg-1": "background",
+          "us-1": "background",
+          "us-2": "background",
+          "us-3": "background",
+          "za-1": "background"
+        },
+        "international": {
+          "nationals": true,
+          "europe": true,
+          "paucc": true,
+          "aoucc": true,
+          "wucc": true
+        },
+        "simulationModel": "focused",
+        "mainCountryId": "pl",
+        "additionalCountryIds": [],
+        "backgroundSimulation": true,
+        "depths": {
+          "au": 2,
+          "baltic": 1,
+          "be": 2,
+          "br": 1,
+          "ca": 1,
+          "centralEurope": 1,
+          "ch": 1,
+          "cn": 1,
+          "co": 1,
+          "cz": 1,
+          "de": 1,
+          "fr": 3,
+          "gb": 2,
+          "iberia": 1,
+          "ie": 1,
+          "in": 2,
+          "it": 2,
+          "jp": 1,
+          "nl": 1,
+          "nordic": 1,
+          "nz": 1,
+          "ph": 1,
+          "pl": 1,
+          "sg": 1,
+          "us": 3,
+          "za": 1
+        },
+        "christmasBreakByCountry": {
+          "au": true,
+          "baltic": false,
+          "be": true,
+          "br": false,
+          "ca": true,
+          "centralEurope": false,
+          "ch": true,
+          "cn": true,
+          "co": false,
+          "cz": true,
+          "de": false,
+          "fr": false,
+          "gb": false,
+          "iberia": false,
+          "ie": false,
+          "in": true,
+          "it": false,
+          "jp": false,
+          "nl": false,
+          "nordic": true,
+          "nz": false,
+          "ph": false,
+          "pl": false,
+          "sg": false,
+          "us": true,
+          "za": true
+        }
+      }
+    },
+    "calendar": {
+      "elapsedMs": 25342.765,
+      "records": [
+        {
+          "date": "2026-08-01",
+          "ms": 649.0576000000001,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-02",
+          "ms": 1969.176400000004,
+          "playerLeagueFixtures": 0,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-03",
+          "ms": 306.0294999999969,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-04",
+          "ms": 2293.5829000000012,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-05",
+          "ms": 240.2835999999952,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-06",
+          "ms": 311.2353000000003,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-07",
+          "ms": 186.005799999999,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-08",
+          "ms": 188.4155000000028,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-09",
+          "ms": 148.46910000000207,
+          "playerLeagueFixtures": 0,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-10",
+          "ms": 213.0405000000028,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-11",
+          "ms": 2041.6893999999957,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-12",
+          "ms": 185.5358000000051,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-13",
+          "ms": 241.7001999999993,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-14",
+          "ms": 697.3451000000059,
+          "playerLeagueFixtures": 3,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-15",
+          "ms": 931.8533000000025,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-16",
+          "ms": 804.4196000000011,
+          "playerLeagueFixtures": 2,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-17",
+          "ms": 539.8527000000031,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-18",
+          "ms": 5351.231199999995,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-19",
+          "ms": 256.553899999999,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-20",
+          "ms": 406.50940000000264,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-21",
+          "ms": 647.4196999999986,
+          "playerLeagueFixtures": 3,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-22",
+          "ms": 869.3007999999973,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-23",
+          "ms": 1086.218200000003,
+          "playerLeagueFixtures": 2,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-24",
+          "ms": 474.87340000000404,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-25",
+          "ms": 1909.943299999999,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-26",
+          "ms": 325.70009999999456,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-27",
+          "ms": 384.0054999999993,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-28",
+          "ms": 944.7200000000012,
+          "playerLeagueFixtures": 3,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-29",
+          "ms": 415.8191999999981,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-30",
+          "ms": 319.4340000000011,
+          "playerLeagueFixtures": 2,
+          "weekTick": true,
+          "blocked": false
+        }
+      ],
+      "stats": {
+        "n": 30,
+        "sumMs": 25339.42100000001,
+        "meanMs": 844.6473666666669,
+        "medianMs": 415.8191999999981,
+        "p95Ms": 2293.5829000000012,
+        "maxMs": 5351.231199999995
+      },
+      "withPlayerLeagueFixtures": {
+        "n": 11,
+        "sumMs": 7731.256000000016,
+        "meanMs": 702.841454545456,
+        "medianMs": 697.3451000000059,
+        "p95Ms": 1086.218200000003,
+        "maxMs": 1086.218200000003
+      },
+      "withoutPlayerLeagueFixtures": {
+        "n": 19,
+        "sumMs": 17608.164999999994,
+        "meanMs": 926.7455263157891,
+        "medianMs": 311.2353000000003,
+        "p95Ms": 5351.231199999995,
+        "maxMs": 5351.231199999995
+      },
+      "weekTicks": {
+        "n": 5,
+        "sumMs": 4327.717300000011,
+        "meanMs": 865.5434600000023,
+        "medianMs": 804.4196000000011,
+        "p95Ms": 1969.176400000004,
+        "maxMs": 1969.176400000004
+      },
+      "startDate": "2026-08-01",
+      "endDate": "2026-08-31",
+      "finalStatus": "active",
+      "note": "Days without player-league fixtures can still contain other league, cup and national matches."
+    }
+  },
+  "cpuProfiles": {},
+  "peakRssMiB": 1066.83984375
+}

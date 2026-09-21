@@ -1,0 +1,45 @@
+{
+  "baselineRef": "34bdbd4ec8f858088f917b9198be8ad3ad1e6a32",
+  "generatedAt": "2026-09-21T21:20:07.306Z",
+  "node": "v24.19.0",
+  "leagues": 38,
+  "teams": 602,
+  "fixtures": 9519,
+  "days": 30,
+  "pairs": [
+    {
+      "before": {
+        "totalMs": 36716.6393,
+        "schedulingPasses": 30
+      },
+      "after": {
+        "totalMs": 83.93340000002354,
+        "schedulingPasses": 0
+      }
+    },
+    {
+      "before": {
+        "totalMs": 28131.1175,
+        "schedulingPasses": 30
+      },
+      "after": {
+        "totalMs": 74.01300000002811,
+        "schedulingPasses": 0
+      }
+    },
+    {
+      "before": {
+        "totalMs": 29599.224799999996,
+        "schedulingPasses": 30
+      },
+      "after": {
+        "totalMs": 63.06180000001041,
+        "schedulingPasses": 0
+      }
+    }
+  ],
+  "beforeMeanMs": 31482.3272,
+  "afterMeanMs": 73.66940000002069,
+  "speedup": 427.346051413357,
+  "note": "Scheduler only, identical snapshots, no new rounds in timed window. Includes daily constraint detection; excludes match simulation, training, UI and saves."
+}

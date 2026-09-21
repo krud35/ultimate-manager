@@ -53,7 +53,14 @@ symulowania nieistniejącej w katalogu ligi. Docelowa baza może ich zastąpić.
 
 Kalendarz rezerwuje terminy pucharowe i przenosi mecze ligowe, zapewniając minimum
 trzech dni między zwykłymi meczami klubowymi. Turnieje letnie mają odrębny,
-gęstszy harmonogram. Trening śledzi faktyczne daty i indywidualny udział. Urlop
+gęstszy harmonogram. Terminarz powstaje na początku sezonu. Codzienny krok jedynie
+porównuje rezerwacje pucharowe i zasady kalendarza z poprzednio sprawdzonym stanem.
+Nowa runda, zmiana uczestników lub dat pucharowych uruchamia korektę kolizji;
+poprawne terminy pozostają bez zmian. Wyniki i upływ dnia nie uruchamiają ponownego
+układania terminarza. Rozegrane mecze są nieruchome. Stan kontroli przechodzi przez
+zapis i wczytanie; starszy zapis bez tego stanu jest sprawdzany raz.
+
+Trening śledzi faktyczne daty i indywidualny udział. Urlop
 dwutygodniowy zaczyna się w czerwcu, po klubowym turnieju albo po zgrupowaniu
 reprezentacji, zależnie od zobowiązań zawodnika. Sezon nie zeruje świeżości,
 zmęczenia ani urazów; działa codzienna regeneracja.
@@ -68,6 +75,7 @@ Samodzielne skrypty Node:
 
 ```
 node scripts/test-domestic-season.mjs
+node --import ./scripts/register-world-tests.mjs scripts/test-domestic-calendar.mjs
 node scripts/test-national-calendar.mjs
 node scripts/test-international-club-cups.mjs
 node scripts/test-career-runtime.mjs

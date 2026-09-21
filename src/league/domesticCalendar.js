@@ -1,4 +1,4 @@
-import { addDays, formatISODate, nextWeekday, parseISODate } from './seasonCalendar.js'
+import { addDays, formatISODate, nextWeekday } from './seasonCalendar.js'
 import { shuffledTeamOrder, generateDoubleRoundRobinSchedule, flattenSchedule } from './schedule.js'
 
 export function domesticCupDates(year, rounds = 6) {
@@ -48,33 +48,90 @@ export function domesticFixtures(teamIds, calendar, seed) {
   return fixtures
 }
 
-/** Reassign only pending domestic games; reserve actual opponents and unresolved cup rounds. */
+const DAY_MS = 86400000
+const CALENDAR_REVISION = 1
+
+/**
+ * Keep the published schedule unless cup reservations or calendar rules change.
+ * The key survives both JSON saves and career clones; match results and the current
+ * day deliberately do not invalidate it. Old saves are checked once on first use.
+ * Returns whether scheduling ran, and how many pending fixtures changed date.
+ */
 export function reconcileDomesticCalendar(league) {
-  if (league.calendar?.mode !== 'domestic') return
+  if (league.calendar?.mode !== 'domestic') return { checked: false, moved: 0 }
   const competitions = [league, ...(league.otherLeagues ?? [])]
-  const international = league.fixtures.filter(f => f.competition === 'international-club')
   const reservations = new Map()
-  const reserve = (id, date) => { if (id && date) { if (!reservations.has(id)) reservations.set(id, []); reservations.get(id).push(date) } }
+  const days = new Map()
+  const dayOf = date => {
+    if (!days.has(date)) days.set(date, Date.parse(date) / DAY_MS)
+    return days.get(date)
+  }
+  const reserve = (id, date) => {
+    if (!id || !date) return
+    if (!reservations.has(id)) reservations.set(id, new Set())
+    reservations.get(id).add(dayOf(date))
+  }
   for (const comp of competitions) {
-    for (const f of comp.fixtures.filter(f => f.competition !== 'league')) { reserve(f.homeTeamId, f.date); reserve(f.awayTeamId, f.date) }
+    for (const f of comp.fixtures) if (f.competition !== 'league') { reserve(f.homeTeamId, f.date); reserve(f.awayTeamId, f.date) }
     if (comp.cup) for (const id of comp.cup.seeds) for (const date of comp.cup.roundDates) reserve(id, date)
   }
-  for (const f of international) { reserve(f.homeTeamId, f.date); reserve(f.awayTeamId, f.date) }
-  const gap = (a, b) => Math.abs((Date.parse(a) - Date.parse(b)) / 86400000)
-  const domestic = competitions.flatMap(c => c.fixtures.filter(f => f.competition === 'league')).sort((a, b) => a.date.localeCompare(b.date))
-  for (const f of domestic) {
-    if (f.status === 'completed') { reserve(f.homeTeamId, f.date); reserve(f.awayTeamId, f.date); continue }
-    f.originalDate ??= f.date
-    const fixtureCalendar = competitions.find(c=>c.teamIds.includes(f.homeTeamId))?.calendar ?? league.calendar
-    const candidates = [0, 1, -1, 2, -2, 3, -3, ...Array.from({ length: 60 }, (_, i) => i + 4)]
-    const found = candidates.map(n => formatISODate(addDays(f.originalDate, n))).find(date => {
-      const dow = parseISODate(date).getDay()
-      return [0, 1, 5, 6].includes(dow) && date >= league.currentDate && date >= `${league.seasonYear}-08-14` && date <= `${league.seasonYear + 1}-${fixtureCalendar.regionalPlayoffs ? "04-30" : fixtureCalendar.frenchPyramid ? "05-07" : "05-31"}`
-        && !(fixtureCalendar.christmasBreak && date >= `${league.seasonYear}-12-23` && date <= `${league.seasonYear}-12-29`)
-        && [f.homeTeamId, f.awayTeamId].every(id => (reservations.get(id) ?? []).every(d => gap(d, date) >= 3))
-    })
-    if (!found) throw new Error(`Cannot schedule domestic fixture ${f.id} with required rest`)
-    f.date = found
+
+  // Compare effective team/date constraints, not fixture status or object identity.
+  // Resolving an already-reserved domestic cup round therefore needs no repair.
+  const constraintsKey = JSON.stringify([
+    CALENDAR_REVISION, league.seasonYear,
+    competitions.map(c => {
+      const calendar = c.calendar ?? league.calendar
+      return JSON.stringify([[...c.teamIds].sort(), !!calendar.christmasBreak, !!calendar.regionalPlayoffs, !!calendar.frenchPyramid])
+    }).sort(),
+    [...reservations].map(([id, dates]) => [id, [...dates].sort((a, b) => a - b)]).sort(([a], [b]) => a.localeCompare(b)),
+  ])
+  if (league.domesticCalendarKey === constraintsKey) return { checked: false, moved: 0 }
+
+  const domestic = competitions.flatMap(c => c.fixtures.filter(f => f.competition === 'league')
+    .map(f => ({ fixture: f, calendar: c.calendar ?? league.calendar })))
+    .sort((a, b) => a.fixture.date.localeCompare(b.fixture.date))
+  // Completed fixtures are immutable, even when a pending fixture sorts before them.
+  for (const { fixture: f } of domestic) if (f.status === 'completed') {
     reserve(f.homeTeamId, f.date); reserve(f.awayTeamId, f.date)
   }
+  const earliest = Math.max(dayOf(league.currentDate), dayOf(`${league.seasonYear}-08-14`))
+  const christmasStart = dayOf(`${league.seasonYear}-12-23`)
+  const christmasEnd = dayOf(`${league.seasonYear}-12-29`)
+  const changes = []
+  for (const { fixture: f, calendar } of domestic) {
+    if (f.status === 'completed') continue
+    const latest = dayOf(`${league.seasonYear + 1}-${calendar.regionalPlayoffs ? '04-30' : calendar.frenchPyramid ? '05-07' : '05-31'}`)
+    const fits = day => {
+      const weekday = (day + 4) % 7 // ISO dates are whole UTC days, unaffected by DST.
+      if (![0, 1, 5, 6].includes(weekday) || day < earliest || day > latest) return false
+      if (calendar.christmasBreak && day >= christmasStart && day <= christmasEnd) return false
+      for (const id of [f.homeTeamId, f.awayTeamId]) {
+        for (const booked of reservations.get(id) ?? []) if (Math.abs(booked - day) < 3) return false
+      }
+      return true
+    }
+    const current = dayOf(f.date)
+    let found = fits(current) ? current : null
+    // Preserve valid dates. Only collisions search nearby dates, then later weekends.
+    for (const offset of [1, -1, 2, -2, 3, -3]) {
+      if (found !== null) break
+      if (fits(current + offset)) found = current + offset
+    }
+    for (let day = Math.max(current + 4, earliest); found === null && day <= latest; day++) {
+      if (fits(day)) found = day
+    }
+    if (found === null) throw new Error(`Cannot schedule domestic fixture ${f.id} with required rest`)
+    const date = found === current ? f.date : new Date(found * DAY_MS).toISOString().slice(0, 10)
+    changes.push({ fixture: f, date })
+    reserve(f.homeTeamId, date); reserve(f.awayTeamId, date)
+  }
+  // Commit only after every collision has a solution; a failure leaves dates intact.
+  let moved = 0
+  for (const { fixture, date } of changes) {
+    fixture.originalDate ??= fixture.date
+    if (fixture.date !== date) { fixture.date = date; moved++ }
+  }
+  league.domesticCalendarKey = constraintsKey
+  return { checked: true, moved }
 }

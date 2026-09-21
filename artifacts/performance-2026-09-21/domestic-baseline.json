@@ -1,0 +1,1033 @@
+{
+  "benchmarkVersion": 2,
+  "scenario": "domestic",
+  "profiling": false,
+  "daysRequested": 30,
+  "matchesRequested": 1,
+  "repeats": 1,
+  "enabled": [
+    "create",
+    "calendar",
+    "save-aged"
+  ],
+  "saveSlots": [
+    1
+  ],
+  "generatedAt": "2026-09-21T20:50:49.774Z",
+  "seed": 20260921,
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "Intel(R) Core(TM) Ultra 5 125U",
+    "logicalCpus": 14,
+    "ramGiB": 15.258289337158203,
+    "commit": "34bdbd4ec8f858088f917b9198be8ad3ad1e6a32"
+  },
+  "notes": [
+    "Headless Node CPU benchmark, not browser FPS or Android measurements.",
+    "Generated careers only; localStorage is memory-only. Disk/quota and browser Worker messaging are NOT timed.",
+    "Scheduled career autosave is suppressed during creation; serialization/compression/loading measured separately.",
+    "Math.random is seeded per scenario; wall-clock timestamps are not frozen.",
+    "Calendar uses advanceCareerDay(autoSimulatePlayer=true,allowRandomEvents=false), matching fast-forward day logic, without UI waits or checkpoint saves.",
+    "CPU profiles are separate diagnostic runs. Inclusive times overlap and must not be summed.",
+    "Three-slot save uses three copies of the same career: size/scaling stress test, not three independently aged careers."
+  ],
+  "stages": {
+    "create": {
+      "elapsedMs": 23184.8665,
+      "samplesMs": [
+        23184.4882
+      ],
+      "stats": {
+        "n": 1,
+        "sumMs": 23184.4882,
+        "meanMs": 23184.4882,
+        "medianMs": 23184.4882,
+        "p95Ms": 23184.4882,
+        "maxMs": 23184.4882
+      },
+      "coldMs": 23184.4882,
+      "warm": {
+        "n": 0,
+        "sumMs": 0,
+        "meanMs": 0,
+        "medianMs": 0,
+        "p95Ms": 0,
+        "maxMs": 0
+      },
+      "teamCount": 604,
+      "seniorPlayers": 13541,
+      "startDate": "2026-08-01",
+      "playerTeamId": "dom-pl-2b",
+      "worldConfig": {
+        "leagues": {
+          "au-1": "background",
+          "au-2": "background",
+          "baltic-1": "background",
+          "be-1": "background",
+          "be-2": "background",
+          "br-1": "background",
+          "ca-1": "background",
+          "centralEurope-1": "background",
+          "ch-1": "background",
+          "cn-1": "background",
+          "co-1": "background",
+          "cz-1": "background",
+          "de-1": "background",
+          "fr-1": "background",
+          "fr-2": "background",
+          "fr-3-nord": "background",
+          "fr-3-ouest": "background",
+          "fr-3-est": "background",
+          "fr-3-sud": "background",
+          "gb-1": "background",
+          "gb-2": "background",
+          "iberia-1": "background",
+          "ie-1": "background",
+          "in-1": "background",
+          "in-2": "background",
+          "it-1": "background",
+          "it-2": "background",
+          "jp-1": "background",
+          "nl-1": "background",
+          "nordic-1": "background",
+          "nz-1": "background",
+          "ph-1": "background",
+          "pl-1": "playable",
+          "sg-1": "background",
+          "us-1": "background",
+          "us-2": "background",
+          "us-3": "background",
+          "za-1": "background"
+        },
+        "international": {
+          "nationals": true,
+          "europe": true,
+          "paucc": true,
+          "aoucc": true,
+          "wucc": true
+        },
+        "simulationModel": "focused",
+        "mainCountryId": "pl",
+        "additionalCountryIds": [],
+        "backgroundSimulation": true,
+        "depths": {
+          "au": 2,
+          "baltic": 1,
+          "be": 2,
+          "br": 1,
+          "ca": 1,
+          "centralEurope": 1,
+          "ch": 1,
+          "cn": 1,
+          "co": 1,
+          "cz": 1,
+          "de": 1,
+          "fr": 3,
+          "gb": 2,
+          "iberia": 1,
+          "ie": 1,
+          "in": 2,
+          "it": 2,
+          "jp": 1,
+          "nl": 1,
+          "nordic": 1,
+          "nz": 1,
+          "ph": 1,
+          "pl": 1,
+          "sg": 1,
+          "us": 3,
+          "za": 1
+        },
+        "christmasBreakByCountry": {
+          "au": true,
+          "baltic": false,
+          "be": true,
+          "br": false,
+          "ca": true,
+          "centralEurope": false,
+          "ch": true,
+          "cn": true,
+          "co": false,
+          "cz": true,
+          "de": false,
+          "fr": false,
+          "gb": false,
+          "iberia": false,
+          "ie": false,
+          "in": true,
+          "it": false,
+          "jp": false,
+          "nl": false,
+          "nordic": true,
+          "nz": false,
+          "ph": false,
+          "pl": false,
+          "sg": false,
+          "us": true,
+          "za": true
+        }
+      }
+    },
+    "calendar": {
+      "elapsedMs": 32583.729199999998,
+      "records": [
+        {
+          "date": "2026-08-01",
+          "ms": 1029.3460000000014,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-02",
+          "ms": 723.8125,
+          "playerLeagueFixtures": 0,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-03",
+          "ms": 806.0063000000009,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-04",
+          "ms": 1870.9809999999998,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-05",
+          "ms": 812.959600000002,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-06",
+          "ms": 801.2268000000004,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-07",
+          "ms": 750.0672999999988,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-08",
+          "ms": 798.168099999999,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-09",
+          "ms": 746.1540999999997,
+          "playerLeagueFixtures": 0,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-10",
+          "ms": 768.089600000003,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-11",
+          "ms": 1831.173999999999,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-12",
+          "ms": 758.4279999999999,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-13",
+          "ms": 783.1402000000016,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-14",
+          "ms": 1059.7222000000038,
+          "playerLeagueFixtures": 3,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-15",
+          "ms": 997.6031000000003,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-16",
+          "ms": 1130.3439999999973,
+          "playerLeagueFixtures": 2,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-17",
+          "ms": 983.5899000000063,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-18",
+          "ms": 1757.6998999999996,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-19",
+          "ms": 747.2295000000013,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-20",
+          "ms": 854.966800000002,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-21",
+          "ms": 1015.2913000000044,
+          "playerLeagueFixtures": 3,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-22",
+          "ms": 1303.4428000000044,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-23",
+          "ms": 1063.720500000003,
+          "playerLeagueFixtures": 2,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-24",
+          "ms": 979.1311999999962,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-25",
+          "ms": 1723.5201000000015,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-26",
+          "ms": 762.1503999999986,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-27",
+          "ms": 3101.992299999998,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-28",
+          "ms": 963.6591999999946,
+          "playerLeagueFixtures": 3,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-29",
+          "ms": 849.4809999999998,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-30",
+          "ms": 807.5573999999979,
+          "playerLeagueFixtures": 2,
+          "weekTick": true,
+          "blocked": false
+        }
+      ],
+      "stats": {
+        "n": 30,
+        "sumMs": 32580.655100000014,
+        "meanMs": 1086.0218366666672,
+        "medianMs": 854.966800000002,
+        "p95Ms": 1870.9809999999998,
+        "maxMs": 3101.992299999998
+      },
+      "withPlayerLeagueFixtures": {
+        "n": 11,
+        "sumMs": 11153.542600000008,
+        "meanMs": 1013.958418181819,
+        "medianMs": 997.6031000000003,
+        "p95Ms": 1303.4428000000044,
+        "maxMs": 1303.4428000000044
+      },
+      "withoutPlayerLeagueFixtures": {
+        "n": 19,
+        "sumMs": 21427.112500000007,
+        "meanMs": 1127.742763157895,
+        "medianMs": 801.2268000000004,
+        "p95Ms": 3101.992299999998,
+        "maxMs": 3101.992299999998
+      },
+      "weekTicks": {
+        "n": 5,
+        "sumMs": 4471.588499999998,
+        "meanMs": 894.3176999999996,
+        "medianMs": 807.5573999999979,
+        "p95Ms": 1130.3439999999973,
+        "maxMs": 1130.3439999999973
+      },
+      "startDate": "2026-08-01",
+      "endDate": "2026-08-31",
+      "finalStatus": "active",
+      "note": "Days without player-league fixtures can still contain other league, cup and national matches."
+    },
+    "save-aged": {
+      "elapsedMs": 91905.4867,
+      "date": "2026-08-31",
+      "rows": [
+        {
+          "slotCount": 1,
+          "repeat": 0,
+          "prepareMs": 0.1823999999978696,
+          "stringifyMs": 427.73099999999977,
+          "compressMs": 85335.3076,
+          "decompressMs": 2916.189400000003,
+          "parseMs": 483.48159999999916,
+          "rehydrateMs": 686.8741999999911,
+          "writeCpuMs": 85763.22099999999,
+          "loadCpuMs": 4086.545199999993,
+          "jsonUtf8Bytes": 105891722,
+          "compressedUtf16Bytes": 9209620
+        }
+      ],
+      "sizeBreakdown": {
+        "career": [
+          {
+            "key": "world",
+            "bytes": 83452437
+          },
+          {
+            "key": "league",
+            "bytes": 20888126
+          },
+          {
+            "key": "nationalTeams",
+            "bytes": 1309257
+          },
+          {
+            "key": "ultiworld",
+            "bytes": 123269
+          },
+          {
+            "key": "internationalClubCups",
+            "bytes": 47730
+          },
+          {
+            "key": "inbox",
+            "bytes": 41002
+          },
+          {
+            "key": "transferLog",
+            "bytes": 24512
+          },
+          {
+            "key": "homeTactics",
+            "bytes": 1999
+          },
+          {
+            "key": "worldConfig",
+            "bytes": 1546
+          },
+          {
+            "key": "managerProfile",
+            "bytes": 810
+          },
+          {
+            "key": "managerCareer",
+            "bytes": 324
+          },
+          {
+            "key": "id",
+            "bytes": 38
+          },
+          {
+            "key": "createdAt",
+            "bytes": 26
+          },
+          {
+            "key": "updatedAt",
+            "bytes": 26
+          },
+          {
+            "key": "allTimeStats",
+            "bytes": 25
+          },
+          {
+            "key": "managerName",
+            "bytes": 19
+          },
+          {
+            "key": "rosterMode",
+            "bytes": 12
+          },
+          {
+            "key": "aiTransfersLastDate",
+            "bytes": 12
+          },
+          {
+            "key": "playerTeamId",
+            "bytes": 11
+          },
+          {
+            "key": "competition",
+            "bytes": 10
+          },
+          {
+            "key": "phase",
+            "bytes": 8
+          },
+          {
+            "key": "usedFictionalFill",
+            "bytes": 5
+          },
+          {
+            "key": "seasonYear",
+            "bytes": 4
+          },
+          {
+            "key": "seasonHistory",
+            "bytes": 2
+          },
+          {
+            "key": "careerStats",
+            "bytes": 2
+          },
+          {
+            "key": "pendingEventFollowUps",
+            "bytes": 2
+          },
+          {
+            "key": "loanLog",
+            "bytes": 2
+          },
+          {
+            "key": "version",
+            "bytes": 1
+          },
+          {
+            "key": "slotIndex",
+            "bytes": 1
+          },
+          {
+            "key": "seasonIndex",
+            "bytes": 1
+          },
+          {
+            "key": "fictionalTeamCount",
+            "bytes": 1
+          }
+        ],
+        "world": [
+          {
+            "key": "teamsById",
+            "bytes": 79517197
+          },
+          {
+            "key": "regionalYouth",
+            "bytes": 2006598
+          },
+          {
+            "key": "nationalPlayerPools",
+            "bytes": 1335830
+          },
+          {
+            "key": "managersById",
+            "bytes": 526559
+          },
+          {
+            "key": "managerRecordedMatches",
+            "bytes": 40928
+          },
+          {
+            "key": "teamIds",
+            "bytes": 12638
+          },
+          {
+            "key": "importConflicts",
+            "bytes": 7214
+          },
+          {
+            "key": "domesticLeagueCatalog",
+            "bytes": 3260
+          },
+          {
+            "key": "worldConfig",
+            "bytes": 1546
+          },
+          {
+            "key": "aiMarketState",
+            "bytes": 114
+          },
+          {
+            "key": "rosterMode",
+            "bytes": 12
+          },
+          {
+            "key": "lastWageDate",
+            "bytes": 12
+          },
+          {
+            "key": "youthCohortVersions",
+            "bytes": 10
+          },
+          {
+            "key": "lastManagementCycleMonth",
+            "bytes": 9
+          },
+          {
+            "key": "managerReviewMonth",
+            "bytes": 9
+          },
+          {
+            "key": "youthCohortYears",
+            "bytes": 6
+          },
+          {
+            "key": "templateSeasonYear",
+            "bytes": 4
+          },
+          {
+            "key": "eloTierBandsApplied",
+            "bytes": 4
+          },
+          {
+            "key": "wjucYouthIntroducedSeason",
+            "bytes": 4
+          },
+          {
+            "key": "freeAgents",
+            "bytes": 2
+          },
+          {
+            "key": "retiredPlayers",
+            "bytes": 2
+          },
+          {
+            "key": "managerCandidates",
+            "bytes": 2
+          },
+          {
+            "key": "activeLoans",
+            "bytes": 2
+          },
+          {
+            "key": "wjucYouthImportVersion",
+            "bytes": 1
+          }
+        ],
+        "league": [
+          {
+            "key": "otherLeagues",
+            "bytes": 19940312
+          },
+          {
+            "key": "matchHistory",
+            "bytes": 412226
+          },
+          {
+            "key": "roundPlayerStats",
+            "bytes": 244570
+          },
+          {
+            "key": "fixtures",
+            "bytes": 112158
+          },
+          {
+            "key": "playerStats",
+            "bytes": 91447
+          },
+          {
+            "key": "scheduleRounds",
+            "bytes": 66825
+          },
+          {
+            "key": "cup",
+            "bytes": 10170
+          },
+          {
+            "key": "calendar",
+            "bytes": 7664
+          },
+          {
+            "key": "standings",
+            "bytes": 1807
+          },
+          {
+            "key": "teamIds",
+            "bytes": 319
+          },
+          {
+            "key": "frenchPlayoffs",
+            "bytes": 112
+          },
+          {
+            "key": "seasonLabel",
+            "bytes": 18
+          },
+          {
+            "key": "currentDate",
+            "bytes": 12
+          },
+          {
+            "key": "playerTeamId",
+            "bytes": 11
+          },
+          {
+            "key": "label",
+            "bytes": 10
+          },
+          {
+            "key": "mode",
+            "bytes": 10
+          },
+          {
+            "key": "status",
+            "bytes": 8
+          },
+          {
+            "key": "simSeedBase",
+            "bytes": 7
+          },
+          {
+            "key": "id",
+            "bytes": 6
+          },
+          {
+            "key": "phase",
+            "bytes": 6
+          },
+          {
+            "key": "frenchPyramid",
+            "bytes": 5
+          },
+          {
+            "key": "countryId",
+            "bytes": 4
+          },
+          {
+            "key": "focusedSimulation",
+            "bytes": 4
+          },
+          {
+            "key": "mainCountryId",
+            "bytes": 4
+          },
+          {
+            "key": "seasonYear",
+            "bytes": 4
+          },
+          {
+            "key": "totalRounds",
+            "bytes": 2
+          },
+          {
+            "key": "cupPlayerStats",
+            "bytes": 2
+          },
+          {
+            "key": "tier",
+            "bytes": 1
+          },
+          {
+            "key": "currentRound",
+            "bytes": 1
+          }
+        ],
+        "teamFields": [
+          {
+            "key": "players",
+            "bytes": 72838728
+          },
+          {
+            "key": "finances",
+            "bytes": 1424887
+          },
+          {
+            "key": "sponsors",
+            "bytes": 871536
+          },
+          {
+            "key": "staffMembers",
+            "bytes": 683247
+          },
+          {
+            "key": "teamTraining",
+            "bytes": 662108
+          },
+          {
+            "key": "manager",
+            "bytes": 507663
+          },
+          {
+            "key": "academyPlayers",
+            "bytes": 434478
+          },
+          {
+            "key": "aiCoachProfile",
+            "bytes": 425095
+          },
+          {
+            "key": "facilities",
+            "bytes": 347947
+          },
+          {
+            "key": "modifiers",
+            "bytes": 159182
+          },
+          {
+            "key": "scoutingAnalysis",
+            "bytes": 95983
+          },
+          {
+            "key": "developmentMatches",
+            "bytes": 74692
+          },
+          {
+            "key": "boardObjective",
+            "bytes": 60717
+          },
+          {
+            "key": "staff",
+            "bytes": 56776
+          },
+          {
+            "key": "scouting",
+            "bytes": 48924
+          },
+          {
+            "key": "fanPreferences",
+            "bytes": 45905
+          },
+          {
+            "key": "boardPreferences",
+            "bytes": 42585
+          },
+          {
+            "key": "fans",
+            "bytes": 42011
+          },
+          {
+            "key": "managerTransition",
+            "bytes": 22952
+          },
+          {
+            "key": "rosterCoverage",
+            "bytes": 20207
+          },
+          {
+            "key": "managerId",
+            "bytes": 16861
+          },
+          {
+            "key": "managerFit",
+            "bytes": 13288
+          },
+          {
+            "key": "id",
+            "bytes": 12033
+          },
+          {
+            "key": "namePl",
+            "bytes": 7962
+          },
+          {
+            "key": "name",
+            "bytes": 7953
+          },
+          {
+            "key": "nameEn",
+            "bytes": 7953
+          },
+          {
+            "key": "managementDate",
+            "bytes": 7248
+          },
+          {
+            "key": "academyCandidates",
+            "bytes": 6658
+          },
+          {
+            "key": "rosterShape",
+            "bytes": 6540
+          },
+          {
+            "key": "clubStrategy",
+            "bytes": 6518
+          },
+          {
+            "key": "country",
+            "bytes": 6169
+          },
+          {
+            "key": "referenceResults",
+            "bytes": 5713
+          },
+          {
+            "key": "primaryColor",
+            "bytes": 5426
+          },
+          {
+            "key": "awayColor",
+            "bytes": 5426
+          },
+          {
+            "key": "domesticLeagueId",
+            "bytes": 4240
+          },
+          {
+            "key": "city",
+            "bytes": 4238
+          },
+          {
+            "key": "simulationMode",
+            "bytes": 3110
+          },
+          {
+            "key": "coordinates",
+            "bytes": 3064
+          },
+          {
+            "key": "shortName",
+            "bytes": 3023
+          },
+          {
+            "key": "detailedCupAttention",
+            "bytes": 3020
+          },
+          {
+            "key": "provisionalIdentity",
+            "bytes": 3019
+          },
+          {
+            "key": "isFictional",
+            "bytes": 3018
+          },
+          {
+            "key": "squadPlan",
+            "bytes": 2652
+          },
+          {
+            "key": "parentClubId",
+            "bytes": 2650
+          },
+          {
+            "key": "region",
+            "bytes": 2512
+          },
+          {
+            "key": "backgroundSimulation",
+            "bytes": 2434
+          },
+          {
+            "key": "countryId",
+            "bytes": 2416
+          },
+          {
+            "key": "tacticalIdentity",
+            "bytes": 2416
+          },
+          {
+            "key": "eloRating",
+            "bytes": 2416
+          },
+          {
+            "key": "financeSeasonYear",
+            "bytes": 2416
+          },
+          {
+            "key": "reputation",
+            "bytes": 1208
+          },
+          {
+            "key": "tier",
+            "bytes": 604
+          },
+          {
+            "key": "managerCrisisMonths",
+            "bytes": 603
+          },
+          {
+            "key": "seasonInjuryCounts",
+            "bytes": 468
+          },
+          {
+            "key": "lastOperationsDate",
+            "bytes": 216
+          },
+          {
+            "key": "lastManagementMonth",
+            "bytes": 162
+          },
+          {
+            "key": "academyRosterInitialized",
+            "bytes": 72
+          },
+          {
+            "key": "lastDevelopmentListingWeek",
+            "bytes": 68
+          },
+          {
+            "key": "academyAdmissionYear",
+            "bytes": 68
+          },
+          {
+            "key": "academyAdmissions",
+            "bytes": 17
+          }
+        ]
+      }
+    }
+  },
+  "cpuProfiles": {},
+  "peakRssMiB": 2644.53515625
+}

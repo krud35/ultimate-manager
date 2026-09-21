@@ -1,0 +1,2047 @@
+{
+  "benchmarkVersion": 2,
+  "scenario": "domestic",
+  "profiling": true,
+  "daysRequested": 30,
+  "matchesRequested": 1,
+  "repeats": 1,
+  "enabled": [
+    "create",
+    "calendar"
+  ],
+  "saveSlots": [
+    1
+  ],
+  "generatedAt": "2026-09-21T20:53:29.540Z",
+  "seed": 20260921,
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "Intel(R) Core(TM) Ultra 5 125U",
+    "logicalCpus": 14,
+    "ramGiB": 15.258289337158203,
+    "commit": "34bdbd4ec8f858088f917b9198be8ad3ad1e6a32"
+  },
+  "notes": [
+    "Headless Node CPU benchmark, not browser FPS or Android measurements.",
+    "Generated careers only; localStorage is memory-only. Disk/quota and browser Worker messaging are NOT timed.",
+    "Scheduled career autosave is suppressed during creation; serialization/compression/loading measured separately.",
+    "Math.random is seeded per scenario; wall-clock timestamps are not frozen.",
+    "Calendar uses advanceCareerDay(autoSimulatePlayer=true,allowRandomEvents=false), matching fast-forward day logic, without UI waits or checkpoint saves.",
+    "CPU profiles are separate diagnostic runs. Inclusive times overlap and must not be summed.",
+    "Three-slot save uses three copies of the same career: size/scaling stress test, not three independently aged careers."
+  ],
+  "stages": {
+    "create": {
+      "elapsedMs": 22654.8808,
+      "samplesMs": [
+        22654.669
+      ],
+      "stats": {
+        "n": 1,
+        "sumMs": 22654.669,
+        "meanMs": 22654.669,
+        "medianMs": 22654.669,
+        "p95Ms": 22654.669,
+        "maxMs": 22654.669
+      },
+      "coldMs": 22654.669,
+      "warm": {
+        "n": 0,
+        "sumMs": 0,
+        "meanMs": 0,
+        "medianMs": 0,
+        "p95Ms": 0,
+        "maxMs": 0
+      },
+      "teamCount": 604,
+      "seniorPlayers": 13541,
+      "startDate": "2026-08-01",
+      "playerTeamId": "dom-pl-2b",
+      "worldConfig": {
+        "leagues": {
+          "au-1": "background",
+          "au-2": "background",
+          "baltic-1": "background",
+          "be-1": "background",
+          "be-2": "background",
+          "br-1": "background",
+          "ca-1": "background",
+          "centralEurope-1": "background",
+          "ch-1": "background",
+          "cn-1": "background",
+          "co-1": "background",
+          "cz-1": "background",
+          "de-1": "background",
+          "fr-1": "background",
+          "fr-2": "background",
+          "fr-3-nord": "background",
+          "fr-3-ouest": "background",
+          "fr-3-est": "background",
+          "fr-3-sud": "background",
+          "gb-1": "background",
+          "gb-2": "background",
+          "iberia-1": "background",
+          "ie-1": "background",
+          "in-1": "background",
+          "in-2": "background",
+          "it-1": "background",
+          "it-2": "background",
+          "jp-1": "background",
+          "nl-1": "background",
+          "nordic-1": "background",
+          "nz-1": "background",
+          "ph-1": "background",
+          "pl-1": "playable",
+          "sg-1": "background",
+          "us-1": "background",
+          "us-2": "background",
+          "us-3": "background",
+          "za-1": "background"
+        },
+        "international": {
+          "nationals": true,
+          "europe": true,
+          "paucc": true,
+          "aoucc": true,
+          "wucc": true
+        },
+        "simulationModel": "focused",
+        "mainCountryId": "pl",
+        "additionalCountryIds": [],
+        "backgroundSimulation": true,
+        "depths": {
+          "au": 2,
+          "baltic": 1,
+          "be": 2,
+          "br": 1,
+          "ca": 1,
+          "centralEurope": 1,
+          "ch": 1,
+          "cn": 1,
+          "co": 1,
+          "cz": 1,
+          "de": 1,
+          "fr": 3,
+          "gb": 2,
+          "iberia": 1,
+          "ie": 1,
+          "in": 2,
+          "it": 2,
+          "jp": 1,
+          "nl": 1,
+          "nordic": 1,
+          "nz": 1,
+          "ph": 1,
+          "pl": 1,
+          "sg": 1,
+          "us": 3,
+          "za": 1
+        },
+        "christmasBreakByCountry": {
+          "au": true,
+          "baltic": false,
+          "be": true,
+          "br": false,
+          "ca": true,
+          "centralEurope": false,
+          "ch": true,
+          "cn": true,
+          "co": false,
+          "cz": true,
+          "de": false,
+          "fr": false,
+          "gb": false,
+          "iberia": false,
+          "ie": false,
+          "in": true,
+          "it": false,
+          "jp": false,
+          "nl": false,
+          "nordic": true,
+          "nz": false,
+          "ph": false,
+          "pl": false,
+          "sg": false,
+          "us": true,
+          "za": true
+        }
+      }
+    },
+    "calendar": {
+      "elapsedMs": 60005.823000000004,
+      "records": [
+        {
+          "date": "2026-08-01",
+          "ms": 1064.122199999998,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-02",
+          "ms": 911.043999999998,
+          "playerLeagueFixtures": 0,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-03",
+          "ms": 1460.0067999999992,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-04",
+          "ms": 3562.7366,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-05",
+          "ms": 1695.2274999999972,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-06",
+          "ms": 1274.2032000000036,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-07",
+          "ms": 2904.154699999999,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-08",
+          "ms": 1446.6552999999985,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-09",
+          "ms": 1372.3974000000017,
+          "playerLeagueFixtures": 0,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-10",
+          "ms": 1569.9358999999968,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-11",
+          "ms": 3482.922999999995,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-12",
+          "ms": 1785.6373000000021,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-13",
+          "ms": 1523.6546999999991,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-14",
+          "ms": 1791.7622999999949,
+          "playerLeagueFixtures": 3,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-15",
+          "ms": 1841.6437000000005,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-16",
+          "ms": 2179.8301999999967,
+          "playerLeagueFixtures": 2,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-17",
+          "ms": 1753.7895999999964,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-18",
+          "ms": 3161.334299999995,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-19",
+          "ms": 1345.8336999999956,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-20",
+          "ms": 1536.1224000000002,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-21",
+          "ms": 5323.2962999999945,
+          "playerLeagueFixtures": 3,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-22",
+          "ms": 2109.7068,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-23",
+          "ms": 1818.7771999999968,
+          "playerLeagueFixtures": 2,
+          "weekTick": true,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-24",
+          "ms": 1820.0794000000024,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-25",
+          "ms": 3285.253199999992,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-26",
+          "ms": 1520.9665000000095,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-27",
+          "ms": 1554.3767999999982,
+          "playerLeagueFixtures": 0,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-28",
+          "ms": 1760.7492999999959,
+          "playerLeagueFixtures": 3,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-29",
+          "ms": 1692.1686000000045,
+          "playerLeagueFixtures": 2,
+          "weekTick": false,
+          "blocked": false
+        },
+        {
+          "date": "2026-08-30",
+          "ms": 1452.5184000000008,
+          "playerLeagueFixtures": 2,
+          "weekTick": true,
+          "blocked": false
+        }
+      ],
+      "stats": {
+        "n": 30,
+        "sumMs": 60000.90729999996,
+        "meanMs": 2000.030243333332,
+        "medianMs": 1695.2274999999972,
+        "p95Ms": 3562.7366,
+        "maxMs": 5323.2962999999945
+      },
+      "withPlayerLeagueFixtures": {
+        "n": 11,
+        "sumMs": 23544.321799999983,
+        "meanMs": 2140.3928909090896,
+        "medianMs": 1818.7771999999968,
+        "p95Ms": 5323.2962999999945,
+        "maxMs": 5323.2962999999945
+      },
+      "withoutPlayerLeagueFixtures": {
+        "n": 19,
+        "sumMs": 36456.58549999998,
+        "meanMs": 1918.7676578947357,
+        "medianMs": 1536.1224000000002,
+        "p95Ms": 3562.7366,
+        "maxMs": 3562.7366
+      },
+      "weekTicks": {
+        "n": 5,
+        "sumMs": 7734.567199999994,
+        "meanMs": 1546.913439999999,
+        "medianMs": 1452.5184000000008,
+        "p95Ms": 2179.8301999999967,
+        "maxMs": 2179.8301999999967
+      },
+      "startDate": "2026-08-01",
+      "endDate": "2026-08-31",
+      "finalStatus": "active",
+      "note": "Days without player-league fixtures can still contain other league, cup and national matches."
+    }
+  },
+  "cpuProfiles": {
+    "create": {
+      "sampledMs": 22682.986,
+      "samples": 13878,
+      "topSelf": [
+        {
+          "fn": "normalizeTraitId",
+          "file": "src/models/playerTraits.js",
+          "line": 759,
+          "selfMs": 8303.456000000002,
+          "inclusiveMs": 8303.456000000002,
+          "selfPct": 36.60653848659961,
+          "inclusivePct": 36.60653848659961
+        },
+        {
+          "fn": "conflictsWith",
+          "file": "src/models/playerTraits.js",
+          "line": 695,
+          "selfMs": 4755.863999999999,
+          "inclusiveMs": 12858.028,
+          "selfPct": 20.9666575643965,
+          "inclusivePct": 56.68578202182023
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerTraits.js",
+          "line": 797,
+          "selfMs": 727.3090000000001,
+          "inclusiveMs": 7696.892999999999,
+          "selfPct": 3.2064076572634668,
+          "inclusivePct": 33.93245051599467
+        },
+        {
+          "fn": "parseISODate",
+          "file": "src/league/seasonCalendar.js",
+          "line": 7,
+          "selfMs": 611.3209999999999,
+          "inclusiveMs": 611.3209999999999,
+          "selfPct": 2.6950640449189533,
+          "inclusivePct": 2.6950640449189533
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerTraits.js",
+          "line": 792,
+          "selfMs": 548.65,
+          "inclusiveMs": 5857.815,
+          "selfPct": 2.4187732602753447,
+          "inclusivePct": 25.824708440061638
+        },
+        {
+          "fn": "(garbage collector)",
+          "file": "",
+          "line": 0,
+          "selfMs": 543.375,
+          "inclusiveMs": 543.375,
+          "selfPct": 2.395517944595125,
+          "inclusivePct": 2.395517944595125
+        },
+        {
+          "fn": "rollTraitsForPlayer",
+          "file": "src/models/playerTraits.js",
+          "line": 780,
+          "selfMs": 432.6149999999999,
+          "inclusiveMs": 15270.190999999999,
+          "selfPct": 1.907222444170269,
+          "inclusivePct": 67.32002127056818
+        },
+        {
+          "fn": "ensurePlayerTraits",
+          "file": "src/models/playerTraits.js",
+          "line": 812,
+          "selfMs": 370.64500000000004,
+          "inclusiveMs": 11515.702999999998,
+          "selfPct": 1.6340220815725057,
+          "inclusivePct": 50.76802057718502
+        },
+        {
+          "fn": "avg",
+          "file": "src/models/playerStats.js",
+          "line": 164,
+          "selfMs": 342.58600000000007,
+          "inclusiveMs": 460.94100000000003,
+          "selfPct": 1.510321436516339,
+          "inclusivePct": 2.0321001829300602
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerStats.js",
+          "line": 307,
+          "selfMs": 276.223,
+          "inclusiveMs": 916.3289999999998,
+          "selfPct": 1.217754135191901,
+          "inclusivePct": 4.039719461979123
+        },
+        {
+          "fn": "canonicalAttribute",
+          "file": "src/models/attributeAliases.js",
+          "line": 6,
+          "selfMs": 260.279,
+          "inclusiveMs": 260.279,
+          "selfPct": 1.1474635658638594,
+          "inclusivePct": 1.1474635658638594
+        },
+        {
+          "fn": "addDays",
+          "file": "src/league/seasonCalendar.js",
+          "line": 21,
+          "selfMs": 209.497,
+          "inclusiveMs": 767.957,
+          "selfPct": 0.9235865154614123,
+          "inclusivePct": 3.38560805001599
+        },
+        {
+          "fn": "getSubStat",
+          "file": "src/models/playerStats.js",
+          "line": 279,
+          "selfMs": 198.07300000000004,
+          "inclusiveMs": 652.698,
+          "selfPct": 0.87322277587263,
+          "inclusivePct": 2.8774783002555306
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerStats.js",
+          "line": 604,
+          "selfMs": 197.064,
+          "inclusiveMs": 206.182,
+          "selfPct": 0.8687745079064987,
+          "inclusivePct": 0.9089720374557388
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerTraits.js",
+          "line": 789,
+          "selfMs": 180.80100000000002,
+          "inclusiveMs": 180.80100000000002,
+          "selfPct": 0.7970775981610181,
+          "inclusivePct": 0.7970775981610181
+        },
+        {
+          "fn": "computeNormalizedPlayerSkills",
+          "file": "src/models/playerStats.js",
+          "line": 255,
+          "selfMs": 174.91799999999998,
+          "inclusiveMs": 341.622,
+          "selfPct": 0.7711418593654291,
+          "inclusivePct": 1.50607155512947
+        },
+        {
+          "fn": "personalityTraitWeight",
+          "file": "src/models/playerPersonalities.js",
+          "line": 167,
+          "selfMs": 167.732,
+          "inclusiveMs": 498.0639999999999,
+          "selfPct": 0.7394617269525273,
+          "inclusivePct": 2.195760293640352
+        },
+        {
+          "fn": "normalizePlayerSkills",
+          "file": "src/models/playerStats.js",
+          "line": 244,
+          "selfMs": 163.71200000000002,
+          "inclusiveMs": 404.51200000000006,
+          "selfPct": 0.7217391925384075,
+          "inclusivePct": 1.7833278211254906
+        },
+        {
+          "fn": "getOverallRating",
+          "file": "src/models/playerStats.js",
+          "line": 505,
+          "selfMs": 157.23600000000002,
+          "inclusiveMs": 1726.7690000000002,
+          "selfPct": 0.6931891594872034,
+          "inclusivePct": 7.6126176685909
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerPersonalities.js",
+          "line": 169,
+          "selfMs": 151.636,
+          "inclusiveMs": 188.16300000000004,
+          "selfPct": 0.6685010518456432,
+          "inclusivePct": 0.8295336425283693
+        },
+        {
+          "fn": "rawAttribute",
+          "file": "src/models/attributeAliases.js",
+          "line": 12,
+          "selfMs": 147.55,
+          "inclusiveMs": 283.66,
+          "selfPct": 0.6504875504486051,
+          "inclusivePct": 1.2505408238580231
+        },
+        {
+          "fn": "rollSubStatForPlayer",
+          "file": "src/models/playerStats.js",
+          "line": 311,
+          "selfMs": 136.48200000000003,
+          "inclusiveMs": 147.49400000000003,
+          "selfPct": 0.6016932691313217,
+          "inclusivePct": 0.6502406693721895
+        },
+        {
+          "fn": "ensurePlayerDevelopment",
+          "file": "src/career/playerDevelopment.js",
+          "line": 310,
+          "selfMs": 136.42499999999998,
+          "inclusiveMs": 5940.841,
+          "selfPct": 0.6014419794642556,
+          "inclusivePct": 26.19073608739167
+        },
+        {
+          "fn": "hasNestedShape",
+          "file": "src/models/playerStats.js",
+          "line": 170,
+          "selfMs": 136.02399999999997,
+          "inclusiveMs": 136.02399999999997,
+          "selfPct": 0.599674134613494,
+          "inclusivePct": 0.599674134613494
+        },
+        {
+          "fn": "gap",
+          "file": "src/league/domesticCalendar.js",
+          "line": 63,
+          "selfMs": 135.285,
+          "inclusiveMs": 135.285,
+          "selfPct": 0.5964161861229381,
+          "inclusivePct": 0.5964161861229381
+        },
+        {
+          "fn": "buildBalancedSubStats",
+          "file": "src/models/playerStats.js",
+          "line": 323,
+          "selfMs": 130.544,
+          "inclusiveMs": 292.308,
+          "selfPct": 0.5755150578499675,
+          "inclusivePct": 1.288666315801632
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerPersonalities.js",
+          "line": 170,
+          "selfMs": 129.978,
+          "inclusiveMs": 142.169,
+          "selfPct": 0.5730197955419097,
+          "inclusivePct": 0.626764924159456
+        },
+        {
+          "fn": "(program)",
+          "file": "",
+          "line": 0,
+          "selfMs": 126.099,
+          "inclusiveMs": 126.099,
+          "selfPct": 0.555918872409479,
+          "inclusivePct": 0.555918872409479
+        },
+        {
+          "fn": "structuredClone",
+          "file": "node:internal/worker/js_transferable",
+          "line": 113,
+          "selfMs": 126.027,
+          "inclusiveMs": 126.027,
+          "selfPct": 0.555601453882659,
+          "inclusivePct": 0.555601453882659
+        },
+        {
+          "fn": "hashSeed",
+          "file": "src/models/playerTraits.js",
+          "line": 704,
+          "selfMs": 121.501,
+          "inclusiveMs": 121.501,
+          "selfPct": 0.5356481725994982,
+          "inclusivePct": 0.5356481725994982
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerStats.js",
+          "line": 510,
+          "selfMs": 120.921,
+          "inclusiveMs": 1566.3329999999999,
+          "selfPct": 0.5330911900223365,
+          "inclusivePct": 6.9053210190228045
+        },
+        {
+          "fn": "generatePlayingStyles",
+          "file": "src/models/playingStyleGeneration.js",
+          "line": 77,
+          "selfMs": 117.539,
+          "inclusiveMs": 6197.624000000001,
+          "selfPct": 0.5181813364430944,
+          "inclusivePct": 27.32278722034216
+        },
+        {
+          "fn": "getCategoryOverall",
+          "file": "src/models/playerStats.js",
+          "line": 303,
+          "selfMs": 116.68800000000002,
+          "inclusiveMs": 1477.2160000000001,
+          "selfPct": 0.5144296257997074,
+          "inclusivePct": 6.512440646041927
+        },
+        {
+          "fn": "createAcademyProspect",
+          "file": "src/career/academy.js",
+          "line": 241,
+          "selfMs": 111.715,
+          "inclusiveMs": 10067.955,
+          "selfPct": 0.49250570449587194,
+          "inclusivePct": 44.38549228042552
+        },
+        {
+          "fn": "scaleSkillsToTargetOvr",
+          "file": "src/models/playerStats.js",
+          "line": 596,
+          "selfMs": 105.237,
+          "inclusiveMs": 696.181,
+          "selfPct": 0.4639468542633673,
+          "inclusivePct": 3.0691770475015945
+        }
+      ],
+      "topInclusive": [
+        {
+          "fn": "createCareer",
+          "file": "src/career/careerModel.js",
+          "line": 157,
+          "selfMs": 41.453,
+          "inclusiveMs": 21976.257,
+          "selfPct": 0.18274930822599814,
+          "inclusivePct": 96.88432113831927
+        },
+        {
+          "fn": "buildDomesticWorldTemplate",
+          "file": "src/career/domesticWorld.js",
+          "line": 49,
+          "selfMs": 41.117,
+          "inclusiveMs": 16309.98,
+          "selfPct": 0.18126802176750448,
+          "inclusivePct": 71.90402533423068
+        },
+        {
+          "fn": "rollTraitsForPlayer",
+          "file": "src/models/playerTraits.js",
+          "line": 780,
+          "selfMs": 432.6149999999999,
+          "inclusiveMs": 15270.190999999999,
+          "selfPct": 1.907222444170269,
+          "inclusivePct": 67.32002127056818
+        },
+        {
+          "fn": "conflictsWith",
+          "file": "src/models/playerTraits.js",
+          "line": 695,
+          "selfMs": 4755.863999999999,
+          "inclusiveMs": 12858.028,
+          "selfPct": 20.9666575643965,
+          "inclusivePct": 56.68578202182023
+        },
+        {
+          "fn": "ensurePlayerTraits",
+          "file": "src/models/playerTraits.js",
+          "line": 812,
+          "selfMs": 370.64500000000004,
+          "inclusiveMs": 11515.702999999998,
+          "selfPct": 1.6340220815725057,
+          "inclusivePct": 50.76802057718502
+        },
+        {
+          "fn": "createAcademyProspect",
+          "file": "src/career/academy.js",
+          "line": 241,
+          "selfMs": 111.715,
+          "inclusiveMs": 10067.955,
+          "selfPct": 0.49250570449587194,
+          "inclusivePct": 44.38549228042552
+        },
+        {
+          "fn": "normalizeTraitId",
+          "file": "src/models/playerTraits.js",
+          "line": 759,
+          "selfMs": 8303.456000000002,
+          "inclusiveMs": 8303.456000000002,
+          "selfPct": 36.60653848659961,
+          "inclusivePct": 36.60653848659961
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerTraits.js",
+          "line": 797,
+          "selfMs": 727.3090000000001,
+          "inclusiveMs": 7696.892999999999,
+          "selfPct": 3.2064076572634668,
+          "inclusivePct": 33.93245051599467
+        },
+        {
+          "fn": "initializeDomesticRoster",
+          "file": "src/career/domesticWorld.js",
+          "line": 19,
+          "selfMs": 19.45,
+          "inclusiveMs": 7197.227,
+          "selfPct": 0.08574708814791844,
+          "inclusivePct": 31.72962766013258
+        },
+        {
+          "fn": "generatePlayingStyles",
+          "file": "src/models/playingStyleGeneration.js",
+          "line": 77,
+          "selfMs": 117.539,
+          "inclusiveMs": 6197.624000000001,
+          "selfPct": 0.5181813364430944,
+          "inclusivePct": 27.32278722034216
+        },
+        {
+          "fn": "ensurePlayerDevelopment",
+          "file": "src/career/playerDevelopment.js",
+          "line": 310,
+          "selfMs": 136.42499999999998,
+          "inclusiveMs": 5940.841,
+          "selfPct": 0.6014419794642556,
+          "inclusivePct": 26.19073608739167
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerTraits.js",
+          "line": 792,
+          "selfMs": 53.418000000000006,
+          "inclusiveMs": 5916.077,
+          "selfPct": 0.2354980953565814,
+          "inclusivePct": 26.08156174852817
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerTraits.js",
+          "line": 792,
+          "selfMs": 548.65,
+          "inclusiveMs": 5857.815,
+          "selfPct": 2.4187732602753447,
+          "inclusivePct": 25.824708440061638
+        },
+        {
+          "fn": "getOverallRating",
+          "file": "src/models/playerStats.js",
+          "line": 505,
+          "selfMs": 157.23600000000002,
+          "inclusiveMs": 1726.7690000000002,
+          "selfPct": 0.6931891594872034,
+          "inclusivePct": 7.6126176685909
+        },
+        {
+          "fn": "createWorldFromTemplate",
+          "file": "src/career/worldState.js",
+          "line": 121,
+          "selfMs": 1.565,
+          "inclusiveMs": 1582.685,
+          "selfPct": 0.006899444367685983,
+          "inclusivePct": 6.97741029333616
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerStats.js",
+          "line": 510,
+          "selfMs": 120.921,
+          "inclusiveMs": 1566.3329999999999,
+          "selfPct": 0.5330911900223365,
+          "inclusivePct": 6.9053210190228045
+        },
+        {
+          "fn": "getCategoryOverall",
+          "file": "src/models/playerStats.js",
+          "line": 303,
+          "selfMs": 116.68800000000002,
+          "inclusiveMs": 1477.2160000000001,
+          "selfPct": 0.5144296257997074,
+          "inclusivePct": 6.512440646041927
+        },
+        {
+          "fn": "reconcileDomesticCalendar",
+          "file": "src/league/domesticCalendar.js",
+          "line": 52,
+          "selfMs": 96.237,
+          "inclusiveMs": 1154.0610000000001,
+          "selfPct": 0.42426953841086,
+          "inclusivePct": 5.0877825344511525
+        },
+        {
+          "fn": "initializeWorldAcademies",
+          "file": "src/career/academy.js",
+          "line": 179,
+          "selfMs": 0,
+          "inclusiveMs": 1033.314,
+          "selfPct": 0,
+          "inclusivePct": 4.555458439201964
+        },
+        {
+          "fn": "initWorldPlayerDevelopment",
+          "file": "src/career/playerDevelopment.js",
+          "line": 384,
+          "selfMs": 4.197,
+          "inclusiveMs": 1000.182,
+          "selfPct": 0.018502854959219214,
+          "inclusivePct": 4.409393013776934
+        },
+        {
+          "fn": "ensureYouthCohort",
+          "file": "src/career/youthPopulation.js",
+          "line": 60,
+          "selfMs": 2.952,
+          "inclusiveMs": 975.925,
+          "selfPct": 0.013014159599622377,
+          "inclusivePct": 4.302453830373127
+        },
+        {
+          "fn": "initializeNationalPlayerPools",
+          "file": "src/career/nationalTeams.js",
+          "line": 265,
+          "selfMs": 4.733,
+          "inclusiveMs": 943.67,
+          "selfPct": 0.020865859547768532,
+          "inclusivePct": 4.160254738948391
+        },
+        {
+          "fn": "selectNationalSquad",
+          "file": "src/career/nationalTeams.js",
+          "line": 202,
+          "selfMs": 51.95,
+          "inclusiveMs": 938.937,
+          "selfPct": 0.2290262842819724,
+          "inclusivePct": 4.139388879400622
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerStats.js",
+          "line": 307,
+          "selfMs": 276.223,
+          "inclusiveMs": 916.3289999999998,
+          "selfPct": 1.217754135191901,
+          "inclusivePct": 4.039719461979123
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/domesticCalendar.js",
+          "line": 70,
+          "selfMs": 7.852,
+          "inclusiveMs": 854.079,
+          "selfPct": 0.034616253785987434,
+          "inclusivePct": 3.765284693999282
+        },
+        {
+          "fn": "applyClubOvrDistribution",
+          "file": "src/data/eucsRosterBalance.js",
+          "line": 38,
+          "selfMs": 56.192,
+          "inclusiveMs": 775.604,
+          "selfPct": 0.24772752582045415,
+          "inclusivePct": 3.4193205427186704
+        },
+        {
+          "fn": "addDays",
+          "file": "src/league/seasonCalendar.js",
+          "line": 21,
+          "selfMs": 209.497,
+          "inclusiveMs": 767.957,
+          "selfPct": 0.9235865154614123,
+          "inclusivePct": 3.38560805001599
+        },
+        {
+          "fn": "assignAiTrainingPlans",
+          "file": "src/career/playerDevelopment.js",
+          "line": 372,
+          "selfMs": 2.499,
+          "inclusiveMs": 719.504,
+          "selfPct": 0.01101706803504618,
+          "inclusivePct": 3.171998607238042
+        },
+        {
+          "fn": "scaleSkillsToTargetOvr",
+          "file": "src/models/playerStats.js",
+          "line": 596,
+          "selfMs": 105.237,
+          "inclusiveMs": 696.181,
+          "selfPct": 0.4639468542633673,
+          "inclusivePct": 3.0691770475015945
+        },
+        {
+          "fn": "getSubStat",
+          "file": "src/models/playerStats.js",
+          "line": 279,
+          "selfMs": 198.07300000000004,
+          "inclusiveMs": 652.698,
+          "selfPct": 0.87322277587263,
+          "inclusivePct": 2.8774783002555306
+        },
+        {
+          "fn": "createDomesticSeason",
+          "file": "src/career/domesticWorld.js",
+          "line": 101,
+          "selfMs": 16.124,
+          "inclusiveMs": 611.578,
+          "selfPct": 0.07108411564509187,
+          "inclusivePct": 2.6961970527160752
+        },
+        {
+          "fn": "parseISODate",
+          "file": "src/league/seasonCalendar.js",
+          "line": 7,
+          "selfMs": 611.3209999999999,
+          "inclusiveMs": 611.3209999999999,
+          "selfPct": 2.6950640449189533,
+          "inclusivePct": 2.6950640449189533
+        },
+        {
+          "fn": "initWorldPlayerStats",
+          "file": "src/career/worldState.js",
+          "line": 213,
+          "selfMs": 18.839,
+          "inclusiveMs": 605.304,
+          "selfPct": 0.08305343926059822,
+          "inclusivePct": 2.6685375549762274
+        },
+        {
+          "fn": "weight",
+          "file": "src/models/playerTraits.js",
+          "line": 799,
+          "selfMs": 44.634,
+          "inclusiveMs": 544.2669999999998,
+          "selfPct": 0.19677303508453428,
+          "inclusivePct": 2.399450407455173
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/career/nationalTeams.js",
+          "line": 228,
+          "selfMs": 10.111,
+          "inclusiveMs": 523.245,
+          "selfPct": 0.04457526006496676,
+          "inclusivePct": 2.3067730148050174
+        },
+        {
+          "fn": "personalityTraitWeight",
+          "file": "src/models/playerPersonalities.js",
+          "line": 167,
+          "selfMs": 167.732,
+          "inclusiveMs": 498.0639999999999,
+          "selfPct": 0.7394617269525273,
+          "inclusivePct": 2.195760293640352
+        },
+        {
+          "fn": "avg",
+          "file": "src/models/playerStats.js",
+          "line": 164,
+          "selfMs": 342.58600000000007,
+          "inclusiveMs": 460.94100000000003,
+          "selfPct": 1.510321436516339,
+          "inclusivePct": 2.0321001829300602
+        },
+        {
+          "fn": "pickAiTrainingFocus",
+          "file": "src/career/playerDevelopment.js",
+          "line": 345,
+          "selfMs": 20.063,
+          "inclusiveMs": 449.457,
+          "selfPct": 0.0884495542165392,
+          "inclusivePct": 1.9814719279022612
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerTraits.js",
+          "line": 801,
+          "selfMs": 30.457,
+          "inclusiveMs": 410.74499999999995,
+          "selfPct": 0.13427244543553482,
+          "inclusivePct": 1.8108065666486763
+        },
+        {
+          "fn": "ensureWorldContracts",
+          "file": "src/career/transfers/playerContracts.js",
+          "line": 391,
+          "selfMs": 5.603,
+          "inclusiveMs": 405.606,
+          "selfPct": 0.0247013334135109,
+          "inclusivePct": 1.7881508192968951
+        }
+      ],
+      "byFile": [
+        {
+          "file": "src/models/playerTraits.js",
+          "ms": 15647.107999999998,
+          "pct": 68.98169403269921
+        },
+        {
+          "file": "src/models/playerStats.js",
+          "ms": 2478.578000000001,
+          "pct": 10.927035796786194
+        },
+        {
+          "file": "src/league/seasonCalendar.js",
+          "ms": 905.267,
+          "pct": 3.9909516322057423
+        },
+        {
+          "file": "(runtime)",
+          "ms": 670.1080000000001,
+          "pct": 2.954231863476881
+        },
+        {
+          "file": "src/models/playerPersonalities.js",
+          "ms": 499.63300000000004,
+          "pct": 2.2026773723706397
+        },
+        {
+          "file": "src/models/attributeAliases.js",
+          "ms": 418.841,
+          "pct": 1.846498516553332
+        },
+        {
+          "file": "src/league/domesticCalendar.js",
+          "ms": 309.259,
+          "pct": 1.3633963359145045
+        },
+        {
+          "file": "src/models/playingStyleGeneration.js",
+          "ms": 273.804,
+          "pct": 1.207089754408877
+        },
+        {
+          "file": "src/career/playerDevelopment.js",
+          "ms": 214.67199999999997,
+          "pct": 0.9464009720766039
+        },
+        {
+          "file": "src/career/academy.js",
+          "ms": 180.857,
+          "pct": 0.7973244792374338
+        },
+        {
+          "file": "src/models/playerArchetypes.js",
+          "ms": 151.447,
+          "pct": 0.6676678282127406
+        },
+        {
+          "file": "node:internal/worker/js_transferable",
+          "ms": 126.027,
+          "pct": 0.555601453882659
+        },
+        {
+          "file": "src/career/transfers/playerContracts.js",
+          "ms": 87.33900000000001,
+          "pct": 0.38504189880468126
+        },
+        {
+          "file": "src/career/domesticWorld.js",
+          "ms": 86.88699999999999,
+          "pct": 0.3830492158307552
+        },
+        {
+          "file": "src/career/nationalTeams.js",
+          "ms": 77.55,
+          "pct": 0.34188620492910415
+        },
+        {
+          "file": "src/data/eucsRosterBalance.js",
+          "ms": 68.617,
+          "pct": 0.30250426465016556
+        },
+        {
+          "file": "src/career/managerProfiles.js",
+          "ms": 47.179,
+          "pct": 0.20799289828949327
+        },
+        {
+          "file": "src/career/careerModel.js",
+          "ms": 43.078,
+          "pct": 0.1899132680327008
+        },
+        {
+          "file": "src/career/clubEconomy.js",
+          "ms": 41.912000000000006,
+          "pct": 0.184772851334476
+        },
+        {
+          "file": "src/career/financialMarkets.js",
+          "ms": 33.256,
+          "pct": 0.14661209066566455
+        },
+        {
+          "file": "src/models/detailedAttributes.js",
+          "ms": 33.12799999999999,
+          "pct": 0.14604779106242888
+        },
+        {
+          "file": "src/career/worldState.js",
+          "ms": 29.737,
+          "pct": 0.13109826016733422
+        },
+        {
+          "file": "src/data/randomRosterSkills.js",
+          "ms": 29.557000000000002,
+          "pct": 0.13030471385028408
+        },
+        {
+          "file": "node:inspector",
+          "ms": 27.554,
+          "pct": 0.12147430677777608
+        },
+        {
+          "file": "src/career/youthPopulation.js",
+          "ms": 26.573,
+          "pct": 0.11714947934985279
+        }
+      ]
+    },
+    "calendar": {
+      "sampledMs": 60083.144,
+      "samples": 35424,
+      "topSelf": [
+        {
+          "fn": "parseISODate",
+          "file": "src/league/seasonCalendar.js",
+          "line": 7,
+          "selfMs": 16197.410999999998,
+          "inclusiveMs": 16197.410999999998,
+          "selfPct": 26.9583279463538,
+          "inclusivePct": 26.9583279463538
+        },
+        {
+          "fn": "addDays",
+          "file": "src/league/seasonCalendar.js",
+          "line": 21,
+          "selfMs": 5187.442,
+          "inclusiveMs": 20764.687999999995,
+          "selfPct": 8.633772560237526,
+          "inclusivePct": 34.559922496732185
+        },
+        {
+          "fn": "structuredClone",
+          "file": "node:internal/worker/js_transferable",
+          "line": 113,
+          "selfMs": 4923.4259999999995,
+          "inclusiveMs": 4967.5,
+          "selfPct": 8.19435480939546,
+          "inclusivePct": 8.267709825571046
+        },
+        {
+          "fn": "gap",
+          "file": "src/league/domesticCalendar.js",
+          "line": 63,
+          "selfMs": 3872.075,
+          "inclusiveMs": 3872.075,
+          "selfPct": 6.444527936154606,
+          "inclusivePct": 6.444527936154606
+        },
+        {
+          "fn": "reconcileDomesticCalendar",
+          "file": "src/league/domesticCalendar.js",
+          "line": 52,
+          "selfMs": 3569.25,
+          "inclusiveMs": 32863.192,
+          "selfPct": 5.940518026153891,
+          "inclusivePct": 54.69619232974893
+        },
+        {
+          "fn": "normalizeTraitId",
+          "file": "src/models/playerTraits.js",
+          "line": 759,
+          "selfMs": 2116.712,
+          "inclusiveMs": 2116.712,
+          "selfPct": 3.522971434384326,
+          "inclusivePct": 3.522971434384326
+        },
+        {
+          "fn": "formatISODate",
+          "file": "src/league/seasonCalendar.js",
+          "line": 13,
+          "selfMs": 2076.687,
+          "inclusiveMs": 2076.687,
+          "selfPct": 3.456355413092231,
+          "inclusivePct": 3.456355413092231
+        },
+        {
+          "fn": "ensurePlayerTraits",
+          "file": "src/models/playerTraits.js",
+          "line": 812,
+          "selfMs": 1730.0459999999998,
+          "inclusiveMs": 4478.458,
+          "selfPct": 2.8794198918751652,
+          "inclusivePct": 7.453767732261147
+        },
+        {
+          "fn": "(garbage collector)",
+          "file": "",
+          "line": 0,
+          "selfMs": 1722.632,
+          "inclusiveMs": 1722.632,
+          "selfPct": 2.867080324558249,
+          "inclusivePct": 2.867080324558249
+        },
+        {
+          "fn": "trainingFixtures",
+          "file": "src/career/trainingSchedule.js",
+          "line": 49,
+          "selfMs": 1055.3809999999999,
+          "inclusiveMs": 1465.3319999999999,
+          "selfPct": 1.756534245278509,
+          "inclusivePct": 2.438840417538736
+        },
+        {
+          "fn": "advanceCareerDay",
+          "file": "src/career/calendarSimulation.js",
+          "line": 283,
+          "selfMs": 891.955,
+          "inclusiveMs": 57963.027,
+          "selfPct": 1.4845344977286807,
+          "inclusivePct": 96.47136141876996
+        },
+        {
+          "fn": "avg",
+          "file": "src/models/playerStats.js",
+          "line": 164,
+          "selfMs": 852.6300000000001,
+          "inclusiveMs": 1075.291,
+          "selfPct": 1.4190835286515635,
+          "inclusivePct": 1.789671658993078
+        },
+        {
+          "fn": "canonicalAttribute",
+          "file": "src/models/attributeAliases.js",
+          "line": 6,
+          "selfMs": 752.4169999999997,
+          "inclusiveMs": 752.4169999999997,
+          "selfPct": 1.2522929891951056,
+          "inclusivePct": 1.2522929891951056
+        },
+        {
+          "fn": "conflictsWith",
+          "file": "src/models/playerTraits.js",
+          "line": 695,
+          "selfMs": 749.844,
+          "inclusiveMs": 2599.862,
+          "selfPct": 1.248010590124911,
+          "inclusivePct": 4.327107116764728
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/domesticCalendar.js",
+          "line": 68,
+          "selfMs": 667.81,
+          "inclusiveMs": 667.81,
+          "selfPct": 1.111476456691414,
+          "inclusivePct": 1.111476456691414
+        },
+        {
+          "fn": "applyDailyDevelopment",
+          "file": "src/career/playerDevelopment.js",
+          "line": 436,
+          "selfMs": 651.123,
+          "inclusiveMs": 9045.953,
+          "selfPct": 1.0837032762466625,
+          "inclusivePct": 15.055725113186487
+        },
+        {
+          "fn": "getSubStat",
+          "file": "src/models/playerStats.js",
+          "line": 279,
+          "selfMs": 645.7690000000001,
+          "inclusiveMs": 1753.2710000000002,
+          "selfPct": 1.0747922911623935,
+          "inclusivePct": 2.9180746600078056
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerStats.js",
+          "line": 307,
+          "selfMs": 642.574,
+          "inclusiveMs": 2279.9399999999996,
+          "selfPct": 1.0694746599811753,
+          "inclusivePct": 3.794641638593346
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/domesticCalendar.js",
+          "line": 70,
+          "selfMs": 616.5590000000001,
+          "inclusiveMs": 23452.097,
+          "selfPct": 1.0261763265916979,
+          "inclusivePct": 39.03273936530352
+        },
+        {
+          "fn": "getCategoryOverall",
+          "file": "src/models/playerStats.js",
+          "line": 303,
+          "selfMs": 504.87100000000004,
+          "inclusiveMs": 3841.1879999999996,
+          "selfPct": 0.8402872526111484,
+          "inclusivePct": 6.393120839348885
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/domesticCalendar.js",
+          "line": 64,
+          "selfMs": 478.39099999999996,
+          "inclusiveMs": 478.39099999999996,
+          "selfPct": 0.7962149916788641,
+          "inclusivePct": 0.7962149916788641
+        },
+        {
+          "fn": "normalizePlayerSkills",
+          "file": "src/models/playerStats.js",
+          "line": 244,
+          "selfMs": 475.934,
+          "inclusiveMs": 1098.4350000000002,
+          "selfPct": 0.7921256584042939,
+          "inclusivePct": 1.828191613940842
+        },
+        {
+          "fn": "ensurePlayerDevelopment",
+          "file": "src/career/playerDevelopment.js",
+          "line": 310,
+          "selfMs": 472.313,
+          "inclusiveMs": 5212.273999999999,
+          "selfPct": 0.786099009732247,
+          "inclusivePct": 8.675101955383692
+        },
+        {
+          "fn": "computeNormalizedPlayerSkills",
+          "file": "src/models/playerStats.js",
+          "line": 255,
+          "selfMs": 468.88899999999995,
+          "inclusiveMs": 1012.8919999999999,
+          "selfPct": 0.7804002400407009,
+          "inclusivePct": 1.6858172401896945
+        },
+        {
+          "fn": "getOverallRating",
+          "file": "src/models/playerStats.js",
+          "line": 505,
+          "selfMs": 458.79699999999997,
+          "inclusiveMs": 4616.813000000001,
+          "selfPct": 0.7636035158213426,
+          "inclusivePct": 7.684040302551413
+        },
+        {
+          "fn": "updatePlayingStyles",
+          "file": "src/career/playingStyleDevelopment.js",
+          "line": 7,
+          "selfMs": 375.599,
+          "inclusiveMs": 694.003,
+          "selfPct": 0.6251320669903692,
+          "inclusivePct": 1.1550710462155576
+        },
+        {
+          "fn": "hasNestedShape",
+          "file": "src/models/playerStats.js",
+          "line": 170,
+          "selfMs": 367.45899999999995,
+          "inclusiveMs": 367.45899999999995,
+          "selfPct": 0.6115841740904903,
+          "inclusivePct": 0.6115841740904903
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerStats.js",
+          "line": 510,
+          "selfMs": 351.84000000000003,
+          "inclusiveMs": 4139.418999999999,
+          "selfPct": 0.5855885304537326,
+          "inclusivePct": 6.889484678098734
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/career/trainingSchedule.js",
+          "line": 52,
+          "selfMs": 342.432,
+          "inclusiveMs": 342.432,
+          "selfPct": 0.5699302286844377,
+          "inclusivePct": 0.5699302286844377
+        },
+        {
+          "fn": "rawAttribute",
+          "file": "src/models/attributeAliases.js",
+          "line": 12,
+          "selfMs": 319.03799999999995,
+          "inclusiveMs": 701.395,
+          "selfPct": 0.5309941836598963,
+          "inclusivePct": 1.1673739976057178
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/domesticCalendar.js",
+          "line": 74,
+          "selfMs": 266.136,
+          "inclusiveMs": 4148.223,
+          "selfPct": 0.4429461946931406,
+          "inclusivePct": 6.904137706242536
+        },
+        {
+          "fn": "(program)",
+          "file": "",
+          "line": 0,
+          "selfMs": 240.028,
+          "inclusiveMs": 240.028,
+          "selfPct": 0.3994930757951015,
+          "inclusivePct": 0.3994930757951015
+        },
+        {
+          "fn": "computeCalendarDayStep",
+          "file": "src/career/calendarSimulation.js",
+          "line": 54,
+          "selfMs": 237.804,
+          "inclusiveMs": 19302.209,
+          "selfPct": 0.3957915384720879,
+          "inclusivePct": 32.12583049914964
+        },
+        {
+          "fn": "recordMatchDevelopment",
+          "file": "src/career/matchDevelopment.js",
+          "line": 21,
+          "selfMs": 231.673,
+          "inclusiveMs": 740.721,
+          "selfPct": 0.38558734542919393,
+          "inclusivePct": 1.2328266310431424
+        },
+        {
+          "fn": "recoverPlayerDay",
+          "file": "src/models/playerWorkload.js",
+          "line": 22,
+          "selfMs": 220.018,
+          "inclusiveMs": 220.21900000000002,
+          "selfPct": 0.3661892260498219,
+          "inclusivePct": 0.36652376247155116
+        }
+      ],
+      "topInclusive": [
+        {
+          "fn": "advanceCareerDay",
+          "file": "src/career/calendarSimulation.js",
+          "line": 283,
+          "selfMs": 891.955,
+          "inclusiveMs": 57963.027,
+          "selfPct": 1.4845344977286807,
+          "inclusivePct": 96.47136141876996
+        },
+        {
+          "fn": "reconcileDomesticCalendar",
+          "file": "src/league/domesticCalendar.js",
+          "line": 52,
+          "selfMs": 3569.25,
+          "inclusiveMs": 32863.192,
+          "selfPct": 5.940518026153891,
+          "inclusivePct": 54.69619232974893
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/domesticCalendar.js",
+          "line": 70,
+          "selfMs": 616.5590000000001,
+          "inclusiveMs": 23452.097,
+          "selfPct": 1.0261763265916979,
+          "inclusivePct": 39.03273936530352
+        },
+        {
+          "fn": "addDays",
+          "file": "src/league/seasonCalendar.js",
+          "line": 21,
+          "selfMs": 5187.442,
+          "inclusiveMs": 20764.687999999995,
+          "selfPct": 8.633772560237526,
+          "inclusivePct": 34.559922496732185
+        },
+        {
+          "fn": "computeCalendarDayStep",
+          "file": "src/career/calendarSimulation.js",
+          "line": 54,
+          "selfMs": 237.804,
+          "inclusiveMs": 19302.209,
+          "selfPct": 0.3957915384720879,
+          "inclusivePct": 32.12583049914964
+        },
+        {
+          "fn": "parseISODate",
+          "file": "src/league/seasonCalendar.js",
+          "line": 7,
+          "selfMs": 16197.410999999998,
+          "inclusiveMs": 16197.410999999998,
+          "selfPct": 26.9583279463538,
+          "inclusivePct": 26.9583279463538
+        },
+        {
+          "fn": "applyDailyDevelopment",
+          "file": "src/career/playerDevelopment.js",
+          "line": 436,
+          "selfMs": 651.123,
+          "inclusiveMs": 9045.953,
+          "selfPct": 1.0837032762466625,
+          "inclusivePct": 15.055725113186487
+        },
+        {
+          "fn": "processUltiworldTick",
+          "file": "src/career/ultiworld.js",
+          "line": 2789,
+          "selfMs": 3.247,
+          "inclusiveMs": 5329.945,
+          "selfPct": 0.0054041779171875555,
+          "inclusivePct": 8.870948897081684
+        },
+        {
+          "fn": "ensurePlayerDevelopment",
+          "file": "src/career/playerDevelopment.js",
+          "line": 310,
+          "selfMs": 472.313,
+          "inclusiveMs": 5212.273999999999,
+          "selfPct": 0.786099009732247,
+          "inclusivePct": 8.675101955383692
+        },
+        {
+          "fn": "runWorldEventArticle",
+          "file": "src/career/ultiworld.js",
+          "line": 2557,
+          "selfMs": 2.025,
+          "inclusiveMs": 4884.497,
+          "selfPct": 0.0033703296218986142,
+          "inclusivePct": 8.12956292699996
+        },
+        {
+          "fn": "advanceCalendarDay",
+          "file": "src/league/dayEngine.js",
+          "line": 371,
+          "selfMs": 2.769,
+          "inclusiveMs": 4871.439,
+          "selfPct": 0.004608613690388772,
+          "inclusivePct": 8.107829710109712
+        },
+        {
+          "fn": "getOverallRating",
+          "file": "src/models/playerStats.js",
+          "line": 505,
+          "selfMs": 458.79699999999997,
+          "inclusiveMs": 4616.813000000001,
+          "selfPct": 0.7636035158213426,
+          "inclusivePct": 7.684040302551413
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/domesticCalendar.js",
+          "line": 70,
+          "selfMs": 127.205,
+          "inclusiveMs": 4584.56,
+          "selfPct": 0.21171495286598185,
+          "inclusivePct": 7.63035968956618
+        },
+        {
+          "fn": "ensurePlayerTraits",
+          "file": "src/models/playerTraits.js",
+          "line": 812,
+          "selfMs": 1730.0459999999998,
+          "inclusiveMs": 4478.458,
+          "selfPct": 2.8794198918751652,
+          "inclusivePct": 7.453767732261147
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/domesticCalendar.js",
+          "line": 74,
+          "selfMs": 266.136,
+          "inclusiveMs": 4148.223,
+          "selfPct": 0.4429461946931406,
+          "inclusivePct": 6.904137706242536
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerStats.js",
+          "line": 510,
+          "selfMs": 351.84000000000003,
+          "inclusiveMs": 4139.418999999999,
+          "selfPct": 0.5855885304537326,
+          "inclusivePct": 6.889484678098734
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/domesticCalendar.js",
+          "line": 74,
+          "selfMs": 11.547,
+          "inclusiveMs": 3882.087,
+          "selfPct": 0.0192183684662041,
+          "inclusivePct": 6.461191511549395
+        },
+        {
+          "fn": "gap",
+          "file": "src/league/domesticCalendar.js",
+          "line": 63,
+          "selfMs": 3872.075,
+          "inclusiveMs": 3872.075,
+          "selfPct": 6.444527936154606,
+          "inclusivePct": 6.444527936154606
+        },
+        {
+          "fn": "applyAcademyDailyGrowth",
+          "file": "src/career/playerDevelopment.js",
+          "line": 402,
+          "selfMs": 93.466,
+          "inclusiveMs": 3859.4019999999996,
+          "selfPct": 0.15556110046438315,
+          "inclusivePct": 6.423435497982594
+        },
+        {
+          "fn": "getCategoryOverall",
+          "file": "src/models/playerStats.js",
+          "line": 303,
+          "selfMs": 504.87100000000004,
+          "inclusiveMs": 3841.1879999999996,
+          "selfPct": 0.8402872526111484,
+          "inclusivePct": 6.393120839348885
+        },
+        {
+          "fn": "advanceOtherLeagueToDate",
+          "file": "src/league/otherLeagues.js",
+          "line": 64,
+          "selfMs": 54.165,
+          "inclusiveMs": 3829.154,
+          "selfPct": 0.09015007603463628,
+          "inclusivePct": 6.373091927413119
+        },
+        {
+          "fn": "processTeamTrainingsForDate",
+          "file": "src/career/teamTraining.js",
+          "line": 867,
+          "selfMs": 31.55,
+          "inclusiveMs": 2878.694,
+          "selfPct": 0.052510567689333966,
+          "inclusivePct": 4.791184029916943
+        },
+        {
+          "fn": "conflictsWith",
+          "file": "src/models/playerTraits.js",
+          "line": 695,
+          "selfMs": 749.844,
+          "inclusiveMs": 2599.862,
+          "selfPct": 1.248010590124911,
+          "inclusivePct": 4.327107116764728
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/models/playerStats.js",
+          "line": 307,
+          "selfMs": 642.574,
+          "inclusiveMs": 2279.9399999999996,
+          "selfPct": 1.0694746599811753,
+          "inclusivePct": 3.794641638593346
+        },
+        {
+          "fn": "backgroundMatch",
+          "file": "src/league/quickMatch.js",
+          "line": 5,
+          "selfMs": 126.416,
+          "inclusiveMs": 2215.735,
+          "selfPct": 0.2104017725836717,
+          "inclusivePct": 3.6877813850753216
+        },
+        {
+          "fn": "normalizeTraitId",
+          "file": "src/models/playerTraits.js",
+          "line": 759,
+          "selfMs": 2116.712,
+          "inclusiveMs": 2116.712,
+          "selfPct": 3.522971434384326,
+          "inclusivePct": 3.522971434384326
+        },
+        {
+          "fn": "formatISODate",
+          "file": "src/league/seasonCalendar.js",
+          "line": 13,
+          "selfMs": 2076.687,
+          "inclusiveMs": 2076.687,
+          "selfPct": 3.456355413092231,
+          "inclusivePct": 3.456355413092231
+        },
+        {
+          "fn": "freshRating",
+          "file": "src/league/quickMatch.js",
+          "line": 11,
+          "selfMs": 14.994,
+          "inclusiveMs": 1998.43,
+          "selfPct": 0.02495541844481374,
+          "inclusivePct": 3.3261075685386903
+        },
+        {
+          "fn": "getSubStat",
+          "file": "src/models/playerStats.js",
+          "line": 279,
+          "selfMs": 645.7690000000001,
+          "inclusiveMs": 1753.2710000000002,
+          "selfPct": 1.0747922911623935,
+          "inclusivePct": 2.9180746600078056
+        },
+        {
+          "fn": "applyMatchResultToLeague",
+          "file": "src/league/leagueEngine.js",
+          "line": 152,
+          "selfMs": 65.82600000000001,
+          "inclusiveMs": 1656.281,
+          "selfPct": 0.10955818157585097,
+          "inclusivePct": 2.756648353821165
+        },
+        {
+          "fn": "trainingFixtures",
+          "file": "src/career/trainingSchedule.js",
+          "line": 49,
+          "selfMs": 1055.3809999999999,
+          "inclusiveMs": 1465.3319999999999,
+          "selfPct": 1.756534245278509,
+          "inclusivePct": 2.438840417538736
+        },
+        {
+          "fn": "growthMultiplier",
+          "file": "src/career/playerDevelopment.js",
+          "line": 216,
+          "selfMs": 86.67,
+          "inclusiveMs": 1354.668,
+          "selfPct": 0.1442501078172607,
+          "inclusivePct": 2.2546556485126676
+        },
+        {
+          "fn": "runSessionCore",
+          "file": "src/career/teamTraining.js",
+          "line": 538,
+          "selfMs": 37.531,
+          "inclusiveMs": 1254.062,
+          "selfPct": 0.06246510668616143,
+          "inclusivePct": 2.087211015455516
+        },
+        {
+          "fn": "normalizePlayerSkills",
+          "file": "src/models/playerStats.js",
+          "line": 244,
+          "selfMs": 475.934,
+          "inclusiveMs": 1098.4350000000002,
+          "selfPct": 0.7921256584042939,
+          "inclusivePct": 1.828191613940842
+        },
+        {
+          "fn": "avg",
+          "file": "src/models/playerStats.js",
+          "line": 164,
+          "selfMs": 852.6300000000001,
+          "inclusiveMs": 1075.291,
+          "selfPct": 1.4190835286515635,
+          "inclusivePct": 1.789671658993078
+        },
+        {
+          "fn": "computeNormalizedPlayerSkills",
+          "file": "src/models/playerStats.js",
+          "line": 255,
+          "selfMs": 468.88899999999995,
+          "inclusiveMs": 1012.8919999999999,
+          "selfPct": 0.7804002400407009,
+          "inclusivePct": 1.6858172401896945
+        },
+        {
+          "fn": "simulateFixturesOnDate",
+          "file": "src/league/dayEngine.js",
+          "line": 229,
+          "selfMs": 3.032,
+          "inclusiveMs": 1011.477,
+          "selfPct": 0.005046340451158814,
+          "inclusivePct": 1.6834621703551331
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/quickMatch.js",
+          "line": 12,
+          "selfMs": 17.794,
+          "inclusiveMs": 978.148,
+          "selfPct": 0.029615627304722936,
+          "inclusivePct": 1.6279907056794498
+        },
+        {
+          "fn": "(anonymous)",
+          "file": "src/league/quickMatch.js",
+          "line": 18,
+          "selfMs": 23.238,
+          "inclusiveMs": 939.3430000000001,
+          "selfPct": 0.0386764048166321,
+          "inclusivePct": 1.5634052039620299
+        },
+        {
+          "fn": "simulateFixtureMatch",
+          "file": "src/league/leagueEngine.js",
+          "line": 126,
+          "selfMs": 3.157,
+          "inclusiveMs": 929.969,
+          "selfPct": 0.005254385489547617,
+          "inclusivePct": 1.5478034904431766
+        }
+      ],
+      "byFile": [
+        {
+          "file": "src/league/seasonCalendar.js",
+          "ms": 23461.54,
+          "pct": 39.04845591968356
+        },
+        {
+          "file": "src/league/domesticCalendar.js",
+          "ms": 9726.782,
+          "pct": 16.18886987671617
+        },
+        {
+          "file": "src/models/playerStats.js",
+          "ms": 5227.142000000001,
+          "pct": 8.699847664429813
+        },
+        {
+          "file": "node:internal/worker/js_transferable",
+          "ms": 4923.4259999999995,
+          "pct": 8.19435480939546
+        },
+        {
+          "file": "src/models/playerTraits.js",
+          "ms": 4872.272,
+          "pct": 8.109216122245533
+        },
+        {
+          "file": "(runtime)",
+          "ms": 2045.299,
+          "pct": 3.404114471772649
+        },
+        {
+          "file": "src/career/playerDevelopment.js",
+          "ms": 1601.389,
+          "pct": 2.6652882878432593
+        },
+        {
+          "file": "src/career/trainingSchedule.js",
+          "ms": 1536.1029999999998,
+          "pct": 2.5566288608332477
+        },
+        {
+          "file": "src/career/calendarSimulation.js",
+          "ms": 1129.759,
+          "pct": 1.8803260362007688
+        },
+        {
+          "file": "src/models/attributeAliases.js",
+          "ms": 1071.4549999999997,
+          "pct": 1.783287172855002
+        },
+        {
+          "file": "src/career/playingStyleDevelopment.js",
+          "ms": 688.664,
+          "pct": 1.146185026535895
+        },
+        {
+          "file": "src/career/clubEconomy.js",
+          "ms": 358.87,
+          "pct": 0.5972889834127189
+        },
+        {
+          "file": "src/career/teamTraining.js",
+          "ms": 302.54099999999994,
+          "pct": 0.5035372316734955
+        },
+        {
+          "file": "src/career/matchDevelopment.js",
+          "ms": 299.43299999999994,
+          "pct": 0.49836439983899633
+        },
+        {
+          "file": "src/models/playerWorkload.js",
+          "ms": 276.296,
+          "pct": 0.4598560954133825
+        },
+        {
+          "file": "src/league/quickMatch.js",
+          "ms": 224.353,
+          "pct": 0.3734042279811456
+        },
+        {
+          "file": "src/career/managerProfiles.js",
+          "ms": 138.25400000000002,
+          "pct": 0.230104469899245
+        },
+        {
+          "file": "src/career/clubFacilities.js",
+          "ms": 121.809,
+          "pct": 0.202734064648814
+        },
+        {
+          "file": "src/career/transfers/transferEngine.js",
+          "ms": 115.92999999999999,
+          "pct": 0.1929492904033118
+        },
+        {
+          "file": "src/league/leagueEngine.js",
+          "ms": 108.951,
+          "pct": 0.1813337198199881
+        },
+        {
+          "file": "src/models/detailedAttributes.js",
+          "ms": 108.87,
+          "pct": 0.18119890663511218
+        },
+        {
+          "file": "src/league/otherLeagues.js",
+          "ms": 87.728,
+          "pct": 0.14601100102218353
+        },
+        {
+          "file": "src/matchEngine/autoSub.js",
+          "ms": 85.94699999999997,
+          "pct": 0.14304677531521984
+        },
+        {
+          "file": "src/matchEngine/styleEvidence.js",
+          "ms": 85.381,
+          "pct": 0.14210474738139536
+        },
+        {
+          "file": "node:inspector",
+          "ms": 74.983,
+          "pct": 0.12479872890806114
+        }
+      ]
+    }
+  },
+  "peakRssMiB": 1090.76953125
+}
