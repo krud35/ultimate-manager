@@ -3,6 +3,7 @@
  * Część artykułów to czysty feature; część aplikuje efekty (kontuzje AI, budżet, przełożenia).
  */
 
+import { createUltiworldEventChanges } from './ultiworldEventChanges.js'
 import { getPlayerFullName } from '../data/mockPlayers.js'
 import { getOverallRating } from '../models/playerStats.js'
 import { ensurePlayerMorale } from '../models/playerMorale.js'
@@ -747,9 +748,9 @@ const WORLD_EVENTS = [
     weight: 1.2,
     impact: true,
     canSpawn: (career) => worldTeamsList(career.world).some((t) => t.id !== career.playerTeamId),
-    run(career, league, rng) {
+    run(career, league, rng, changes) {
       const rivals = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
-      const team = pick(rivals, rng)
+      const team = changes.team(pick(rivals, rng))
       const candidates = (team.players ?? [])
         .filter((p) => !p.injury)
         .sort((a, b) => getOverallRating(b.skills) - getOverallRating(a.skills))
@@ -818,7 +819,7 @@ const WORLD_EVENTS = [
           f.homeTeamId &&
           f.awayTeamId && safePostponementDate(league, f),
       ),
-    run(career, league, rng) {
+    run(career, league, rng, changes) {
       const upcoming = (league.fixtures ?? []).filter(
         (f) =>
           (f.status === 'scheduled' || f.status === 'pending') &&
@@ -827,7 +828,7 @@ const WORLD_EVENTS = [
           f.homeTeamId &&
           f.awayTeamId && safePostponementDate(league, f),
       )
-      const fixture = pick(upcoming.slice(0, 12), rng)
+      const fixture = changes.fixture(pick(upcoming.slice(0, 12), rng))
       if (!fixture) return null
       const names = teamNameMap(league)
       const oldDate = fixture.date
@@ -891,8 +892,8 @@ const WORLD_EVENTS = [
     weight: 0.85,
     impact: true,
     canSpawn: () => true,
-    run(career, _league, rng) {
-      const team = worldTeamById(career.world, career.playerTeamId)
+    run(career, _league, rng, changes) {
+      const team = changes.team(worldTeamById(career.world, career.playerTeamId))
       if (!team) return null
       const amount = (12 + Math.floor(rng() * 19)) * 1000
       adjustTransferBudget(team, amount)
@@ -962,9 +963,9 @@ const WORLD_EVENTS = [
     weight: 0.7,
     impact: true,
     canSpawn: (career) => worldTeamsList(career.world).some((t) => t.id !== career.playerTeamId),
-    run(career, _league, rng) {
+    run(career, _league, rng, changes) {
       const rivals = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
-      const team = pick(rivals, rng)
+      const team = changes.team(pick(rivals, rng))
       if (!team) return null
       const amount = (15 + Math.floor(rng() * 25)) * 1000
       adjustTransferBudget(team, amount)
@@ -1013,8 +1014,8 @@ const WORLD_EVENTS = [
     weight: 0.8,
     impact: true,
     canSpawn: () => true,
-    run(career, _league, rng) {
-      const team = worldTeamById(career.world, career.playerTeamId)
+    run(career, _league, rng, changes) {
+      const team = changes.team(worldTeamById(career.world, career.playerTeamId))
       if (!team?.players?.length) return null
       const up = rng() > 0.4
       const delta = up ? 2 + Math.floor(rng() * 3) : -(2 + Math.floor(rng() * 3))
@@ -1061,8 +1062,8 @@ const WORLD_EVENTS = [
     weight: 0.75,
     impact: true,
     canSpawn: () => true,
-    run(career, _league, rng) {
-      const team = worldTeamById(career.world, career.playerTeamId)
+    run(career, _league, rng, changes) {
+      const team = changes.team(worldTeamById(career.world, career.playerTeamId))
       if (!team?.players?.length) return null
       const sorted = [...team.players].sort(
         (a, b) => getOverallRating(b.skills) - getOverallRating(a.skills),
@@ -1122,7 +1123,7 @@ const WORLD_EVENTS = [
     weight: 1.25,
     impact: false,
     canSpawn: (c, league) => (league?.currentRound ?? 0) >= 4,
-    run(career, league, rng) {
+    run(career, league) {
       const names = teamNameMap(league)
       const leaders = Object.values(league.playerStats ?? {})
         .sort(
@@ -1329,7 +1330,7 @@ const WORLD_EVENTS = [
     weight: 0.85,
     impact: false,
     canSpawn: (c, league) => (league?.currentRound ?? 0) >= 8,
-    run(career, league, rng) {
+    run(career, league) {
       const names = teamNameMap(league)
       const table = Object.values(league.standings ?? {}).sort(
         (a, b) => (b.wins ?? 0) - (a.wins ?? 0),
@@ -1362,9 +1363,9 @@ const WORLD_EVENTS = [
     weight: 0.85,
     impact: true,
     canSpawn: (career) => worldTeamsList(career.world).some((t) => t.id !== career.playerTeamId),
-    run(career, _league, rng) {
+    run(career, _league, rng, changes) {
       const rivals = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
-      const team = pick(rivals, rng)
+      const team = changes.team(pick(rivals, rng))
       const stars = [...(team?.players ?? [])]
         .filter((p) => !p.injury)
         .sort((a, b) => getOverallRating(b.skills) - getOverallRating(a.skills))
@@ -1400,8 +1401,8 @@ const WORLD_EVENTS = [
     weight: 0.8,
     impact: true,
     canSpawn: () => true,
-    run(career, _league, rng) {
-      const team = worldTeamById(career.world, career.playerTeamId)
+    run(career, _league, rng, changes) {
+      const team = changes.team(worldTeamById(career.world, career.playerTeamId))
       const young = [...(team?.players ?? [])]
         .filter((p) => (p.age ?? 99) <= 23 && !p.injury)
         .sort((a, b) => (b.potential ?? 0) - (a.potential ?? 0))
@@ -1440,8 +1441,8 @@ const WORLD_EVENTS = [
     weight: 0.65,
     impact: true,
     canSpawn: () => true,
-    run(career, _league, rng) {
-      const team = worldTeamById(career.world, career.playerTeamId)
+    run(career, _league, rng, changes) {
+      const team = changes.team(worldTeamById(career.world, career.playerTeamId))
       if (!team) return null
       const amount = (4 + Math.floor(rng() * 7)) * 1000
       const budget = getTransferBudget(team)
@@ -1496,8 +1497,8 @@ const WORLD_EVENTS = [
       const team = worldTeamById(career.world, career.playerTeamId)
       return (team?.players ?? []).some((p) => p.injury && (p.injury.daysRemaining ?? 0) >= 3)
     },
-    run(career, _league, rng) {
-      const team = worldTeamById(career.world, career.playerTeamId)
+    run(career, _league, rng, changes) {
+      const team = changes.team(worldTeamById(career.world, career.playerTeamId))
       const injured = (team?.players ?? []).filter(
         (p) => p.injury && (p.injury.daysRemaining ?? 0) >= 3,
       )
@@ -1533,9 +1534,9 @@ const WORLD_EVENTS = [
     weight: 0.75,
     impact: true,
     canSpawn: (career) => worldTeamsList(career.world).some((t) => t.id !== career.playerTeamId),
-    run(career, _league, rng) {
+    run(career, _league, rng, changes) {
       const rivals = worldTeamsList(career.world).filter((t) => t.id !== career.playerTeamId)
-      const team = pick(rivals, rng)
+      const team = changes.team(pick(rivals, rng))
       if (!team?.players?.length) return null
       const delta = -(3 + Math.floor(rng() * 3))
       for (const p of team.players) {
@@ -1586,8 +1587,8 @@ const WORLD_EVENTS = [
     weight: 0.7,
     impact: true,
     canSpawn: () => true,
-    run(career, _league, rng) {
-      const team = worldTeamById(career.world, career.playerTeamId)
+    run(career, _league, rng, changes) {
+      const team = changes.team(worldTeamById(career.world, career.playerTeamId))
       if (!team?.players?.length) return null
       const delta = 2 + Math.floor(rng() * 2)
       for (const p of team.players) {
@@ -1620,8 +1621,8 @@ const WORLD_EVENTS = [
     weight: 0.6,
     impact: true,
     canSpawn: () => true,
-    run(career, _league, rng) {
-      const team = worldTeamById(career.world, career.playerTeamId)
+    run(career, _league, rng, changes) {
+      const team = changes.team(worldTeamById(career.world, career.playerTeamId))
       if (!team?.players?.length) return null
       const amount = (5 + Math.floor(rng() * 8)) * 1000
       adjustTransferBudget(team, amount)
@@ -1765,7 +1766,7 @@ const WORLD_EVENTS = [
     weight: 0.8,
     impact: false,
     canSpawn: (c, league) => (league?.currentRound ?? 0) >= 3,
-    run(career, league, rng) {
+    run(career, league) {
       const names = teamNameMap(league)
       const leaders = Object.values(league.playerStats ?? {})
         .sort(
@@ -2556,16 +2557,11 @@ function pickWorldEvent(
 
 function runWorldEventArticle(event, career, world, league, simDate, rng, inboxMessages) {
   if (!event) return { world, league, article: null }
-  const needsClone = event.impact
-  let nextWorld = world
-  let nextLeague = league
-  if (needsClone) {
-    nextWorld = structuredClone(world)
-    nextLeague = structuredClone(league)
-    if (nextLeague && nextWorld?.teamsById) nextLeague.teamsById = nextWorld.teamsById
-  }
-  const liveCareer = { ...career, world: nextWorld, league: nextLeague }
-  const result = event.run(liveCareer, nextLeague, rng)
+  const changes = createUltiworldEventChanges(world, league)
+  const liveCareer = { ...career, world, league }
+  const result = event.run(liveCareer, league, rng, changes)
+  const nextWorld = changes.world
+  const nextLeague = changes.league
   if (!result?.article) return { world: nextWorld, league: nextLeague, article: null }
   const art = makeArticle({
     ...result.article,
