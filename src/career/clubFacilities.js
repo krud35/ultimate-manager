@@ -668,7 +668,7 @@ export function upgradeFacility(team, facilityId, { date = team?.managementDate 
   if (!team || !FACILITY_DEFS[facilityId]) {
     return { ok: false, error: 'unknown_facility' }
   }
-  if (team.facilityProject) return { ok: false, error: 'construction_in_progress' }
+  if (team.facilityProject || team.streamlinedClub?.project) return { ok: false, error: 'construction_in_progress' }
   if (!date) return { ok: false, error: 'missing_date' }
   ensureTeamFacilities(team)
   const level = getFacilityLevel(team, facilityId)

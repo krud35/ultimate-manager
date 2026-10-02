@@ -258,6 +258,7 @@ export function evaluatePlayerContractOffer({
   promises = [],
   seed = null,
   renew = false,
+  squadRole = null,
 }) {
   const demands = computePlayerContractDemands({
     player,
@@ -274,7 +275,7 @@ export function evaluatePlayerContractOffer({
     years: offerYears,
     seasonYear: league?.calendar?.seasonYear ?? league?.seasonYear ?? null,
   }).weeksTotal
-  const relief = promiseWageRelief(promises)
+  const relief = buyerTeam?.streamlinedClub?.enabled && squadRole ? (squadRole === 'starter' ? .05 : squadRole === 'rotation' ? .02 : 0) : promiseWageRelief(promises)
   const bonusEq = bonusWageEquivalent(bonuses, weeks)
   const effectiveDemand = roundWage(demands.minWeeklyWage * (1 - relief) - bonusEq)
 

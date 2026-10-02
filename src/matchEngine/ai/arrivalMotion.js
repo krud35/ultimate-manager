@@ -1,4 +1,4 @@
-import { integrateAgentMotion } from './playerMovement.js'
+import { integrateAgentMotion, prepareMotionParameters } from './playerMovement.js'
 import { subStat } from './statFormulas.js'
 import { bodyAwareTarget } from './bodyTraffic.js'
 
@@ -15,12 +15,13 @@ export function arrivalSpeed(agent, target, _player, speed, seconds, lead = 0.15
 // analytical. Carries velocity through the same steering/braking as live motion.
 export function arrivalWindowGap(agent, target, player, role, speed, seconds, reach, blockers = []) {
   let projected = { ...agent, player }
+  const parameters = prepareMotionParameters(player, role)
   let elapsed = 0
   while (elapsed < seconds - 1e-9) {
     const dt = Math.min(0.02, seconds - elapsed)
     const requested = arrivalSpeed(projected, target, player, speed, seconds - elapsed)
     const steer = bodyAwareTarget(projected, target, blockers, requested)
-    projected = { ...projected, ...integrateAgentMotion(projected, steer.x, steer.y, speed, dt, true, role, steer.speed) }
+    projected = { ...projected, ...integrateAgentMotion(projected, steer.x, steer.y, speed, dt, true, role, steer.speed, parameters) }
     elapsed += dt
   }
   return Math.hypot(projected.x - target.x, projected.y - target.y) - reach

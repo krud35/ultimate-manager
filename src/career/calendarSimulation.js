@@ -1,10 +1,14 @@
 import { processPlayingStyleDevelopment } from './playingStyleDevelopment.js'
+import { isStreamlinedCareer, prepareCareerEdition } from './gameplayEdition.js'
+import { nextCareerDecision } from './streamlinedDecisions.js'
 import { playingStyleMessages } from './playingStyleMessages.js'
 import { processManagerCareer } from './managerCareer.js'
 import { scheduleSeasonalHolidays } from './seasonalAvailability.js'
 import { advanceInternationalClubCups } from './internationalClubCups.js'
 import { reconcileDomesticCalendar } from '../league/domesticCalendar.js'
 import { processClubManagement } from './clubManagement.js'
+import { processRecruitmentMandates } from './streamlinedRecruitment.js'
+import { processStreamlinedStories } from './streamlinedStories.js'
 import { processMonthlyOwnerFunding } from './clubEconomy.js'
 import {
   worldTeamById,
@@ -49,7 +53,7 @@ import { advanceCalendarDay, getPlayerFixtureOnDate, areCompetitionsComplete } f
 import { processContractExpirations, processContractExpiryReminders } from './transfers/contractLifecycle.js'
 import { recordMatchKnowledgeGainForNewMatches } from './scouting.js'
 import { messagesFromNewPlayerMatches } from './inbox.js'
-import { cupFinalWatchableMessage } from './watchableFinals.js'
+import { cupFinalWatchableMessage, resolveWatchableFinalIgnore } from './watchableFinals.js'
 
 export function computeCalendarDayStep(career, nextLeague, { weekTick = false, trainingDate = null, allowRandomEvents = true } = {}) {
   const inboxMessages = []
@@ -185,6 +189,11 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
   transferLog = delayed.transferLog ?? transferLog
   loanLog = delayed.loanLog ?? loanLog
   inboxBase = delayed.inbox ?? inboxBase
+  const delegated = processRecruitmentMandates({ ...offerCareer, world, transferLog, inbox: inboxBase })
+  world = delegated.world
+  transferLog = delegated.transferLog
+  inboxBase = delegated.inbox
+  inboxMessages.push(...processStreamlinedStories({ ...offerCareer, world }, offerDate))
   if (delayed.resolved > 0) {
     inboxMessages.push(
       ...messagesFromNewTransferLogEntries(career.transferLog, transferLog, {
@@ -281,6 +290,19 @@ export function computeCalendarDayStep(career, nextLeague, { weekTick = false, t
 
 /** One chronological step for every UI mode. A blocked player match does not tick the day. */
 export function advanceCareerDay(career, { autoSimulatePlayer = false, allowRandomEvents = true } = {}) {
+  if (isStreamlinedCareer(career)) {
+    prepareCareerEdition(career)
+    const decision = nextCareerDecision(career)
+    if (decision) return { career, league: career.league, blocked: true, blockingMessage: decision, inboxMessages: [] }
+    allowRandomEvents = true
+    // Optional finals remain available until the next advance; continuing delegates the result.
+    for (const message of career.inbox ?? []) {
+      if (message.type !== 'watchable_final' || message.payload?.status !== 'pending') continue
+      const patch = resolveWatchableFinalIgnore(career, message)
+      if (patch) Object.assign(career, patch)
+      message.payload = { ...message.payload, status: 'resolved', delegated: true }
+    }
+  }
   const league = career.league
   const date = league.currentDate
   const clubCupMessages = advanceInternationalClubCups(career, date, { simulatePlayer: autoSimulatePlayer })
@@ -314,18 +336,25 @@ export async function simulateCareerUntil(career, { targetDate = null, untilMatc
   maxDays = 400, onProgress = null } = {}) {
   let current = career
   let daysAdvanced = 0
+  let blockingMessage = null
+  let playerFixture = null
+  const streamlined = isStreamlinedCareer(career)
   while (daysAdvanced < maxDays && current.league.status !== 'complete') {
+    if (streamlined && (blockingMessage = nextCareerDecision(current))) break
     const date = current.league.currentDate
     if (targetDate && date >= targetDate) break
     if (untilMatch && (getPlayerFixtureOnDate(current.league, date) || areCompetitionsComplete(current.league))) break
-    const result = advanceCareerDay(current, { autoSimulatePlayer: !untilMatch, allowRandomEvents: false })
+    const result = advanceCareerDay(current, { autoSimulatePlayer: streamlined ? false : !untilMatch, allowRandomEvents: streamlined })
     current = result.career
-    if (result.blocked || current.managerCareer?.status === 'unemployed') break
+    if (result.blocked) { blockingMessage = result.blockingMessage ?? null; playerFixture = result.playerFixture ?? null; break }
+    if (!streamlined && current.managerCareer?.status === 'unemployed') break
     daysAdvanced++
+    if (current.managerCareer?.status === 'unemployed') break
+    if (streamlined && (blockingMessage = nextCareerDecision(current))) break
     if (onProgress && (daysAdvanced % 4 === 0 || current.league.status === 'complete')) {
       onProgress({ daysAdvanced, currentDate: current.league.currentDate, total: maxDays })
       await new Promise(resolve => setTimeout(resolve, 0))
     }
   }
-  return { career: current, daysAdvanced }
+  return { career: current, daysAdvanced, blockingMessage, playerFixture }
 }

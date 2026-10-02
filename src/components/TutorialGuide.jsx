@@ -80,7 +80,7 @@ function TipsPanel({ lang }) {
   )
 }
 
-export default function TutorialGuide({ open, onClose, lang }) {
+export default function TutorialGuide({ open, onClose, lang, streamlined = false }) {
   const t = onboardingStrings(lang)
   const [activeId, setActiveId] = useState('loop')
 
@@ -145,6 +145,12 @@ export default function TutorialGuide({ open, onClose, lang }) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-5">
+          {streamlined && <section className="mb-5 border-l-2 border-ufa-accent pl-4 text-sm">
+            <h3 className="font-semibold">{lang === 'en' ? 'Your streamlined career' : 'Twoja uproszczona kariera'}</h3>
+            <p className="mt-2">{lang === 'en' ? 'Choose a weekly goal and workload in Training, then Continue to the next match or decision. You may focus on up to three development projects.' : 'W Treningu wybierz cel i obciążenie tygodnia, następnie użyj Dalej, aby dojść do meczu lub decyzji. Możesz prowadzić do trzech projektów rozwoju.'}</p>
+            <p className="mt-2">{lang === 'en' ? 'Start the match from preparation. Rotation is automatic; pause to intervene between points. Choose highlights, full playback or manual points. After the match, review three coaching observations and their examples.' : 'Rozpocznij mecz z ekranu przygotowania. Rotacja działa automatycznie; zatrzymaj grę, aby interweniować między punktami. Wybierz skrót, pełny mecz lub ręczne punkty. Po meczu sprawdź trzy obserwacje trenera i ich przykłady.'}</p>
+            <p className="mt-2 text-ufa-muted">{lang === 'en' ? 'The reference below also describes the classic edition. Detailed training sessions and dressing-room steps apply to classic careers.' : 'Poniższy przewodnik opisuje również wersję klasyczną. Szczegółowy harmonogram sesji i etapy szatni dotyczą karier klasycznych.'}</p>
+          </section>}
           {active.id === 'loop' ? (
             <LoopPanel lang={lang} />
           ) : active.id === 'tips' ? (

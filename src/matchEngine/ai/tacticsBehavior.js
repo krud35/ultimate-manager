@@ -357,6 +357,7 @@ export function formationStructuralTarget({
   possessionTeam,
   stackIndex = 2,
   isDump = false,
+  handlerSlotIndex = null,
   rng,
 }) {
   if (!disc) return { x, y }
@@ -371,7 +372,17 @@ export function formationStructuralTarget({
   // Dump/reset — tylko gdy layout / podrola oznaczyły dump (nie hardcoduj index==1:
   // zone O i horizontal mają handlery na 1–2 bez roli dump).
   if (isDump) {
-    return resetSlotTarget({ disc, throwerPos: { x: ox, y: oy }, attackSign, forceSide, rng })
+    const slot = handlerSlotIndex ?? Math.max(0, stackIndex - 1)
+    const threeHandlers = [ATTACK_STYLES.HORIZONTAL_STACK, ATTACK_STYLES.MOTION_OFFENSE, ATTACK_STYLES.ZONE_OFFENSE].includes(attackStyle)
+    if (threeHandlers) {
+      const width = attackStyle === ATTACK_STYLES.ZONE_OFFENSE ? 8 : 6
+      const forward = slot >= 2 ? -3 : attackStyle === ATTACK_STYLES.HORIZONTAL_STACK ? 0 : 2
+      // Keep both lanes inside the field even when possession is on a sideline.
+      const center = Math.max(width + 1, Math.min(w - width - 1, oy))
+      return { x: clampFieldX(ox + attackSign * forward),
+        y: clampFieldY(center + (slot === 0 ? -width : slot === 1 ? width : 0)) }
+    }
+    return resetSlotTarget({ disc, throwerPos: { x: ox, y: oy }, attackSign, forceSide, rng, handlerSlotIndex: slot })
   }
 
   // Klasyczny 2-handler: index 1 = dump w layoutcie; gdy brak flagi, i tak trzymaj dump shape

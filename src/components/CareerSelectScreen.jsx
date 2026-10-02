@@ -1,4 +1,7 @@
 import ThemeControl from '../ui/ThemeControl'
+import { useState } from 'react'
+import { exportCareerBackup, restoreCareerBackup } from '../career/careerBackup.js'
+import { editionLabel } from '../career/gameplayEdition.js'
 import Wordmark from '../ui/Wordmark'
 import { SLOT_COUNT, slotSummary } from '../career'
 import { teamById } from '../data/ufaLeagueTeams'
@@ -6,7 +9,8 @@ import { displaySeasonLabel, formatUiDate } from '../ui/locale'
 import { LangSwitch } from '../ui/LangSwitch'
 import { careerFlowStrings } from '../ui/strings/careerFlow'
 
-function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete, selectionMode }) {
+function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete, selectionMode, onRestored }) {
+  const [error, setError] = useState('')
   const summary = slotSummary(career)
   const team =
     (summary?.playerTeamId && career?.world?.teamsById?.[summary.playerTeamId]) ||
@@ -27,6 +31,14 @@ function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete, selecti
         >
           {t.newCareer}
         </button>}
+        <label className="um-button mt-3 cursor-pointer">{lang === 'en' ? 'Restore backup' : 'Przywróć kopię'}<input type="file" accept=".json,application/json" className="sr-only" onChange={async e => {
+          const file = e.target.files?.[0]
+          if (!file) return
+          try { restoreCareerBackup(await file.text(), slotIndex); setError(''); onRestored?.() }
+          catch (err) { setError(err.message) }
+          e.target.value = ''
+        }} /></label>
+        {error && <p role="alert" className="text-sm text-ufa-danger">{error}</p>}
       </article>
     )
   }
@@ -62,6 +74,7 @@ function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete, selecti
         {team?.name ?? summary.playerTeamId}
       </p>
       <p className="mt-2 text-sm text-ufa-muted">{seasonLine}</p>
+      <p className="mt-1 text-sm font-semibold text-ufa-accent">{editionLabel(career, lang)}</p>
       <p className="mt-1 text-xs text-ufa-muted">{career?.competition === 'domestic' ? (lang === 'en' ? 'Domestic leagues' : 'Ligi krajowe') : career?.competition === 'eucs' ? 'EUCS' : 'UFA'}{career?.league?.currentDate ? ` · ${formatUiDate(career.league.currentDate, lang)}` : ''}</p>
       <p className="text-sm text-ufa-muted">
         {t.record(summary.wins, summary.losses)}
@@ -72,6 +85,11 @@ function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete, selecti
       </p>
 
       <div className="mt-5 flex flex-wrap gap-2">
+        <button type="button" className="um-button" onClick={() => {
+          const url = URL.createObjectURL(new Blob([exportCareerBackup(career)], { type: 'application/json' }))
+          const link = document.createElement('a'); link.href = url; link.download = `ultimate-manager-${slotIndex + 1}-${career.league.currentDate}.json`; link.click()
+          setTimeout(() => URL.revokeObjectURL(url), 1000)
+        }}>{lang === 'en' ? 'Download backup' : 'Pobierz kopię'}</button>
         {selectionMode !== 'new' && <button
           type="button"
           onClick={() => onLoad(slotIndex)}
@@ -91,7 +109,7 @@ function SlotCard({ slotIndex, career, lang, t, onNew, onLoad, onDelete, selecti
   )
 }
 
-export default function CareerSelectScreen({ slots, lang, onLangChange, onNew, onLoad, onDelete, onBack, selectionMode }) {
+export default function CareerSelectScreen({ slots, lang, onLangChange, onNew, onLoad, onDelete, onBack, selectionMode, onRestored }) {
   const list = Array.from({ length: SLOT_COUNT }, (_, i) => slots?.[i] ?? null)
   const t = careerFlowStrings(lang)
 
@@ -114,6 +132,7 @@ export default function CareerSelectScreen({ slots, lang, onLangChange, onNew, o
             onLoad={onLoad}
             onDelete={onDelete}
             selectionMode={selectionMode}
+            onRestored={onRestored}
           />
         ))}
       </div>

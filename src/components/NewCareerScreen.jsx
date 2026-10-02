@@ -7,6 +7,7 @@ import { MANAGER_ATTRIBUTES, MANAGER_BACKGROUND_QUESTIONS, MANAGER_PLAYING_BACKG
 import { AI_COACH_ARCHETYPES } from '../matchEngine/aiCoachProfile.js'
 import UfaCareerSetup from './UfaCareerSetup'
 import SelectionIndicator from './SelectionIndicator'
+import { editionLabel } from '../career/gameplayEdition.js'
 
 const input = 'mt-2 w-full rounded-md border border-ufa-border bg-ufa-bg px-3 py-2 text-ufa-text outline-none focus:border-ufa-accent'
 const panel = 'rounded-sm border border-ufa-border bg-ufa-panel p-4'
@@ -32,6 +33,7 @@ export default function NewCareerScreen({ slotIndex, lang = 'pl', onCancel, onCr
   const [answers, setAnswers] = useState({})
   const [skipBackground, setSkipBackground] = useState(false)
   const [competition, setCompetition] = useState('domestic')
+  const [gameplayEdition, setGameplayEdition] = useState('classic')
   const [worldConfig, setWorldConfig] = useState(() => normalizeWorldConfig({...defaultWorldConfig(),simulationModel:'focused',mainCountryId:'pl',additionalCountryIds:[]}))
   const [playerTeamId, setPlayerTeamId] = useState('')
   const [ufaOptions, setUfaOptions] = useState(null)
@@ -64,7 +66,7 @@ export default function NewCareerScreen({ slotIndex, lang = 'pl', onCancel, onCr
     const selectedWorldConfig = competition === 'eucs'
       ? { international: Object.fromEntries(Object.keys(cups).map(id => [id, false])) }
       : effectiveConfig
-    onCreate({ ...(competition === 'domestic' ? { playerTeamId, seasonYear: 2026 } : setupOptions), slotIndex, competition, managerName, managerProfile: profile, worldConfig: selectedWorldConfig })
+    onCreate({ ...(competition === 'domestic' ? { playerTeamId, seasonYear: 2026 } : setupOptions), slotIndex, competition, gameplayEdition, managerName, managerProfile: profile, worldConfig: selectedWorldConfig })
   }
 
   return <main className="mx-auto min-h-screen max-w-5xl px-4 py-8 sm:px-6 league-fade-in">
@@ -72,6 +74,8 @@ export default function NewCareerScreen({ slotIndex, lang = 'pl', onCancel, onCr
     <p className="um-eyebrow">{tr('Nowa kariera · Zapis', 'New career · Save slot')} {slotIndex + 1}</p>
     <h1 className="um-page-title text-ufa-text">{titles[step]}</h1>
     <ol aria-label={tr('Etapy tworzenia kariery', 'Career creation steps')} className="my-6 flex flex-wrap gap-2">{titles.map((title, i) => <li key={title} aria-current={step === i ? 'step' : undefined} className={`rounded px-3 py-2 text-xs ${i === step ? 'bg-ufa-accent text-ufa-on-accent' : 'bg-ufa-panel text-ufa-muted'}`}>{i + 1}. {title}</li>)}</ol>
+    {step === 1 && <fieldset className="mb-6 space-y-3"><legend className="um-section-title mb-3">{tr('Wersja rozgrywki', 'Gameplay edition')}</legend><div className="grid gap-4 sm:grid-cols-2">{['classic', 'streamlined'].map(id => <label key={id} className={`${panel} cursor-pointer ${gameplayEdition === id ? 'border-ufa-accent' : ''}`}><span className="flex items-center gap-3 font-semibold"><input type="radio" name="gameplay-edition" value={id} checked={gameplayEdition === id} onChange={() => setGameplayEdition(id)} />{editionLabel({ gameplayEdition: id }, lang)}</span><p className="mt-2 text-sm text-ufa-muted">{id === 'classic' ? tr('Dotychczasowa gra: pełny harmonogram treningów i prowadzenie meczu punkt po punkcie.', 'The original game: detailed training schedules and point-by-point match management.') : tr('Płynne mecze, cel treningowy tygodnia, cztery osie taktyki, krótka lista kandydatów i trzy obszary rozwoju klubu.', 'Flowing matches, weekly training goals, four tactical axes, recruitment shortlists and three club investment tracks.')}</p></label>)}</div><p className="text-sm text-ufa-muted">{tr('Wybór dotyczy tylko tej nowej kariery i pozostaje zapisany na kolejne sezony. Obie wersje są dostępne we wszystkich rozgrywkach.', 'This choice applies only to this new career and persists across seasons. Both editions support all competitions.')}</p><h2 className="um-section-title pt-4">{tr('Rozgrywki', 'Competition')}</h2></fieldset>}
+    {step === 4 && <p className="mb-4 text-lg font-semibold text-ufa-accent">{tr('Wersja', 'Edition')}: {editionLabel({ gameplayEdition }, lang)}</p>}
 
     {step === 0 && <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">

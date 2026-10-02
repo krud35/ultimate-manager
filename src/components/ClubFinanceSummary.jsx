@@ -1,8 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { StreamlinedFinanceSummary } from './StreamlinedClubView.jsx'
 import { clubBudgetAllocation, adjustClubBudget, budgetAdjustmentStatus, contractualWeeklyBill, BUDGET_ADJUSTMENT_DAYS } from '../career/clubEconomy.js'
 import { formatUsd, getMoneyCurrency } from '../career/transfers/moneyFormat.js'
 
-export default function ClubFinanceSummary({ team, lang, onChange }) {
+export default function ClubFinanceSummary(props) {
+  return props.team?.streamlinedClub?.economyActive ? <StreamlinedFinanceSummary {...props} /> : <ClassicFinanceSummary {...props} />
+}
+function ClassicFinanceSummary({ team, lang, onChange }) {
   const sliderId = useId()
   const titleId = useId()
   const dialogRef = useRef(null)

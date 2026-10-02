@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SQUAD_ROLES } from '../career/streamlinedStories.js'
 import { clubContractOverview } from '../career/clubContractOverview.js'
 import { CONTRACT_BONUS_DEFS, CONTRACT_PROMISE_DEFS } from '../career/transfers/playerContracts.js'
 import { formatUsd } from '../career/transfers/moneyFormat.js'
@@ -41,6 +42,7 @@ export default function PlayerContractsPanel({ team, world, currentDate, lang })
           <td className="p-2 min-w-52">{c ? <details><summary className="cursor-pointer text-ufa-accent">{en ? 'View contract' : 'Podgląd umowy'}</summary>
             <div className="space-y-1 py-2 text-xs">
               <p>{en ? 'Signed' : 'Podpisana'}: {c.signedDate ?? '—'}</p>
+              {c.squadRole && <p>{en ? 'Expected role' : 'Oczekiwana rola'}: {SQUAD_ROLES[c.squadRole]?.[en ? 'en' : 'pl']}</p>}
               <p>{en ? 'Weeks remaining' : 'Pozostało tygodni'}: {c.weeksRemaining ?? '—'}</p>
               <p>{en ? 'Remaining club wages' : 'Pozostałe pensje po stronie klubu'}: {formatUsd(remainingCost)}</p>
               {p.loan && <><p>{en ? 'Return date' : 'Powrót z wypożyczenia'}: {p.loan.returnDate ?? '—'}</p><p>{en ? 'Borrowing club wage share' : 'Udział klubu wypożyczającego w pensji'}: {p.loan.wageSplitPct ?? 50}%</p>{kind === 'outgoing' && <p>{en ? 'Current club' : 'Obecny klub'}: {location}</p>}</>}

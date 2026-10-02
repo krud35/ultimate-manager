@@ -46,9 +46,10 @@ export function managerJobOffers(c){
   const s=standing(c,t.id),tier=c.competition==='domestic'?t.tier:currentEucsTier(t),rep=Number(t.reputation?.value??t.reputation??50)
   const weak=s.place>=Math.max(1,s.total-3)
   const required=weak&&(tier===3||!tier)?5:({1:54,2:30,3:12})[tier]??25
-  const threshold=required+(weak?0:rep*.12)+(t.clubStrategy==='contend'?6:0)
+  const recovery = c.gameplayEdition === 'streamlined' && m.status === 'unemployed' && weak && dayDiff(date, m.history.at(-1)?.to ?? date) >= 14
+  const threshold=recovery ? 5 : required+(weak?0:rep*.12)+(t.clubStrategy==='contend'?6:0)
   const vacancy=t.boardObjective.confidence<40||(s.played>=4&&s.place>t.boardObjective.targetPlace+3)||weak
-  return {teamId:t.id,name:t.name,tier,leagueLabel:competitionFor(c,t.id)?.label,required:Math.round(threshold),reason:weak?'rebuild':'underperforming',vacancy}
+  return {teamId:t.id,name:t.name,tier,leagueLabel:competitionFor(c,t.id)?.label,required:Math.round(threshold),reason:weak?'rebuild':'underperforming',vacancy,recovery}
  }).filter(o=>o.vacancy&&m.reputation>=o.required).sort((a,b)=>b.required-a.required||a.teamId.localeCompare(b.teamId)).slice(0,4)
  return eligible.map(o=>({...o,id:`job-${month}-${o.teamId}`,month}))
 }

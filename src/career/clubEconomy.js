@@ -83,6 +83,15 @@ export function clubBudgetAllocation(team) {
   const f = ensureClubEconomy(team)
   const weeks = remainingPayrollWeeks(team)
   const minimum = seasonWageReserve(team)
+  if (team.streamlinedClub?.economyActive) {
+    const operatingReserve = Math.max(0, Math.round(((f.weeklyOperations ?? 0) + (team.streamlinedClub.project?.upkeepDelta ?? 0)) * Math.min(8, weeks)))
+    f.seasonPayrollBudget = minimum
+    f.weeklyWageLimit = weeks ? Math.max(0, f.cash - operatingReserve) / weeks : 0
+    f.salaryBudget = f.weeklyWageLimit
+    f.transferBudget = f.cash - minimum - operatingReserve
+    f.transferLimit = f.transferBudget
+    return { cash: f.cash, weeks, minimum, seasonPayrollBudget: minimum, operatingReserve, automaticReserve: minimum + operatingReserve, weeklyWageLimit: f.weeklyWageLimit, transferBudget: f.transferBudget, shortfall: Math.max(0, minimum + operatingReserve - f.cash) }
+  }
   const date = team.managementDate ?? `${team.financeSeasonYear ?? 2025}-08-01`
   const year = Number(date.slice(0, 4)) - (Number(date.slice(5, 7)) < 8 ? 1 : 0)
   if (!Number.isFinite(f.seasonPayrollBudget) || f.allocationSeason !== year) {
@@ -100,6 +109,7 @@ export function clubBudgetAllocation(team) {
 }
 
 export function setClubBudgetAllocation(team, seasonPayrollBudget) {
+  if (team.streamlinedClub?.economyActive) return { ok: false, error: 'automatic_reserve' }
   const state = clubBudgetAllocation(team)
   const amount = Math.round(Number(seasonPayrollBudget))
   if (!Number.isFinite(amount) || !state.weeks || amount < state.minimum || amount > state.cash) return { ok: false, error: 'invalid_allocation' }
@@ -299,6 +309,10 @@ export function reviewClubBudgets(team, seasonKey) {
 export function canAffordContract(team, player, wage, { date = team?.managementDate, fee = 0, weeksRemaining = 52, until = null } = {}) {
   const f = ensureClubEconomy(team)
   const allocation = clubBudgetAllocation(team)
+  if (team.streamlinedClub?.economyActive) {
+    const reserve = seasonWageReserve(team, { excludePlayerId: player?.id, date }) + wage * Math.min(weeksRemaining, remainingPayrollWeeks(team, date, until)) + allocation.operatingReserve
+    return Number.isFinite(wage) && wage >= 0 && Number.isFinite(fee) && fee >= 0 && f.cash - fee >= reserve ? { ok: true, requiredReserve: reserve } : { ok: false, error: 'Brak środków po odłożeniu rezerwy / Insufficient funds after reserves', requiredReserve: reserve }
+  }
   const bill = contractualWeeklyBill(team, player?.id)
   if (bill + wage > allocation.weeklyWageLimit) return { ok: false, error: 'Przekroczony tygodniowy limit płac / Weekly wage limit exceeded' }
   const reserve = seasonWageReserve(team, { excludePlayerId: player?.id, date }) + wage * Math.min(weeksRemaining, remainingPayrollWeeks(team, date, until))

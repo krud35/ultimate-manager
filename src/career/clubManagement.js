@@ -1,5 +1,6 @@
 import { refreshAiDevelopmentListings } from './developmentListings.js'
 import { CLUB_STRATEGY_DEFS } from './clubObjectives.js'
+import { completeClubTrack, upgradeClubTrack } from './streamlinedClub.js'
 import { currentEucsTier } from './competitionMembership.js'
 import { rebalanceAiBudget } from './clubEconomy.js'
 import { staffWeeklyCosts, facilityWeeklyCost } from './economyBalance.js'
@@ -101,6 +102,11 @@ export function processClubManagement(career, date, { weekTick = false } = {}) {
     ensureClubManagement(team, career.seasonYear)
     ensureClubEconomy(team)
     team.managementDate = date
+    if (team.streamlinedClub?.enabled) {
+      const finished = completeClubTrack(team, date)
+      if (finished && team.id === career.playerTeamId) messages.push({ id: `club-track-${date}-${finished.id}`, date, type: 'club_news', read: false, title: 'Zakończono inwestycję klubu', titleEn: 'Club investment completed', body: `Nowy poziom działa. Koszt utrzymania wzrósł o ${finished.upkeepDelta} tygodniowo.`, bodyEn: `The upgrade is operational. Weekly upkeep increased by ${finished.upkeepDelta}.` })
+      if (team.id !== career.playerTeamId && team.streamlinedClub.staffRenewalCap == null) team.streamlinedClub.staffRenewalCap = staffPayroll(team)
+    }
     for (const notice of processStaffContracts(team,date,{ai:team.id !== career.playerTeamId})) {
       if(team.id === career.playerTeamId) messages.push({id:`staff-${notice.role}-${date}`,date,read:false,type:'club_news',title:notice.expired?'Koniec umowy ze sztabem':'Wygasająca umowa sztabu',titleEn:notice.expired?'Staff contract expired':'Staff contract expiring',body:`${notice.name}: ${notice.expired?'stanowisko jest wolne.':'umowa kończy się w ciągu 30 dni.'}`,bodyEn:`${notice.name}: ${notice.expired?'the position is now vacant.':'contract ends within 30 days.'}`})
     }
@@ -148,9 +154,12 @@ export function processClubManagement(career, date, { weekTick = false } = {}) {
     if (team.players.length >= 24 && forecast.annualIncome - forecast.annualCosts > 50_000 && forecast.cash > forecast.annualCosts * 1.4 && forecast.projectedCash > forecast.annualCosts * 1.2 && !team.facilityProject) {
       const priority = team.clubStrategy === 'development' ? ['academy', 'trainingCenter', 'scoutingDept'] : ['trainingCenter', 'medicalCenter', 'fanShop']
       const facility = priority.sort((a, b) => getFacilityLevel(team, a) - getFacilityLevel(team, b))[0]
-      if (getTransferBudget(team) > 150_000) upgradeFacility(team, facility, { date })
+      if (getTransferBudget(team) > 150_000) {
+        if (team.streamlinedClub?.enabled) upgradeClubTrack(team, team.clubStrategy === 'development' ? 'recruitment' : 'preparation', date)
+        else upgradeFacility(team, facility, { date })
+      }
       const role = team.clubStrategy === 'development' ? 'youthCoach' : 'sportingDirector'
-      if (forecast.projectedCash > 500_000 && team.staff[role] < 3) {
+      if (!team.streamlinedClub?.enabled && forecast.projectedCash > 500_000 && team.staff[role] < 3) {
         const candidate=staffMarket(team,role,date).find(p=>p.level===team.staff[role]+1)
         if(candidate)hireClubStaff(team,role,candidate.id,date)
       }

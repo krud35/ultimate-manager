@@ -1,3 +1,4 @@
+import SquadRoleSelect from './SquadRoleSelect.jsx'
 import { ATTRIBUTE_HELP_PL } from '../models/detailedAttributes.js'
 import { useEffect, useState, useRef } from 'react'
 import { useDialogFocus } from '../ui/useDialogFocus'
@@ -123,6 +124,7 @@ function CategoryBlock({
 }
 
 export default function PlayerProfileModal({
+  streamlined = false,
   player,
   onClose,
   stamina = null,
@@ -150,6 +152,7 @@ export default function PlayerProfileModal({
   const [extendOpen, setExtendOpen] = useState(false)
   const [extendWage, setExtendWage] = useState('')
   const [extendYears, setExtendYears] = useState('3')
+  const [extendRole, setExtendRole] = useState(player?.contract?.squadRole ?? 'rotation')
   const [extendBusy, setExtendBusy] = useState(false)
   const [extendFlash, setExtendFlash] = useState(null)
   const [scoutFlash, setScoutFlash] = useState(null)
@@ -161,6 +164,7 @@ export default function PlayerProfileModal({
     setExtendOpen(false)
     setExtendFlash(null)
     if (player?.contract?.weeklyWage) {
+      setExtendRole(player.contract.squadRole ?? 'rotation')
       const demands = computePlayerContractDemands({
         player,
         sellerTeam: null,
@@ -197,6 +201,7 @@ export default function PlayerProfileModal({
       playerId: player.id,
       weeklyWage: Math.round(Number(extendWage) || 0),
       years: Math.max(1, Math.min(5, Math.round(Number(extendYears) || 1))),
+      ...(streamlined ? { squadRole: extendRole } : {}),
     })
     setExtendBusy(false)
     if (result?.completed) {
@@ -542,6 +547,7 @@ export default function PlayerProfileModal({
                   <p className="text-[11px] text-ufa-muted tabular-nums">
                     {formatUsd(extendPreview.totalCost)}
                   </p>
+                  {streamlined && <SquadRoleSelect value={extendRole} onChange={setExtendRole} lang={lang} />}
                   <button
                     type="button"
                     disabled={extendBusy}

@@ -1,5 +1,7 @@
 import { ensureYouthCohort, clubYouthCountry, claimRegionalYouth, youthWillJoin, discoverRegionalYouth } from './youthPopulation.js'
 import { getTransferBudget, adjustTransferBudget } from './transfers/clubFinances.js'
+import { ensureClubEconomy } from './clubEconomy.js'
+import { clubFinancialMarket } from './financialMarkets.js'
 /**
  * Akademia U21: własna pula prospektów per drużyna, zamiast dawnego jednorazowego
  * dosypywania wolnych agentów po emeryturach (youthIntake.js).
@@ -146,7 +148,8 @@ export function signAcademyCandidate(team, candidateId, { world = null, seasonYe
   if (candidate.regionalYouth && (!world || !world.regionalYouth?.some(p => p.id === candidateId))) return { ok: false, error: 'unavailable' }
   if (!youthWillJoin(team, candidate)) return { ok: false, error: 'declined' }
   const cost = academyRecruitmentCost(candidate)
-  if (getTransferBudget(team) < cost) return { ok: false, error: 'insufficient_funds' }
+  const weeklyUpkeep = Math.round(80 * clubFinancialMarket(team).prices)
+  if (getTransferBudget(team) < cost + (team.streamlinedClub?.economyActive ? weeklyUpkeep * 8 : 0)) return { ok: false, error: 'insufficient_funds' }
   const player = candidate.regionalYouth ? claimRegionalYouth(world, candidateId) : candidate
   team.academyCandidates = ensureTeamAcademyCandidates(team).filter(p => p.id !== candidateId)
   player.inAcademy = true
@@ -156,6 +159,7 @@ export function signAcademyCandidate(team, candidateId, { world = null, seasonYe
   ensureTeamAcademy(team).push(player)
   team.academyAdmissions = (team.academyAdmissions ?? 0) + 1
   adjustTransferBudget(team, -cost, 'academy_recruitment')
+  if (team.streamlinedClub?.enabled) { const f = ensureClubEconomy(team); f.weeklyOperations = (f.weeklyOperations ?? 0) + weeklyUpkeep }
   return { ok: true, player, cost }
 }
 
@@ -442,12 +446,14 @@ export function promoteAcademyPlayer(team, playerId, { league = null } = {}) {
   const terms = { ...auto.terms, years: 1, weeklyWage: Math.round(weeklyWageFromOvr(rookieOvr, team) * 0.85) }
   const signed = signPlayerContract(team, player, {
     ...terms,
+    ...(team.streamlinedClub?.enabled ? { squadRole: 'reserve' } : {}),
     signedDate: league?.currentDate ?? null,
     seasonYear: league?.calendar?.seasonYear ?? league?.seasonYear ?? null,
   })
   if (!signed.ok) return { ok: false, error: signed.error ?? 'contract_failed' }
 
   pool.splice(idx, 1)
+  if (team.streamlinedClub?.enabled) ensureClubEconomy(team).weeklyOperations = Math.max(0, (team.finances.weeklyOperations ?? 0) - Math.round(80 * clubFinancialMarket(team).prices))
   player.status = PLAYER_STATUS.ACTIVE
   player.inAcademy = false
   if (team.boardObjective) team.boardObjective.graduates = (team.boardObjective.graduates ?? 0) + 1

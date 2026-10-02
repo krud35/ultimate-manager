@@ -1,0 +1,17 @@
+{
+  "passed": 12,
+  "checks": [
+    "v1 migration is additive and economics wait for the next season",
+    "four-axis plans compile for both lines; exceptions override and obsolete controls leave saves",
+    "automatic reserve reconciles cash and blocks unfunded wages for human and AI teams",
+    "three facility tracks retain stronger assets, charge once and preserve paid construction",
+    "staff renewal requires an approved cap and preserves secondary contracts until expiry",
+    "squad roles survive normalization and promises use real available matches exactly once",
+    "shortlist stays within approved budget and delegation stops at unapproved counters",
+    "a larger promised role improves the same wage offer but creates a real playing-time obligation",
+    "legacy bonus obligations deduct cash once and expire on their original end date",
+    "playing-time events record a real promise without a free morale reward",
+    "unemployment retains a rebuilding route after two weeks",
+    "opposite plans produce different behavior in the same seeded full match engine"
+  ]
+}

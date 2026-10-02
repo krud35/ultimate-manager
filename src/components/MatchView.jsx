@@ -48,6 +48,8 @@ import FieldView2D from './FieldView2D'
 import { resolveMatchColors } from '../data/teamColors.js'
 import MatchDashboard from './MatchDashboard'
 import ScoutingAnalysisPanel from './ScoutingAnalysisPanel'
+import CoachReport from './match/CoachReport.jsx'
+import { pointIsHighlight, matchIntervention } from '../matchEngine/streamlinedMatch.js'
 import { buildScoutingAnalysis } from '../matchEngine/scoutingAnalysis.js'
 import TeamNewsView from './match/TeamNewsView'
 import TacticsOverlay from './match/TacticsOverlay'
@@ -171,6 +173,7 @@ function cloneTacticsForMatch(tactics) {
 }
 
 export default function MatchView({
+  streamlined = false,
   homeTactics,
   onHomeTacticsChange: _onHomeTacticsChange,
   onMatchStaminaChange,
@@ -239,6 +242,12 @@ export default function MatchView({
   // Tło ekranu podąża za etapem dnia meczowego (tunel → szatnia → boisko → zmierzch).
   useSceneOverride(MATCH_STAGE_TO_SCENE[stage])
   const [showFullStats, setShowFullStats] = useState(false)
+  const [flowPaused, setFlowPaused] = useState(false)
+  const [viewMode, setViewMode] = useState('highlights')
+  const [intervention, setIntervention] = useState(null)
+  const [reviewEvidence, setReviewEvidence] = useState(false)
+  const acknowledgedInterventions = useRef(new Set())
+  const flowTimer = useRef(null)
 
   /** Poza "prep" blokujemy nawigację w App.jsx — nie da się porzucić meczu w trakcie. */
   useEffect(() => {
@@ -367,8 +376,8 @@ export default function MatchView({
 
   function pointAiOptions(overrides = {}) {
     return {
-      rotateHome: playerSide !== 'home',
-      rotateAway: playerSide !== 'away',
+      rotateHome: streamlined || playerSide !== 'home',
+      rotateAway: streamlined || playerSide !== 'away',
       aiHome: playerSide !== 'home',
       aiAway: playerSide !== 'away',
       ...overrides,
@@ -417,6 +426,7 @@ export default function MatchView({
     if (spectatorMode) return { ok: true }
     if (!session || !matchTactics) return { ok: false, reason: 'empty' }
     const roster = playerRosterForValidation()
+    if (streamlined && stage === 'live' && roster.filter(p => !(p.injury?.daysRemaining > 0)).length >= 7) return { ok: true }
     const role = pointStartRoleForTeam(playerSide, session.pullTeam)
     const current = validateLineupForSubmit(
       lineupIdsForPointStart(matchTactics, role),
@@ -463,15 +473,21 @@ export default function MatchView({
     } catch (err) {
       console.error('[MatchView] playNextPoint failed:', err)
       setPointPlaybackComplete(true)
+      if (streamlined) { setFlowPaused(true); setIntervention({ key: 'error', pl: 'Nie udało się rozegrać punktu. Spróbuj ponownie.', en: 'Could not play the point. Try again.' }) }
       return
     }
     scrubInjuredFromPlayerTactics()
     const played = sessionRef.current.pointIndex - 1
+    if (streamlined && viewMode === 'highlights') {
+      const s = sessionRef.current
+      const events = slicePointEvents(s.events, played)
+      if (!pointIsHighlight(events, played, s.homeScore, s.awayScore)) fastForwardSkipRef.current = true
+    }
     setReviewPointIndex(played)
     bump()
   }
 
-  /** Punkt po punkcie, bez animacji: symuluje 1 punkt (fastMode) i zatrzymuje się. */
+  /** Punkt po punkcie: pełny model, bez zapisywania powtórki. */
   function handleSimulateNextPoint() {
     if (!sessionRef.current || sessionRef.current.status === 'finished') return
     const lineupCheck = validatePlayerLineup()
@@ -482,7 +498,7 @@ export default function MatchView({
     setFieldPlaying(false)
     setPointPlaybackComplete(true)
     try {
-      playNextPoint(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions())
+      playNextPoint(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions({ collectFrames: false }))
     } catch (err) {
       console.error('[MatchView] simulate next point failed:', err)
       fastForwardSkipRef.current = false
@@ -505,8 +521,32 @@ export default function MatchView({
     setTacticsModalOpen(false)
   }
 
+  function pauseFlow() {
+    window.clearTimeout(flowTimer.current)
+    setFlowPaused(true)
+  }
+
+  function resumeFlow() {
+    if (intervention) acknowledgedInterventions.current.add(intervention.key)
+    setIntervention(null)
+    setFlowPaused(false)
+    if (!pointPlaybackComplete && reviewHasReplay) setFieldPlaying(true)
+  }
+
+  function reviewCoachPoint(point) {
+    playbackPointRef.current = null
+    fastForwardSkipRef.current = false
+    setHoldPose(null)
+    setPlaybackStep(0)
+    setClipElapsed(0)
+    setReviewPointIndex(point)
+    setReviewEvidence(true)
+    setFieldPlaying(true)
+  }
+
   /** Etap "prep": zatwierdza siódemki startowe i przechodzi do team news (bez rozgrywania punktu). */
   function handleContinueToTeamNews() {
+    if (streamlined) { handleKickoff(); return }
     setStage('teamNews')
   }
 
@@ -516,13 +556,15 @@ export default function MatchView({
   function handleKickoff() {
     tacticsAutoOpenedForRef.current = null
     setStage('live')
-    setTacticsModalOpen(true)
+    setTacticsModalOpen(!streamlined)
+    if (streamlined) { setFlowPaused(false); setIntervention(null) }
   }
 
   function handleSimulateAll() {
     const finished = simulateMatch({
       ...matchOptions(),
       ...pointAiOptions({ rotateHome: true, rotateAway: true }),
+      collectFrames: false,
     })
     setInstantResult(finished)
     publishStamina(finished)
@@ -535,7 +577,7 @@ export default function MatchView({
   /** Odstęp między punktami auto-symulacji. Sam punkt liczy się ~0.4 s (blokująco),
    *  więc odliczamy od CHWILI POKAZANIA poprzedniego, a nie stałym interwałem — inaczej
    *  wolniejszy punkt nakładałby się na następny. */
-  const AUTO_SIM_POINT_MS = 1000
+  const AUTO_SIM_POINT_MS = streamlined ? 0 : 1000
 
   const autoSimLabels = useMemo(
     () => ({
@@ -563,6 +605,13 @@ export default function MatchView({
       autoSimTimerRef.current = null
     }
     setAutoSimProgress(null)
+    if (streamlined && sessionRef.current?.lastPoint) {
+      fastForwardSkipRef.current = true
+      setReviewPointIndex(sessionRef.current.lastPoint.pointIndex)
+      setPointPlaybackComplete(true)
+      setFieldPlaying(false)
+      bump()
+    }
   }
 
   /** Siódemka z danego punktu jako gotowa lista zawodników — rozwiązywana ze składu
@@ -596,7 +645,7 @@ export default function MatchView({
       playNextPoint(
         sessionRef.current,
         tacticsUpdateForPoint(),
-        pointAiOptions({ rotateHome: true, rotateAway: true }),
+        pointAiOptions({ rotateHome: true, rotateAway: true, collectFrames: false }),
       )
     } catch (err) {
       console.error('[MatchView] auto sim step failed:', err)
@@ -681,6 +730,7 @@ export default function MatchView({
   function handleSimulateToEnd() {
     if (!sessionRef.current || sessionRef.current.status === 'finished') return
     if (autoSimRef.current) return
+    if (streamlined) { setFlowPaused(true); setIntervention(null) }
     const lineupCheck = validatePlayerLineup()
     if (!lineupCheck.ok) return
     fastForwardSkipRef.current = true
@@ -738,12 +788,16 @@ export default function MatchView({
    * jeszcze na etapie "prep" (mecz może się skończyć bez odwiedzenia "live").
    */
   useEffect(() => {
-    if (!POST_MATCH_STAGES.has(stage) && matchFinished) {
+    if (!POST_MATCH_STAGES.has(stage) && matchFinished && (!streamlined || (pointPlaybackComplete && !fieldPlaying && !autoSimProgress))) {
       setStage('postMatch')
     }
-  }, [stage, matchFinished])
+  }, [stage, matchFinished, streamlined, pointPlaybackComplete, fieldPlaying, autoSimProgress])
 
   function resetMatch() {
+    setFlowPaused(false)
+    setIntervention(null)
+    setReviewEvidence(false)
+    acknowledgedInterventions.current = new Set()
     setPointByPointMode(false)
     setTacticsModalOpen(false)
     setShowFullStats(false)
@@ -774,6 +828,10 @@ export default function MatchView({
 
   useEffect(() => {
     leagueSubmittedRef.current = false
+    acknowledgedInterventions.current = new Set()
+    setFlowPaused(false)
+    setIntervention(null)
+    setReviewEvidence(false)
     tacticsAutoOpenedForRef.current = null
     setPointByPointMode(false)
     setTacticsModalOpen(false)
@@ -808,6 +866,8 @@ export default function MatchView({
     return slicePointEvents(result.events, activeReviewPoint)
   }, [result?.events, activeReviewPoint])
 
+  const reviewHasReplay = reviewPointEvents.some(e => e.motionTrace?.frames?.length || e.actionSim?.frames?.length)
+
   const reviewPullTeam = useMemo(() => {
     const start = reviewPointEvents.find((e) => e.type === EVENT.POINT_START)
     return start?.pullTeam ?? MATCH_CONFIG.firstPointPullTeam
@@ -815,7 +875,7 @@ export default function MatchView({
 
   useEffect(() => {
     if (!reviewPointEvents.length) return
-    if (fastForwardSkipRef.current) {
+    if (fastForwardSkipRef.current || !reviewHasReplay) {
       fastForwardSkipRef.current = false
       playbackPointRef.current = activeReviewPoint
       setPlaybackStep(Math.max(0, reviewPointEvents.length - 1))
@@ -833,7 +893,7 @@ export default function MatchView({
     setHoldPose(null)
     setFieldPlaying(true)
     setPointPlaybackComplete(false)
-  }, [activeReviewPoint, reviewPointEvents.length])
+  }, [activeReviewPoint, reviewPointEvents.length, reviewHasReplay])
 
   useEffect(() => {
     if (!reviewPointEvents.length) return
@@ -1143,6 +1203,7 @@ export default function MatchView({
    *  Widz (spectatorMode) nie wybiera nic — patrz efekt auto-advance niżej. */
   useEffect(() => {
     if (spectatorMode) return
+    if (streamlined) return
     if (stage !== 'live') return
     if (!matchLive || !canPlayPoint || !pointPlaybackComplete || fieldPlaying) return
     // W trakcie auto-symulacji gracz nic nie wybiera — okno taktyk by tylko migało.
@@ -1152,6 +1213,7 @@ export default function MatchView({
     setTacticsModalOpen(true)
   }, [
     spectatorMode,
+    streamlined,
     stage,
     matchLive,
     canPlayPoint,
@@ -1160,6 +1222,17 @@ export default function MatchView({
     activeReviewPoint,
     autoSimProgress,
   ])
+
+  // One point at a time: tactics are read only when the next point actually starts.
+  useEffect(() => {
+    if (!streamlined || spectatorMode || stage !== 'live' || !matchLive || !canPlayPoint || !pointPlaybackComplete || fieldPlaying || flowPaused || tacticsModalOpen || pointByPointMode || autoSimProgress) return undefined
+    const notice = matchIntervention(sessionRef.current, playerSide, acknowledgedInterventions.current)
+    if (notice) { setIntervention(notice); setFlowPaused(true); return undefined }
+    flowTimer.current = window.setTimeout(() => handlePlayNextPoint(), 350)
+    return () => window.clearTimeout(flowTimer.current)
+    // Mutable session is advanced only by the point handler; tick marks its revision.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streamlined, spectatorMode, stage, matchLive, canPlayPoint, pointPlaybackComplete, fieldPlaying, flowPaused, tacticsModalOpen, pointByPointMode, autoSimProgress, tick, viewMode])
 
   /** Widz: zamiast otwierać okno taktyk, po krótkiej pauzie (żeby wynik/punkt było widać)
    *  sam gra kolejny punkt — obie strony AI, pełny silnik, pełna wizualizacja na boisku. */
@@ -1185,6 +1258,7 @@ export default function MatchView({
       (playerSide === 'home' ? homeTeam?.players : awayTeam?.players) ??
       []
     const role = homeNextPointRole
+    if (streamlined && stage === 'live' && roster.filter(p => !(p.injury?.daysRemaining > 0)).length >= 7) return { ok: true }
     const current = validateLineupForSubmit(
       lineupIdsForPointStart(matchTactics, role),
       roster,
@@ -1216,6 +1290,8 @@ export default function MatchView({
     session,
     tick,
     beforeFirstPoint,
+    streamlined,
+    stage,
     playerSide,
     homeTeam,
     awayTeam,
@@ -1383,6 +1459,20 @@ export default function MatchView({
 
       {stage === 'live' && (
         <div className="space-y-4 league-fade-in">
+          {streamlined && <section className="um-section space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <label>{lang === 'en' ? 'Watch' : 'Oglądaj'} <select className="border border-ufa-border bg-ufa-panel p-2" value={pointByPointMode ? 'points' : viewMode} onChange={e => {
+                if (e.target.value === 'points') { pauseFlow(); handleEnterPointByPoint() }
+                else { setViewMode(e.target.value); setPointByPointMode(false); resumeFlow() }
+              }}><option value="highlights">{lang === 'en' ? 'Highlights' : 'Skrót meczu'}</option><option value="full">{lang === 'en' ? 'Full match' : 'Pełny mecz'}</option><option value="points">{lang === 'en' ? 'Point by point' : 'Punkt po punkcie'}</option></select></label>
+              {!pointByPointMode && <button className="um-button um-button--primary" onClick={flowPaused ? resumeFlow : pauseFlow}>{flowPaused ? (lang === 'en' ? 'Continue' : 'Kontynuuj') : (lang === 'en' ? 'Pause after point' : 'Zatrzymaj po punkcie')}</button>}
+              <button className="um-button" disabled={!pointPlaybackComplete} onClick={() => { pauseFlow(); setTacticsModalOpen(true) }}>{t.tacticsAndSubs}</button>
+              <button className="um-button" disabled={!canPlayPoint || !pointPlaybackComplete} onClick={handleSimulateToEnd}>{t.simRest}</button>
+            </div>
+            <p className="text-sm text-ufa-muted">{lang === 'en' ? 'Automatic rotation. Highlights include breaks, deep completions and the closing stages. Change tactics between points.' : 'Automatyczna rotacja. Skrót pokazuje breaki, celne dalekie podania i końcówkę. Taktykę zmienisz między punktami.'}</p>
+            {intervention && <p role="status" className="text-ufa-gold">{intervention[lang === 'en' ? 'en' : 'pl']}</p>}
+            {lineupSubmitError && <p role="alert" className="text-ufa-danger">{lineupSubmitError}</p>}
+          </section>}
           <div className="um-scoreboard">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="um-live-score">
@@ -1475,7 +1565,11 @@ export default function MatchView({
                     </button>
                   )}
                 </div>
-                <FieldView2D
+                {reviewPointEvents.length > 0 && !reviewHasReplay ? (
+                  <p className="mt-3 rounded-md border border-ufa-border bg-ufa-panel p-6 text-center text-sm text-ufa-muted">
+                    {t.replayNotRecorded}
+                  </p>
+                ) : <FieldView2D
                   className="field-view-2d--fullscreen mt-3"
                   fieldState={fieldState}
                   renderFrame={renderFrame}
@@ -1486,7 +1580,7 @@ export default function MatchView({
                   homeColor={matchKitColors.homeColor}
                   awayColor={matchKitColors.awayColor}
                   commentary={fieldCommentary}
-                />
+                />}
               </>
             )}
             {fieldStaminaReady && (
@@ -1540,19 +1634,31 @@ export default function MatchView({
 
       {stage === 'postMatch' && (
         <div className="space-y-4 league-fade-in">
+          {streamlined && <>
+            <h2 className="text-2xl font-semibold">{homeTeam.name} {finalHomeScore} : {finalAwayScore} {awayTeam.name}</h2>
+            <CoachReport result={result} side={playerSide} onReview={reviewCoachPoint} />
+            {reviewEvidence && <section className="um-section">
+              <div className="flex justify-between"><h3>{t.pointN(activeReviewPoint)}</h3><button className="um-button" onClick={() => { setReviewEvidence(false); setFieldPlaying(false) }}>{lang === 'en' ? 'Close replay' : 'Zamknij powtórkę'}</button></div>
+              {reviewHasReplay ? <FieldView2D fieldState={fieldState} renderFrame={renderFrame} fieldPointKey={activeReviewPoint} wind={wind} homeLabel={homeTeam.name} awayLabel={awayTeam.name} homeColor={matchKitColors.homeColor} awayColor={matchKitColors.awayColor} commentary={fieldCommentary} /> : <p className="my-3 text-ufa-muted">{t.replayNotRecorded}</p>}
+              <PointHistory events={reviewPointEvents} pointIndex={activeReviewPoint} pointIndices={pointIndices} onSelectPointIndex={reviewCoachPoint} scoringTeam={reviewPointMeta.scoringTeam} throws={reviewPointMeta.throws} homeTeamName={homeTeam.name} awayTeamName={awayTeam.name} />
+            </section>}
+            <button className="um-button" onClick={() => setShowFullStats(v => !v)}>{showFullStats ? t.hideFullStats : t.fullStats}</button>
+          </>}
+          {(!streamlined || showFullStats) && <>
           <MatchDashboard
             matchStats={matchStats}
             homeName={homeTeam.name}
             awayName={awayTeam.name}
-            homeScore={displayedScore.home}
-            awayScore={displayedScore.away}
+            homeScore={streamlined ? finalHomeScore : displayedScore.home}
+            awayScore={streamlined ? finalAwayScore : displayedScore.away}
             matchEvents={result?.events ?? session?.events ?? null}
           />
+          </>}
 
           <div className="flex flex-col items-center gap-3">
             <button
               type="button"
-              onClick={() => (spectatorMode ? handleReturnToLeague() : setStage('dressingRoomPost'))}
+              onClick={() => (spectatorMode || streamlined ? handleReturnToLeague() : setStage('dressingRoomPost'))}
               className="rounded-md bg-ufa-accent px-6 py-2.5 text-sm font-semibold text-ufa-on-accent  hover:opacity-90"
             >
               {t.postMatchContinue}
@@ -1562,6 +1668,7 @@ export default function MatchView({
             </p>
           </div>
 
+          {(!streamlined || showFullStats) && <>
           {result && <ScoutingAnalysisPanel report={scoutingReport} side={playerSide} subtitle={`${homeTeam.name} ${finalHomeScore} : ${finalAwayScore} ${awayTeam.name}`} />}
 
           {reviewPointEvents.length > 0 && (
@@ -1613,6 +1720,7 @@ export default function MatchView({
               </ul>
             </div>
           )}
+          </>}
         </div>
       )}
 
@@ -1647,6 +1755,7 @@ export default function MatchView({
             onPlayPoint={
               canPlayPoint
                 ? () => {
+                    if (streamlined) resumeFlow()
                     ;(pointByPointMode ? handleSimulateNextPoint : handlePlayNextPoint)()
                     setTacticsModalOpen(false)
                   }

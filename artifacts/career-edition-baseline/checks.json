@@ -1,0 +1,25 @@
+{
+  "passed": 9,
+  "checks": [
+    "New careers opt in; legacy and classic retain training and data",
+    "Backups round trip only into empty slots and reject future versions",
+    "Read decisions still block; reports and queued negotiations do not",
+    "Unknown follow-ups survive and are flagged only in streamlined careers",
+    "Weekly workloads, match protection, project limit and no duplicate sessions",
+    "Continue and date fast-forward stop on the same decision or match",
+    "Coach observations cite real events and interventions are acknowledged once",
+    "Both fast-forward controls stop before the player match and preserve its result",
+    "Both other competitions retain edition metadata on creation and reload"
+  ],
+  "durationMs": {
+    "New careers opt in; legacy and classic retain training and data": 35204,
+    "Backups round trip only into empty slots and reject future versions": 47836,
+    "Read decisions still block; reports and queued negotiations do not": 409,
+    "Unknown follow-ups survive and are flagged only in streamlined careers": 0,
+    "Weekly workloads, match protection, project limit and no duplicate sessions": 284,
+    "Continue and date fast-forward stop on the same decision or match": 4968,
+    "Coach observations cite real events and interventions are acknowledged once": 2,
+    "Both fast-forward controls stop before the player match and preserve its result": 10165,
+    "Both other competitions retain edition metadata on creation and reload": 11608
+  }
+}

@@ -1,3 +1,4 @@
+import StreamlinedTacticsForm from './StreamlinedTacticsForm'
 import { useUiLang } from '../ui/UiLangContext'
 import { tacticsStrings } from '../ui/strings/tactics'
 import { useState } from 'react'
@@ -293,7 +294,11 @@ function RichLineupSection({
   )
 }
 
-export default function TacticsForm({
+export default function TacticsForm(props) {
+  return props.tactics?.streamlinedPlan ? <StreamlinedTacticsForm {...props} /> : <ClassicTacticsForm {...props} />
+}
+
+function ClassicTacticsForm({
   roster,
   tactics,
   onTacticsChange,

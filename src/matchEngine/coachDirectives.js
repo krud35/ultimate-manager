@@ -7,6 +7,7 @@
  */
 
 import { FORCE_SIDES, resolveLineRole } from './tacticsModifiers.js'
+import { compileStreamlinedTactics } from '../career/streamlinedTactics.js'
 import { normalizeForceMark } from './throwTechnique.js'
 import { getPlayerTraits, getTraitMods } from '../models/playerTraits.js'
 import { getSubStat, normalizePlayerSkills } from '../models/playerStats.js'
@@ -324,6 +325,7 @@ export { resolveLineRole }
  * @param {LineRole|null|undefined} [lineRole]
  */
 export function coachDirectivesForLine(tactics, lineRole = null) {
+  if (tactics?.streamlinedPlan && !tactics.oLineCoachDirectives) tactics = compileStreamlinedTactics(tactics)
   const role = resolveLineRole(tactics, lineRole)
   const legacy = tactics?.coachDirectives
   const legacyForce = tactics?.forceSide ?? legacy?.forceSide

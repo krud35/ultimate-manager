@@ -1,4 +1,5 @@
 import ClubManagementPanel from './ClubManagementPanel.jsx'
+import StreamlinedClubView from './StreamlinedClubView.jsx'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useUiLang } from '../ui/UiLangContext'
 import { clubBoardStrings } from '../ui/strings/clubBoard'
@@ -278,6 +279,7 @@ export default function ClubBoardView({ career, onChange }) {
         )}
       </div>
 
+      {career.gameplayEdition === 'streamlined' ? <StreamlinedClubView career={career} onChange={() => persist()} /> : <>
       <ClubManagementPanel team={team} seasonYear={career.seasonYear} lang={lang} onChange={() => persist()} />
       {team.facilityProject && <p className="rounded-sm border border-ufa-border p-3 text-sm">{lang === 'en' ? 'Under construction' : 'Trwa budowa'}: {facilityName(team.facilityProject.facilityId, lang)} → {team.facilityProject.targetLevel}. {lang === 'en' ? 'Completion' : 'Zakończenie'}: {team.facilityProject.completesOn}.</p>}
       <section className="space-y-3">
@@ -300,6 +302,7 @@ export default function ClubBoardView({ career, onChange }) {
         </div>
       </section>
 
+      </>}
       <section className="space-y-3">
         <div>
           <h3 className="font-semibold text-ufa-text">{t.sponsors}</h3>

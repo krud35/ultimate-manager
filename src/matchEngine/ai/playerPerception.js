@@ -25,12 +25,15 @@ export function perceivePlayers(observer, targets, blockers, nowMs, focus = null
     if (id === (observer.id ?? owner.id)) { observed.push(target); continue }
     const dx = target.x - observer.x, dy = target.y - observer.y, distance = Math.hypot(dx, dy)
     const angle = Math.abs(wrap(Math.atan2(dy, dx) - state.heading))
-    const occluded = distance > 4 && blockers.some(b => {
+    // Occlusion cannot make an out-of-view target visible. Keep the strict
+    // distance > 4 boundary: a target exactly 4 m away was never occluded.
+    const inView = angle < 1.05 + vision * 0.8
+    const occluded = distance > 4 && inView && blockers.some(b => {
       if ((b.id ?? b.player?.id) === id) return false
       const u = ((b.x - observer.x) * dx + (b.y - observer.y) * dy) / Math.max(0.01, distance * distance)
       return u > 0.08 && u < 0.9 && Math.hypot(b.x - observer.x - dx * u, b.y - observer.y - dy * u) < 0.35
     })
-    const visible = distance < 4 || (angle < 1.05 + vision * 0.8 && !occluded)
+    const visible = distance < 4 || (inView && !occluded)
     if (visible) {
       const snapshot = { ...target, rawX: target.x, rawY: target.y,
         observedAtMs: nowMs, observationAgeMs: 0, visibility: 1 }

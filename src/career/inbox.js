@@ -4,6 +4,8 @@
  */
 
 import { getPlayerFullName } from '../data/mockPlayers.js'
+import { isStreamlinedCareer } from './gameplayEdition.js'
+import { requiresCareerDecision } from './streamlinedDecisions.js'
 import { injuryLabelEn } from '../models/playerInjury.js'
 import { getOverallRating } from '../models/playerStats.js'
 import { getPlayerForm, formLabel } from '../models/playerForm.js'
@@ -324,7 +326,7 @@ export function replyToInboxMessage(original, { title, titleEn, body, bodyEn, da
  * Dokłada wiadomości na początek skrzynki (najnowsze pierwsze), z deduplikacją i limitem.
  * @returns {object[]} nowa tablica inbox
  */
-export function appendInboxMessages(inbox, messages, { dedupeKey = null } = {}) {
+export function appendInboxMessages(inbox, messages, { dedupeKey = null, preserveDecisions = false } = {}) {
   const list = Array.isArray(inbox) ? [...inbox] : []
   const incoming = (messages ?? []).filter(Boolean)
   if (!incoming.length) return list
@@ -348,7 +350,8 @@ export function appendInboxMessages(inbox, messages, { dedupeKey = null } = {}) 
   }
 
   if (!toAdd.length) return list
-  return [...toAdd, ...list].slice(0, INBOX_MAX)
+  const combined = [...toAdd, ...list]
+  return preserveDecisions ? combined.filter((m, index) => index < INBOX_MAX || requiresCareerDecision(m)) : combined.slice(0, INBOX_MAX)
 }
 
 export function markInboxRead(inbox, messageId) {
@@ -1662,5 +1665,6 @@ export function inboxDedupeKey(message) {
 export function mergeInbox(career, messages) {
   return appendInboxMessages(ensureInbox(career), messages, {
     dedupeKey: inboxDedupeKey,
+    preserveDecisions: isStreamlinedCareer(career),
   })
 }

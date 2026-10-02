@@ -10,6 +10,7 @@ import { isPlayerInjured, tryTrainingInjury } from '../models/playerInjury.js'
 import { ensurePlayerDevelopment, getIndividualFocusMods, applyDailyDevelopment } from './playerDevelopment.js'
 import { addPlayerLoad, ensurePlayerWorkload, trainingParticipation, workloadRisk } from '../models/playerWorkload.js'
 import { ensureTrainingSchedule, resolveTrainingDay, playerSessionPlan, SESSION_DEFS, trainingFixtures } from './trainingSchedule.js'
+import { syncDevelopmentProjects } from './streamlinedTraining.js'
 import { staffSessionQuality } from './clubStaff.js'
 import { parseISODate, formatISODate, addDays } from '../league/seasonCalendar.js'
 import { getPlayerFullName } from '../data/mockPlayers.js'
@@ -884,6 +885,7 @@ export function processTeamTrainingsForDate(league, isoDate, options = {}) {
     if (!isPlayer) schedule.legacy = false
     const tt = ensureTeamTraining(team)
     if (tt.lastProcessedDate >= date) continue
+    if (isPlayer) syncDevelopmentProjects(team)
     const plans = resolveTrainingDay(team, date, league) ?? plansForDate(team, date, isPlayer)
     tt.lastProcessedDate = date
     schedule.overrides = Object.fromEntries(Object.entries(schedule.overrides).filter(([key]) => key.slice(0,10) >= date))

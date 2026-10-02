@@ -403,6 +403,38 @@ export function interceptForFlight(flight) {
 }
 
 const interceptCache = new WeakMap()
+const intendedSampleCache = new WeakMap()
+
+/** Read-only planned samples, shared only within one flight tick. Trajectory
+ * plans are immutable, as required by sampleContinuedDisc's existing cache.
+ * Observations and their corrections remain private to each player. */
+export function plannedFlightSampler(flight) {
+  const plan = flight.plannedShape?.plan
+  const source = plan ?? flight.trajectoryPlan
+  const totalMs = flight.totalFlightMs
+  const planMs = plan?.totalMs ?? totalMs
+  const landingX = flight.landingX ?? flight.toX, landingY = flight.landingY ?? flight.toY
+  const trueX = flight.trueLandingX ?? flight.toX, trueY = flight.trueLandingY ?? flight.toY
+  let cached = intendedSampleCache.get(flight)
+  if (!cached || cached.elapsedMs !== flight.elapsedMs || cached.deflection !== flight.deflection
+    || cached.source !== source || cached.plan !== plan || cached.totalMs !== totalMs || cached.planMs !== planMs
+    || cached.landingX !== landingX || cached.landingY !== landingY || cached.trueX !== trueX || cached.trueY !== trueY) {
+    const samples = new Map()
+    cached = { elapsedMs: flight.elapsedMs, deflection: flight.deflection, source, plan, totalMs, planMs,
+      landingX, landingY, trueX, trueY,
+      sample(ms) {
+        let point = samples.get(ms)
+        if (!point) {
+          const p = sampleContinuedDisc(source, ms / totalMs * planMs)
+          point = plan ? p : { ...p, x: p.x + landingX - trueX, y: p.y + landingY - trueY }
+          samples.set(ms, point)
+        }
+        return point
+      } }
+    intendedSampleCache.set(flight, cached)
+  }
+  return cached.sample
+}
 
 export function interceptForAgent(flight, agent, player, role, speed) {
   let cache = interceptCache.get(flight)
@@ -415,12 +447,7 @@ export function interceptForAgent(flight, agent, player, role, speed) {
     + subStat(player, 'mental', 'anticipation') * 0.35
   const delayMs = Math.max(80, 350 - reactions * 2.5 + (playerMatchMods(player).reactionDelayDeltaMs ?? 0)) * FLIGHT_APPROACH_CALIBRATION.readDelayScale
   const read = Math.max(0, Math.min(1, (elapsedMs - delayMs) / (Math.max(400, 1200 - vision * 8) * FLIGHT_APPROACH_CALIBRATION.readBlendScale)))
-  const plan = flight.plannedShape?.plan
-  const intendedAt = ms => {
-    const p = sampleContinuedDisc(plan ?? flight.trajectoryPlan, ms / flight.totalFlightMs * (plan?.totalMs ?? flight.totalFlightMs))
-    return plan ? p : { ...p, x: p.x + (flight.landingX ?? flight.toX) - (flight.trueLandingX ?? flight.toX),
-      y: p.y + (flight.landingY ?? flight.toY) - (flight.trueLandingY ?? flight.toY) }
-  }
+  const intendedAt = plannedFlightSampler(flight)
   const now = sampleFlightDisc(flight, elapsedMs), before = sampleFlightDisc(flight, Math.max(0, elapsedMs - 20))
   const observations = perceivePlayers({ ...agent, player }, [{ ...now, id: 'disc',
     vx: (now.x - before.x) / 0.02, vy: (now.y - before.y) / 0.02,
@@ -429,6 +456,15 @@ export function interceptForAgent(flight, agent, player, role, speed) {
   const observation = observations.find(o => o.id === 'disc')
   const knownAt = observation ? intendedAt(observation.observedAtMs) : null
   const knownBefore = observation ? intendedAt(Math.max(0, observation.observedAtMs - 20)) : null
+  // These observed errors are constant throughout one intercept decision.
+  // Keep the original arithmetic order; no observation is shared across players.
+  const correction = observation && knownAt && !observation.deflected ? {
+    confidence: read * Math.max(0.2, observation.visibility),
+    x: observation.rawX - knownAt.x, y: observation.rawY - knownAt.y, z: observation.z - knownAt.z,
+    vx: observation.vx - (knownAt.x - knownBefore.x) / 0.02,
+    vy: observation.vy - (knownAt.y - knownBefore.y) / 0.02,
+    vz: observation.vz - (knownAt.z - knownBefore.z) / 0.02,
+  } : null
   const sample = ms => {
     const intended = intendedAt(ms)
     if (!observation || !knownAt) return intended
@@ -437,11 +473,10 @@ export function interceptForAgent(flight, agent, player, role, speed) {
       y: observation.rawY + observation.vy * horizon,
       z: Math.max(0, observation.z + observation.vz * horizon - 4.905 * horizon * horizon) }
     // Correct a known plan from an observed error, never sample the future actual flight.
-    const confidence = read * Math.max(0.2, observation.visibility)
     const extrapolate = Math.min(0.8, horizon) * vision / 100
-    return { x: intended.x + (observation.rawX - knownAt.x + (observation.vx - (knownAt.x - knownBefore.x) / 0.02) * extrapolate) * confidence,
-      y: intended.y + (observation.rawY - knownAt.y + (observation.vy - (knownAt.y - knownBefore.y) / 0.02) * extrapolate) * confidence,
-      z: Math.max(0, intended.z + (observation.z - knownAt.z + (observation.vz - (knownAt.z - knownBefore.z) / 0.02) * extrapolate) * confidence) }
+    return { x: intended.x + (correction.x + correction.vx * extrapolate) * correction.confidence,
+      y: intended.y + (correction.y + correction.vy * extrapolate) * correction.confidence,
+      z: Math.max(0, intended.z + (correction.z + correction.vz * extrapolate) * correction.confidence) }
   }
   const target = selectDiscIntercept({ agent, player, role, speed, elapsedMs,
     totalMs: Math.min(flight.totalFlightMs + 12000, Math.max(flight.totalFlightMs + 3000, elapsedMs + 3000)), sample,

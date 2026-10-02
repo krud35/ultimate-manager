@@ -1,4 +1,5 @@
 import { applyPendingSimulationScope } from './simulationScope.js'
+import { gameplayEdition, prepareCareerEdition } from './gameplayEdition.js'
 import { addManagerWelcome } from './managerCareer.js'
 import { buildDomesticWorldTemplate, createDomesticSeason, finishDomesticSeason, replenishCupRepresentatives } from './domesticWorld.js'
 import { processSeasonEndTvPayouts, messagesFromTvPayouts } from './tvMoney.js'
@@ -216,6 +217,7 @@ export function createCareer(slotIndex, options) {
   const now = new Date().toISOString()
   const draftCareer = {
     version: SAVE_VERSION,
+    gameplayEdition: gameplayEdition(options),
     id: newId(),
     slotIndex,
     createdAt: now,
@@ -258,7 +260,7 @@ export function createCareer(slotIndex, options) {
   maybeStartNationalTeamSeason(draftCareer, { seasonYear, calendar: league.calendar })
   initializeInternationalClubCups(draftCareer)
   reconcileDomesticCalendar(league)
-  return writeSlot(slotIndex, addManagerWelcome(draftCareer))
+  return writeSlot(slotIndex, prepareCareerEdition(addManagerWelcome(draftCareer)))
 }
 
 /**
@@ -366,6 +368,7 @@ function createEucsCareer(slotIndex, options) {
   const now = new Date().toISOString()
   const draftCareer = {
     version: SAVE_VERSION,
+    gameplayEdition: gameplayEdition(options),
     id: newId(),
     slotIndex,
     createdAt: now,
@@ -412,7 +415,7 @@ function createEucsCareer(slotIndex, options) {
   ensureCareerNationalTeams(draftCareer)
   maybeStartNationalTeamSeason(draftCareer, { seasonYear, calendar: league.calendar })
 
-  return writeSlot(slotIndex, addManagerWelcome(draftCareer))
+  return writeSlot(slotIndex, prepareCareerEdition(addManagerWelcome(draftCareer)))
 }
 
 /**
@@ -477,7 +480,7 @@ export function persistCareer(career, patch = {}) {
   const players = team?.players ?? []
   const rawTactics = patch.homeTactics ?? career.homeTactics
   const homeTactics = resolvePlayerDefaultTactics(players, rawTactics)
-  return {
+  return prepareCareerEdition({
     ...career,
     ...patch,
     world,
@@ -486,7 +489,7 @@ export function persistCareer(career, patch = {}) {
     worldConfig: world?.worldConfig ?? patch.worldConfig ?? career.worldConfig,
     managerProfile: world?.managersById?.[(patch.managerProfile ?? career.managerProfile)?.id] ?? patch.managerProfile ?? career.managerProfile,
     internationalClubCups: league?.internationalClubCups ?? patch.internationalClubCups ?? career.internationalClubCups,
-  }
+  })
 }
 
 /** Po oficjalnym końcu sezonu (31 lipca) — archiwizuje (per-season + all-time). */

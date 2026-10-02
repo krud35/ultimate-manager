@@ -1,4 +1,7 @@
+import SquadRoleSelect from './SquadRoleSelect.jsx'
+import { isStreamlinedCareer } from '../career/gameplayEdition.js'
 import { useUiLang } from '../ui/UiLangContext'
+import { requiresCareerDecision } from '../career/streamlinedDecisions.js'
 import { pickLabel, pickCopy, UI_LANG } from '../ui/locale'
 import {
   randomEventBodyEn,
@@ -302,7 +305,8 @@ function IncomingLoanRequestPanel({ message, onAction, busy }) {
   )
 }
 
-function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t }) {
+function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t, streamlined = false }) {
+  const [role, setRole] = useState('rotation')
   const [weeklyWage, setWeeklyWage] = useState(() =>
     String(demands?.minWeeklyWage ?? 1000),
   )
@@ -391,8 +395,9 @@ function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t }
         </div>
       </div>
       {budgetHint}
+      {streamlined && <SquadRoleSelect value={role} onChange={setRole} lang={lang} />}
 
-      <div>
+      {!streamlined && <><div>
         <p className="text-[11px] uppercase text-ufa-muted mb-1">{t.bonuses}</p>
         <div className="flex flex-wrap gap-1.5">
           {CONTRACT_BONUS_DEFS.map((b) => (
@@ -433,6 +438,7 @@ function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t }
         </div>
       </div>
 
+      </>}
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -441,8 +447,9 @@ function ContractOfferForm({ demands, fee, budgetHint, busy, onSubmit, lang, t }
             onSubmit({
               weeklyWage: wageNum,
               years: yearsNum,
-              bonuses: bonusesPayload,
-              promises: promisesPayload,
+              bonuses: streamlined ? [] : bonusesPayload,
+              promises: streamlined ? [] : promisesPayload,
+              ...(streamlined ? { squadRole: role } : {}),
             })
           }
           className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"
@@ -475,6 +482,8 @@ function OutgoingClubOfferPanel({ message, career, onAction, busy }) {
 
   return (
     <div className="rounded-sm border border-ufa-accent/30 bg-ufa-accent/5 px-4 py-3 text-sm space-y-3">
+      {p.mandate?.active && <div className="rounded border border-ufa-border p-2"><p>{lang === 'en' ? 'Delegated limits: fee / weekly wage / years' : 'Limity delegacji: kwota / pensja tygodniowo / lata'}: {formatUsd(p.mandate.maxFee)} / {formatUsd(p.mandate.maxWage)} / {p.mandate.years}</p><button className="um-button" disabled={busy} onClick={() => onAction({ action: 'cancel_delegation', messageId: message.id })}>{lang === 'en' ? 'Take over negotiation' : 'Przejmij negocjacje'}</button></div>}
+      {p.delegationPaused && <p className="text-ufa-gold">{lang === 'en' ? 'Delegation paused: the terms or available funds exceeded your authorization. Decide how to proceed.' : 'Delegacja zatrzymana: warunki lub dostępne środki wykraczają poza zatwierdzony zakres. Zdecyduj, co dalej.'}</p>}
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded border border-ufa-accent/40 px-2 py-0.5 text-[11px] font-semibold uppercase text-ufa-accent">
           {t.offerStatus[p.status] ?? p.status}
@@ -514,7 +523,7 @@ function OutgoingClubOfferPanel({ message, career, onAction, busy }) {
       )}
 
       {p.status === 'club_agreed' && canNegotiate && !p.contractQueued && (
-        <ContractOfferForm
+        <ContractOfferForm streamlined={isStreamlinedCareer(career)}
           demands={p.playerDemands}
           fee={p.agreedFee ?? p.offerAmount}
           busy={busy}
@@ -540,6 +549,8 @@ function OutgoingPlayerContractPanel({ message, career, onAction, busy }) {
 
   return (
     <div className="rounded-sm border border-ufa-gold/30 bg-ufa-gold/5 px-4 py-3 text-sm space-y-3">
+      {p.mandate?.active && <div className="rounded border border-ufa-border p-2"><p>{lang === 'en' ? 'Delegated limits: fee / weekly wage / years' : 'Limity delegacji: kwota / pensja tygodniowo / lata'}: {formatUsd(p.mandate.maxFee)} / {formatUsd(p.mandate.maxWage)} / {p.mandate.years}</p><button className="um-button" disabled={busy} onClick={() => onAction({ action: 'cancel_delegation', messageId: message.id })}>{lang === 'en' ? 'Take over negotiation' : 'Przejmij negocjacje'}</button></div>}
+      {p.delegationPaused && <p className="text-ufa-gold">{lang === 'en' ? 'Delegation paused: the terms or available funds exceeded your authorization. Decide how to proceed.' : 'Delegacja zatrzymana: warunki lub dostępne środki wykraczają poza zatwierdzony zakres. Zdecyduj, co dalej.'}</p>}
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded border border-ufa-gold/40 px-2 py-0.5 text-[11px] font-semibold uppercase text-ufa-gold">
           {t.offerStatus[p.status] ?? p.status}
@@ -574,7 +585,7 @@ function OutgoingPlayerContractPanel({ message, career, onAction, busy }) {
           >
             {t.acceptPlayerCounter}
           </button>
-          <ContractOfferForm
+          <ContractOfferForm streamlined={isStreamlinedCareer(career)}
             demands={p.playerDemands}
             fee={p.fee}
             busy={busy}
@@ -588,7 +599,7 @@ function OutgoingPlayerContractPanel({ message, career, onAction, busy }) {
       )}
 
       {p.status === 'rejected' && (
-        <ContractOfferForm
+        <ContractOfferForm streamlined={isStreamlinedCareer(career)}
           demands={p.playerDemands}
           fee={p.fee}
           busy={busy}
@@ -804,7 +815,7 @@ function MatchAnalysisPanel({ message }) {
   )
 }
 
-function SponsorOffersPanel({ message, busy, onSign, lang, t }) {
+function SponsorOffersPanel({ message, busy, onSign, lang }) {
   const p = message.payload ?? {}
   const offers = p.offers ?? []
   const status = p.status ?? 'pending'
@@ -1361,6 +1372,10 @@ export default function InboxView({
 
   const handleDelete = (messageId) => {
     if (!onInboxChange) return
+    if (career?.gameplayEdition === 'streamlined' && requiresCareerDecision(inbox.find(m => m.id === messageId))) {
+      setFlash({ type: 'error', text: lang === 'en' ? 'Resolve this decision before deleting it.' : 'Rozstrzygnij tę decyzję przed usunięciem.' })
+      return
+    }
     const next = deleteInboxMessage(inbox, messageId)
     onInboxChange(next)
     if (selectedId === messageId) setSelectedId(null)

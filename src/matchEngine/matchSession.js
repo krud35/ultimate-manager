@@ -220,6 +220,8 @@ export function initMatchSession({
   wind: windOverride = null,
   /** Kontrolowane eksperymenty; normalny mecz nadal ma dryf pogody. */
   windLocked = false,
+  /** Full simulation without replay storage when false; independent of fastMode. */
+  collectFrames = true,
 }) {
   resetEventIds()
   const { home, away } = prepareTeams(homeTeam, awayTeam, homeTactics, awayTactics)
@@ -263,6 +265,7 @@ export function initMatchSession({
     away,
     wind,
     windLocked,
+    collectFrames,
     matchStats: createMatchStats(),
     homeScore: 0,
     awayScore: 0,
@@ -324,6 +327,7 @@ export function playNextPoint(session, tacticsUpdate = {}, options = {}) {
         wind: session.wind,
       })
     : simulatePoint({
+        collectFrames: options.collectFrames ?? session.collectFrames ?? true,
         homeTeam: session.home,
         awayTeam: session.away,
         pullTeam: session.pullTeam,
@@ -502,7 +506,7 @@ export function simulateMatch(options) {
         homeTactics: session.home.tactics,
         awayTactics: session.away.tactics,
       },
-      { rotateHome, rotateAway, aiHome, aiAway, fastMode: options.fastMode },
+      { rotateHome, rotateAway, aiHome, aiAway, fastMode: options.fastMode, collectFrames: options.collectFrames },
     )
   }
   return sessionToResult(session)
@@ -518,7 +522,7 @@ export function runRemainingMatch(session, tacticsUpdate = {}, options = {}) {
     session = playNextPoint(
       session,
       {},
-      { rotateHome, rotateAway, aiHome, aiAway, fastMode: options.fastMode },
+      { rotateHome, rotateAway, aiHome, aiAway, fastMode: options.fastMode, collectFrames: options.collectFrames },
     )
   }
   return sessionToResult(session)

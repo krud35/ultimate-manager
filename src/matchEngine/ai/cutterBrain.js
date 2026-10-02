@@ -1,4 +1,5 @@
 import { uplineSpaceBonus, giveAndGoOfferBonus, doubleMoveSetup } from './traitBehavior.js'
+import { pullHandlerTarget } from './pullFlow.js'
 import { playerTravelSec } from './discIntercept.js'
 import { clampAgentPosition } from './spatialEvaluator.js'
 import { attackDirectionX, clampFieldX, clampFieldY, fieldCenterY } from '../fieldDimensions.js'
@@ -32,6 +33,7 @@ import {
 
 export const CUTTER_STATE = {
   WAITING: 'WAITING',
+  PREPARING_CUT: 'PREPARING_CUT',
   INITIATING_CUT: 'INITIATING_CUT',
   ACTIVE_CUT: 'ACTIVE_CUT',
   CLEARING: 'CLEARING',
@@ -371,6 +373,7 @@ function pickCutTarget(
     possessionTeam,
     stackIndex,
     isDump: agent.isDump === true,
+    handlerSlotIndex: agent.handlerSlotIndex,
     rng,
   })
   const selfAhead = ((slot?.x ?? agent.x) - (disc?.x ?? agent.x)) * attackSign
@@ -480,8 +483,8 @@ function pickClearTarget(x, y, disc, attackSign, forceSide, rng) {
  * jest normalnym atakiem na wolną przestrzeń, która akurat jest z tyłu — a nie osobną
  * mechaniką obok reszty decyzji.
  */
-function pickResetTarget(disc, throwerPos, attackSign, forceSide, rng, cells = null, mods = {}) {
-  const slot = resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng })
+function pickResetTarget(disc, throwerPos, attackSign, forceSide, rng, cells = null, mods = {}, assignedSlot = null) {
+  const slot = assignedSlot ?? resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng })
   const resetCells = (cells ?? []).filter((c) => c.depth === 'reset' || uplineSpaceBonus(mods, (c.x - disc.x) * attackSign, c.y - disc.y) > 0)
   if (!resetCells.length) return slot
   // Spośród komórek resetowych bierz najwolniejszą, ale nie odbiegaj daleko od slotu —
@@ -672,6 +675,8 @@ export function tickCutterBrain(agent, tickCtx) {
     discInFlight = false,
     flightIsForMe = false,
     pullFlow = false,
+    pullOpeningCue = null,
+    pullOpeningAnchor = null,
   } = tickCtx
 
   if (isThrower) {
@@ -697,6 +702,7 @@ export function tickCutterBrain(agent, tickCtx) {
           possessionTeam,
           stackIndex,
           isDump,
+          handlerSlotIndex: agent.handlerSlotIndex,
           rng,
         }),
         disc,
@@ -710,13 +716,61 @@ export function tickCutterBrain(agent, tickCtx) {
 
   // Handlers offer short forward/centering passes while the pull coverage is still arriving.
   if (pullFlow && isDump) {
-    const side = stackIndex % 2 ? -1 : 1
-    const targetX = clampFieldX((throwerPos?.x ?? disc.x) + attackSign * 7)
-    const targetY = clampFieldY((throwerPos?.y ?? disc.y) * .4 + fieldCenterY() * .6 + side * 6)
+    const slot = agent.handlerSlotIndex ?? Math.max(0, stackIndex - 1)
+    const { x: targetX, y: targetY } = pullHandlerTarget({ subRole, handlerSlotIndex: slot,
+      disc: throwerPos ?? disc, attackSign })
     const distance = Math.hypot(targetX - agent.x, targetY - agent.y)
     return { ...agent, ...integrateAgentMotion(agent, targetX, targetY,
       Math.min(maxSpeedMps(agent.player), distance * 3), dtSec, true, 'offense'),
       targetX, targetY, state: CUTTER_STATE.ACTIVE_CUT, stateMs: 0, continuationCut: true }
+  }
+  // Prepare the opening without spending the actual receiving route before the center pass.
+  if (pullOpeningCue && !isDump && !flightIsForMe && agent.isActive !== false
+    && ![CUTTER_STATE.ACTIVE_CUT, CUTTER_STATE.CLEARING].includes(agent.state)
+    && (agent.player?.currentStamina ?? 100) >= 40) {
+    const anchor = pullOpeningAnchor ?? throwerPos ?? disc
+    const preparing = agent.state === CUTTER_STATE.PREPARING_CUT
+    if (!preparing) {
+      const target = pickCutTarget(agent, anchor, attackSign, situation, rng, forceSide, attackStyle,
+        stackIndex, offenseTactics, teammates, defenders, anchor, possessionTeam)
+      agent = { ...agent, targetX: target.x, targetY: target.y, cutKind: target.kind, cutScore: target.score,
+        cutReviewMs: 0, stateMs: 0, feintOrigin: { x: agent.x, y: agent.y }, feintElapsedMs: 0,
+        pullPreparation: true, continuationCut: false }
+    }
+    const stateMs = (agent.stateMs ?? 0) + dtSec * 1000
+    const setup = doubleMoveSetup(subStat(agent.player, 'offensive', 'cutTiming'))
+    const readyMs = Math.max(cutInitiationMs(agent.player), coachMods.doubleMove ? setup.durationMs : 0)
+    if (pullOpeningCue === 'offer' && stateMs >= readyMs) {
+      return { ...agent, state: CUTTER_STATE.ACTIVE_CUT, stateMs: 0,
+        feintElapsedMs: coachMods.doubleMove ? stateMs : 0, continuationCut: true }
+    }
+    const feint = coachMods.doubleMove && stateMs < setup.durationMs
+    const origin = agent.feintOrigin
+    const distance = Math.max(.1, Math.hypot(agent.targetX - origin.x, agent.targetY - origin.y))
+    let moveX = feint ? clampFieldX(origin.x - (agent.targetX - origin.x) / distance * setup.distanceM) : agent.x
+    let moveY = feint ? clampFieldY(origin.y - (agent.targetY - origin.y) / distance * setup.distanceM) : agent.y
+    let speed = feint ? maxSpeedMps(agent.player) * .65 : 0
+    // Preparing cutters must leave the centering corridor open (especially the compact hex).
+    const from = throwerPos ?? disc
+    const laneX = anchor.x - from.x, laneY = anchor.y - from.y
+    const laneLength = Math.hypot(laneX, laneY)
+    if (laneLength > 1) {
+      const along = ((agent.x - from.x) * laneX + (agent.y - from.y) * laneY) / laneLength
+      const across = ((agent.x - from.x) * -laneY + (agent.y - from.y) * laneX) / laneLength
+      if (along > 0 && along < laneLength && Math.abs(across) < 1.8) {
+        const side = Math.sign(across) || (stackIndex % 2 ? 1 : -1)
+        moveX = clampFieldX(agent.x - laneY / laneLength * (side * 2 - across))
+        moveY = clampFieldY(agent.y + laneX / laneLength * (side * 2 - across))
+        speed = repositionSpeedMps(agent.player, 2)
+      }
+    }
+    const moved = integrateAgentMotion(agent, moveX, moveY, speed,
+      dtSec, true, 'offense')
+    return { ...agent, ...moved, state: CUTTER_STATE.PREPARING_CUT, stateMs,
+      feintElapsedMs: coachMods.doubleMove ? stateMs : 0, continuationCut: false }
+  }
+  if (!pullOpeningCue && agent.state === CUTTER_STATE.PREPARING_CUT) {
+    agent = { ...agent, state: CUTTER_STATE.INITIATING_CUT, stateMs: 0 }
   }
   // Reserve a stable formation slot before any offer or reorganization branch.
   if (agent.isActive === false && !isDump && !flightIsForMe) {
@@ -753,7 +807,7 @@ export function tickCutterBrain(agent, tickCtx) {
   // inaczej cała ofensywa zostaje w CLEARING i ucieka od dysku do końca punktu.
   const reorgWindow = postCatchReorg && elapsedMs < REORG_WINDOW_MS
 
-  if (reorgWindow && situation?.inThrowLane && state !== CUTTER_STATE.ACTIVE_CUT) {
+  if (reorgWindow && situation?.inThrowLane && !alreadyCutting) {
     state = CUTTER_STATE.CLEARING
     stateMs = 0
     const clr = pickClearTarget(agent.x, agent.y, disc, attackSign, forceSide, rng)
@@ -820,6 +874,7 @@ export function tickCutterBrain(agent, tickCtx) {
           viewer: { x: agent.x, y: agent.y, player: agent?.player ?? agent },
         }),
         coachMods,
+        isDump ? structuralTarget() : null,
       )
       targetX = tgt.x
       targetY = tgt.y

@@ -67,7 +67,13 @@ export function buildPointLineStats(pointEvents = []) {
         ensureRow(byPlayerId, ev.throwerId).attempts += 1
       }
       const frames = ev.motionTrace?.frames ?? ev.actionSim?.frames
-      accumulateRunFromFrames(frames, runById)
+      if (frames?.length) {
+        accumulateRunFromFrames(frames, runById)
+      } else {
+        for (const [id, meters] of Object.entries(ev.motionTrace?.runMetersById ?? {})) {
+          runById[id] = (runById[id] ?? 0) + meters
+        }
+      }
 
       const next = pointEvents[i + 1]
       if (next?.type === EVENT.THROW_SUCCESS && ev.throwerId != null) {

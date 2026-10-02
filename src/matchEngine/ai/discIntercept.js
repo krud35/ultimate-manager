@@ -2,7 +2,7 @@ import { playerMatchMods } from '../playerModsRegistry.js'
 import { MAX_ACCEL_MPS2, mobilityMultiplier, maxTurnRadForSpeed } from './playerMovement.js'
 import { horizontalReachM, standingReachM, jumpHeightM, subStat, movementFatigueMult } from './statFormulas.js'
 import { plannedCatchSupport } from './catchRules.js'
-import { bodyAwareTarget, BODY_TRAFFIC_CALIBRATION } from './bodyTraffic.js'
+import { bodyAwareTarget, prepareBodyTraffic, BODY_TRAFFIC_CALIBRATION } from './bodyTraffic.js'
 import { ARRIVAL_CALIBRATION, arrivalWindowGap } from './arrivalMotion.js'
 
 /** Przybliżony czas dobiegu, z rozpędzaniem i kosztem zmiany kierunku.
@@ -48,6 +48,7 @@ export function selectDiscIntercept({ agent, player, role, speed, elapsedMs, tot
   const height = standing + jump
   const jumpTime = jump ? Math.sqrt(2 * jump / 9.81) : 0
   const sideReach = horizontalReachM(player)
+  const traffic = BODY_TRAFFIC_CALIBRATION.planning ? prepareBodyTraffic(agent, blockers) : null
   let best = null
   for (let ms = Math.min(totalMs, elapsedMs + 20); ; ms = Math.min(totalMs, ms + 40)) {
     const point = sample(ms)
@@ -61,7 +62,7 @@ export function selectDiscIntercept({ agent, player, role, speed, elapsedMs, tot
     let support = role === 'offense' ? plannedCatchSupport(agent, point, reach * 0.7)
       : { x: point.x, y: point.y, legal: true, reachRemaining: reach * 0.7 }
     const route = BODY_TRAFFIC_CALIBRATION.planning
-      ? bodyAwareTarget(agent, support, blockers, speed, true) : null
+      ? bodyAwareTarget(agent, support, blockers, speed, true, traffic) : null
     let detourSec = 0
     if (route?.avoidanceKind === 'support') {
       const extension = Math.hypot(route.x - point.x, route.y - point.y)
@@ -86,13 +87,18 @@ export function selectDiscIntercept({ agent, player, role, speed, elapsedMs, tot
       motionGap = arrivalWindowGap(agent, support, player, role, speed, availableSec, support.reachRemaining, blockers)
       if (motionGap > 0) lateness = Math.max(lateness, motionGap / Math.max(0.1, speed))
     }
-    const candidate = { x: support.x, y: support.y, z: point.z, atMs: ms, travelSec,
-      discPoint: point, support, legal: support.legal, detourSec, avoidedId: route?.avoidedId ?? null,
-      motionGap, reachable: support.legal && heightPenalty === 0 && travelSec <= availableSec
-        && (motionGap == null || motionGap <= 0), lateness }
-    if (candidate.reachable) return candidate
-    if (!best || (candidate.legal && !best.legal)
-      || (candidate.legal === best.legal && lateness < best.lateness)) best = candidate
+    const reachable = support.legal && heightPenalty === 0 && travelSec <= availableSec
+      && (motionGap == null || motionGap <= 0)
+    // Rejected samples do not need a result object. Preserve candidate order,
+    // strict tie-breaking and all calculations that determine reachability.
+    if (reachable || !best || (support.legal && !best.legal)
+      || (support.legal === best.legal && lateness < best.lateness)) {
+      const candidate = { x: support.x, y: support.y, z: point.z, atMs: ms, travelSec,
+        discPoint: point, support, legal: support.legal, detourSec, avoidedId: route?.avoidedId ?? null,
+        motionGap, reachable, lateness }
+      if (reachable) return candidate
+      best = candidate
+    }
     if (ms >= totalMs) break
   }
   return best

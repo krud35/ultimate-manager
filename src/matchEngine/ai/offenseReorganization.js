@@ -85,11 +85,11 @@ export function resetLateralSign(forceSide, oy) {
 }
 
 /** JEDNA definicja miejsca resetu — używana przez formację, reorganizację i aktywny cut. */
-export function resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng }) {
+export function resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng, handlerSlotIndex = 0 }) {
   const ox = throwerPos?.x ?? disc?.x ?? 0
   const oy = throwerPos?.y ?? disc?.y ?? 0
   const r = rng?.float ? rng.float() : 0.5
-  const lateral = resetLateralSign(forceSide, oy)
+  const lateral = resetLateralSign(forceSide, oy) * (handlerSlotIndex % 2 === 0 ? 1 : -1)
   return {
     x: clampFieldX(ox - attackSign * RESET_BEHIND_M),
     y: clampFieldY(oy + lateral * (RESET_LATERAL_M + r * 2)),

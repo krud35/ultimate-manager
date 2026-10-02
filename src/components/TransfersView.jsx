@@ -1,3 +1,4 @@
+import StreamlinedRecruitmentView from './StreamlinedRecruitmentView.jsx'
 import { setPlayerLoanListed } from '../career/transfers/transferEngine.js'
 import ClubFinanceSummary from './ClubFinanceSummary.jsx'
 import { useUiLang } from '../ui/UiLangContext'
@@ -64,7 +65,10 @@ function formatTransferDate(entry, lang = 'pl') {
   return '—'
 }
 
-export default function TransfersView({ career, onCareerUpdate, scope = 'club' }) {
+export default function TransfersView(props) {
+  return props.career.gameplayEdition === 'streamlined' && (!props.scope || props.scope === 'club') ? <StreamlinedRecruitmentView {...props}><ClassicTransfersView {...props} /></StreamlinedRecruitmentView> : <ClassicTransfersView {...props} />
+}
+function ClassicTransfersView({ career, onCareerUpdate, scope = 'club' }) {
   const { lang } = useUiLang()
   const t = transfersStrings(lang)
   const isClub = scope === 'club'

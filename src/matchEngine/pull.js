@@ -6,6 +6,7 @@ import { maxSpeedMps } from './ai/statFormulas.js'
 import { integrateAgentMotion } from './ai/playerMovement.js'
 import { resolvePlayerSubRole } from './playerSubRoles.js'
 import { offenseLineSlotsForAttackStyle } from './offenseLineSlots.js'
+import { pullHandlerTarget } from './ai/pullFlow.js'
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 const inside = p => p.x >= 0 && p.x <= F.lengthM && p.y >= 0 && p.y <= F.widthM
@@ -55,36 +56,37 @@ export function planPull({ puller, possessionTeam, rng, wind, pullType = 'auto' 
 
 /** Pulls are not pass attempts; landing on the ground keeps receiving possession. */
 export function simulatePull({ offenseLineup, defenseLineup, possessionTeam, offenseTactics,
-  defenseTactics, attackStyle, defenseStyle, rng, wind, collectFrames = true, pullType = defenseTactics?.pullType ?? 'auto' }) {
+  defenseTactics, attackStyle, defenseStyle, rng, wind, collectFrames = true, onMotionSample = null,
+  pullType = defenseTactics?.pullType ?? 'auto' }) {
   const sign = attackDirectionX(possessionTeam)
   const ownLine = sign > 0 ? F.endzoneM : F.lengthM - F.endzoneM
   const slots = offenseLineSlotsForAttackStyle(attackStyle)
   const subRole = p => resolvePlayerSubRole(offenseTactics, p.id, slots[offenseLineup.indexOf(p)])
   const puller = selectPuller(defenseLineup)
   const receiver = [...offenseLineup].sort((a, b) => {
-    const score = p => (subRole(p) === 'primary_handler' ? 100 : 0) + getSubStat(p.skills, 'offensive', 'discReading')
+    const score = p => (subRole(p) === 'reset_handler' ? 2000 : subRole(p) === 'primary_handler' ? 1000 : 0)
+      + getSubStat(p.skills, 'offensive', 'discReading')
     return score(b) - score(a)
   })[0]
   const plan = planPull({ puller, possessionTeam, rng, wind, pullType })
   const { start, landing, roller, hangMs } = plan
-  const legalPivot = p => ({ x: sign * (p.x - ownLine) < 0 ? ownLine : p.x, y: p.y })
   const targetsFor = (anchor, flowing) => {
     const offense = layoutPlayersOnField(offenseLineup, possessionTeam, anchor.x, true,
       { attackStyle, throwerId: receiver.id, attackSign: sign, discYMeters: anchor.y })
+    let handlerSlotIndex = 0
     if (flowing) for (const p of offense) {
       if (p.id === receiver.id) continue
       const player = offenseLineup.find(a => a.id === p.id)
       if (subRole(player)?.endsWith('_handler')) {
-        const side = offenseLineup.indexOf(player) % 2 ? -1 : 1
-        p.x = clampFieldX(anchor.x + sign * 7)
-        p.y = clampFieldY(anchor.y * .4 + F.widthM / 2 * .6 + side * 6)
+        Object.assign(p, pullHandlerTarget({ subRole: subRole(player), handlerSlotIndex: handlerSlotIndex++,
+          disc: anchor, attackSign: sign }))
       } else p.x = clampFieldX(p.x + sign * 10)
     }
     const defense = layoutPlayersOnField(defenseLineup, possessionTeam === 'home' ? 'away' : 'home', anchor.x, false,
       { defenseStyle, offenseLayout: offense, attackSign: sign, personMark: !String(defenseStyle).includes('zone'), defenseTactics })
     return [...offense, ...defense]
   }
-  let targets = new Map(targetsFor(legalPivot({ x: clampFieldX(landing.x), y: clampFieldY(landing.y) }), true).map(p => [p.id, p]))
+  let targets = new Map(targetsFor({ x: clampFieldX(landing.x), y: clampFieldY(landing.y) }, true).map(p => [p.id, p]))
   const agents = [...targets.values()].map((p, i) => {
     const offense = i < offenseLineup.length
     return { ...p, player: (offense ? offenseLineup : defenseLineup).find(a => a.id === p.id),
@@ -94,6 +96,7 @@ export function simulatePull({ offenseLineup, defenseLineup, possessionTeam, off
   let disc = { ...start, z: 1.1, state: 'HELD' }
   const frames = []
   const snapshot = ms => {
+    onMotionSample?.(ms, agents)
     if (collectFrames) frames.push({ ms, disc: { ...disc }, stallCount: 0,
       players: agents.map(a => ({ id: a.id, teamId: a.teamId, x: a.x, y: a.y, z: 0, vx: a.vx, vy: a.vy,
         role: a.fieldRole, cutterState: 'WAITING' })) })
@@ -103,9 +106,12 @@ export function simulatePull({ offenseLineup, defenseLineup, possessionTeam, off
   let rollVelocity = { ...plan.rollVelocity }
   const setRestart = (kind, point) => {
     outcome = kind
-    restart = kind === 'roll_out' ? { ...point } : legalPivot(point)
+    // An in-bounds pull stays at the catch/ground location, even in the defending end zone.
+    restart = { ...point }
+    // Untouched rollers that leave through the end zone restart in the central zone (7.11).
+    if (kind === 'roll_out' && sign * (point.x - ownLine) < 0) restart.x = ownLine
     // Only a brick pauses for a fully established formation. Ground pickup proceeds as soon as reached.
-    targets = new Map(targetsFor(restart, kind === 'caught').map(p => [p.id, p]))
+    targets = new Map(targetsFor(restart, kind === 'caught' || kind === 'ground').map(p => [p.id, p]))
   }
   snapshot(0)
   for (elapsed = 100; elapsed <= 30000; elapsed += 100) {
@@ -146,7 +152,7 @@ export function simulatePull({ offenseLineup, defenseLineup, possessionTeam, off
       if (!inside(landing)) setRestart('brick', { x: ownLine + sign * 18, y: F.widthM / 2 })
       else if (roller) {
         outcome = 'rolling'
-        targets = new Map(targetsFor(legalPivot(landing), false).map(p => [p.id, p]))
+        targets = new Map(targetsFor(landing, false).map(p => [p.id, p]))
       } else setRestart('ground', landing)
     }
     if (restart) {
@@ -159,6 +165,7 @@ export function simulatePull({ offenseLineup, defenseLineup, possessionTeam, off
       })
       if (receiverReady && setupReady) {
         r.x = restart.x; r.y = restart.y
+        r.vx = 0; r.vy = 0
         disc = { ...restart, z: 1.1, state: 'HELD' }
         snapshot(elapsed)
         break

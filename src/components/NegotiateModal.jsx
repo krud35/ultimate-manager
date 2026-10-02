@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import SquadRoleSelect from './SquadRoleSelect.jsx'
 import { canAffordContract, clubFinanceForecast } from '../career/clubEconomy.js'
 import { useUiLang } from '../ui/UiLangContext'
 import { transfersStrings } from '../ui/strings/transfers'
@@ -29,6 +30,8 @@ function parseOfferInput(value) {
  * Czysty UI — logika wysyłki (`submitTransferOffer`) żyje w wywołującym.
  */
 export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubmitOffer }) {
+  const streamlined = !!buyerTeam?.streamlinedClub?.enabled
+  const [role, setRole] = useState('rotation')
   const { lang } = useUiLang()
   const t = transfersStrings(lang)
   const isFa = !!row?.freeAgent
@@ -152,7 +155,8 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
             <p className="text-xs text-ufa-muted tabular-nums">{formatUsd(preview.totalCost)}</p>
             {faOverBudget && <p className="text-xs text-ufa-danger">{t.overBudgetContract}</p>}
 
-            <div>
+            {streamlined && <SquadRoleSelect value={role} onChange={setRole} lang={lang} />}
+            {!streamlined && <><div>
               <p className="text-[11px] uppercase text-ufa-muted mb-1">{t.bonuses}</p>
               <div className="flex flex-wrap gap-1.5">
                 {CONTRACT_BONUS_DEFS.map((b) => (
@@ -191,6 +195,7 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
               </div>
             </div>
 
+            </>}
             <button
               type="button"
               disabled={faOverBudget}
@@ -198,8 +203,9 @@ export default function NegotiateModal({ row, budget, buyerTeam, onClose, onSubm
                 onSubmitOffer(0, {
                   weeklyWage: Math.round(Number(wage) || 0),
                   years: Math.max(1, Math.min(5, Math.round(Number(years) || 1))),
-                  bonuses: bonusesPayload,
-                  promises: promisesPayload,
+                  bonuses: streamlined ? [] : bonusesPayload,
+                  promises: streamlined ? [] : promisesPayload,
+                  ...(streamlined ? { squadRole: role } : {}),
                 })
               }
               className="rounded-md bg-ufa-accent px-4 py-2 text-sm font-semibold text-ufa-on-accent hover:opacity-90 disabled:opacity-40"

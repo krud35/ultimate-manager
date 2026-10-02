@@ -20,7 +20,7 @@ export default function Tactics({
           {lang === 'en' ? 'Tactics' : 'Taktyka'} · {teamName}
         </h2>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ufa-muted">
-          {t.intro}
+          {tactics?.streamlinedPlan ? (lang === 'en' ? 'A clear match plan: formation, tempo, passing risk, direction and defensive pressure.' : 'Czytelny plan meczu: ustawienie, tempo, ryzyko podań, kierunek i presja obronna.') : t.intro}
         </p>
       </header>
 

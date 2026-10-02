@@ -125,9 +125,10 @@ function rotateToward(fromX, fromY, toX, toY, maxRad) {
 /**
  * Krok ruchu: docelowa prędkość → ograniczone przyspieszenie → pozycja.
  */
-export function integrateAgentMotion(agent, targetX, targetY, maxSpeed, dtSec, limitTurn, role = null, desiredSpeedMps = null) {
-  const mobility = mobilityMultiplier(agent?.player ?? agent, role)
-  maxSpeed = Math.min(maxSpeed, maxSpeedMps(agent?.player ?? agent))
+export function integrateAgentMotion(agent, targetX, targetY, maxSpeed, dtSec, limitTurn, role = null, desiredSpeedMps = null, parameters = null) {
+  const player = agent?.player ?? agent
+  const mobility = parameters?.mobility ?? mobilityMultiplier(player, role)
+  maxSpeed = Math.min(maxSpeed, parameters?.maxSpeed ?? maxSpeedMps(player))
   const dx = targetX - agent.x
   const dy = targetY - agent.y
   const dist = Math.hypot(dx, dy) || 1
@@ -183,7 +184,9 @@ export function integrateAgentMotion(agent, targetX, targetY, maxSpeed, dtSec, l
   // Przy plantcie (target≈0) mocniejsze hamowanie; bez limitu skrętu — szybsze dojście do wektora.
   const braking = desiredSpd < 0.15 && curSpd > 0.4
   const accelMult = braking ? 3.6 : limitTurn ? 1 : 2.15
-  const maxDelta = MAX_ACCEL_MPS2 * accelMult * (0.65 + subStat(agent?.player ?? agent, 'physical', 'acceleration') / 100 * 0.45) * movementFatigueMult(agent?.player ?? agent) * dtSec
+  const maxDelta = MAX_ACCEL_MPS2 * accelMult
+    * (parameters?.accelerationScale ?? (0.65 + subStat(player, 'physical', 'acceleration') / 100 * 0.45))
+    * (parameters?.fatigueMult ?? movementFatigueMult(player)) * dtSec
   // Limit dotyczy długości wektora przyspieszenia. Osobny limit X/Y dawał
   // sprintowi po skosie do sqrt(2) razy większe przyspieszenie niż wzdłuż osi.
   const deltaX = targetVx - cvx, deltaY = targetVy - cvy
@@ -211,4 +214,12 @@ export function integrateAgentMotion(agent, targetX, targetY, maxSpeed, dtSec, l
     vx: cvx,
     vy: cvy,
   }
+}
+
+/** Reuse only inside one forecast, where player attributes and stamina do not
+ * advance. Live movement must read fresh parameters after fatigue/mod changes. */
+export function prepareMotionParameters(player, role = null) {
+  return { mobility: mobilityMultiplier(player, role), maxSpeed: maxSpeedMps(player),
+    accelerationScale: 0.65 + subStat(player, 'physical', 'acceleration') / 100 * 0.45,
+    fatigueMult: movementFatigueMult(player) }
 }

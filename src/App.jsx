@@ -1,4 +1,7 @@
 import ThemeControl from './ui/ThemeControl'
+import { isStreamlinedCareer } from './career/gameplayEdition.js'
+import { nextCareerDecision, requiresCareerDecision } from './career/streamlinedDecisions.js'
+import StreamlinedTrainingView from './components/StreamlinedTrainingView.jsx'
 import Wordmark from './ui/Wordmark'
 import MobileMenu from './ui/MobileMenu'
 import { setPlayerLoanListed, setPlayerNotForSale } from './career/transfers/transferEngine.js'
@@ -99,6 +102,7 @@ import { prepareInternationalClubMatch } from './career/internationalClubCups.js
 import TrainingView from './components/TrainingView'
 import ClubBoardView from './components/ClubBoardView'
 import StaffManagementPanel from './components/StaffManagementPanel.jsx'
+import StreamlinedClubView from './components/StreamlinedClubView.jsx'
 import ClubFinancesView from './components/ClubFinancesView.jsx'
 import TransfersView from './components/TransfersView'
 import ScoutingCenterView from './components/ScoutingCenterView'
@@ -607,6 +611,29 @@ export default function App() {
   // (żeby manager go zauważył), ale bez wchodzenia w "Wymaganą akcję" — patrz
   // isPausingInboxMessage. Pojedyncze raporty treningowe i artykuły Ultiworld
   // nie przerywają symulacji w ogóle — lecą w tle.
+  const runStreamlinedAdvance = useCallback(async ({ targetDate = null, untilMatch = false } = {}) => {
+    if (!career?.league || simProgress || calendarSim) return
+    setSimProgress({ label: shellStrings(uiLang).simCalendar, detail: career.league.currentDate, indeterminate: true })
+    try {
+      const result = await simulateCareerUntil({ ...career, league: cloneLeague(career.league) }, {
+        targetDate, untilMatch,
+        onProgress: p => setSimProgress({ label: shellStrings(uiLang).simCalendar, detail: p.currentDate, indeterminate: true }),
+      })
+      const next = persistCareer(result.career)
+      syncCareer(next, { save: true })
+      setActionRequiredMessageId(result.blockingMessage?.id ?? null)
+      if (result.blockingMessage) {
+        setInboxFocusId(result.blockingMessage.id)
+        setActiveTab('inbox')
+      } else {
+        const fixture = result.playerFixture ?? findNextPlayerFixture(next.league)
+        if (fixture?.date === next.league.currentDate) { setLeagueFixture(fixture); setActiveTab('match') }
+        else setActiveTab('hub')
+      }
+    } catch (err) { setAppError(friendlySaveErrorMessage(err, uiLang)) }
+    finally { setSimProgress(null) }
+  }, [career, simProgress, calendarSim, syncCareer, uiLang])
+
   const handleAdvanceDay = useCallback(async () => {
     if (!career?.league || simProgress || calendarSim) return
     if (career.phase === 'season_complete') {
@@ -627,6 +654,7 @@ export default function App() {
       return
     }
 
+    if (isStreamlinedCareer(career)) return runStreamlinedAdvance()
     let workingCareer = career
     let dayLeague = cloneLeague(career.league)
     let blockedFixture = null
@@ -708,11 +736,12 @@ export default function App() {
       console.error('[calendar sim]', err)
       setAppError(friendlySaveErrorMessage(err, uiLang))
     }
-  }, [career, simProgress, calendarSim, syncCareer, uiLang])
+  }, [career, simProgress, calendarSim, syncCareer, uiLang, runStreamlinedAdvance])
 
   const runFastForward = useCallback(async ({ targetDate = null, untilMatch = false } = {}) => {
     if (!career?.league || simProgress || calendarSim) return
     if (targetDate && targetDate <= career.league.currentDate) return
+    if (isStreamlinedCareer(career)) return runStreamlinedAdvance({ targetDate, untilMatch })
     const league = cloneLeague(career.league)
     setSimProgress({ label: untilMatch ? shellStrings(uiLang).simUntilMatch : shellStrings(uiLang).simUntilDate,
       detail: league.currentDate, current: 0, total: 1, indeterminate: true })
@@ -732,7 +761,7 @@ export default function App() {
     } finally {
       setSimProgress(null)
     }
-  }, [career, simProgress, calendarSim, syncCareer, uiLang])
+  }, [career, simProgress, calendarSim, syncCareer, uiLang, runStreamlinedAdvance])
 
   const handleSimulateUntilMatch = useCallback(() => runFastForward({ untilMatch: true }), [runFastForward])
   const handleSimulateUntilDate = useCallback(targetDate => runFastForward({ targetDate }), [runFastForward])
@@ -792,6 +821,10 @@ export default function App() {
   const handleInboxChange = useCallback(
     (nextInbox) => {
       if (!career) return
+      if (isStreamlinedCareer(career)) {
+        const ids = new Set(nextInbox.map(m => m.id))
+        nextInbox = [...nextInbox, ...career.inbox.filter(m => !ids.has(m.id) && requiresCareerDecision(m))]
+      }
       const next = persistCareer(career, { inbox: nextInbox })
       syncCareer(next)
     },
@@ -814,6 +847,11 @@ export default function App() {
       const p = message?.payload
       if (!message) {
         return { ok: false, error: shellStrings(uiLang).errOfferNotFound }
+      }
+      if (isStreamlinedCareer(career) && action === 'cancel_delegation' && p?.mandate) {
+        const inbox = career.inbox.map(m => m.id === messageId ? { ...m, payload: { ...p, mandate: { ...p.mandate, active: false } } } : m)
+        syncCareer(persistCareer(career, { inbox }))
+        return { ok: true }
       }
 
       // —— Potwierdzenie / anulowanie rejestracji po otwarciu okna ——
@@ -1263,12 +1301,16 @@ export default function App() {
   // Samoczynnie odblokuj przycisk, gdy blokująca wiadomość zniknie albo przestanie
   // wymagać decyzji (np. gracz odpowiedział na ofertę transferową w skrzynce).
   useEffect(() => {
+    if (isStreamlinedCareer(career)) {
+      setActionRequiredMessageId(nextCareerDecision(career)?.id ?? null)
+      return
+    }
     if (!actionRequiredMessageId || !career?.inbox) return
     const msg = career.inbox.find((m) => m.id === actionRequiredMessageId)
     if (!msg || !isImportantInboxMessage(msg)) {
       setActionRequiredMessageId(null)
     }
-  }, [career?.inbox, actionRequiredMessageId])
+  }, [career, actionRequiredMessageId])
 
   // Same auto-clear for the random-event popup — also covers switching careers
   // (a fresh inbox won't contain the old id).
@@ -1316,7 +1358,7 @@ export default function App() {
         recordMatchKnowledgeGain(prev.world, prev.playerTeamId, scoutOpponentId)
         const analysis = messageFromMatchAnalysis(prev, { fixture, record })
         const postMatchEvent = pickPostMatchEventMessage(prev, { fixture, record })
-        if (postMatchEvent?.type === INBOX_TYPES.RANDOM_EVENT && postMatchEvent.payload?.kind === 'decision') {
+        if (!isStreamlinedCareer(prev) && postMatchEvent?.type === INBOX_TYPES.RANDOM_EVENT && postMatchEvent.payload?.kind === 'decision') {
           setPendingRandomEventId(postMatchEvent.id)
         }
         const playerInjuries = (record.injuries ?? []).filter((inj) => {
@@ -1545,6 +1587,7 @@ export default function App() {
       <>
         <div className="relative z-10 min-h-screen">
           <CareerSelectScreen
+            onRestored={refreshSlots}
             onBack={() => setScreen('menu')}
             selectionMode={slotSelectionMode}
             slots={slots}
@@ -1803,6 +1846,7 @@ export default function App() {
 
         {activeTab === 'roster' && (
           <RosterView
+            streamlined={isStreamlinedCareer(career)}
             matchStamina={matchStamina}
             focusTeamName={userTeam.name}
             leaguePlayerStats={league.playerStats}
@@ -1828,7 +1872,7 @@ export default function App() {
         )}
 
         {activeTab === 'training' && (
-          <TrainingView
+          isStreamlinedCareer(career) ? <StreamlinedTrainingView team={userTeam} league={league} leaguePlayerStats={league.playerStats} onChange={handleTrainingChange} disabled={career.phase === 'season_complete'} /> : <TrainingView
             team={userTeam}
             league={league}
             leaguePlayerStats={league.playerStats}
@@ -1843,7 +1887,7 @@ export default function App() {
 
         {activeTab === 'club-staff' && userTeam && (
           <div className="um-section league-fade-in">
-            <StaffManagementPanel key={userTeam.id} team={userTeam} lang={uiLang} currentDate={career.league.currentDate} onChange={handleClubBoardChange} />
+            {isStreamlinedCareer(career) ? <StreamlinedClubView career={career} section="staff" onChange={handleClubBoardChange} /> : <StaffManagementPanel key={userTeam.id} team={userTeam} lang={uiLang} currentDate={career.league.currentDate} onChange={handleClubBoardChange} />}
           </div>
         )}
 
@@ -1869,6 +1913,7 @@ export default function App() {
           ) : leagueFixture ? (
             isFixtureMatchDay(leagueFixture, league) || leagueFixture.status === 'completed' ? (
               <MatchView
+                streamlined={isStreamlinedCareer(career)}
                 homeTactics={homeTactics}
                 onHomeTacticsChange={handleHomeTacticsChange}
                 onMatchStaminaChange={setMatchStamina}
@@ -2008,7 +2053,7 @@ export default function App() {
           onNo={() => setPendingWelcome(false)}
         />
       )}
-      <TutorialGuide open={tutorialOpen} onClose={() => setTutorialOpen(false)} lang={uiLang} />
+      <TutorialGuide open={tutorialOpen} onClose={() => setTutorialOpen(false)} lang={uiLang} streamlined={isStreamlinedCareer(career)} />
     </div>
     </>
   )

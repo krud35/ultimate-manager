@@ -7,7 +7,7 @@ import { resolveTeamName } from '../ui/locale'
 
 /** Off leagues deliberately never enter this view, including cup-only clubs. */
 export default function DomesticLeaguesView({ career, lang = 'pl', onTeamClick, onTeamSelect, onScopeChange }) {
-  const [countryFilter, setCountryFilter] = useState('all')
+  const [countryFilter, setCountryFilter] = useState(() => career.gameplayEdition === 'streamlined' ? career.league.countryId ?? DOMESTIC_LEAGUES.find(l => l.id === career.league.domesticLeagueId)?.countryId ?? 'all' : 'all')
   const en = lang === 'en'
   const openTeam = onTeamClick ?? onTeamSelect
   const competitions = [career.league, ...(career.league?.otherLeagues ?? [])].filter(Boolean)
@@ -18,7 +18,7 @@ export default function DomesticLeaguesView({ career, lang = 'pl', onTeamClick, 
   const countryName = id => REGIONAL_LEAGUES[id]?.[en ? 'labelEn' : 'labelPl'] ?? ACADEMY_COUNTRIES[id]?.[en ? 'labelEn' : 'labelPl'] ?? id
   const countries = [...new Set(visible.map(cid).filter(Boolean))].sort((a, b) => countryName(a).localeCompare(countryName(b), lang))
   return <div className="space-y-6">
-    <WorldScopeSettings career={career} lang={lang} onChange={onScopeChange} />
+    {career.gameplayEdition === 'streamlined' ? <details><summary>{en ? 'World simulation settings' : 'Ustawienia symulacji świata'}</summary><WorldScopeSettings career={career} lang={lang} onChange={onScopeChange} /></details> : <WorldScopeSettings career={career} lang={lang} onChange={onScopeChange} />}
     <header><h2 className="um-page-title text-ufa-text">{en ? 'Domestic leagues' : 'Ligi krajowe'}</h2><p className="mt-2 text-sm text-ufa-muted">{en ? 'Active leagues allow transfers and changing clubs. Background leagues retain simplified results.' : 'Aktywne ligi umożliwiają transfery i zmianę klubu. Ligi tła zachowują uproszczone wyniki.'}</p></header>
     <label className="block max-w-sm text-sm text-ufa-text">{en ? 'Country' : 'Kraj'}<select value={countryFilter} onChange={e => setCountryFilter(e.target.value)} className="mt-2 w-full rounded border border-ufa-border bg-ufa-bg px-3 py-2"><option value="all">{en ? 'All countries' : 'Wszystkie kraje'}</option>{countries.map(id => <option key={id} value={id}>{countryName(id)}</option>)}</select></label>
     {visible.filter(comp => countryFilter === 'all' || cid(comp) === countryFilter).map((comp, i) => {

@@ -50,7 +50,7 @@ export function observeStyleTick(boxScore, before, offense, defense, {dtSec, thr
     add('cutStarts');if(a.cutKind==='in')add('underCuts');if(a.cutKind==='deep')add('deepCuts')
    }
    if(a.feintElapsedMs>0 && (!(old.feintElapsedMs>0) || a.feintElapsedMs<old.feintElapsedMs)) add('doubleMoves')
-   if(a.state==='INITIATING_CUT' && a.feintElapsedMs>0) add('feintMeters',Math.hypot(a.x-old.x,a.y-old.y))
+   if(['INITIATING_CUT','PREPARING_CUT'].includes(a.state) && a.feintElapsedMs>0) add('feintMeters',Math.hypot(a.x-old.x,a.y-old.y))
    if(a.state==='ACTIVE_CUT') {
     add('cutMeters',Math.hypot(a.x-old.x,a.y-old.y))
     if(a.cutKind!==old.cutKind && old.state==='ACTIVE_CUT') {

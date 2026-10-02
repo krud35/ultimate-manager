@@ -1,4 +1,5 @@
 import { simulatePull } from './pull.js'
+import { createPullOpening } from './ai/pullOpening.js'
 import { recordStyleThrow, captureStyleInstructions } from './styleEvidence.js'
 import { isClutchPoint } from './ai/traitBehavior.js'
 import { getTraitMods } from '../models/playerTraits.js'
@@ -61,10 +62,12 @@ import {
   staminaMapsForGeometry,
 } from './stamina.js'
 import { runThrowMotionSimulation } from './ai/motionPipeline.js'
+import { createMotionStaminaAccumulator } from './motionStamina.js'
 import { resolveCatchPointFromMotionTrace, resolveTurnoverPointFromMotionTrace } from './motionFromTicks.js'
 import { offenseFieldPositionsFromStates } from './ai/offenseReorganization.js'
 import { recordPointPlayedForPlayers } from '../models/playerStats.js'
 import { setPossessionPlayerMods, clearPointPlayerMods } from './playerMods.js'
+import { tacticsWithLineupSubRoles } from './offenseLineSlots.js'
 import {
   lineStylesForPointStart,
   pointStartRoleForTeam,
@@ -123,6 +126,7 @@ export function simulatePoint({
   matchStats = null,
   stamina = null,
   wind = null,
+  collectFrames = true,
 }) {
   const events = []
   const attackTeamId = pullTeam === 'home' ? 'away' : 'home'
@@ -160,10 +164,17 @@ export function simulatePoint({
       teamId === 'home' ? homePointRole : awayPointRole,
     )
   const pointLineups = buildPointLineups(homeTeamOnPoint, awayTeamOnPoint, attackTeamId)
+  for (const side of ['home', 'away']) {
+    const team = teamById(side)
+    team.tactics = tacticsWithLineupSubRoles(team.tactics, pointLineups[side], stylesForTeam(side).attackStyle)
+  }
+  const pullStamina = !collectFrames ? createMotionStaminaAccumulator(
+    geoStaminaMaps(stamina), buildPointPlayersById(pointLineups[attackTeamId], pointLineups[pullTeam]), geo(attackTeamId),
+  ) : null
   const pull = simulatePull({ offenseLineup: pointLineups[attackTeamId], defenseLineup: pointLineups[pullTeam],
     possessionTeam: geo(attackTeamId), offenseTactics: teamById(attackTeamId).tactics,
     defenseTactics: teamById(pullTeam).tactics, attackStyle: stylesForTeam(attackTeamId).attackStyle,
-    defenseStyle: stylesForTeam(pullTeam).defenseStyle, rng, wind, collectFrames: true })
+    defenseStyle: stylesForTeam(pullTeam).defenseStyle, rng, wind, collectFrames, onMotionSample: pullStamina?.sample })
   discPosition = pull.discPosition
 
 
@@ -221,7 +232,9 @@ export function simulatePoint({
   /** Pozycje ofensywy między rzutami (po złapaniu — bez snapu do stacka). */
   /** Stan zawodników z końca poprzedniego rzutu — zapewnia płynne przejście między rzutami. */
   let liveAgentStates = pull.endStates
-  let pullTransitionMs = pull.outcome === 'caught' ? 8000 : 0
+  let pullTransitionActive = pull.outcome === 'caught' || pull.outcome === 'ground'
+  let pullOpening = createPullOpening(pointLineups[attackTeamId].find(p =>
+    teamById(attackTeamId).tactics?.playerSubRoles?.[p.id] === 'primary_handler')?.id ?? null)
   /** Po dump/reset (+0m) — wymuszone głębokie cięcia w następnej symulacji setupu. */
   let postResetClearout = false
   /** Ile podań z rzędu nie dało postępu — podbija agresję mimo zerowania stalla. */
@@ -249,11 +262,13 @@ export function simulatePoint({
     player.currentStamina = getStamina(map, player.id)
   }
 
-  function applyThrowStaminaFromTrace(motionTrace, simResult, offenseLineup, defenseLineup, baseline) {
+  function applyThrowStaminaFromTrace(motionTrace, simResult, offenseLineup, defenseLineup, baseline, accumulator = null) {
     if (!stamina) return
     const playersById = buildPointPlayersById(offenseLineup, defenseLineup, possession)
     const defSide = defendingTeamId()
-    if (motionTrace?.frames?.length) {
+    if (accumulator) {
+      accumulator.apply(geoStaminaMaps(stamina))
+    } else if (motionTrace?.frames?.length) {
       applyStaminaFromMotionTrace(
         geoStaminaMaps(stamina),
         motionTrace,
@@ -275,7 +290,7 @@ export function simulatePoint({
   }
 
   applyThrowStaminaFromTrace(pull.motionTrace, null, pointLineups[attackTeamId], pointLineups[pullTeam],
-    stamina ? cloneStaminaMaps(stamina) : null)
+    stamina ? cloneStaminaMaps(stamina) : null, pullStamina)
 
   function setupPersonMatchupsForPossession() {
     personMatchups = null
@@ -334,7 +349,8 @@ export function simulatePoint({
     stallCount = 0
     stallClock = { markerId: null, elapsedMs: 0 }
     pickupPending = !securedBy
-    pullTransitionMs = 0
+    pullTransitionActive = false
+    pullOpening = null
     discYMeters = discY
     resetChain = 0
     postResetClearout = false
@@ -446,7 +462,12 @@ export function simulatePoint({
 
     captureStyleInstructions(collectStyleEvidence ? boxScore : null, offenseLineup, offenseTeam.tactics, 'offense')
     captureStyleInstructions(collectStyleEvidence ? boxScore : null, defenseLineup, defenseTeam.tactics, 'defense')
+    const motionStamina = !collectFrames ? createMotionStaminaAccumulator(
+      geoStaminaMaps(stamina), buildPointPlayersById(offenseLineup, defenseLineup), geo(possession),
+    ) : null
     const sim = runThrowMotionSimulation({
+      collectFrames,
+      onMotionSample: motionStamina?.sample,
       behaviorBoxScore: collectStyleEvidence ? boxScore : null,
       rng,
       thrower,
@@ -465,7 +486,8 @@ export function simulatePoint({
       wind,
       staminaMaps: geoStaminaMaps(simStaminaMaps),
       seedStates: liveAgentStates,
-      pullTransitionMs,
+      pullTransitionActive,
+      pullOpening,
       postResetClearout,
       lastThrowerId,
       afterTurnover: transitionPasses > 0,
@@ -646,7 +668,8 @@ export function simulatePoint({
     })
     postResetClearout = false
     liveAgentStates = sim.endStates ?? liveAgentStates
-    pullTransitionMs = Math.max(0, pullTransitionMs - (sim.motionTrace?.totalMs ?? sim.totalMs ?? 0))
+    pullTransitionActive = sim.pullTransitionActive ?? false
+    pullOpening = sim.pullOpening ?? null
     holdMs = sim.holdMsAtEnd ?? holdMs
     stallClock = sim.stallClock ?? stallClock
     pickupPending = sim.pickupPending ?? false
@@ -654,7 +677,7 @@ export function simulatePoint({
     const eventMarkerId = sim.markerId ?? markerDefender?.id ?? null
 
     if (sim.stallOut) {
-      applyThrowStaminaFromTrace(null, sim, offenseLineup, defenseLineup, staminaBaseline)
+      applyThrowStaminaFromTrace(null, sim, offenseLineup, defenseLineup, staminaBaseline, motionStamina)
       events.push(
         createEvent(EVENT.STALL_OUT, {
           stallCount: STALL_MAX,
@@ -685,7 +708,7 @@ export function simulatePoint({
     }
 
     if (sim.stallAbort) {
-      applyThrowStaminaFromTrace(null, sim, offenseLineup, defenseLineup, staminaBaseline)
+      applyThrowStaminaFromTrace(null, sim, offenseLineup, defenseLineup, staminaBaseline, motionStamina)
       events.push(
         createEvent(EVENT.STALL_PRESSURE, {
           stallCount: Math.max(1, stallCount),
@@ -746,7 +769,7 @@ export function simulatePoint({
           }),
         }),
       )
-      applyThrowStaminaFromTrace(null, sim, offenseLineup, defenseLineup, staminaBaseline)
+      applyThrowStaminaFromTrace(null, sim, offenseLineup, defenseLineup, staminaBaseline, motionStamina)
       continue
     }
 
@@ -844,6 +867,7 @@ export function simulatePoint({
       offenseLineup,
       defenseLineup,
       staminaBaseline,
+      motionStamina,
     )
 
     const lineupIds = possession === 'home' ? homeLineupIds : awayLineupIds
@@ -1242,6 +1266,10 @@ export function simulatePointFast({
       teamId === 'home' ? homePointRole : awayPointRole,
     )
   const pointLineups = buildPointLineups(homeTeamOnPoint, awayTeamOnPoint, attackTeamId)
+  for (const side of ['home', 'away']) {
+    const team = teamById(side)
+    team.tactics = tacticsWithLineupSubRoles(team.tactics, pointLineups[side], stylesForTeam(side).attackStyle)
+  }
   const pull = simulatePull({ offenseLineup: pointLineups[attackTeamId], defenseLineup: pointLineups[pullTeam],
     possessionTeam: attackTeamId, offenseTactics: teamById(attackTeamId).tactics,
     defenseTactics: teamById(pullTeam).tactics, attackStyle: stylesForTeam(attackTeamId).attackStyle,

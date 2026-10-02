@@ -21,7 +21,7 @@ export default function ManagerCareerPanel({career,onUpdate,onWait}) {
   <div className="grid gap-3 md:grid-cols-2">{offers.map(o=><div key={o.id} className="rounded-sm border border-ufa-border p-3">
    <h4 className="font-semibold">{o.name} · {o.leagueLabel??(o.tier?`${en?'League':'Liga'} ${o.tier}`:'UFA')}</h4>
    <p className="mt-1 text-xs text-ufa-muted">{CLUB_STRATEGY_DEFS[career.world.teamsById[o.teamId].clubStrategy]?.[en?'en':'pl']} · {en?'Minimum reputation':'Wymagana reputacja'}: {o.required}</p>
-   <p className="my-2 text-xs">{o.reason==='rebuild'?(en?'Club looking to rebuild.':'Klub szuka trenera do odbudowy.'):(en?'Board dissatisfied with results.':'Zarząd niezadowolony z wyników.')}</p>
+   <p className="my-2 text-xs">{o.recovery ? (en ? 'A chance to rebuild your career: this struggling club is open to a fresh start.' : 'Szansa na odbudowę kariery: klub w trudnej sytuacji jest otwarty na nowy początek.') : o.reason==='rebuild'?(en?'Club looking to rebuild.':'Klub szuka trenera do odbudowy.'):(en?'Board dissatisfied with results.':'Zarząd niezadowolony z wyników.')}</p>
    <button type="button" disabled={busy} className="rounded border border-ufa-accent px-3 py-2 text-sm" onClick={()=>setConfirm(o.id)}>{en?'Accept offer':'Przyjmij ofertę'}</button>
   </div>)}</div>
   {confirm&&<div role="alertdialog" aria-label={en?'Confirm job change':'Potwierdź zmianę pracy'} className="rounded-sm border border-ufa-gold p-4">

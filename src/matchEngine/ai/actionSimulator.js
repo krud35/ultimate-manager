@@ -1,6 +1,8 @@
-import { offenseLineSlotsForAttackStyle } from '../offenseLineSlots.js'
+import { offenseLineSlotsForAttackStyle, tacticsWithLineupSubRoles } from '../offenseLineSlots.js'
 import { resolvePlayerSubRole } from '../playerSubRoles.js'
 import { assignActiveCutters } from './activeCutters.js'
+import { pullFlowIsOpen } from './pullFlow.js'
+import { advancePullOpening, pullOpeningCue } from './pullOpening.js'
 import { observeStyleTick, recordStyleEvidence, instructionContext } from '../styleEvidence.js'
 import { throwingFakePhase } from './traitBehavior.js'
 import {
@@ -636,7 +638,7 @@ function shadeMarkBesideOffense(off, forceSide, attackSign) {
 }
 
 function layoutToAgents(layout, teamId, rosterLineup = [], tactics = null, attackStyle = null) {
-  return layout.map((p, stackIndex) => {
+  const agents = layout.map((p, stackIndex) => {
     const rosterPlayer = rosterLineup.find((r) => r.id === p.id) ?? p
     const base = {
       player: rosterPlayer,
@@ -658,9 +660,16 @@ function layoutToAgents(layout, teamId, rosterLineup = [], tactics = null, attac
     return {
       ...base,
       subRole,
-      isDump: preferDump || (p.fieldRole === 'dump' && subRole !== HANDLER_SUB_ROLES.PRIMARY),
+      isDump: preferDump || (!subRole && p.fieldRole === 'dump'),
     }
   })
+  // Stable off-disc handler lanes, including when a cutter has possession.
+  const handlers = agents.filter(a => a.isDump && !a.isThrower)
+    .sort((a, b) => rosterLineup.findIndex(p => p.id === a.id) - rosterLineup.findIndex(p => p.id === b.id))
+  handlers.forEach((a, i) => { a.handlerSlotIndex = i })
+  const throwingHandler = agents.find(a => a.isDump && a.isThrower)
+  if (throwingHandler) throwingHandler.handlerSlotIndex = handlers.length
+  return agents
 }
 
 /** Stan zawodników na koniec symulacji — wejście do kolejnego rzutu (ciągłość ruchu). */
@@ -681,6 +690,13 @@ function snapshotAgentStates(offenseAgents, defenseAgents) {
         stateMs: a.stateMs ?? 0,
         targetX: a.targetX ?? a.x,
         targetY: a.targetY ?? a.y,
+        cutKind: a.cutKind,
+        cutScore: a.cutScore,
+        cutReviewMs: a.cutReviewMs,
+        continuationCut: a.continuationCut,
+        feintOrigin: a.feintOrigin ? { ...a.feintOrigin } : null,
+        feintElapsedMs: a.feintElapsedMs,
+        pullPreparation: a.pullPreparation,
         role,
       })
     }
@@ -699,6 +715,28 @@ function snapshotAgentStates(offenseAgents, defenseAgents) {
 function activeMarkerId(defenseAgents, fallbackId) {
   const active = defenseAgents.find((a) => a?.isActiveMark === true)
   return active ? active.id ?? active.player?.id ?? fallbackId : fallbackId
+}
+
+/** Reuse two small contact-state buffers; never retain a player timeline.
+ * Defaults intentionally match snapshotFrame (including defender vz).
+ */
+function writeContactFrame(frame, ms, offense, defense, disc) {
+  frame.ms = ms
+  frame.disc = disc
+  for (let i = 0; i < offense.length + defense.length; i++) {
+    const defending = i >= offense.length
+    const a = defending ? defense[i - offense.length] : offense[i]
+    const p = frame.players[i] ??= {}
+    p.id = defending ? a.id ?? a.player?.id : a.id
+    p.teamId = a.teamId ?? (defending ? 'away' : 'home')
+    p.x = a.x; p.y = a.y; p.z = a.z ?? 0
+    p.vx = a.vx ?? 0; p.vy = a.vy ?? 0
+    p.vz = defending ? undefined : a.vz ?? 0
+    p.diving = a.diving ?? false
+    p.diveHeading = a.diveHeading ?? 0
+  }
+  frame.players.length = offense.length + defense.length
+  return frame
 }
 
 function snapshotFrame(ms, offenseAgents, defenseAgents, throwerId, disc = null, markerId = null, stallCount = null) {
@@ -755,6 +793,8 @@ function snapshotFrame(ms, offenseAgents, defenseAgents, throwerId, disc = null,
 
 function buildMotionTracePayload({
   frames,
+  collectFrames = true,
+  runMetersById,
   throwMs,
   discX,
   discY,
@@ -774,7 +814,8 @@ function buildMotionTracePayload({
     discX,
     discY,
     throwPathPoints: flight?.throwPathPoints ?? null,
-    frames,
+    frames: collectFrames ? frames : [],
+    ...(!collectFrames ? { finalFrame: frames.at(-1) ?? null, runMetersById } : {}),
     resolution: resolution ?? flight?.resolution ?? null,
     possessionTeam,
     markerId,
@@ -807,7 +848,8 @@ export function runContinuousThrowSimulation({
   maxTicks = null,
   staminaMaps = null,
   seedStates = null,
-  pullTransitionMs = 0,
+  pullTransitionActive = false,
+  pullOpening = null,
   postResetClearout = false,
   lastThrowerId = null,
   afterTurnover = false,
@@ -815,10 +857,15 @@ export function runContinuousThrowSimulation({
   requireForwardPass = false,
   onThrowCommitted = null,
   behaviorBoxScore = null,
+  /** Disable replay storage, preserving the full movement and contact model. */
+  collectFrames = true,
+  onMotionSample = null,
   /** Controlled replay starts at release; uses the same movement/contact loop as matches. */
   initialFlightState = null,
 }) {
   const holdStartMs = Math.max(0, startHoldMs ?? 0)
+  if (pullOpening) pullOpening = { ...pullOpening, order: pullOpening.order?.slice() ?? null,
+    launchedIds: [...pullOpening.launchedIds] }
   const setupBudgetMs = Math.max(
     SIM_TICK_MS,
     // Dojście markera nie jest częścią liczenia. Budżet obliczeń nie przyznaje stalla.
@@ -833,6 +880,7 @@ export function runContinuousThrowSimulation({
   const postCatchReorg = !pickupPending && seedStates instanceof Map && seedStates.size > 0
   const defenseTeamId = possessionTeam === 'home' ? 'away' : 'home'
   const tickKinematics = {}
+  const staminaParameters = staminaMaps ? new Map() : null
 
   const homeSide = possessionTeam === 'home' ? offenseTeam : defenseTeam
   const awaySide = possessionTeam === 'home' ? defenseTeam : offenseTeam
@@ -842,6 +890,7 @@ export function runContinuousThrowSimulation({
     awaySide,
     null,
   )
+  offenseTeam = { ...offenseTeam, tactics: tacticsWithLineupSubRoles(offenseTeam?.tactics, offenseLineup, attackStyle) }
   const forceSide = resolveMarkForceSide(defenseTeam, null)
   const attackSign = possessionTeam === 'home' ? 1 : -1
   let spaceCellsCache = null
@@ -926,12 +975,16 @@ export function runContinuousThrowSimulation({
       stateMs: carriesRole ? (seed.stateMs ?? 0) : 0,
       targetX: carriesRole ? (seed.targetX ?? base.targetX) : base.targetX,
       targetY: carriesRole ? (seed.targetY ?? base.targetY) : base.targetY,
+      ...(carriesRole ? { cutKind: seed.cutKind, cutScore: seed.cutScore, cutReviewMs: seed.cutReviewMs,
+        continuationCut: seed.continuationCut, feintOrigin: seed.feintOrigin ? { ...seed.feintOrigin } : null,
+        feintElapsedMs: seed.feintElapsedMs, pullPreparation: seed.pullPreparation } : {}),
       teamId: possessionTeam,
       fieldRole: a.fieldRole,
       stackIndex: a.stackIndex,
       isDump: a.isDump,
       isThrower: false,
       subRole: a.subRole,
+      handlerSlotIndex: a.handlerSlotIndex,
     }
   })
 
@@ -1006,6 +1059,32 @@ export function runContinuousThrowSimulation({
     null
 
   const frames = []
+  const runMetersById = {}
+  // Boundary rules need the disc path, not historical player/render snapshots.
+  const discHistory = []
+  const recordFrame = (ms, offense, defense, holder, disc, marker, stall) => {
+    const previous = frames.at(-1)
+    const frame = collectFrames
+      ? snapshotFrame(ms, offense, defense, holder, disc, marker, stall)
+      : writeContactFrame(frames.length === 2 ? frames.shift() : { players: [] }, ms, offense, defense, disc)
+    if (!collectFrames && previous) {
+      for (let i = 0; i < frame.players.length; i++) {
+        const player = frame.players[i]
+        const before = previous.players[i]?.id === player.id ? previous.players[i]
+          : previous.players.find(p => p.id === player.id)
+        if (!before) continue
+        const distance = Math.hypot(player.x - before.x, player.y - before.y)
+        if (distance > 0 && distance < 40) {
+          runMetersById[player.id] = (runMetersById[player.id] ?? 0) + distance
+        }
+      }
+    }
+    onMotionSample?.(ms, frame.players)
+    frames.push(frame)
+    if (!collectFrames) {
+      discHistory.push({ ms, disc })
+    }
+  }
   let throwDecision = initialFlightState?.decision ?? null
   let flight = initialFlightState?.flight ?? null
   let commitMeta = null
@@ -1031,11 +1110,17 @@ export function runContinuousThrowSimulation({
   let prevDiscSample = null
   if (initialFlightState) {
     prevDiscSample = sampleFlightDisc(flight, flight.elapsedMs)
-    frames.push(snapshotFrame(0, offenseAgents, defenseAgents, thrower.id,
-      discPositionInFlight(prevDiscSample.x, prevDiscSample.y, prevDiscSample.z), markerId, 0))
+    recordFrame(0, offenseAgents, defenseAgents, thrower.id,
+      discPositionInFlight(prevDiscSample.x, prevDiscSample.y, prevDiscSample.z), markerId, 0)
     flight.elapsedMs += SIM_TICK_MS
   }
 
+  const pullFlowAt = anchor => {
+    const open = pullFlowIsOpen(pullTransitionActive, defenseAgents, anchor)
+    if (pullTransitionActive && !open) { scanCache = null; scanCacheMs = -1e9 }
+    pullTransitionActive = open
+    return pullTransitionActive
+  }
   for (let tick = initialFlightState ? 1 : 0; tick < resolvedMaxTicks; tick += 1) {
     const ms = tick * SIM_TICK_MS
     for (const a of [...offenseAgents, ...defenseAgents]) {
@@ -1050,8 +1135,8 @@ export function runContinuousThrowSimulation({
       offenseAgents = offenseAgents.map(interception ? brake : advance)
       defenseAgents = defenseAgents.map(interception ? advance : brake)
       const catcher = (interception ? defenseAgents : offenseAgents).find(a => a.id === pendingCatch.receiverId)
-      frames.push(snapshotFrame(ms, offenseAgents, defenseAgents, thrower.id,
-        discPositionHeld(catcher.x, catcher.y, attackSign), markerId, 0))
+      recordFrame(ms, offenseAgents, defenseAgents, thrower.id,
+        discPositionHeld(catcher.x, catcher.y, attackSign), markerId, 0)
       if (catcher.z <= 0) {
         contactResolution = groundedInBounds(catcher) ? pendingCatch
           : { ...pendingCatch, success: false, securedInterception: false, isDrop: false, reason: 'out_of_bounds' }
@@ -1086,9 +1171,7 @@ export function runContinuousThrowSimulation({
       const heldDisc = throwerAgent
         ? discPositionHeld(throwerAgent.x, throwerAgent.y, attackSign)
         : null
-      frames.push(
-        snapshotFrame(ms, offenseAgents, defenseAgents, thrower.id, heldDisc, markerId, STALL_MAX),
-      )
+      recordFrame(ms, offenseAgents, defenseAgents, thrower.id, heldDisc, markerId, STALL_MAX)
       break
     }
 
@@ -1143,6 +1226,9 @@ export function runContinuousThrowSimulation({
       vx: a.vx ?? 0,
       vy: a.vy ?? 0,
     }))
+    // All defenders read this same pre-movement snapshot during this tick.
+    const trafficAgents = [...offensePositions, ...defensePositions]
+    const activePoachers = defenseAgents.filter(a => a.state === DEFENDER_STATE.POACHING).length
 
     // Mapa przestrzeni dla obrony — przeliczana w LUDZKIM tempie, nie co tick.
     //
@@ -1155,6 +1241,13 @@ export function runContinuousThrowSimulation({
     const spaceAnchor = flight
       ? { x: flight.landingX ?? flight.toX, y: flight.landingY ?? flight.toY }
       : disc
+    pullOpening = advancePullOpening(pullOpening, offenseAgents, { dtMs: SIM_TICK_MS,
+      throwerId: thrower.id, flight, stallCount: activeStallCount(stallClock) })
+    const centeringHandler = pullOpening?.phase === 'centering'
+      ? offenseAgents.find(a => a.id === pullOpening.centerReceiverId) : null
+    const openingAnchor = centeringHandler
+      ? { x: centeringHandler.targetX ?? centeringHandler.x, y: centeringHandler.targetY ?? centeringHandler.y }
+      : spaceAnchor
     if (!spaceCellsCache || ms - spaceCellsCacheMs >= DEFENSE_REASSESS_MS) {
       spaceCellsCache = buildSpaceMap({
         disc: spaceAnchor,
@@ -1192,6 +1285,10 @@ export function runContinuousThrowSimulation({
         }
       }
 
+      if (pullOpening) assignActiveCutters(offenseAgents, maxConcurrentCutters(attackStyle), ms, false, pullOpening)
+      const flightActiveCutters = offenseAgents.filter(a => !a.isDump && !a.isThrower
+        && [CUTTER_STATE.ACTIVE_CUT, CUTTER_STATE.INITIATING_CUT].includes(a.state)).length
+      const pullTransitionOpen = pullFlowAt(spaceAnchor)
       offenseAgents = offenseAgents.map((agent) => {
         if (agent.id === (flight.recoveryReceiverId ?? flight.receiverId)) {
           const contested = tickFlightContestAgent(
@@ -1216,8 +1313,7 @@ export function runContinuousThrowSimulation({
         // During the pull transition, a handler follows the pass into a new offer.
         // Other possessions retain the existing release-position behavior.
         if (agent.id === thrower.id || agent.isThrower) {
-          if (ms < pullTransitionMs && agent.isDump &&
-            defenseAgents.every(a => Math.hypot(a.x - spaceAnchor.x, a.y - spaceAnchor.y) > 8)) {
+          if (pullTransitionOpen && agent.isDump) {
             return { ...tickCutterBrain(agent, { dtSec: DT_SEC, disc: spaceAnchor, throwerPos: spaceAnchor,
               possessionTeam, forceSide, situation: {}, rng, stackIndex: agent.stackIndex,
               isDump: true, pullFlow: true, offenseTactics: offenseTeam?.tactics }), isThrower: true }
@@ -1256,7 +1352,9 @@ export function runContinuousThrowSimulation({
             dtSec: DT_SEC,
             // Cutterzy odnoszą się do miejsca, gdzie dysk BĘDZIE — tam zacznie się gra.
             disc: spaceAnchor,
-            pullFlow: ms < pullTransitionMs && defenseAgents.every(a => Math.hypot(a.x - spaceAnchor.x, a.y - spaceAnchor.y) > 8),
+            pullFlow: pullTransitionOpen,
+            pullOpeningCue: pullOpeningCue(pullOpening, agent),
+            pullOpeningAnchor: openingAnchor,
             // Czy dysk jest w powietrzu i czy leci DO MNIE — cutter po rozpoczęciu
             // deep cutu ogląda się i na tej podstawie biegnie dalej albo zawraca.
             discInFlight: !!flight,
@@ -1282,7 +1380,7 @@ export function runContinuousThrowSimulation({
             elapsedMs: ms,
             teammates: offensePositions,
             defenders: defensePositions,
-            activeCutters: offenseAgents.filter((a) => a.state === CUTTER_STATE.ACTIVE_CUT).length,
+            activeCutters: flightActiveCutters,
             attackStyle,
             maxCutters: maxConcurrentCutters(attackStyle),
             offenseTactics: offenseTeam?.tactics,
@@ -1356,7 +1454,7 @@ export function runContinuousThrowSimulation({
         const isMarkerOnThrower =
           targetOff?.isThrower || targetOff?.player?.id === thrower.id
         return tickDefenseAgent(defAgent, {
-          trafficAgents: [...offensePositions, ...defensePositions],
+          trafficAgents,
           targetOffense: targetOff,
           throwerAgent,
           disc: discForAi,
@@ -1368,8 +1466,7 @@ export function runContinuousThrowSimulation({
           possessionTeam,
           stallCount: 1,
           rng,
-          activePoachers: defenseAgents.filter((a) => a.state === DEFENDER_STATE.POACHING)
-            .length,
+          activePoachers,
           attackSign,
           defenseTactics: defenseTeam?.tactics,
           spaceCells,
@@ -1578,8 +1675,8 @@ export function runContinuousThrowSimulation({
       flight.elapsedMs += SIM_TICK_MS
     } else {
       const throwerPos = { x: discX, y: discY }
-      const pullFlow = ms < pullTransitionMs && defenseAgents.every(a => Math.hypot(a.x - discX, a.y - discY) > 8)
-      assignActiveCutters(offenseAgents, maxConcurrentCutters(attackStyle), ms, postCatchReorg)
+      const pullFlow = pullFlowAt(throwerPos)
+      assignActiveCutters(offenseAgents, maxConcurrentCutters(attackStyle), ms, postCatchReorg, pullOpening)
       const activeCutterCount = offenseAgents.filter(
         (a) =>
           !a.isThrower && !a.isDump &&
@@ -1627,6 +1724,8 @@ export function runContinuousThrowSimulation({
             isDump: agent.isDump,
             postCatchReorg,
             pullFlow,
+            pullOpeningCue: pullOpeningCue(pullOpening, agent),
+            pullOpeningAnchor: openingAnchor,
             lastThrowerId,
             throwerId: thrower.id,
             throwerPos,
@@ -1650,17 +1749,15 @@ export function runContinuousThrowSimulation({
       })
 
       throwerAgent = offenseAgents.find(a => a.isThrower)
+      const fakePhase = throwingFakePhase(ms - (pickupEndMs ?? 0), playerMatchMods(thrower).fakeFrequency)
       defenseAgents = defenseAgents.map((defAgent) => {
         const targetOff = personMark
           ? resolvePersonMarkTarget(defAgent, offenseAgents, personMatchups)
           : resolvePersonMarkTarget(defAgent, offenseAgents, null)
         const isMarkerOnThrower =
           targetOff?.isThrower || targetOff?.player?.id === thrower.id
-        const activePoachers = defenseAgents.filter(
-          (a) => a.state === DEFENDER_STATE.POACHING,
-        ).length
         return tickDefenseAgent(defAgent, {
-          trafficAgents: [...offensePositions, ...defensePositions],
+          trafficAgents,
           targetOffense: targetOff,
           throwerAgent,
           disc,
@@ -1677,7 +1774,7 @@ export function runContinuousThrowSimulation({
           defenseTactics: defenseTeam?.tactics,
           spaceCells,
           afterTurnover,
-          fakePhase: throwingFakePhase(ms - (pickupEndMs ?? 0), playerMatchMods(thrower).fakeFrequency),
+          fakePhase,
           // Patrz komentarz przy bliźniaczym wywołaniu w pętli lotu.
           offenseAgents,
           defenseAgents,
@@ -1694,6 +1791,7 @@ export function runContinuousThrowSimulation({
         possessionTeam,
         tickKinematics,
         DT_SEC,
+        staminaParameters,
       )
       drainAgentsTickStamina(
         staminaMaps,
@@ -1702,6 +1800,7 @@ export function runContinuousThrowSimulation({
         possessionTeam,
         tickKinematics,
         DT_SEC,
+        staminaParameters,
       )
     }
 
@@ -1727,9 +1826,7 @@ export function runContinuousThrowSimulation({
       })
       previousBehaviorFake=fakePhase; previousBehaviorWindow=fakeWindow
     }
-    frames.push(
-      snapshotFrame(ms, offenseAgents, defenseAgents, thrower.id, discSnapshot, markerId, liveStall),
-    )
+    recordFrame(ms, offenseAgents, defenseAgents, thrower.id, discSnapshot, markerId, liveStall)
 
     if (contactResolution || (flight && discSnapshot?.z <= 0)) break
 
@@ -1744,7 +1841,8 @@ export function runContinuousThrowSimulation({
           wind,
           rng,
           setupElapsedMs: ms - (pickupEndMs ?? 0),
-          pullFlow: ms < pullTransitionMs && defenseAgents.every(a => Math.hypot(a.x - discX, a.y - discY) > 8),
+          pullFlow: pullFlowAt({ x: discX, y: discY }),
+          pullCenteringPending: pullOpening?.phase === 'centering',
           postCatchReorg,
           lastThrowerId,
           afterTurnover,
@@ -1779,8 +1877,7 @@ export function runContinuousThrowSimulation({
         throwerPatienceBonusMs(thrower)) *
         (throwerCoach.releaseGateMult ?? 1) * (throwerCoach.decisionTimeMult ?? 1)
       // Jitter w górę częściej niż w dół — rzadziej „przyśpieszamy” set play.
-      const unpressuredPull = ms < pullTransitionMs && option?.isDump && option?.situation?.separation >= 4
-        && defenseAgents.every(a => Math.hypot(a.x - discX, a.y - discY) > 8)
+      const unpressuredPull = pullFlowAt({ x: discX, y: discY }) && option?.isDump && option?.situation?.separation >= 4
       const releaseGateMs = (unpressuredPull ? Math.min(gateBase, 350) : gateBase) * (0.95 + rng.float() * 0.25)
       if (option && !throwingFakePhase(ms - (pickupEndMs ?? 0), throwerCoach.fakeFrequency) && ms - (pickupEndMs ?? 0) >= Math.max(0, releaseGateMs)) {
         // A cached look can schedule the release, but cannot authorize it.
@@ -1938,17 +2035,21 @@ export function runContinuousThrowSimulation({
     return {
       stallAbort: true,
       stallOut,
-      frames,
+      frames: collectFrames ? frames : [],
       tickMs: SIM_TICK_MS,
       holdMsAtEnd,
       holdStartMs,
       stallCount: activeStallCount(stallClock),
       stallClock,
       pickupPending,
+      pullTransitionActive,
+      pullOpening,
       markerId,
       endStates: snapshotAgentStates(offenseAgents, defenseAgents),
       motionTrace: buildMotionTracePayload({
         frames,
+        collectFrames,
+        runMetersById,
         throwMs: null,
         discX,
         discY,
@@ -1972,7 +2073,7 @@ export function runContinuousThrowSimulation({
       const receiver = (geoResolution.securedInterception ? defenseAgents : offenseAgents).find(a => a.id === geoResolution.receiverId)
       if (receiver) frame.disc = discPositionHeld(receiver.x, receiver.y, attackSign)
     } else {
-      const last = frames.at(-1), start = { ...last.disc }
+      const last = frames.at(-1), start = { ...last.disc }, landingStartMs = last.ms
       const previous = frames.at(-2)
       const dt = Math.max(0.001, (last.ms - (previous?.ms ?? last.ms - SIM_TICK_MS)) / 1000)
       const factor = geoResolution.isBlock || geoResolution.isDrop ? 0.2 : 1
@@ -1987,9 +2088,9 @@ export function runContinuousThrowSimulation({
           Math.hypot(a.vx ?? 0, a.vy ?? 0), DT_SEC, true) })
         offenseAgents = offenseAgents.map(brake)
         defenseAgents = defenseAgents.map(brake)
-        frames.push(snapshotFrame(last.ms + elapsed, offenseAgents, defenseAgents, thrower.id,
+        recordFrame(landingStartMs + elapsed, offenseAgents, defenseAgents, thrower.id,
           landing.grounded ? discPositionOnGround(landing.x, landing.y)
-            : discPositionInFlight(landing.x, landing.y, landing.z), markerId, 0))
+            : discPositionInFlight(landing.x, landing.y, landing.z), markerId, 0)
         if (landing.grounded) break
       }
       if (durationMs === 0) last.disc = discPositionOnGround(start.x, start.y)
@@ -2002,12 +2103,14 @@ export function runContinuousThrowSimulation({
       const stopMs = geoResolution.reason === 'out_of_bounds'
         ? geoResolution.landing?.ms ?? geoResolution.contact?.ms ?? Infinity : Infinity
       geoResolution.reason = 'out_of_bounds'
-      geoResolution.restartPoint = boundaryRestart(frames, throwDecision.throwMs, { touches: flight.touches ?? [], stopMs })
+      if (!collectFrames && discHistory.length) discHistory.at(-1).disc = frames.at(-1).disc
+      geoResolution.restartPoint = boundaryRestart(collectFrames ? frames : discHistory,
+        throwDecision.throwMs, { touches: flight.touches ?? [], stopMs })
       geoResolution.groundPoint = ground ? { x: ground.x, y: ground.y } : null
     }
   }
   geoResolution.diagnosis = diagnoseThrow(flight, geoResolution)
-  const motionTrace = buildMotionTracePayload({ frames, throwMs: throwDecision.throwMs,
+  const motionTrace = buildMotionTracePayload({ frames, collectFrames, runMetersById, throwMs: throwDecision.throwMs,
     discX, discY, flight, possessionTeam, resolution: geoResolution, markerId, holdStartMs })
   motionTrace.flightMs = Math.max(0, motionTrace.totalMs - motionTrace.throwMs)
 
@@ -2035,8 +2138,10 @@ export function runContinuousThrowSimulation({
     stallCount: throwDecision.stallCount ?? activeStallCount(stallClock),
     stallClock,
     pickupPending,
+    pullTransitionActive,
+    pullOpening,
     markerId,
-    frames,
+    frames: collectFrames ? frames : [],
     tickMs: SIM_TICK_MS,
     discX,
     discY,

@@ -9,6 +9,7 @@ import { demoHomeTeam } from '../data/demoMatchTeams'
 import StaminaBar, { getStaminaForPlayer } from './StaminaBar'
 import { SkillBar, sortPlayers, ThrowingHandBadge } from './TeamRosterPanel'
 import PlayerProfileModal from './PlayerProfileModal'
+import { PlayerReadinessList } from './StreamlinedTrainingView.jsx'
 import LoanTermsModal from './LoanTermsModal'
 
 import { seasonStatsForPlayer } from '../league/leagueStats.js'
@@ -51,6 +52,7 @@ function rosterStaminaSide(player, matchStamina, focusTeamName, teamNameOf) {
 }
 
 export default function RosterView({
+  streamlined = false,
   matchStamina,
   focusTeamName = demoHomeTeam.name,
   leaguePlayerStats = null,
@@ -90,6 +92,7 @@ export default function RosterView({
   const [sortKey, setSortKey] = useState('ovr')
   const [sortDir, setSortDir] = useState('desc')
   const [profilePlayer, setProfilePlayer] = useState(null)
+  const [showDetailedRoster, setShowDetailedRoster] = useState(false)
   const [pageSize, setPageSize] = useState(20)
   const [loanOutPlayer, setLoanOutPlayer] = useState(null)
   const [loanFlash, setLoanFlash] = useState(null)
@@ -207,6 +210,8 @@ export default function RosterView({
     <>
       <section>
         <header className="um-page-heading"><p className="um-eyebrow">{focusTeamName} / {t.playerCount(filtered.length)}</p><h1 className="um-page-title">{clubOnly ? t.clubTitle : t.leagueTitle}</h1><p className="text-sm text-ufa-muted">{clubOnly ? t.clubHint : t.leagueHint(allPlayers.length)}</p></header>
+        {streamlined && <><PlayerReadinessList players={filtered} onSelect={setProfilePlayer} /><button className="um-button my-4" onClick={() => setShowDetailedRoster(v => !v)}>{showDetailedRoster ? (lang === 'en' ? 'Hide details' : 'Ukryj szczegóły') : (lang === 'en' ? 'Attributes, contracts and statistics' : 'Atrybuty, kontrakty i statystyki')}</button></>}
+        {(!streamlined || showDetailedRoster) && <>
         <div className="um-tabs" aria-label={lang === 'en' ? 'Roster view' : 'Widok składu'}>{views.map(item => <button type="button" key={item.id} aria-pressed={view === item.id} onClick={() => { setView(item.id); setSortKey('ovr'); setSortDir('desc') }}>{item.label}</button>)}</div>
         <div className="um-table-toolbar">
           {!clubOnly && <label className="flex items-center gap-2 text-sm">{t.team}<select className="rounded-sm border border-ufa-border bg-ufa-panel px-3 py-2" value={teamFilter} onChange={event => setTeamFilter(event.target.value)}>{teamFilters.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</select></label>}
@@ -228,8 +233,10 @@ export default function RosterView({
           })}</tbody></table>
         </div>
         {rows.length === 0 && <p className="py-8 text-ufa-muted">{lang === 'en' ? 'No players to display.' : 'Brak zawodników do wyświetlenia.'}</p>}
+        </>}
       </section>
       <PlayerProfileModal
+        streamlined={streamlined}
         player={profilePlayer}
         onClose={() => setProfilePlayer(null)}
         stamina={profilePlayer ? getSt(profilePlayer) : null}

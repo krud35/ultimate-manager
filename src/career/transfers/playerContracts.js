@@ -1,3 +1,4 @@
+import { squadRole, promisePlayingTime } from '../streamlinedStories.js'
 import { referenceWeeklyWage } from '../economyBalance.js'
 import { clubWageScale } from '../financialMarkets.js'
 import { ensureClubEconomy, postClubCash, clubCash, canAffordContract, syncLoanFinancialCommitments, contractualWeeklyBill } from '../clubEconomy.js'
@@ -261,6 +262,7 @@ export function buildContract(player, terms) {
 
   return {
     weeklyWage,
+    ...(terms.squadRole ? { squadRole: squadRole(terms.squadRole) } : {}),
     years,
     weeksTotal,
     weeksRemaining,
@@ -292,6 +294,7 @@ function normalizeBonus(b) {
     type,
     amount: Math.max(0, Math.round(Number(b.amount) || def?.defaultAmount || 0)),
     target: b.target != null ? Math.round(Number(b.target)) : null,
+    ...(b.expiresOn ? { expiresOn: b.expiresOn } : {}),
   }
 }
 
@@ -300,7 +303,7 @@ function normalizePromise(p) {
   const id = p.type ?? p.id
   const def = CONTRACT_PROMISE_DEFS.find((d) => d.id === id)
   if (!def) return null
-  return { type: def.id }
+  return { type: def.id, ...(p.expiresOn ? { expiresOn: p.expiresOn } : {}) }
 }
 
 /**
@@ -336,6 +339,7 @@ export function ensurePlayerContract(player, options = {}) {
     Number.isFinite(c.weeksRemaining)
   ) {
     player.contract = {
+      ...(c.squadRole ? { squadRole: squadRole(c.squadRole) } : {}),
       weeklyWage: roundWage(c.weeklyWage),
       years: clamp(Math.round(c.years ?? Math.ceil((c.weeksTotal ?? c.weeksRemaining) / 52)), 1, 5),
       weeksTotal: Math.max(
@@ -429,10 +433,15 @@ export function releaseContractFunds() { return 0 }
 export function signPlayerContract(team, player, terms) {
   if (!team || !player) return { ok: false, error: 'Brak drużyny/zawodnika' }
   if (team.simulationMode === 'off') return { ok: false, error: 'league_disabled' }
+  if (team.streamlinedClub?.enabled) terms = { ...terms, squadRole: squadRole(terms.squadRole), bonuses: terms.bonuses ?? [], promises: terms.promises ?? [] }
   const contract = buildContract(player, terms)
   const affordability = canAffordContract(team, player, contract.weeklyWage, { date: terms.signedDate ?? team.managementDate, weeksRemaining: contract.weeksRemaining })
   if (!affordability.ok) return affordability
   player.contract = contract
+  if (team.streamlinedClub?.enabled) {
+    player.playingTimePromise = null
+    promisePlayingTime(player, { role: contract.squadRole, date: contract.signedDate ?? team.managementDate, source: 'contract' })
+  }
   return { ok: true, contract }
 }
 
@@ -625,6 +634,7 @@ export function processSeasonEndContractObligations(world, options = {}) {
 
       for (const bonus of contract.bonuses ?? []) {
         if (!bonus?.type || !(bonus.amount > 0)) continue
+        if (bonus.expiresOn && `${Number(seasonKey) + 1}-07-31` > bonus.expiresOn) continue
         const paidKey = `${bonus.type}:${seasonKey}`
         if (contract.bonusesPaidSeasons?.[paidKey]) continue
         const met = bonusConditionMet({
@@ -640,7 +650,7 @@ export function processSeasonEndContractObligations(world, options = {}) {
         // umowy) — dla zawodnika na wypożyczeniu to nie destination płaci, mimo że
         // to destination iteruje go w `players[]`.
         const payTeam = player.loan ? (worldTeamById(world, player.loan.parentTeamId) ?? team) : team
-        adjustTransferBudget(payTeam, bonus.amount)
+        adjustTransferBudget(payTeam, payTeam.streamlinedClub?.enabled ? -bonus.amount : bonus.amount)
         if (!contract.bonusesPaidSeasons) contract.bonusesPaidSeasons = {}
         contract.bonusesPaidSeasons[paidKey] = bonus.amount
         bonusPayouts.push({
@@ -654,6 +664,7 @@ export function processSeasonEndContractObligations(world, options = {}) {
 
       const ovrNow = getOverallRating(player.skills)
       for (const promise of contract.promises ?? []) {
+        if (promise?.expiresOn && `${Number(seasonKey) + 1}-07-31` > promise.expiresOn) continue
         const def = promiseDefById(promise?.type)
         if (!def) continue
         const met = promiseConditionMet({

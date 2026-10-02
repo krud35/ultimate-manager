@@ -115,29 +115,6 @@ export function pickThrowType({
     rng,
   })
 
-  if (tier === 'high') {
-    const roll = rng.float()
-    if (roll < 0.42) return THROW_TYPE.DUMP_SWING
-    // Desperacki hammer przy stallu 8-9 jest realny, ale to margines, nie co czwarty
-    // rzut — patrz komentarz przy wagach OTT niżej (audyt: 13% wszystkich rzutów).
-    if (roll < 0.45) return THROW_TYPE.OVER_THE_TOP
-    if (roll < 0.88) return THROW_TYPE.STANDARD
-    return THROW_TYPE.HUCK
-  }
-
-  if (tier === 'medium') {
-    if (stallMods.badDecision) {
-      return rng.float() < 0.90 ? THROW_TYPE.HUCK : THROW_TYPE.OVER_THE_TOP
-    }
-    if (rng.float() < 0.52 + (stallCount - 4) * 0.04) {
-      return THROW_TYPE.DUMP_SWING
-    }
-  }
-
-  if (stallCount > 6) {
-    return rng.float() < 0.82 ? THROW_TYPE.DUMP_SWING : THROW_TYPE.STANDARD
-  }
-
   // Hammer/scoober to w realnym club ultimate (EUCF/USAU Nationals/WUCC) rzut
   // marginalny — rzędu 1-3% wszystkich podań. Audyt silnika pokazał 13,3% w fastMode
   // (i 15,1% w pełnym silniku): waga bazowa 6 dawała ~8%, a bonus `skill >= 70` (+6
@@ -188,6 +165,20 @@ export function pickThrowType({
   }
 
   if (skill >= 70) weights[THROW_TYPE.OVER_THE_TOP] += 1
+
+  // Stall changes the baseline distribution, then the same tactics/instructions
+  // apply below. No emergency branch bypasses the player's orders entirely.
+  if (tier === 'high') {
+    Object.assign(weights, { standard: 43, huck: 12, dump_swing: 42, over_the_top: 3 })
+  } else if (tier === 'medium' && stallMods.badDecision) {
+    Object.assign(weights, { standard: 8, huck: 81, dump_swing: 2, over_the_top: 9 })
+  } else if (stallCount > 6) {
+    Object.assign(weights, { standard: 11, huck: 3, dump_swing: 85, over_the_top: 1 })
+  } else if (tier === 'medium') {
+    const resetChance = 0.52 + (stallCount - 4) * 0.04
+    const total = Object.values(weights).reduce((sum, weight) => sum + weight, 0)
+    weights[THROW_TYPE.DUMP_SWING] += total * resetChance / (1 - resetChance)
+  }
 
   // Styl ataku: w pełnym silniku (tickowym) te same pola (tacticsBehavior.js,
   // applyAttackThrowBias/preferredCutKind) kierują wyborem cutu/rzutu; fastMode

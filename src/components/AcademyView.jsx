@@ -1,3 +1,4 @@
+import StreamlinedRecruitmentView from './StreamlinedRecruitmentView.jsx'
 import { academyCapacity, academyAnnualPlaces } from '../career/academy.js'
 import { useState } from 'react'
 import { useUiLang } from '../ui/UiLangContext'
@@ -33,7 +34,10 @@ function firstCountryFor(continentId, europeRegionId) {
   return academyCountriesForContinent(continentId)[0]?.id ?? ''
 }
 
-export default function AcademyView({ career, onCareerUpdate }) {
+export default function AcademyView(props) {
+  return props.career.gameplayEdition === 'streamlined' ? <StreamlinedRecruitmentView {...props} academyOnly><ClassicAcademyView {...props} /></StreamlinedRecruitmentView> : <ClassicAcademyView {...props} />
+}
+function ClassicAcademyView({ career, onCareerUpdate }) {
   const { lang } = useUiLang()
   const t = academyStrings(lang)
   const [continentId, setContinentId] = useState(ACADEMY_CONTINENTS[0]?.id ?? '')

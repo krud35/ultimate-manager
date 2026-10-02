@@ -403,6 +403,7 @@ export function queueOutgoingPlayerContract(career, opts) {
       requiredCash: preview.requiredCash,
       bonuses: opts.bonuses ?? [],
       promises: opts.promises ?? [],
+      ...(career.gameplayEdition === 'streamlined' ? { squadRole: opts.squadRole ?? 'rotation' } : {}),
       parentMessageId: opts.parentMessageId ?? null,
       playerDemands: demands,
     },
@@ -765,6 +766,7 @@ function stagePreAgreedBuyMessage(message, p, contractTerms, evaluation = null) 
 }
 
 function finalizeOrStageBuy(career, message, p, contractTerms, evaluation = null) {
+  if (career.gameplayEdition === 'streamlined') contractTerms = { ...contractTerms, squadRole: p.squadRole ?? 'rotation' }
   if (!isTransferWindowOpen(career)) {
     return stagePreAgreedBuyMessage(message, p, contractTerms, evaluation)
   }
@@ -837,6 +839,7 @@ function resolveOutgoingPlayerContract(career, message) {
     league: career.league ?? null,
     weeklyWage: p.weeklyWage,
     years: p.years,
+    squadRole: p.squadRole,
     bonuses: p.bonuses ?? [],
     promises: p.promises ?? [],
     seed: hashSeed(`${message.id}|${p.replyDate}|player-reply`),

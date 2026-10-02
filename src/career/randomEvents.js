@@ -1,4 +1,5 @@
 import { eventFinanceScale } from './economyBalance.js'
+import { promisePlayingTime } from './streamlinedStories.js'
 import { availableClubCash } from './clubEconomy.js'
 /**
  * Losowe eventy decyzyjne w skrzynce odbiorczej.
@@ -4563,6 +4564,11 @@ export function scaleEventMoneyText(text, scale = 1) {
   })
 }
 function balancedEventChoices(template, context) {
+  if (template.id === 'playing_time_request' && context.streamlinedRole) return [
+    { id: 'promise', label: 'Obiecaj rotację', labelEn: 'Promise rotation', hint: '25% punktów w 6 dostępnych meczach; ocena +1 / −3 morale', hintEn: '25% of points across 6 available matches; morale review +1 / −3' },
+    { id: 'honest', label: 'Nie obiecuj minut', labelEn: 'Do not promise minutes', hint: 'Morale −2', hintEn: 'Morale −2' },
+    { id: 'ignore', label: 'Zignoruj', labelEn: 'Ignore', hint: 'Morale −7', hintEn: 'Morale −7' },
+  ]
   return localizeEventChoices(template.id, template.choices(context)).map(c => Object.fromEntries(
     Object.entries(c).map(([k,v]) => [k, k === 'id' ? v : scaleEventMoneyText(v, context.financeScale ?? 1)])))
 }
@@ -4589,6 +4595,11 @@ function eventFamily(id) {
 
 function eligibleTemplates(career, team, simDate) {
   return RANDOM_EVENT_TEMPLATES.filter((t) => {
+    if (career.gameplayEdition === 'streamlined') {
+      const meaningful = ['playing_time_request', 'specialist_rehab', 'technical_mentor', 'foreign_interest', 'nagging_pain']
+      if (!meaningful.some(id => t.id.startsWith(id))) return false
+      if (t.id === 'playing_time_request' && !team.players.some(p => !p.injury && p.playingTimePromise?.status !== 'active' && (p.recentPlayingTime ?? []).filter(r => r.teamId === team.id && r.available).length >= 4 && (p.recentPlayingTime ?? []).filter(r => r.teamId === team.id && r.available).slice(-4).every(r => r.share < .25))) return false
+    }
     const family = eventFamily(t.id)
     const recent = [...(career.inbox ?? []), ...(team.randomEventHistory ?? [])]
     if (recent.some((m) => eventFamily(m.payload?.templateId ?? m.templateId) === family &&
@@ -4626,6 +4637,8 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
   const team = worldTeamById(career.world, career.playerTeamId)
   if (!team?.players?.length) return null
 
+  if (career.gameplayEdition === 'streamlined' && ((career.pendingEventFollowUps ?? []).length + (career.inbox ?? []).filter(m => m.type === RANDOM_EVENT_TYPE && m.payload?.status === 'pending').length + team.players.filter(p => p.playingTimePromise?.status === 'active' && p.playingTimePromise.source === 'event').length >= 3)) return null
+
   const recent = [...(career.inbox ?? []), ...(team.randomEventHistory ?? [])]
   if (recent.some((m) => (m.payload?.templateId || m.templateId) && m.date &&
     simDate < formatISODate(addDays(parseISODate(m.date), 3)))) return null
@@ -4638,7 +4651,7 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
       ),
     )
 
-  if (rand() > SPAWN_CHANCE) return null
+  if (rand() > (career.gameplayEdition === 'streamlined' ? .08 : SPAWN_CHANCE)) return null
 
   const pool = eligibleTemplates(career, team, simDate)
   const template = pickWeighted(pool, rand)
@@ -4646,6 +4659,12 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
 
   const ctx = template.pickContext(team.players, rand, team)
   if (!ctx) return null
+  if (career.gameplayEdition === 'streamlined' && template.id === 'playing_time_request') {
+    const candidates = team.players.filter(p => !p.injury && p.playingTimePromise?.status !== 'active' && (p.recentPlayingTime ?? []).filter(r => r.teamId === team.id && r.available).length >= 4 && (p.recentPlayingTime ?? []).filter(r => r.teamId === team.id && r.available).slice(-4).every(r => r.share < .25))
+    const player = candidates[0]
+    if (!player) return null
+    Object.assign(ctx, { playerId: player.id, playerName: getPlayerFullName(player), playerOvr: getOverallRating(player.skills), streamlinedRole: true })
+  }
   ctx.financeScale = eventFinanceScale(team)
 
   const choices = balancedEventChoices(template, ctx)
@@ -4664,9 +4683,9 @@ export function pickRandomEventMessage(career, { date = null, rng = null } = {})
     seasonYear: career.seasonYear ?? null,
     read: false,
     title: template.title(ctx),
-    body: scaleEventMoneyText(template.body(ctx), ctx.financeScale ?? 1),
+    body: ctx.streamlinedRole ? `${ctx.playerName} gra za mało. Obietnica oznacza co najmniej 25% punktów w kolejnych sześciu dostępnych meczach. Dotrzymanie: morale +1; niedotrzymanie: −3. Kontuzje nie liczą się do oceny.` : scaleEventMoneyText(template.body(ctx), ctx.financeScale ?? 1),
     ...(typeof template.titleEn === 'function' ? { titleEn: template.titleEn(ctx) } : {}),
-    ...(bodyEn ? { bodyEn: scaleEventMoneyText(bodyEn, ctx.financeScale ?? 1) } : {}),
+    ...(bodyEn ? { bodyEn: ctx.streamlinedRole ? `${ctx.playerName} needs more playing time. A promise means at least 25% of points across the next six available matches. Fulfilled: morale +1; broken: −3. Injuries are excluded.` : scaleEventMoneyText(bodyEn, ctx.financeScale ?? 1) } : {}),
     payload: {
       kind: 'decision',
       templateId: template.id,
@@ -4734,9 +4753,13 @@ export function processPendingEventFollowUps(career, { date = null } = {}) {
   if (!due.length) return { messages: [], pendingEventFollowUps: pending }
 
   const messages = []
+  const preserve = career?.gameplayEdition === 'streamlined'
   for (const item of due) {
     const template = templateById(item.templateId)
-    if (!template) continue
+    if (!template) {
+      if (preserve) remaining.push({ ...item, reviewRequired: 'missing_template' })
+      continue
+    }
     try {
       const msg = buildDecisionMessage(template, item.ctx ?? {}, {
         date: today,
@@ -4744,7 +4767,9 @@ export function processPendingEventFollowUps(career, { date = null } = {}) {
         seasonYear: item.seasonYear ?? career?.seasonYear ?? null,
       })
       if (msg) messages.push(msg)
+      else if (preserve) remaining.push({ ...item, reviewRequired: 'invalid_context' })
     } catch {
+      if (preserve) remaining.push({ ...item, reviewRequired: 'invalid_context' })
       // Kontekst niekompletny (np. zawodnik odszedł od etapu 1) — po prostu pomiń etap 2.
     }
   }
@@ -4769,7 +4794,7 @@ export function pickPostMatchEventMessage(career, { fixture = null, record = nul
     hashSeed(`${career.id}|postmatch|${matchCtx.fixtureId ?? 'unknown'}`),
   )
 
-  if (rand() > POST_MATCH_SPAWN_CHANCE) return null
+  if (career.gameplayEdition === 'streamlined' || rand() > POST_MATCH_SPAWN_CHANCE) return null
 
   const contexts = new Map()
   const pool = POST_MATCH_EVENT_TEMPLATES.filter((t) => {
@@ -4877,6 +4902,7 @@ export function applyRandomEventChoice(career, messageId, choiceId) {
   const ctx = payload.context ?? {}
   const rng = mulberry32(hashSeed(`${message.id}|${choiceId}|resolve`))
   let resolved = template.resolve(ctx, choiceId, rng)
+  if (career.gameplayEdition === 'streamlined' && template.id === 'playing_time_request' && choiceId === 'promise') resolved = { effects: [], summary: 'Obietnica rotacji zapisana. Ocena po sześciu dostępnych meczach.', summaryEn: 'Rotation promise recorded. Review after six available matches.' }
   const liveTeam = worldTeamById(career.world, career.playerTeamId)
   const targetId = ctx.playerId ?? ctx.starId
   const sponsorPresent = !ctx.sponsorName || getActiveSponsors(liveTeam).some((s) =>
@@ -4919,6 +4945,10 @@ export function applyRandomEventChoice(career, messageId, choiceId) {
   try { effectResult = applyEffects(team, effects, career) }
   catch (error) { return { ok: false, error: error.message, errorEn: error.message } }
   const { bits: effectBits, bitsEn: effectBitsEn } = effectResult
+  if (career.gameplayEdition === 'streamlined' && template.id === 'playing_time_request' && choiceId === 'promise') {
+    const player = findPlayer(team.players, ctx.playerId)
+    if (player) promisePlayingTime(player, { date: career.league.currentDate, role: 'rotation', source: 'event' })
+  }
   const outcomeSummary =
     summary + (effectBits.length ? ` (${effectBits.join(', ')})` : '')
   const outcomeSummaryEn =

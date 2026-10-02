@@ -6,9 +6,10 @@ export const MOTION_RELEASE_MS = 300
 
 /** Pozycja chwytu z ostatniej klatki motionTrace (ciągła symulacja). */
 export function resolveCatchPointFromMotionTrace(motionTrace, receiverId, throwSuccess) {
-  if (!throwSuccess || !motionTrace?.frames?.length || !receiverId) return null
+  if (!throwSuccess || !receiverId) return null
+  const frames = motionTrace?.frames?.length ? motionTrace.frames : motionTrace?.finalFrame ? [motionTrace.finalFrame] : []
+  if (!frames.length) return null
   if (motionTrace.resolution?.pivotPoint) return { ...motionTrace.resolution.pivotPoint }
-  const frames = motionTrace.frames
   for (let i = frames.length - 1; i >= 0; i -= 1) {
     const recv = frames[i].players?.find((p) => p.id === receiverId)
     if (recv) return { x: recv.x, y: recv.y }
@@ -32,9 +33,14 @@ export function resolveTurnoverPointFromMotionTrace(
   motionTrace,
   { receiverId = null, defenderId = null, isBlock = false } = {},
 ) {
-  if (!motionTrace?.frames?.length) return null
+  const frames = motionTrace?.frames?.length ? motionTrace.frames : motionTrace?.finalFrame ? [motionTrace.finalFrame] : []
+  if (!frames.length) return null
   if (motionTrace.resolution?.restartPoint) return { ...motionTrace.resolution.restartPoint, source: 'boundary' }
-  const frames = motionTrace.frames
+  const last = frames[frames.length - 1]
+  if (motionTrace.resolution?.securedInterception) {
+    const catcher = last.players?.find(p => p.id === (motionTrace.resolution.receiverId ?? defenderId))
+    if (catcher) return { x: catcher.x, y: catcher.y, source: 'interception' }
+  }
 
   for (let i = frames.length - 1; i >= 0; i -= 1) {
     const d = frames[i].disc
@@ -43,7 +49,6 @@ export function resolveTurnoverPointFromMotionTrace(
     }
   }
 
-  const last = frames[frames.length - 1]
   if (isBlock && defenderId) {
     const def = last.players?.find((p) => p.id === defenderId)
     if (def) return { x: def.x, y: def.y, source: 'block' }

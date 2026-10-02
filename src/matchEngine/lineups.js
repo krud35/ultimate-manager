@@ -1,3 +1,4 @@
+import { compileStreamlinedTactics } from '../career/streamlinedTactics.js'
 import { MATCH_CONFIG } from './config.js'
 import { getStamina, STAMINA_CONFIG } from './stamina.js'
 import { assignPlayerToLineupSlot } from './lineManager.js'
@@ -54,8 +55,9 @@ function pickDefenseStyle(...candidates) {
 
 function fillSubRolesFromOffenseLine(tactics) {
   const map = { ...normalizePlayerSubRolesMap(tactics?.playerSubRoles) }
-  const oLine = tactics?.lineupWhenOffenseStartPlayerIds ?? tactics?.oLinePlayerIds ?? []
-  const attackStyle = tactics?.oLineAttackStyle ?? tactics?.attackStyle
+  const defensiveStart = tactics?.streamlinedPlan && tactics?._pointStartRole === 'defense'
+  const oLine = defensiveStart ? tactics?.lineupWhenDefenseStartPlayerIds ?? tactics?.dLinePlayerIds ?? [] : tactics?.lineupWhenOffenseStartPlayerIds ?? tactics?.oLinePlayerIds ?? []
+  const attackStyle = (defensiveStart ? tactics?.dLineAttackStyle : tactics?.oLineAttackStyle) ?? tactics?.attackStyle
   const slots = offenseLineSlotsForAttackStyle(attackStyle)
   for (let i = 0; i < slots.length; i += 1) {
     const pid = oLine[i]
@@ -96,6 +98,7 @@ export function normalizeTactics(tactics) {
 }
 
 function computeNormalizedTactics(tactics) {
+  tactics = compileStreamlinedTactics(tactics)
   const offenseStart =
     tactics?.lineupWhenOffenseStartPlayerIds ??
     tactics?.oLinePlayerIds ??

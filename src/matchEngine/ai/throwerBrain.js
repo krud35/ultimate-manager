@@ -1,4 +1,5 @@
 import { stylePassBonus } from './traitBehavior.js'
+import { receiverPriorityPenalty } from './activeCutters.js'
 import { ARRIVAL_CALIBRATION, observationUncertaintyM } from './arrivalMotion.js'
 import { playerTravelSec, selectDiscIntercept } from './discIntercept.js'
 import { sampleContinuedDisc } from './discTrajectory.js'
@@ -640,6 +641,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     setupElapsedMs = 0,
     postCatchReorg = false,
     pullFlow = false,
+    pullCenteringPending = false,
     lastThrowerId = null,
     afterTurnover = false,
     hardStallCount = stallCount,
@@ -656,6 +658,8 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
   const tier = stallTier(stallCount)
   const scanRadius = throwScanRadiusM(thrower)
   const throwerPos = throwerPosition(offenseAgents, thrower)
+  const openingPull = pullFlow && lastThrowerId == null
+    && offenseAgents.some(a => a.player?.id === thrower.id && a.subRole === 'reset_handler')
   if (throwerPos) {
     const blockers = [...offenseAgents, ...defenseAgents]
     const observer = { ...throwerPos, player: thrower }
@@ -709,6 +713,8 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
   const options = []
   for (const agent of offenseAgents) {
     if (agent.player.id === thrower.id) continue
+    if (pullCenteringPending && agent.subRole?.endsWith('_cutter')) { reject(agent, 'awaiting_center_pass'); continue }
+    if (agent.state === CUTTER_STATE.PREPARING_CUT) { reject(agent, 'preparing_pull_cut'); continue }
     // CLEARING = zawodnik zakończył próbę cutu i wraca do formacji. Rzut GŁĘBOKI do
     // kogoś takiego jest nierealny (nie patrzy na dysk, odchodzi od gry) — stąd
     // pierwotne, całkowite wykluczenie. Okazało się jednak zbyt szerokie: pomiar
@@ -781,6 +787,17 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
         ? Math.hypot(catchPt.x - throwerPos.x, catchPt.y - throwerPos.y)
         : situation.discDist
     if (distFromThrower > scanRadius) { reject(agent, 'scan_radius'); continue }
+    if (pullCenteringPending && throwerPos && distFromThrower > 1) {
+      const laneX = catchPt.x - throwerPos.x, laneY = catchPt.y - throwerPos.y
+      const blocked = offenseAgents.some(other => {
+        if (other.player.id === thrower.id || other.player.id === agent.player.id) return false
+        const dx = other.x - throwerPos.x, dy = other.y - throwerPos.y
+        const along = (dx * laneX + dy * laneY) / distFromThrower
+        const across = Math.abs(dx * -laneY + dy * laneX) / distFromThrower
+        return along > .5 && along < distFromThrower - .5 && across < 1.8
+      })
+      if (blocked) { reject(agent, 'centering_lane_occupied'); continue }
+    }
 
     const isDump = agent.isDump === true
     const isContinuationCut =
@@ -788,13 +805,15 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
       agent.state === CUTTER_STATE.INITIATING_CUT ||
       agent.continuationCut === true
     const speed = Math.hypot(agent.vx ?? 0, agent.vy ?? 0)
-    if ((!isDump && agent.isActive === false) ||
-      (!isContinuationCut && Math.abs(catchPt.y - (throwerPos?.y ?? disc.y)) > 16)) {
+    const rolePenalty = receiverPriorityPenalty(agent, situation, hardStallCount)
+    const passiveOpen = !isDump && agent.isActive === false && rolePenalty != null
+    if (rolePenalty == null ||
+      (!passiveOpen && !isContinuationCut && Math.abs(catchPt.y - (throwerPos?.y ?? disc.y)) > 16)) {
       reject(agent, 'inactive_or_crossfield_stationary')
       continue
     }
 
-    if (continuationWindow && !isDump && !isContinuationCut && speed < 0.35) {
+    if (continuationWindow && !isDump && !isContinuationCut && !passiveOpen && speed < 0.35) {
       reject(agent, 'stationary_continuation')
       continue
     }
@@ -860,7 +879,11 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     }
 
     let score = situation.throwWindowScore
-    if (pullFlow && isDump && distFromThrower <= 18 && forwardProgress >= -1) {
+    const centeringPriority = openingPull && agent.subRole === 'primary_handler'
+      && distFromThrower <= 22 && forwardProgress >= -1
+      && situation.separation >= 4 && situation.throwWindowScore >= 60 ? 35 : 0
+    score += centeringPriority
+    if (pullFlow && isDump && distFromThrower <= 22 && forwardProgress >= -1) {
       const centering = Math.abs((throwerPos?.y ?? disc.y) - fieldCenterY()) - Math.abs(catchPt.y - fieldCenterY())
       score += 25 + Math.min(12, Math.max(0, forwardProgress)) + Math.max(0, centering)
     }
@@ -1070,6 +1093,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     // Ocena jest subiektywna: to, jak trafnie zawodnik porówna opcje, zależy od
     // decisionMaking i composure. Słabszy myli dobre podanie z ryzykownym.
     score += (rng.float() * 2 - 1) * decisionNoiseAmplitude(thrower, stallCount)
+    score -= rolePenalty
 
     options.push({
       agent,
@@ -1080,6 +1104,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
       player: agent.player,
       score,
       salience:
+        -rolePenalty + centeringPriority +
         (isDump ? 30 : 0) +
         (isContinuationCut ? 25 : 0) +
         Math.max(0, 40 - distFromThrower) +

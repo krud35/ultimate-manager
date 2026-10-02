@@ -39,6 +39,11 @@ export function ensureClubStaff(team, year = team.financeSeasonYear ?? 2025) {
       member.nameGenerationVersion = 2
     }
   }
+  if (team.streamlinedClub?.enabled) {
+    for (const [role, primary] of [['youthCoach', 'assistantCoach'], ['analyst', 'assistantCoach'], ['sportingDirector', 'chiefScout']]) {
+      if (!team.staffMembers[role]) team.staff[role] = team.staffMembers[primary]?.level ?? 0
+    }
+  }
   return team.staffMembers
 }
 export function staffPayroll(team) {
@@ -71,7 +76,8 @@ export function hireClubStaff(team, role, candidateId, date, years=1) {
   const members=ensureClubStaff(team), candidate=staffMarket(team,role,date).find(p=>p.id===candidateId)
   if(!candidate?.interested || members[role]?.id===candidateId)return {ok:false,error:'unavailable'}
   const cost=candidate.weeklyWage*4+staffReleaseCost(members[role],date)
-  if(getTransferBudget(team)<cost)return {ok:false,error:'insufficient_funds'}
+  const extraReserve = team.streamlinedClub?.economyActive ? Math.max(0, candidate.weeklyWage - (members[role]?.weeklyWage ?? 0)) * 8 : 0
+  if(getTransferBudget(team)<cost + extraReserve)return {ok:false,error:'insufficient_funds'}
   postClubCash(team,-cost,'staff_recruitment',date)
   const previousWage=members[role]?.weeklyWage??0
   members[role]={...candidate,expiresOn:extendDate(date,years)}
@@ -108,11 +114,13 @@ export function processStaffContracts(team,date,{ai=false}={}) {
   for(const [role,p] of Object.entries(ensureClubStaff(team))) {
     if(!p)continue
     const days=Math.ceil((Date.parse(p.expiresOn)-Date.parse(date))/86400000)
-    if(ai && days<=30 && ensureClubEconomy(team).cash>staffPayroll(team)*12) { renewClubStaff(team,role,date);continue }
+    const streamlined = team.streamlinedClub?.enabled
+    const approved = streamlined && ['assistantCoach', 'chiefScout', 'physio'].includes(role) && Number.isFinite(team.streamlinedClub.staffRenewalCap) && staffPayroll(team) <= team.streamlinedClub.staffRenewalCap && getTransferBudget(team) >= 0
+    if(days<=30 && (approved || (!streamlined && ai && ensureClubEconomy(team).cash>staffPayroll(team)*12))) { renewClubStaff(team,role,date);continue }
     if(days<=0) {updatePayroll(team,p.weeklyWage,0);team.staffMembers[role]=null;team.staff[role]=0;notices.push({role,name:p.name,expired:true})}
     else if(days<=30 && p.remindedExpiry!==p.expiresOn) {p.remindedExpiry=p.expiresOn;notices.push({role,name:p.name,expired:false})}
   }
-  if(ai && !team.staff?.assistantCoach && ensureClubEconomy(team).cash>100_000) {
+  if(ai && !team.staffMembers?.assistantCoach && ensureClubEconomy(team).cash>100_000) {
     const candidate=staffMarket(team,'assistantCoach',date)[0]
     hireClubStaff(team,'assistantCoach',candidate.id,date)
     if(team.teamTraining?.schedule)team.teamTraining.schedule.delegated=true

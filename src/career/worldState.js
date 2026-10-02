@@ -1,4 +1,5 @@
 import { initializeClubLiquidity } from './clubEconomy.js'
+import { prepareCareerEdition } from './gameplayEdition.js'
 import { ensureWorldManagers } from './managerProfiles.js'
 import { ensureClubManagement } from './clubManagement.js'
 /**
@@ -383,7 +384,7 @@ export function rehydrateCareerWorld(career) {
     league.competitionsComplete = true
   }
 
-  return {
+  return prepareCareerEdition({
     ...career,
     world,
     league,
@@ -446,7 +447,7 @@ export function rehydrateCareerWorld(career) {
             transferRumors: [],
             transferNewsSeeded: false,
           },
-  }
+  })
 }
 
 /** Do zapisu: składy tylko w `world` (liga i otherLeagues nie dublują teamsById —

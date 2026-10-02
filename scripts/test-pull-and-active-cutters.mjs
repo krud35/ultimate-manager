@@ -29,6 +29,7 @@ for(let i=0;i<40;i++) {
 assert.ok(waiting.structureSlot)
 assert.equal(getSubStat({throwing:{huck:80,backhand:70}},'throwing','pulling'),75)
 let outcomes=new Set(), sum={low:0,high:0}, hangs={low:0,high:0}
+const endzoneCatches=new Set(), endzonePickups=new Set()
 for(let seed=1;seed<=30;seed++)for(const side of ['home','away'])for(const level of ['low','high']){
  const offenseLineup=structuredClone(demoHomeTeam.players.slice(0,7))
  const defenseLineup=structuredClone(demoAwayTeam.players.slice(0,7))
@@ -40,11 +41,22 @@ for(let seed=1;seed<=30;seed++)for(const side of ['home','away'])for(const level
  assert.equal(new Set(first.players.map(p=>p.x)).size,2)
  assert.equal(last.disc.state,'HELD')
  assert.ok(pull.motionTrace.totalMs<22000,'pull must finish without timeout')
- if(pull.outcome==='caught' && Math.abs(pull.restart.x - (side==='home'?18:82)) > .6) {
-   assert.equal(pull.motionTrace.totalMs,pull.catchMs,'in-field catch must immediately hand off to play')
+ if(pull.outcome==='caught') {
+   assert.equal(pull.motionTrace.totalMs,pull.catchMs,'every catch must hand off immediately, including in the defending end zone')
+   const caught=pull.motionTrace.frames.find(f=>f.ms===pull.catchMs)
+   const receiver=caught.players.find(p=>p.id===pull.receiverId)
+   assert.deepEqual(pull.restart,{x:receiver.x,y:receiver.y})
+   assert.equal(receiver.vx,0,'receiver must establish a stationary pivot')
+   assert.equal(receiver.vy,0)
+   if(side==='home'?receiver.x<18:receiver.x>82) endzoneCatches.add(side)
+ }
+ if(pull.outcome==='ground'&&!pull.roller) {
+   assert.deepEqual(pull.restart,pull.landing,'grounded in-bounds pull stays where it landed, including in the defending end zone')
+   if(side==='home'?pull.landing.x<18:pull.landing.x>82) endzonePickups.add(side)
  }
  if(pull.outcome==='roll_out') {
-   assert.deepEqual(pull.restart,pull.exitPoint)
+   const ownLine=side==='home'?18:82
+   assert.deepEqual(pull.restart,{x:side==='home'?Math.max(ownLine,pull.exitPoint.x):Math.min(ownLine,pull.exitPoint.x),y:pull.exitPoint.y})
    assert.ok(pull.exitPoint.y===0||pull.exitPoint.y===37||pull.exitPoint.x===0||pull.exitPoint.x===100)
    assert.ok(pull.motionTrace.frames.some(f=>f.disc.state==='ON_GROUND'&&f.disc.x>0&&f.disc.x<100&&f.disc.y>0&&f.disc.y<37))
  }
@@ -53,9 +65,27 @@ for(let seed=1;seed<=30;seed++)for(const side of ['home','away'])for(const level
 }
 assert.ok(sum.high>sum.low)
 assert.ok(['brick','caught','ground','roll_out'].every(k=>outcomes.has(k)))
+// A slow receiver cannot reach this deep, crosswind pull before it lands.
+for(const side of ['home','away']) {
+ const offenseLineup=structuredClone(demoHomeTeam.players.slice(0,7))
+ const defenseLineup=structuredClone(demoAwayTeam.players.slice(0,7))
+ for(const p of offenseLineup) {p.currentStamina=0;p.skills.physical.speed=1}
+ for(const p of defenseLineup) p.skills.throwing.pulling=70
+ const pull=simulatePull({offenseLineup,defenseLineup,possessionTeam:side,
+   offenseTactics:{playerSubRoles:{[offenseLineup[0].id]:'reset_handler',[offenseLineup[1].id]:'primary_handler'}},
+   pullType:'hanging',rng:{float:()=>.99},wind:{speedMph:40,directionDeg:90}})
+ assert.equal(pull.outcome,'ground')
+ assert.deepEqual(pull.restart,pull.landing)
+ assert.ok(side==='home'?pull.restart.x<18:pull.restart.x>82)
+ const last=pull.motionTrace.frames.at(-1)
+ assert.deepEqual({x:last.disc.x,y:last.disc.y},pull.landing)
+ endzonePickups.add(side)
+}
+assert.equal(endzoneCatches.size,2,'cover catches in both defending end zones')
+assert.equal(endzonePickups.size,2,'cover ground pickups in both defending end zones')
 console.log('Pull outcomes, mirrored sides, skill influence, migration and cutter capacity OK:',[...outcomes])
-for(const simulate of [simulatePointFast,simulatePoint]){
- const result=simulate({homeTeam:structuredClone(demoHomeTeam),awayTeam:structuredClone(demoAwayTeam),pullTeam:'away',pointIndex:2,rng:createRng(731)})
+for(const simulate of [simulatePointFast,simulatePoint])for(const pointIndex of [1,2]){
+ const result=simulate({homeTeam:structuredClone(demoHomeTeam),awayTeam:structuredClone(demoAwayTeam),pullTeam:'away',pointIndex,rng:createRng(731)})
  const pull=result.events.find(e=>e.type==='pull')
  assert.ok(pull.receiverId);assert.ok(pull.outcome)
  const firstThrow=result.events.find(e=>e.type==='throw_attempt')
@@ -77,6 +107,15 @@ for(const simulate of [simulatePointFast,simulatePoint]){
        renderedFrameToInitialPlayerPositions(sampleFieldActionClip(clip,clip.totalDurationMs)))
      assert.equal(throwClip.repositionMs,0,'no synthetic setup between pull catch and live throw')
      const start=firstThrow.motionTrace.frames[0]
+     for(const frame of firstThrow.motionTrace.frames) {
+       if(frame.ms>=firstThrow.motionTrace.throwMs) break
+       // The disc is drawn in the hand, including the throwing motion, not at the pivot foot.
+       assert.ok(Math.hypot(frame.disc.x-pull.restart.x,frame.disc.y-pull.restart.y)<1.5,
+         'held disc must remain within reach of the pull pivot until the first pass')
+       const holder=frame.players.find(p=>p.id===pull.receiverId)
+       assert.ok(Math.hypot(holder.x-pull.restart.x,holder.y-pull.restart.y)<.01,
+         'pull receiver must not carry the disc toward the goal line')
+     }
      for(const player of pull.motionTrace.frames.at(-1).players) {
        const next=start.players.find(p=>p.id===player.id)
        assert.ok(next)

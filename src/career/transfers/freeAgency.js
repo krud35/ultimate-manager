@@ -174,6 +174,7 @@ export function renewPlayerContract(career, opts) {
     league: career.league ?? null,
     weeklyWage: opts.weeklyWage,
     years: opts.years,
+    squadRole: opts.squadRole,
     bonuses: opts.bonuses ?? [],
     promises: opts.promises ?? [],
     seed: opts.seed ?? null,
@@ -198,6 +199,13 @@ export function renewPlayerContract(career, opts) {
     bonuses: evaluation.contractTerms.bonuses ?? opts.bonuses ?? [],
     promises: evaluation.contractTerms.promises ?? opts.promises ?? [],
     signedDate: career.league?.currentDate ?? null,
+    ...(team.streamlinedClub?.enabled ? {
+      squadRole: opts.squadRole ?? previousContract.squadRole ?? 'rotation',
+      bonuses: (previousContract.bonuses ?? []).map(b => ({ ...b, expiresOn: b.expiresOn ?? previousContract.endDate })),
+      promises: (previousContract.promises ?? []).map(p => ({ ...p, expiresOn: p.expiresOn ?? previousContract.endDate })),
+      bonusesPaidSeasons: previousContract.bonusesPaidSeasons,
+      ovrCheckpoint: previousContract.ovrCheckpoint,
+    } : {}),
   })
   if (!signed.ok) {
     player.contract = previousContract

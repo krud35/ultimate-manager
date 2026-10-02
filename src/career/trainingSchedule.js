@@ -1,6 +1,7 @@
 import { addDays, formatISODate, parseISODate } from '../league/seasonCalendar.js'
 import { trainingParticipation, ensurePlayerWorkload, recoverPlayerDay, addPlayerLoad } from '../models/playerWorkload.js'
 import { medicalRecoveryMult } from './clubFacilities.js'
+import { WEEK_GOALS } from './streamlinedTraining.js'
 
 export const SESSION_DEFS = {
   rest: { pl: 'Wolne', en: 'Rest', load: 0, focuses: [], intensity: 'light' },
@@ -59,6 +60,19 @@ export function resolveTrainingDay(team, date, league = null) {
   const on = offset => fixtures.some(f => f.date === trainingDateAdd(date, offset))
   if (on(0)) return [{ id: `schedule-${date}-match`, date, type: 'match', slot: 0, group: 'all', source: 'schedule', focuses: [], intensity: 'light' }]
   if (s.legacy) return null
+  if (s.streamlined) {
+    const settings = s.streamlined
+    const averageFatigue = (team.players ?? []).reduce((sum, p) => sum + (p.developmentFatigue ?? 0), 0) / Math.max(1, team.players?.length ?? 0)
+    const congested = new Set(fixtures.filter(f => f.date >= weekStart && f.date <= trainingDateAdd(weekStart, 6)).map(f => f.date)).size >= 2
+    let types = [...(WEEK_GOALS[settings.goal] ?? WEEK_GOALS.tactical).days[weekday], 'rest']
+    let reason = ''
+    if (averageFatigue > 40) { types = ['recovery', 'video', 'rest']; reason = 'overload' }
+    else if (settings.intensity === 'light' || congested) types[1] = 'rest'
+    else if (settings.intensity === 'strong' && settings.goal !== 'recovery' && weekday < 5) types[2] = 'individual'
+    if (on(-1)) { types = ['recovery','rest','rest']; reason = 'postMatch' }
+    if (on(1)) { types = ['matchPrep','rest','rest']; reason = 'preMatch' }
+    return types.map((type, slot) => ({ id: `schedule-${date}-${slot}`, date, slot, type, group: settings.goal === 'youth' && !reason && slot === 1 ? 'youth' : 'all', reason, source: 'schedule', ...SESSION_DEFS[type] }))
+  }
   let template = s.weeks[weekStart] ?? s.template
   if (s.delegated && team.staff?.assistantCoach > 0) {
     const count = new Set(fixtures.filter(f => f.date >= weekStart && f.date <= trainingDateAdd(weekStart, 6)).map(f => f.date)).size

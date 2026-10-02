@@ -1,8 +1,21 @@
 import { ATTACK_STYLES } from './tacticsModifiers.js'
 import { MATCH_CONFIG } from './config.js'
-import { defaultSubRoleForSlot } from './playerSubRoles.js'
+import { defaultSubRoleForSlot, resolvePlayerSubRole } from './playerSubRoles.js'
 
 const LINE_SIZE = MATCH_CONFIG.lineupSize
+
+/** Runtime copy: saved preferences survive a different slot on the other line. */
+export function tacticsWithLineupSubRoles(tactics, lineup, attackStyle) {
+  const slots = offenseLineSlotsForAttackStyle(attackStyle)
+  const roles = { ...tactics?.playerSubRoles }
+  let changed = false
+  for (let i = 0; i < lineup.length; i++) {
+    const id = lineup[i].id
+    const role = resolvePlayerSubRole(tactics, id, slots[i])
+    if (role && roles[id] !== role) { roles[id] = role; changed = true }
+  }
+  return changed ? { ...tactics, playerSubRoles: roles } : tactics
+}
 
 /**
  * Ile handlerów w siódemce przy danym stylu ataku (reszta = cutters).

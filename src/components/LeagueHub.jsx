@@ -1,4 +1,5 @@
 import { LeagueStandingsView } from './LeagueStandingsView'
+import StreamlinedStoriesPanel from './StreamlinedStoriesPanel.jsx'
 import SeasonRecapPanel, {
   SeasonSummaryPanel,
   shouldShowSeasonSummary,
@@ -35,6 +36,9 @@ import { displaySeasonLabel, pickCopy, pickLabel, UI_LANG } from '../ui/locale'
 import { nationalTeamFixturesOnDate } from '../career/nationalTeamSeason.js'
 import { academyCountryLabel } from '../data/academyScoutGeography.js'
 import { internationalCompetitionStrings } from '../ui/strings/internationalCompetition.js'
+import { isStreamlinedCareer } from '../career/gameplayEdition.js'
+import { requiresCareerDecision } from '../career/streamlinedDecisions.js'
+import { readiness, WEEK_GOALS, WEEK_INTENSITIES } from '../career/streamlinedTraining.js'
 
 function formatDayLabel(iso, lang) {
   if (!iso) return '—'
@@ -125,6 +129,16 @@ export default function LeagueHub({
         <div><p className="um-eyebrow">{formatDayLabel(league.currentDate, lang)}</p><h1 className="um-page-title">{seasonDone ? (lang === 'en' ? 'SEASON COMPLETE.' : 'SEZON ZAKOŃCZONY.') : (lang === 'en' ? 'EVERY POINT COUNTS.' : 'KAŻDY PUNKT SIĘ LICZY.')}</h1><p className="text-sm text-ufa-muted">{displaySeasonLabel(league.seasonLabel, lang)} · {phaseLabel} · {t.leagueRound(league.currentRound, league.totalRounds)}</p></div>
 
       </header>
+      {isStreamlinedCareer(career) && <section className="um-section">
+        <p className="um-eyebrow">{lang === 'en' ? 'Streamlined · Team briefing' : 'Uproszczona · Odprawa zespołu'}</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-3">
+          <button className="text-left" onClick={() => onNavigate('roster')}><strong>{lang === 'en' ? 'Ready to play' : 'Gotowi do gry'}: {(playerTeam?.players ?? []).filter(p => readiness(p).id === 'ready').length}/{playerTeam?.players?.length ?? 0}</strong><p className="text-sm text-ufa-muted">{lang === 'en' ? 'Check injuries, rest and match rhythm →' : 'Sprawdź urazy, odpoczynek i rytm meczowy →'}</p></button>
+          <button className="text-left" onClick={() => onNavigate('training')}><strong>{WEEK_GOALS[playerTeam?.teamTraining?.schedule?.streamlined?.goal]?.[lang === 'en' ? 'en' : 'pl']}</strong><p className="text-sm text-ufa-muted">{WEEK_INTENSITIES[playerTeam?.teamTraining?.schedule?.streamlined?.intensity]?.[lang === 'en' ? 'en' : 'pl']} · {lang === 'en' ? 'Change weekly plan →' : 'Zmień plan tygodnia →'}</p></button>
+          <button className="text-left" onClick={() => onNavigate('inbox')}><strong>{lang === 'en' ? 'Decisions' : 'Decyzje'}: {(career.inbox ?? []).filter(requiresCareerDecision).length}</strong><p className="text-sm text-ufa-muted">{lang === 'en' ? 'Reports arrive without stopping the calendar →' : 'Raporty trafiają do skrzynki bez zatrzymywania czasu →'}</p></button>
+        </div>
+        {(career.pendingEventFollowUps ?? []).some(f => f.reviewRequired) && <p className="mt-3 text-sm text-ufa-gold">{lang === 'en' ? 'A story continuation is waiting for compatible data. Its state has been preserved in this save.' : 'Kontynuacja wydarzenia oczekuje na zgodne dane. Jej stan został zachowany w zapisie.'}</p>}
+      </section>}
+      {isStreamlinedCareer(career) && <StreamlinedStoriesPanel career={career} onNavigate={onNavigate} />}
       {!seasonDone && featuredFixture && <section className="um-match-feature">
         <p className="um-eyebrow">{t.yourMatch} · {featuredFixture.competition === 'cup' ? t.competitionCup : t.competitionLeague} · {featuredFixture.date} · {venueMarkerForTeam(featuredFixture, league.playerTeamId)}</p>
         <div className="um-match-teams">

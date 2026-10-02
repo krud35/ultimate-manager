@@ -405,6 +405,10 @@ function computeLinePlayerInstructions(tactics) {
  */
 export function instructionsForPlayer(tactics, playerId, lineRole = null) {
   if (playerId == null) return []
+  if (tactics?.streamlinedPlan) {
+    const tag = tactics.streamlinedPlan.exceptions?.[String(playerId)]
+    return tag && PLAYER_INSTRUCTION_DEFS[tag] ? [tag] : []
+  }
   const role = resolveLineRole(tactics, lineRole)
   const { oLinePlayerInstructions, dLinePlayerInstructions } =
     normalizeLinePlayerInstructions(tactics)

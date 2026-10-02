@@ -308,19 +308,19 @@ export function calculateTickStaminaCost(
   isChangingDirection,
   isDefense,
   enduranceStat,
+  drainMultiplier = drainMultiplierFromEndurance(enduranceStat ?? 50),
 ) {
+  void playerState // Retained for callers; tick cost does not depend on current energy.
   const v = Math.max(0, Number(velocity) || 0)
   let cost = v * v * TICK_V2_SCALE
   if (isChangingDirection) cost += PLANT_CUT_STAMINA_COST
   if (isDefense) cost *= DEFENSE_STAMINA_MULT
-  const endurance = enduranceStat ?? 50
-  cost *= drainMultiplierFromEndurance(endurance)
+  cost *= drainMultiplier
   return cost
 }
 
-export function isPlantAndCut(prevVx, prevVy, vx, vy) {
+export function isPlantAndCut(prevVx, prevVy, vx, vy, speed = Math.hypot(vx, vy)) {
   const prevSpeed = Math.hypot(prevVx, prevVy)
-  const speed = Math.hypot(vx, vy)
   if (speed < 0.35 || prevSpeed < 0.35) return false
   const dot = (prevVx * vx + prevVy * vy) / (prevSpeed * speed)
   return dot < 0.55
@@ -355,16 +355,20 @@ const STAND_STILL_MPS = 0.35
  *  zakotwiczenie po chwycie) nie mogą być liczone jako wysiłek. */
 const MAX_HUMAN_SPEED_MPS = 11
 
-export function tickStaminaRecovery(velocity, isDefense, enduranceStat, dtSec) {
+const RECOVERY_BASE = [false, true].map(isDefense => calculateTickStaminaCost(null, 6.2, false, isDefense, 50))
+
+/** Immutable physiology during one action/trace. Energy and sprint totals are
+ * deliberately excluded: live movement and post-action accounting own them. */
+export function prepareTickStamina(player) {
+  const endurance = playerEndurance(player)
+  return { endurance, drainMultiplier: drainMultiplierFromEndurance(endurance),
+    enduranceBoost: 0.7 + (endurance / 100) * 0.7, ceiling: currentMatchStamina(player) }
+}
+
+export function tickStaminaRecovery(velocity, isDefense, enduranceStat, dtSec,
+  enduranceBoost = 0.7 + (enduranceStat / 100) * 0.7) {
   // Baza regeneracji niezależna od endurance (inaczej elita regenerowałaby wolniej).
-  const baseRef = calculateTickStaminaCost(
-    { currentStamina: 70 },
-    6.2,
-    false,
-    isDefense,
-    50,
-  )
-  const enduranceBoost = 0.7 + (enduranceStat / 100) * 0.7
+  const baseRef = RECOVERY_BASE[isDefense ? 1 : 0]
   // Brak ruchu / trucht: regeneracja obniżona o 40% względem bazowej skali.
   const idleJogScale = 0.6
   if (velocity >= SPRINT_SPEED_MPS) return 0
@@ -387,31 +391,34 @@ export function applyTickStaminaDrain(
   x,
   y,
   dtSec,
+  parameters = null,
 ) {
   if (!staminaMaps || !player?.id || !dtSec) return player?.currentStamina ?? STAMINA_CONFIG.default
   const prev = kinematics[player.id] ?? { x, y, vx: 0, vy: 0 }
   const vx = (x - prev.x) / dtSec
   const vy = (y - prev.y) / dtSec
-  const velocity = Math.min(Math.hypot(vx, vy), MAX_HUMAN_SPEED_MPS)
-  const isChangingDirection = isPlantAndCut(prev.vx, prev.vy, vx, vy)
+  const movementSpeed = Math.hypot(vx, vy)
+  const velocity = Math.min(movementSpeed, MAX_HUMAN_SPEED_MPS)
+  const isChangingDirection = isPlantAndCut(prev.vx, prev.vy, vx, vy, movementSpeed)
   const isDefense = teamId !== possessionTeam
   const map = staminaMapForTeam(staminaMaps, teamId)
   const currentStamina = getStamina(map, player.id)
-  const endurance = playerEndurance(player)
+  const endurance = parameters?.endurance ?? playerEndurance(player)
   // Skala kosztu jest odniesiona do 200 ms — tak samo jak regeneracja poniżej.
   const cost =
     calculateTickStaminaCost(
-      { currentStamina },
+      null,
       velocity,
       isChangingDirection,
       isDefense,
       endurance,
+      parameters?.drainMultiplier,
     ) *
     (dtSec / 0.2)
-  const recovery = tickStaminaRecovery(velocity, isDefense, endurance, dtSec)
+  const recovery = tickStaminaRecovery(velocity, isDefense, endurance, dtSec, parameters?.enduranceBoost)
   // Regeneracja nie może podnieść energii powyżej pułapu ze staminy meczowej —
   // przeciążony w tygodniu/meczach zawodnik nie odzyska pełnej dyspozycji "magicznie".
-  const ceiling = currentMatchStamina(player)
+  const ceiling = parameters?.ceiling ?? currentMatchStamina(player)
   const next = clampStamina(Math.min(currentStamina - cost + recovery, ceiling))
   map[player.id] = next
   player.currentStamina = next
@@ -451,6 +458,7 @@ export function applyStaminaFromMotionTrace(
 
   const kinematics = {}
   const frames = [...motionTrace.frames].sort((a, b) => a.ms - b.ms)
+  const parameters = new Map(Object.values(playersById).map(player => [player, prepareTickStamina(player)]))
 
   for (let i = 1; i < frames.length; i += 1) {
     const prevFrame = frames[i - 1]
@@ -471,6 +479,7 @@ export function applyStaminaFromMotionTrace(
         pl.x,
         pl.y,
         dtSec,
+        parameters.get(player),
       )
     }
   }
@@ -498,11 +507,12 @@ export function syncLineupStaminaFromMaps(staminaMaps, lineup, teamId) {
 }
 
 /** Drain tickowy dla wszystkich agentów symulacji (setup / lot). */
-export function drainAgentsTickStamina(staminaMaps, agents, teamId, possessionTeam, kinematics, dtSec) {
+export function drainAgentsTickStamina(staminaMaps, agents, teamId, possessionTeam, kinematics, dtSec, parameters = null) {
   if (!staminaMaps || !agents?.length) return
   for (const agent of agents) {
     const player = agent.player ?? agent
     if (!player?.id) continue
+    if (parameters && !parameters.has(player)) parameters.set(player, prepareTickStamina(player))
     applyTickStaminaDrain(
       staminaMaps,
       player,
@@ -512,6 +522,7 @@ export function drainAgentsTickStamina(staminaMaps, agents, teamId, possessionTe
       agent.x,
       agent.y,
       dtSec,
+      parameters?.get(player),
     )
     agent.currentStamina = player.currentStamina
   }
