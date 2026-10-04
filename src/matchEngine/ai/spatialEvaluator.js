@@ -1,6 +1,6 @@
-import { clampFieldX, clampFieldY, fieldCenterY, attackDirectionX } from '../fieldDimensions.js'
+import { clampFieldX, clampFieldY, attackDirectionX } from '../fieldDimensions.js'
 import { FORCE_SIDES } from '../tacticsModifiers.js'
-import { forceMarkLayoutSide, normalizeForceMark } from '../throwTechnique.js'
+import { isForceOpenSide } from '../throwTechnique.js'
 import { isCloggingThrowLane } from './offenseReorganization.js'
 import { subStat } from './statFormulas.js'
 import { playerMatchMods } from '../playerModsRegistry.js'
@@ -84,20 +84,8 @@ export function evaluatePlayerSituation(player, ctx) {
   if (!Number.isFinite(minDefDist)) minDefDist = 12
   const separation = minDefDist
 
-  const forceMark = normalizeForceMark(forceSide)
-  const layout = forceMarkLayoutSide(forceMark, throwerPos?.y ?? y)
-  const cy = fieldCenterY()
-  let isOpenSide = true
-  if (forceMark === FORCE_SIDES.FORCE_STRAIGHT) {
-    // Straight-up: obie strony „otwarte” na short — deep trudniejszy.
-    isOpenSide = true
-  } else if (layout === 'middle') {
-    isOpenSide = Math.abs(y - cy) >= 2.2
-  } else if (layout === 'home') {
-    isOpenSide = y >= cy + 0.8
-  } else if (layout === 'away') {
-    isOpenSide = y <= cy - 0.8
-  }
+  const attackSign = attackDirectionX(possessionTeam)
+  const isOpenSide = isForceOpenSide(forceSide, throwerPos?.y ?? disc?.y ?? y, y, attackSign)
 
   const inThrowLane = isCloggingThrowLane(x, y, disc, throwerPos, possessionTeam)
 
@@ -114,7 +102,6 @@ export function evaluatePlayerSituation(player, ctx) {
   }
 
   const discDist = disc ? dist(x, y, disc.x, disc.y) : 15
-  const attackSign = attackDirectionX(possessionTeam)
   const aheadOfDisc = (x - disc.x) * attackSign
   const angleQuality = aheadOfDisc > -2 ? 1 : 0.55
   const sepScore = Math.min(1, separation / 10)

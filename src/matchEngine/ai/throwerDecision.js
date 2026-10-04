@@ -1,6 +1,28 @@
 import { attackDirectionX, FIELD_DIMENSIONS } from '../fieldDimensions.js'
 import { subStat } from './statFormulas.js'
 import { HUCK_MIN_M } from '../matchStats.js'
+import { THROW_TYPE } from '../throwTypes.js'
+
+/** Instruction preferences use the same 0..100 window points as spatial evaluation. */
+export function applyRiskInstructionScore(score, situation, throwType, isDump, mods) {
+  const sep = situation.separation ?? 0
+  const window = situation.throwWindowScore ?? 0
+  const safe = mods.safeOptionBias ?? 0
+  const creative = mods.creativeRiskBias ?? 0
+  if (safe > 0) {
+    if (sep < 2.8) score -= safe * 28
+    else if (sep >= 4.5) score += safe * 12
+    if (window < 35) score -= safe * 18
+    if (isDump) score += safe * 10
+  }
+  if (creative > 0) {
+    if (!situation.isOpenSide) score += creative * 16
+    if (throwType === THROW_TYPE.OVER_THE_TOP) score += creative * 22
+    if (sep >= 2.2 && sep < 4.2) score += creative * 14
+    if (window >= 25 && window < 55) score += creative * 10
+  }
+  return score
+}
 
 /** Postęp w stronę strefy punktowej (metry), dodatni = do przodu. */
 export function forwardProgressMeters(fromX, toX, possessionTeam) {

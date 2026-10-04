@@ -150,8 +150,8 @@ const MAX_CONCURRENT_CUTTERS = 2
 const MIN_CUT_START_DIST_M = 7
 const DEG = Math.PI / 180
 
-function layoutSideFromForce(forceSide) {
-  return forceMarkLayoutSide(normalizeForceMark(forceSide))
+function layoutSideFromForce(forceSide, throwerY, attackSign) {
+  return forceMarkLayoutSide(normalizeForceMark(forceSide), throwerY, attackSign)
 }
 
 function vectorAtAngle(attackSign, angleDeg, length) {
@@ -439,7 +439,7 @@ function pickCutTarget(
 
 /** Stara ścieżka „rodzaj cutu z reguł stylu" — już tylko awaryjnie, gdy brak pozycji. */
 function legacyStyleCutTarget(agent, disc, attackSign, situation, rng, forceSide, attackStyle, stackIndex, traitMods) {
-  const side = layoutSideFromForce(forceSide)
+  const side = layoutSideFromForce(forceSide, disc?.y, attackSign)
   const cy = fieldCenterY()
   const openSpace = estimateOpenSpaceTarget(agent, disc, attackSign, situation, rng)
   let kind = preferredCutKind(attackStyle, stackIndex, rng)
@@ -682,6 +682,7 @@ export function tickCutterBrain(agent, tickCtx) {
   if (isThrower) {
     return { ...agent, state: CUTTER_STATE.WAITING, vx: 0, vy: 0 }
   }
+  const outsideField = agent.x !== clampFieldX(agent.x) || agent.y !== clampFieldY(agent.y)
 
   const baseMods = mergeTraitAndCoachMods(agent.player ?? agent, offenseTactics, 'offense')
   const coachMods = { ...baseMods, postCatchOfferBonus: (baseMods.postCatchOfferBonus ?? 0)
@@ -774,10 +775,11 @@ export function tickCutterBrain(agent, tickCtx) {
   }
   // Reserve a stable formation slot before any offer or reorganization branch.
   if (agent.isActive === false && !isDump && !flightIsForMe) {
-    const slot = agent.structureFlow === pullFlow ? agent.structureSlot ?? structuralTarget() : structuralTarget()
+    const requestedSlot = agent.structureFlow === pullFlow ? agent.structureSlot ?? structuralTarget() : structuralTarget()
+    const slot = clampAgentPosition(requestedSlot.x, requestedSlot.y)
     const distance = Math.hypot(slot.x - agent.x, slot.y - agent.y)
     const moved = integrateAgentMotion(agent, slot.x, slot.y,
-      distance < 0.6 ? 0 : repositionSpeedMps(agent.player ?? agent, distance), dtSec, true, 'offense')
+      distance < 0.6 && !outsideField ? 0 : repositionSpeedMps(agent.player ?? agent, distance), dtSec, true, 'offense')
     return { ...agent, ...moved, structureSlot: slot, structureFlow: pullFlow, state: CUTTER_STATE.WAITING,
       stateMs: 0, targetX: slot.x, targetY: slot.y, continuationCut: false, forceClearout: false }
   }
@@ -799,8 +801,8 @@ export function tickCutterBrain(agent, tickCtx) {
     ((activeCutters < maxCutters || priorityClaim) && distToDisc >= MIN_CUT_START_DIST_M)
 
   let state = agent.state ?? CUTTER_STATE.WAITING
-  let targetX = agent.targetX ?? agent.x
-  let targetY = agent.targetY ?? agent.y
+  let targetX = clampFieldX(agent.targetX ?? agent.x)
+  let targetY = clampFieldY(agent.targetY ?? agent.y)
   let stateMs = (agent.stateMs ?? 0) + dtSec * 1000
 
   // Reorganizacja po chwycie trwa tylko chwilę — potem stack musi wrócić do cięcia,
@@ -854,7 +856,10 @@ export function tickCutterBrain(agent, tickCtx) {
       agent.continuationCut = true
     } else if (role === 'reset') {
       state = CUTTER_STATE.CLEARING
-      const tgt = pickResetTarget(
+      // In HEX a support/reset offer keeps its ring vertex. The generic reset
+      // search only contains behind-disc cells and otherwise erases that shape
+      // again immediately after a catch, even with a correct structural target.
+      const tgt = attackStyle === ATTACK_STYLES.HEX_OFFENSE ? structuralTarget() : pickResetTarget(
         disc,
         throwerPos,
         attackSign,
@@ -1120,7 +1125,8 @@ export function tickCutterBrain(agent, tickCtx) {
     const distance = origin ? Math.max(0.1, Math.hypot(targetX - origin.x, targetY - origin.y)) : 1
     const moveX = feint ? clampFieldX(origin.x - (targetX - origin.x) / distance * setup.distanceM) : targetX
     const moveY = feint ? clampFieldY(origin.y - (targetY - origin.y) / distance * setup.distanceM) : targetY
-    const spaced = crowdAwareTarget(agent, spacingAdjustedTarget(agent, moveX, moveY, teammates), [...(teammates ?? []), ...(defenders ?? [])])
+    const crowdTarget = crowdAwareTarget(agent, spacingAdjustedTarget(agent, moveX, moveY, teammates), [...(teammates ?? []), ...(defenders ?? [])])
+    const spaced = clampAgentPosition(crowdTarget.x, crowdTarget.y)
     const movement = BODY_TRAFFIC_CALIBRATION.offBall ? bodyAwareTarget({ ...agent, x, y, vx, vy }, spaced,
       [...(teammates ?? []), ...(defenders ?? [])], speed) : { ...spaced, speed }
     const moved = integrateAgentMotion(
@@ -1143,9 +1149,12 @@ export function tickCutterBrain(agent, tickCtx) {
     // Bez piłki zawodnik nie stoi bezczynnie: wraca truchtem / lekkim biegiem na slot
     // (nie sprint — sprint tylko na ACTIVE_CUT).
     const slot = slotWithError(structuralTarget(), agent.player ?? agent, rng)
-    const spaced = crowdAwareTarget(agent, spacingAdjustedTarget(agent, slot.x, slot.y, teammates), [...(teammates ?? []), ...(defenders ?? [])])
+    const crowdTarget = crowdAwareTarget(agent, spacingAdjustedTarget(agent, slot.x, slot.y, teammates), [...(teammates ?? []), ...(defenders ?? [])])
+    const spaced = clampAgentPosition(crowdTarget.x, crowdTarget.y)
+    targetX = spaced.x
+    targetY = spaced.y
     const drift = Math.hypot(spaced.x - agent.x, spaced.y - agent.y)
-    if (drift > 1.5) {
+    if (drift > 1.5 || outsideField) {
       const speed = waitingHoldSpeedMps(agent.player ?? agent, drift)
       const movement = BODY_TRAFFIC_CALIBRATION.offBall ? bodyAwareTarget({ ...agent, x, y, vx, vy }, spaced,
         [...(teammates ?? []), ...(defenders ?? [])], speed) : { ...spaced, speed }
@@ -1164,7 +1173,7 @@ export function tickCutterBrain(agent, tickCtx) {
       vx = moved.vx
       vy = moved.vy
     } else {
-      const jitter = { x: x + (rng.float() - 0.5) * 0.15, y: y + (rng.float() - 0.5) * 0.12 }
+      const jitter = clampAgentPosition(x + (rng.float() - 0.5) * 0.15, y + (rng.float() - 0.5) * 0.12)
       if (BODY_TRAFFIC_CALIBRATION.offBall && BODY_TRAFFIC_CALIBRATION.enabled) {
         const movement = bodyAwareTarget({ ...agent, x, y, vx, vy }, jitter,
           [...(teammates ?? []), ...(defenders ?? [])], 0.5)
@@ -1177,11 +1186,12 @@ export function tickCutterBrain(agent, tickCtx) {
     }
   }
 
-  const clamped = clampAgentPosition(x, y)
+  // Constrain navigation goals, not the body: inertia may carry a player out of
+  // bounds. They must run back continuously, including when a cut slot activates.
   return {
     ...agent,
-    x: clamped.x,
-    y: clamped.y,
+    x,
+    y,
     state,
     stateMs,
     targetX,

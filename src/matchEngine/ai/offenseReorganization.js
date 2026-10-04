@@ -4,7 +4,7 @@ import {
   clampFieldY,
   fieldCenterY,
 } from '../fieldDimensions.js'
-import { forceMarkLayoutSide, normalizeForceMark } from '../throwTechnique.js'
+import { forceOpenSideY } from '../throwTechnique.js'
 
 const DEG = Math.PI / 180
 const LANE_HALF_WIDTH_M = 3.2
@@ -36,16 +36,14 @@ export function isCloggingThrowLane(x, y, disc, throwerPos, possessionTeam, atta
   return ahead > -1.5 && ahead < LANE_AHEAD_M + 2
 }
 
-export function breakSideSign(forceSide) {
-  const layout = forceMarkLayoutSide(normalizeForceMark(forceSide))
-  if (layout === 'away') return -1
-  if (layout === 'home') return 1
-  return 0
+export function breakSideSign(forceSide, throwerY, attackSign = 1) {
+  const open = forceOpenSideY(forceSide, throwerY, attackSign)
+  return open === 0 ? 0 : -open
 }
 
 export function pickBreakSideClearTarget(x, y, disc, attackSign, forceSide, rng) {
   const cy = fieldCenterY()
-  const breakSign = breakSideSign(forceSide)
+  const breakSign = breakSideSign(forceSide, disc?.y, attackSign)
   const r = rng?.float ? rng.float() : 0.5
   const lateral =
     breakSign !== 0
@@ -80,8 +78,9 @@ const RESET_LATERAL_M = 7
 const RESET_BEHIND_M = 1.5
 
 /** Strona, na którą schodzi reset: przeciwna do break side, z fallbackiem na połowę boiska. */
-export function resetLateralSign(forceSide, oy) {
-  return -breakSideSign(forceSide) || (oy >= fieldCenterY() ? -1 : 1)
+export function resetLateralSign(forceSide, oy, attackSign = 1) {
+  // Neutral force still needs a spatial reset slot: prefer room toward midfield.
+  return openSideSign(forceSide, oy, attackSign) || Math.sign(fieldCenterY() - oy) || (Math.sign(attackSign) || 1)
 }
 
 /** JEDNA definicja miejsca resetu — używana przez formację, reorganizację i aktywny cut. */
@@ -89,7 +88,7 @@ export function resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng, 
   const ox = throwerPos?.x ?? disc?.x ?? 0
   const oy = throwerPos?.y ?? disc?.y ?? 0
   const r = rng?.float ? rng.float() : 0.5
-  const lateral = resetLateralSign(forceSide, oy) * (handlerSlotIndex % 2 === 0 ? 1 : -1)
+  const lateral = resetLateralSign(forceSide, oy, attackSign) * (handlerSlotIndex % 2 === 0 ? 1 : -1)
   return {
     x: clampFieldX(ox - attackSign * RESET_BEHIND_M),
     y: clampFieldY(oy + lateral * (RESET_LATERAL_M + r * 2)),
@@ -97,10 +96,8 @@ export function resetSlotTarget({ disc, throwerPos, attackSign, forceSide, rng, 
 }
 
 /** Otwarta strona boiska względem ustawienia marka. */
-export function openSideSign(forceSide, y) {
-  const breakSign = breakSideSign(forceSide)
-  if (breakSign !== 0) return -breakSign
-  return y >= fieldCenterY() ? 1 : -1
+export function openSideSign(forceSide, throwerY, attackSign = 1) {
+  return forceOpenSideY(forceSide, throwerY, attackSign)
 }
 
 /**
@@ -132,12 +129,13 @@ export function computeDynamicOffenseTarget({
     return { x: disc.x, y: disc.y }
   }
   if (inThrowLane) {
-    return pickBreakSideClearTarget(x, y, disc, attackSign, forceSide, rng)
+    return pickBreakSideClearTarget(x, y, throwerPos ?? disc, attackSign, forceSide, rng)
   }
 
   const ox = throwerPos?.x ?? disc.x
   const oy = throwerPos?.y ?? disc.y
-  const openSign = openSideSign(forceSide, y)
+  // Keep alternating stack slots even when the mark has no preferred side.
+  const openSign = openSideSign(forceSide, oy, attackSign) || attackSign
 
   if (isDump) {
     return resetSlotTarget({ disc, throwerPos: { x: ox, y: oy }, attackSign, forceSide, rng })

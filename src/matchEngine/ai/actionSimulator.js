@@ -628,8 +628,8 @@ function resolvePersonMarkTarget(defAgent, offenseAgents, personMatchups) {
   return best
 }
 
-function shadeMarkBesideOffense(off, forceSide, attackSign) {
-  const layout = forceMarkLayoutSide(forceSide, off.y)
+function shadeMarkBesideOffense(off, forceSide, attackSign, throwerY) {
+  const layout = forceMarkLayoutSide(forceSide, throwerY, attackSign)
   const shade = layout === 'away' ? 0.9 : layout === 'home' ? -0.9 : 0
   return {
     x: off.x - attackSign * 2.2,
@@ -697,6 +697,8 @@ function snapshotAgentStates(offenseAgents, defenseAgents) {
         feintOrigin: a.feintOrigin ? { ...a.feintOrigin } : null,
         feintElapsedMs: a.feintElapsedMs,
         pullPreparation: a.pullPreparation,
+        // A pass preserves the one reset leave; changing possession rearms it.
+        resetPoachDone: role === 'defense' && (a.resetPoachDone ?? false),
         role,
       })
     }
@@ -864,6 +866,10 @@ export function runContinuousThrowSimulation({
   initialFlightState = null,
 }) {
   const holdStartMs = Math.max(0, startHoldMs ?? 0)
+  // point.js escalates decision pressure after repeated passes without progress.
+  // Carry that offset as the real marker clock advances; it must never create a
+  // legal stall-out or unlock rules that depend on actual late-stall urgency.
+  const decisionStallOffset = Math.max(0, (stallCount ?? 1) - Math.max(1, hardStallCount ?? 1))
   if (pullOpening) pullOpening = { ...pullOpening, order: pullOpening.order?.slice() ?? null,
     launchedIds: [...pullOpening.launchedIds] }
   const setupBudgetMs = Math.max(
@@ -998,6 +1004,7 @@ export function runContinuousThrowSimulation({
       state: carriesRole ? (seed.state ?? DEFENDER_STATE.COVERING_CUTTER) : DEFENDER_STATE.COVERING_CUTTER,
       reactUntil: 0,
       pendingTarget: null,
+      resetPoachDone: carriesRole && (seed.resetPoachDone ?? false),
       vx: carriesRole ? (seed.vx ?? 0) : 0,
       vy: carriesRole ? (seed.vy ?? 0) : 0,
       z: 0,
@@ -1024,7 +1031,8 @@ export function runContinuousThrowSimulation({
         defAgent.vy = 0
         defAgent.state = DEFENDER_STATE.MARKING_STALL
       } else if (!carriesDefense) {
-        const shade = shadeMarkBesideOffense(off, forceSide, attackSign)
+        const shade = shadeMarkBesideOffense(off, forceSide, attackSign,
+          offenseAgents.find(a => a.isThrower || a.player?.id === thrower.id)?.y ?? discYMeters)
         defAgent.x = shade.x
         defAgent.y = shade.y
         defAgent.vx = 0
@@ -1160,7 +1168,7 @@ export function runContinuousThrowSimulation({
       stallClock, pickupPending ? null : defenseAgents.find(a => (a.id ?? a.player?.id) === markerId), throwerAgent,
       tick === 0 ? 0 : SIM_TICK_MS,
     )
-    const decisionStall = Math.max(1, liveStall)
+    const decisionStall = Math.min(STALL_MAX - 1, Math.max(1, liveStall) + decisionStallOffset)
 
     if (flight && flightComplete(flight)) {
       break
@@ -1846,7 +1854,7 @@ export function runContinuousThrowSimulation({
           postCatchReorg,
           lastThrowerId,
           afterTurnover,
-          hardStallCount: Math.max(hardStallCount ?? 1, decisionStall),
+          hardStallCount: liveStall,
           requireForwardPass,
           attackStyle,
           defenseStyle,

@@ -453,9 +453,14 @@ export function effectiveCoachDirectives(tactics, player, role = 'offense', line
   // poachuj", a jeden zawodnik zielone światło; bez tego jego rozkaz walczyłby z
   // dyrektywą i wychodziło coś pośredniego, czego trener nigdy nie chciał.
   const overridden = directivesOverriddenByInstructions(tactics, player, lineRole)
+  const personalPoachBan = instructionsForPlayer(tactics, player?.id, lineRole).includes('no_poach')
   for (const key of COACH_SLIDER_KEYS) {
     if (overridden.has(key)) {
-      out[key] = 0
+      // A personal ban may cancel encouragement, but must not remove an existing
+      // team ban (including its compliance gate). Positive `poach` still overrides it.
+      out[key] = key === 'poachSeeking' && personalPoachBan
+        ? Math.min(0, effectiveDirective(d[key], coachCompliance(player, role, key, tactics)))
+        : 0
       continue
     }
     const c = coachCompliance(player, role, key, tactics)
@@ -620,6 +625,7 @@ function computeTraitAndCoachMods(player, tactics = null, role = 'offense', line
     stackDepthBiasM: 0,
     markShapeBias: 0,
     poachSeekingMode: 0,
+    noPoachBias: 0,
     helpDeepMode: 0,
     poachResetHandlerBias: 0,
     preferDumpRole: false,
@@ -709,6 +715,7 @@ function computeTraitAndCoachMods(player, tactics = null, role = 'offense', line
       denyUnderBias: (merged.denyUnderBias ?? 0) + (instr.denyUnderBias ?? 0),
       helpDeepBias: (merged.helpDeepBias ?? 0) + (instr.helpDeepBias ?? 0),
       poachChanceMult: (merged.poachChanceMult ?? 1) * (instr.poachChanceMult ?? 1),
+      noPoachBias: instr.noPoachBias ?? 0,
       poachRangeBonusM: (merged.poachRangeBonusM ?? 0) + (instr.poachRangeBonusM ?? 0),
       releaseGateMult: (merged.releaseGateMult ?? 1) * (instr.releaseGateMult ?? 1),
       dumpEarlyBias: (merged.dumpEarlyBias ?? 0) + (instr.dumpEarlyBias ?? 0),

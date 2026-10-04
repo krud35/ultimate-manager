@@ -1,0 +1,1324 @@
+[
+  {
+    "id": "matrix-00028-configured-a",
+    "point": 6,
+    "scans": 464,
+    "failures": 6,
+    "attempts": 98,
+    "resets": 68,
+    "actualProgress": 17.313788825819813,
+    "requireForward": 20,
+    "selected": 359,
+    "selectedDump": 207,
+    "selectedNonProgress": 305,
+    "requiredNonProgress": 0,
+    "alternatives": 31,
+    "earlyRequired": 20,
+    "earlyRequiredNonProgress": 0,
+    "rejects": {
+      "clearing": 68,
+      "echo": 85,
+      "inactive_or_crossfield_stationary": 759,
+      "separation_policy": 150,
+      "scan_radius": 6,
+      "no_progress": 19
+    },
+    "activeRoutes": 698,
+    "activeTargetsBehind": 339,
+    "activeStartsBehind": 470,
+    "forwardRoutes": 257,
+    "examples": [
+      {
+        "serial": 550,
+        "ms": 1820,
+        "hardStall": 1,
+        "requireForward": false,
+        "thrower": "development-balanced-0-a-p5",
+        "throwerX": 83.98758612754956,
+        "selected": {
+          "id": "development-balanced-0-a-p9",
+          "score": 154.90929753074158,
+          "isDump": false,
+          "forwardProgress": -10.813231273096804,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-0-a-p13",
+            "score": 24.75860378061421,
+            "isDump": false,
+            "forwardProgress": 4.756313784679918
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-0-a-p5",
+            "x": 83.98758612754956,
+            "y": 18.381049075811852,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p6",
+            "x": 83.4149142973942,
+            "y": 28.469953895542908,
+            "targetX": 87.83274830081702,
+            "targetY": 28.982865845784545,
+            "state": "ACTIVE_CUT",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p13",
+            "x": 79.91665332905427,
+            "y": 25.834480456548643,
+            "targetX": 72.32658282481687,
+            "targetY": 12.534649983955815,
+            "state": "INITIATING_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p2",
+            "x": 90.19881317200137,
+            "y": 34.41025571378998,
+            "targetX": 91.07107804292083,
+            "targetY": 34.67184119857848,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p9",
+            "x": 93.47698311600979,
+            "y": 19.748746807323222,
+            "targetX": 96.90743201128409,
+            "targetY": 12.198531046044081,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p10",
+            "x": 88.14113969766856,
+            "y": 11.411184154458082,
+            "targetX": 88.48758612754956,
+            "targetY": 10.586820441751904,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p16",
+            "x": 79.12324921381624,
+            "y": 11.451983214600592,
+            "targetX": 79.48758612754956,
+            "targetY": 10.586820441751904,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      },
+      {
+        "serial": 551,
+        "ms": 2080,
+        "hardStall": 2,
+        "requireForward": false,
+        "thrower": "development-balanced-0-a-p5",
+        "throwerX": 83.98758612754956,
+        "selected": {
+          "id": "development-balanced-0-a-p6",
+          "score": 162.87261525843738,
+          "isDump": true,
+          "forwardProgress": -1.81208648051593,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-0-a-p13",
+            "score": 24.139826209328554,
+            "isDump": false,
+            "forwardProgress": 4.756313784679918
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-0-a-p5",
+            "x": 83.98758612754956,
+            "y": 18.381049075811852,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p6",
+            "x": 83.76659691531398,
+            "y": 28.514523770235236,
+            "targetX": 87.83274830081702,
+            "targetY": 28.982865845784545,
+            "state": "ACTIVE_CUT",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p13",
+            "x": 79.91665332905427,
+            "y": 25.834480456548643,
+            "targetX": 72.32658282481687,
+            "targetY": 12.534649983955815,
+            "state": "INITIATING_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p2",
+            "x": 91.42772289004408,
+            "y": 34.77767746557725,
+            "targetX": 88.48758612754956,
+            "targetY": 26.1752777098718,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p9",
+            "x": 93.99424522537136,
+            "y": 18.61028340208368,
+            "targetX": 92.98758612754956,
+            "targetY": 18.381049075811852,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p10",
+            "x": 88.26511908811207,
+            "y": 11.116177187175522,
+            "targetX": 88.48758612754956,
+            "targetY": 10.586820441751904,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p16",
+            "x": 79.27228320247052,
+            "y": 11.098083694643591,
+            "targetX": 79.48758612754956,
+            "targetY": 10.586820441751904,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      },
+      {
+        "serial": 552,
+        "ms": 2340,
+        "hardStall": 2,
+        "requireForward": false,
+        "thrower": "development-balanced-0-a-p5",
+        "throwerX": 83.98758612754956,
+        "selected": {
+          "id": "development-balanced-0-a-p6",
+          "score": 159.24732740222515,
+          "isDump": true,
+          "forwardProgress": -2.1310663105561787,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-0-a-p13",
+            "score": -9.171162998323759,
+            "isDump": false,
+            "forwardProgress": 4.756313784679918
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-0-a-p5",
+            "x": 83.98758612754956,
+            "y": 18.381049075811852,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p6",
+            "x": 84.40455657539447,
+            "y": 28.590875058404574,
+            "targetX": 87.83274830081702,
+            "targetY": 28.982865845784545,
+            "state": "ACTIVE_CUT",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p13",
+            "x": 79.8517615043966,
+            "y": 25.719142826510314,
+            "targetX": 72.32658282481687,
+            "targetY": 12.534649983955815,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p2",
+            "x": 91.54564937167257,
+            "y": 34.7724565722265,
+            "targetX": 88.48758612754956,
+            "targetY": 26.1752777098718,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p9",
+            "x": 93.94621803878678,
+            "y": 18.54008574643307,
+            "targetX": 92.98758612754956,
+            "targetY": 18.381049075811852,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p10",
+            "x": 88.26511908811207,
+            "y": 11.116177187175522,
+            "targetX": 88.48758612754956,
+            "targetY": 10.586820441751904,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p16",
+            "x": 79.27228320247052,
+            "y": 11.098083694643591,
+            "targetX": 79.48758612754956,
+            "targetY": 10.586820441751904,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      }
+    ],
+    "resetEcho": 0,
+    "chains": [
+      {
+        "n": 10,
+        "resets": 7,
+        "progress": 7.743516414883032,
+        "firstX": 90.8822307604458,
+        "lastX": 83.13871434556276
+      },
+      {
+        "n": 32,
+        "resets": 27,
+        "progress": -25.09684794752817,
+        "firstX": 47.750020267187075,
+        "lastX": 72.84686821471524
+      },
+      {
+        "n": 52,
+        "resets": 33,
+        "progress": 35.67838504316152,
+        "firstX": 87.46609883401777,
+        "lastX": 51.78771379085625
+      },
+      {
+        "n": 1,
+        "resets": 1,
+        "progress": -1.0112646846965703,
+        "firstX": 55.2903525473489,
+        "lastX": 56.30161723204547
+      }
+    ],
+    "medianHoldMs": 1340,
+    "medianTargetProgress": 0.4907691259868443
+  },
+  {
+    "id": "matrix-00063-configured-a",
+    "point": 14,
+    "scans": 512,
+    "attempts": 120,
+    "resets": 67,
+    "actualProgress": -19.186613666096022,
+    "requireForward": 311,
+    "selected": 416,
+    "selectedDump": 294,
+    "selectedNonProgress": 281,
+    "requiredNonProgress": 135,
+    "alternatives": 49,
+    "earlyRequired": 311,
+    "earlyRequiredNonProgress": 135,
+    "rejects": {
+      "separation_policy": 144,
+      "inactive_or_crossfield_stationary": 899,
+      "no_progress": 181,
+      "clearing": 40,
+      "echo": 120,
+      "stationary_continuation": 1
+    },
+    "activeRoutes": 580,
+    "activeTargetsBehind": 259,
+    "activeStartsBehind": 370,
+    "forwardRoutes": 263,
+    "examples": [
+      {
+        "serial": 274,
+        "ms": 260,
+        "hardStall": 1,
+        "requireForward": true,
+        "thrower": "development-balanced-0-a-p5",
+        "throwerX": 89.74919955493606,
+        "selected": {
+          "id": "development-balanced-0-a-p6",
+          "score": 159.0729980291347,
+          "isDump": true,
+          "forwardProgress": -0.8810656729816202,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-0-a-p13",
+            "score": 150.32641869565896,
+            "isDump": false,
+            "forwardProgress": 4.234525586533408,
+            "validationStatus": "reachable",
+            "reachable": true
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-0-a-p5",
+            "x": 89.74919955493606,
+            "y": 11.759959137521932,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p6",
+            "x": 90.63026522791768,
+            "y": 11.679720929389209,
+            "targetX": 93.40714710044423,
+            "targetY": 21.70255357594376,
+            "state": "CLEARING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p13",
+            "x": 85.61344315970678,
+            "y": 34.35997809816107,
+            "targetX": 85.6743951099172,
+            "targetY": 34.21354262406627,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p2",
+            "x": 95.13785673501614,
+            "y": 24.229879899014133,
+            "targetX": 94.69046950472442,
+            "targetY": 26.92889244444668,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p9",
+            "x": 97.6617116710388,
+            "y": 13.580366964783465,
+            "targetX": 97.69814214389771,
+            "targetY": 13.530979176517576,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p10",
+            "x": 94.52046696400616,
+            "y": 3.4379339557653172,
+            "targetX": 94.24919955493606,
+            "targetY": 3.965730503461984,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p16",
+            "x": 85.52595462769533,
+            "y": 3.444043879073914,
+            "targetX": 85.24919955493606,
+            "targetY": 3.9657305034619847,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      },
+      {
+        "serial": 320,
+        "ms": 3120,
+        "hardStall": 2,
+        "requireForward": false,
+        "thrower": "development-balanced-0-a-p13",
+        "throwerX": 86.94716929182441,
+        "selected": {
+          "id": "development-balanced-0-a-p5",
+          "score": 207.32589338848706,
+          "isDump": true,
+          "forwardProgress": -4.951357427613658,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-0-a-p16",
+            "score": 151.2420956516361,
+            "isDump": false,
+            "forwardProgress": 3.1014188890017778,
+            "validationStatus": "reachable",
+            "reachable": true
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-0-a-p13",
+            "x": 86.94716929182441,
+            "y": 29.263634797755724,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p5",
+            "x": 91.89852671943807,
+            "y": 17.949069799105498,
+            "targetX": 92.02541589647562,
+            "targetY": 1.046014896873385,
+            "state": "ACTIVE_CUT",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p6",
+            "x": 90.44779847980666,
+            "y": 28.299787774804898,
+            "targetX": 89.62732934726029,
+            "targetY": 35.7984488884471,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p2",
+            "x": 91.54831418914301,
+            "y": 34.892758497299965,
+            "targetX": 98.57238507041738,
+            "targetY": 33.1477703070268,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p9",
+            "x": 95.89932602872138,
+            "y": 30.035068095579618,
+            "targetX": 97.290118433107,
+            "targetY": 31.648301237262785,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p10",
+            "x": 93.10892200713558,
+            "y": 14.620125171979485,
+            "targetX": 91.44716929182441,
+            "targetY": 21.469406163695776,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p16",
+            "x": 84.09714133929019,
+            "y": 14.698347512066324,
+            "targetX": 82.44716929182441,
+            "targetY": 21.469406163695776,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      },
+      {
+        "serial": 321,
+        "ms": 3380,
+        "hardStall": 3,
+        "requireForward": false,
+        "thrower": "development-balanced-0-a-p13",
+        "throwerX": 86.94716929182441,
+        "selected": {
+          "id": "development-balanced-0-a-p5",
+          "score": 200.894826119673,
+          "isDump": true,
+          "forwardProgress": -4.947844072854778,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-0-a-p16",
+            "score": 146.88188908850788,
+            "isDump": false,
+            "forwardProgress": 3.2856732581057457,
+            "validationStatus": "reachable",
+            "reachable": true
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-0-a-p13",
+            "x": 86.94716929182441,
+            "y": 29.263634797755724,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p5",
+            "x": 91.86015404706843,
+            "y": 18.037708039951905,
+            "targetX": 92.02541589647562,
+            "targetY": 1.046014896873385,
+            "state": "ACTIVE_CUT",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p6",
+            "x": 90.32063448779465,
+            "y": 29.118357380339543,
+            "targetX": 89.71770047193641,
+            "targetY": 36.27232400855564,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p2",
+            "x": 91.95687229444606,
+            "y": 34.791260508335355,
+            "targetX": 98.57238507041738,
+            "targetY": 33.1477703070268,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p9",
+            "x": 95.74339727418567,
+            "y": 31.326688086144575,
+            "targetX": 97.290118433107,
+            "targetY": 31.648301237262785,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p10",
+            "x": 92.91275550849394,
+            "y": 15.428668740452817,
+            "targetX": 91.44716929182441,
+            "targetY": 21.469406163695776,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p16",
+            "x": 83.90016346016341,
+            "y": 15.506693795683486,
+            "targetX": 82.44716929182441,
+            "targetY": 21.469406163695776,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      }
+    ],
+    "resetEcho": 0,
+    "chains": [
+      {
+        "n": 120,
+        "resets": 67,
+        "progress": -19.186613666096022,
+        "firstX": 77.33240246384048,
+        "lastX": 96.5190161299365
+      }
+    ],
+    "medianHoldMs": 360,
+    "medianTargetProgress": 0.7947491630589667
+  },
+  {
+    "id": "matrix-00063-configured-b",
+    "point": 15,
+    "scans": 453,
+    "failures": 8,
+    "attempts": 89,
+    "resets": 54,
+    "actualProgress": 76.48612895861335,
+    "requireForward": 29,
+    "selected": 357,
+    "selectedDump": 176,
+    "selectedNonProgress": 266,
+    "requiredNonProgress": 4,
+    "alternatives": 43,
+    "earlyRequired": 29,
+    "earlyRequiredNonProgress": 4,
+    "rejects": {
+      "separation_policy": 201,
+      "inactive_or_crossfield_stationary": 772,
+      "echo": 75,
+      "clearing": 49,
+      "scan_radius": 17,
+      "no_progress": 5
+    },
+    "activeRoutes": 737,
+    "activeTargetsBehind": 322,
+    "activeStartsBehind": 510,
+    "forwardRoutes": 385,
+    "examples": [
+      {
+        "serial": 752,
+        "ms": 2600,
+        "hardStall": 2,
+        "requireForward": false,
+        "thrower": "development-balanced-0-a-p9",
+        "throwerX": 70.57865956612314,
+        "selected": {
+          "id": "development-balanced-0-a-p13",
+          "score": 87.22613712452355,
+          "isDump": false,
+          "forwardProgress": -2.1603301433156474,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-0-a-p6",
+            "score": 80.12817620325654,
+            "isDump": true,
+            "forwardProgress": 6.18453041163805,
+            "validationStatus": "reachable",
+            "reachable": true
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-0-a-p9",
+            "x": 70.57865956612314,
+            "y": 21.52257382952632,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p5",
+            "x": 68.0662480680138,
+            "y": 26.700248360326984,
+            "targetX": 71.93198923769123,
+            "targetY": 14.537166983111678,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p6",
+            "x": 64.06125570295025,
+            "y": 23.473812601872755,
+            "targetX": 70.61031515710438,
+            "targetY": 2.022319227301826,
+            "state": "ACTIVE_CUT",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p13",
+            "x": 73.12112944055922,
+            "y": 28.40311117140912,
+            "targetX": 63.59023688067218,
+            "targetY": 10.05726322231087,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p2",
+            "x": 75.54404740419189,
+            "y": 25.66373315753741,
+            "targetX": 79.57865956612314,
+            "targetY": 21.52257382952632,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p10",
+            "x": 68.14427364133974,
+            "y": 20.31574951212723,
+            "targetX": 75.07865956612314,
+            "targetY": 13.728345195466371,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p16",
+            "x": 64.2665777626887,
+            "y": 14.617262657154997,
+            "targetX": 66.07865956612314,
+            "targetY": 13.728345195466371,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      },
+      {
+        "serial": 778,
+        "ms": 520,
+        "hardStall": 1,
+        "requireForward": false,
+        "thrower": "development-balanced-0-a-p5",
+        "throwerX": 70.28870194520294,
+        "selected": {
+          "id": "development-balanced-0-a-p2",
+          "score": 153.49388861500523,
+          "isDump": false,
+          "forwardProgress": -3.6757924741881993,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-0-a-p16",
+            "score": 142.20981500918214,
+            "isDump": false,
+            "forwardProgress": 6.432599681393029,
+            "validationStatus": "reachable",
+            "reachable": true
+          },
+          {
+            "id": "development-balanced-0-a-p13",
+            "score": 138.5907351972153,
+            "isDump": false,
+            "forwardProgress": 6.495267431997668
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-0-a-p5",
+            "x": 70.28870194520294,
+            "y": 33.736989093201174,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p6",
+            "x": 68.30220037346795,
+            "y": 15.456055855631897,
+            "targetX": 74.03870194520294,
+            "targetY": 24.049999999999997,
+            "state": "CLEARING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p13",
+            "x": 63.79343451320528,
+            "y": 22.433475416264375,
+            "targetX": 7.042730054570882,
+            "targetY": 32.888486835484706,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p2",
+            "x": 72.36342894062412,
+            "y": 23.188797566423144,
+            "targetX": 83.44002237751573,
+            "targetY": 29.87150327814743,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p9",
+            "x": 79.12988756324427,
+            "y": 16.560987894057504,
+            "targetX": 79.35164233596427,
+            "targetY": 16.588586771395057,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p10",
+            "x": 72.69449055058239,
+            "y": 8.313492516779842,
+            "targetX": 74.78870194520294,
+            "targetY": 25.942760459141226,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p16",
+            "x": 63.70718852932046,
+            "y": 8.297689300022142,
+            "targetX": 65.78870194520294,
+            "targetY": 25.942760459141226,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      },
+      {
+        "serial": 779,
+        "ms": 780,
+        "hardStall": 1,
+        "requireForward": false,
+        "thrower": "development-balanced-0-a-p5",
+        "throwerX": 70.28870194520294,
+        "selected": {
+          "id": "development-balanced-0-a-p2",
+          "score": 156.05228732966862,
+          "isDump": false,
+          "forwardProgress": -3.8858464668956003,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-0-a-p16",
+            "score": 121.65292129894671,
+            "isDump": false,
+            "forwardProgress": 6.2722541854680145,
+            "validationStatus": "reachable",
+            "reachable": true
+          },
+          {
+            "id": "development-balanced-0-a-p13",
+            "score": 95.57938796676173,
+            "isDump": false,
+            "forwardProgress": 6.695453575210394
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-0-a-p5",
+            "x": 70.28870194520294,
+            "y": 33.736989093201174,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p6",
+            "x": 68.72346505895186,
+            "y": 16.08026578325923,
+            "targetX": 74.03870194520294,
+            "targetY": 24.049999999999997,
+            "state": "CLEARING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-0-a-p13",
+            "x": 63.38126104972004,
+            "y": 22.50940889248367,
+            "targetX": 7.042730054570882,
+            "targetY": 32.888486835484706,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p2",
+            "x": 72.5721140230241,
+            "y": 23.3147009861028,
+            "targetX": 83.44002237751573,
+            "targetY": 29.87150327814743,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p9",
+            "x": 79.66175121150296,
+            "y": 16.627181912831254,
+            "targetX": 79.35164233596427,
+            "targetY": 16.588586771395057,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p10",
+            "x": 72.78296060932551,
+            "y": 9.058241769154993,
+            "targetX": 74.78870194520294,
+            "targetY": 25.942760459141226,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-0-a-p16",
+            "x": 63.795834819750546,
+            "y": 9.049147393299762,
+            "targetX": 65.78870194520294,
+            "targetY": 25.942760459141226,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      }
+    ],
+    "resetEcho": 0,
+    "chains": [
+      {
+        "n": 6,
+        "resets": 2,
+        "progress": 10.522692265338243,
+        "firstX": 74.46335772852049,
+        "lastX": 63.94066546318225
+      },
+      {
+        "n": 5,
+        "resets": 3,
+        "progress": 26.382949680040916,
+        "firstX": 70.06322346014498,
+        "lastX": 43.680273780104066
+      },
+      {
+        "n": 34,
+        "resets": 22,
+        "progress": 0.32808020842904284,
+        "firstX": 43.87557638965282,
+        "lastX": 43.547496181223764
+      },
+      {
+        "n": 23,
+        "resets": 17,
+        "progress": -22.72528058975803,
+        "firstX": 62.04822928099817,
+        "lastX": 84.7735098707562
+      },
+      {
+        "n": 17,
+        "resets": 8,
+        "progress": 61.97768739456319,
+        "firstX": 82,
+        "lastX": 20.02231260543682
+      }
+    ],
+    "medianHoldMs": 1820,
+    "medianTargetProgress": 4.229470151942223
+  },
+  {
+    "id": "matrix-00254-configured-a",
+    "point": 10,
+    "scans": 488,
+    "failures": 8,
+    "attempts": 100,
+    "resets": 60,
+    "actualProgress": 85.92712509316331,
+    "requireForward": 48,
+    "selected": 397,
+    "selectedDump": 226,
+    "selectedNonProgress": 291,
+    "requiredNonProgress": 16,
+    "alternatives": 28,
+    "earlyRequired": 48,
+    "earlyRequiredNonProgress": 16,
+    "rejects": {
+      "inactive_or_crossfield_stationary": 748,
+      "clearing": 106,
+      "separation_policy": 99,
+      "echo": 67,
+      "no_progress": 36,
+      "scan_radius": 8
+    },
+    "activeRoutes": 720,
+    "activeTargetsBehind": 417,
+    "activeStartsBehind": 512,
+    "forwardRoutes": 237,
+    "examples": [
+      {
+        "serial": 797,
+        "ms": 520,
+        "hardStall": 0,
+        "requireForward": false,
+        "thrower": "development-balanced-1-a-p3",
+        "throwerX": 58.11540299250013,
+        "selected": {
+          "id": "development-balanced-1-a-p16",
+          "score": 197.85366379526545,
+          "isDump": true,
+          "forwardProgress": -7.1074316747167,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-1-a-p8",
+            "score": 189.12219068576832,
+            "isDump": true,
+            "forwardProgress": 5.775561622914431,
+            "validationStatus": "reachable",
+            "reachable": true
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-1-a-p3",
+            "x": 58.11540299250013,
+            "y": 30.841445720195527,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p8",
+            "x": 61.3675856096975,
+            "y": 10.519842721741815,
+            "targetX": 0.5,
+            "targetY": 3.5074385056893025,
+            "state": "ACTIVE_CUT",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-1-a-p16",
+            "x": 64.53333308511945,
+            "y": 28.427248819348357,
+            "targetX": 68.80221258057975,
+            "targetY": 36.5,
+            "state": "ACTIVE_CUT",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-1-a-p6",
+            "x": 70.5266363501905,
+            "y": 27.153497754832685,
+            "targetX": 50.427815223263714,
+            "targetY": 35.84315292568256,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p2",
+            "x": 64.86049322878368,
+            "y": 20.779966567344687,
+            "targetX": 53.58732427532053,
+            "targetY": 24.398027802662302,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p13",
+            "x": 68.91967587235929,
+            "y": 13.592741010250084,
+            "targetX": 62.61540299250013,
+            "targetY": 23.04721708613558,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p11",
+            "x": 59.91525988970332,
+            "y": 13.601118489021447,
+            "targetX": 53.61540299250013,
+            "targetY": 23.04721708613558,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      },
+      {
+        "serial": 836,
+        "ms": 740,
+        "hardStall": 0,
+        "requireForward": true,
+        "thrower": "development-balanced-1-a-p16",
+        "throwerX": 59.57500550038458,
+        "selected": {
+          "id": "development-balanced-1-a-p8",
+          "score": 248.85980542692366,
+          "isDump": true,
+          "forwardProgress": -3.336032666821332,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-1-a-p3",
+            "score": 183.3947455932694,
+            "isDump": false,
+            "forwardProgress": 3.5650923119671347,
+            "validationStatus": "reachable",
+            "reachable": true
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-1-a-p16",
+            "x": 59.57500550038458,
+            "y": 28.895174388603927,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-1-a-p8",
+            "x": 60.97255641183993,
+            "y": 13.262530390581963,
+            "targetX": 65.48514469600559,
+            "targetY": 3.98599890479818,
+            "state": "INITIATING_CUT",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-1-a-p3",
+            "x": 55.89942306688547,
+            "y": 32.94002836708938,
+            "targetX": 55.07500550038458,
+            "targetY": 36.5,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p6",
+            "x": 65.6833082016305,
+            "y": 30.465072349921762,
+            "targetX": 64.07500550038458,
+            "targetY": 36.5,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p2",
+            "x": 71.02427254876552,
+            "y": 27.787146731901892,
+            "targetX": 68.57500550038458,
+            "targetY": 28.895174388603927,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p13",
+            "x": 64.62261725773426,
+            "y": 20.74787908833742,
+            "targetX": 64.07500550038458,
+            "targetY": 21.10094575454398,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p11",
+            "x": 55.62288829440134,
+            "y": 20.740687278136807,
+            "targetX": 55.07500550038458,
+            "targetY": 21.10094575454398,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      },
+      {
+        "serial": 843,
+        "ms": 1560,
+        "hardStall": 2,
+        "requireForward": true,
+        "thrower": "development-balanced-1-a-p8",
+        "throwerX": 62.03918354984445,
+        "selected": {
+          "id": "development-balanced-1-a-p16",
+          "score": 156.47577081190633,
+          "isDump": true,
+          "forwardProgress": 1.4410528888895442,
+          "validationStatus": "reachable",
+          "reachable": true
+        },
+        "alt": [
+          {
+            "id": "development-balanced-1-a-p3",
+            "score": 141.15409039237517,
+            "isDump": false,
+            "forwardProgress": 6.8070002540112995,
+            "validationStatus": "reachable",
+            "reachable": true
+          }
+        ],
+        "players": [
+          {
+            "id": "development-balanced-1-a-p8",
+            "x": 62.03918354984445,
+            "y": 15.100104042356943,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-1-a-p16",
+            "x": 60.424596169158065,
+            "y": 24.405336307048753,
+            "targetX": 63.90858453604569,
+            "targetY": 7.1862425392256695,
+            "state": "WAITING",
+            "dump": true
+          },
+          {
+            "id": "development-balanced-1-a-p3",
+            "x": 55.212646171323165,
+            "y": 32.322539607277065,
+            "targetX": 2.9721695939078927,
+            "targetY": 16.00970737216994,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p6",
+            "x": 65.75419592805896,
+            "y": 33.46077793485566,
+            "targetX": 62.95902618186621,
+            "targetY": 31.273473848775033,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p2",
+            "x": 69.92165619839653,
+            "y": 25.049080840758535,
+            "targetX": 72.41964373484326,
+            "targetY": 13.84334298176691,
+            "state": "ACTIVE_CUT",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p13",
+            "x": 65.1791458759342,
+            "y": 16.481899075837788,
+            "targetX": 66.53918354984445,
+            "targetY": 7.305875408296995,
+            "state": "WAITING",
+            "dump": false
+          },
+          {
+            "id": "development-balanced-1-a-p11",
+            "x": 56.18510628638781,
+            "y": 16.434654405145956,
+            "targetX": 57.53918354984445,
+            "targetY": 7.305875408296996,
+            "state": "WAITING",
+            "dump": false
+          }
+        ]
+      }
+    ],
+    "resetEcho": 0,
+    "chains": [
+      {
+        "n": 23,
+        "resets": 14,
+        "progress": 28.76653786309418,
+        "firstX": 89.22198237392419,
+        "lastX": 60.45544451083001
+      },
+      {
+        "n": 5,
+        "resets": 2,
+        "progress": 12.102971345110518,
+        "firstX": 81.55593283536517,
+        "lastX": 69.45296149025465
+      },
+      {
+        "n": 1,
+        "resets": 1,
+        "progress": -7.07284323993143,
+        "firstX": 70.05539225664886,
+        "lastX": 77.12823549658029
+      },
+      {
+        "n": 56,
+        "resets": 35,
+        "progress": 43.0426932458406,
+        "firstX": 76.8083263532557,
+        "lastX": 33.76563310741509
+      },
+      {
+        "n": 11,
+        "resets": 6,
+        "progress": 9.087765879049421,
+        "firstX": 57.791888661549386,
+        "lastX": 48.704122782499965
+      }
+    ],
+    "medianHoldMs": 2080,
+    "medianTargetProgress": -2.2684580250643194
+  }
+]

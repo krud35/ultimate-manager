@@ -524,6 +524,7 @@ export function rawInstructionMods(ids) {
     denyUnderBias: 0,
     helpDeepBias: 0,
     poachChanceMult: 1,
+    noPoachBias: 0,
     poachRangeBonusM: 0,
     releaseGateMult: 1,
     dumpEarlyBias: 0,
@@ -613,6 +614,7 @@ export function rawInstructionMods(ids) {
         // obrońca ma dalej WIDZIEĆ okazję do poacha i po prostu z niej nie korzystać.
         // Nie dodawaj tu kar do vision / scanu ani zmian cushionu.
         mods.poachChanceMult *= 0.05
+        mods.noPoachBias = 1
         break
       case 'shade_deep':
         mods.cushionDeltaM += 0.45
@@ -730,6 +732,8 @@ export function instructionModsForPlayer(ids, player, role = 'offense') {
     denyUnderBias: scaleAdd(raw.denyUnderBias),
     helpDeepBias: scaleAdd(raw.helpDeepBias),
     poachChanceMult: scaleMult(raw.poachChanceMult),
+    // The ban has its own compliance gate; unrelated orders must not dilute it.
+    noPoachBias: raw.noPoachBias * instructionCompliance(player, role, 'no_poach'),
     poachRangeBonusM: scaleAdd(raw.poachRangeBonusM),
     releaseGateMult: scaleMult(raw.releaseGateMult),
     dumpEarlyBias: scaleAdd(raw.dumpEarlyBias),

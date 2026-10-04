@@ -4,6 +4,7 @@ import { recordStyleThrow, captureStyleInstructions } from './styleEvidence.js'
 import { isClutchPoint } from './ai/traitBehavior.js'
 import { getTraitMods } from '../models/playerTraits.js'
 import { MATCH_CONFIG } from './config.js'
+import { PointSimulationLimitError } from './simulationFailure.js'
 import { recordBlock, recordDrop, recordGoal, recordTurnover, recordThrowResult, recordRunMeters } from './boxScore.js'
 import {
   buildPointLineups,
@@ -547,11 +548,13 @@ export function simulatePoint({
           return { abort: true }
         }
 
-        const throwerFieldX = discMetersFromState(discPosition, geo(possession))
+        const releaseThrower = live?.offenseAgents?.find(a => a.id === thrower.id)
+        const throwerFieldX = releaseThrower?.x ?? discMetersFromState(discPosition, geo(possession))
+        const throwerFieldY = releaseThrower?.y ?? discYMeters
         const catchX = decision.catchX ?? throwerFieldX
-        const catchY = decision.catchY ?? discYMeters
+        const catchY = decision.catchY ?? throwerFieldY
         const throwDx = catchX - throwerFieldX
-        const throwDy = catchY - discYMeters
+        const throwDy = catchY - throwerFieldY
         const throwDistanceM = Math.hypot(throwDx, throwDy)
 
         const stallMods = stallThrowModifiers({
@@ -585,7 +588,8 @@ export function simulatePoint({
           forceSide: resolveMarkForceSide(defenseTeam, null),
           isOpenSide: decision.isOpenSide ?? true,
           throwTechnique: decision.throwTechnique ?? null,
-          throwerY: discYMeters,
+          throwerY: throwerFieldY,
+          attackSign: attackDirectionX(geo(possession)),
           laneThreats: decision.laneThreats ?? null,
           wind,
           throwDx,
@@ -940,16 +944,21 @@ export function simulatePoint({
       ? (catchPoint.x - throwerFieldX) * attackDirectionX(geo(possession))
       : null
 
-    const discAfter = computeThrowAdvance(discPositionBefore, throwType, {
-      attackStyle,
-      defenseStyle,
-      rng,
-      forwardProgressM,
-      wind,
-      throwDx: commitThrowDx,
-      throwDy: commitThrowDy,
-      thrower,
-    })
+    // The flight already includes wind, defense and receiver movement. Preserve
+    // its actual pivot; applying abstract yard modifiers again moves the disc
+    // between a successful catch and the next throw.
+    const discAfter = finalSuccess && catchPoint
+      ? discPositionFromFieldMeters(catchPoint.x, geo(possession))
+      : computeThrowAdvance(discPositionBefore, throwType, {
+        attackStyle,
+        defenseStyle,
+        rng,
+        forwardProgressM,
+        wind,
+        throwDx: commitThrowDx,
+        throwDy: commitThrowDy,
+        thrower,
+      })
     const yardsIfSuccess = yardsFromPositions(discPositionBefore, discAfter)
     const isHuck = isHuckType(throwType, yardsIfSuccess)
 
@@ -1135,14 +1144,12 @@ export function simulatePoint({
   }
 
   if (!scoringTeam) {
-    scoringTeam = discPosition >= 50 ? possession : possession === 'home' ? 'away' : 'home'
-    events.push(
-      createEvent(EVENT.SCORE, {
-        team: scoringTeam,
-        teamName: teamById(scoringTeam).name,
-        reason: throwCount >= MATCH_CONFIG.maxThrowsPerPoint ? 'throw_limit' : 'action_limit',
-      }),
-    )
+    clearPointPlayerMods()
+    throw new PointSimulationLimitError({
+      pointIndex, throwCount, actionCount: Math.min(actionCount, MATCH_CONFIG.maxThrowsPerPoint),
+      limit: MATCH_CONFIG.maxThrowsPerPoint, mode: 'full', possessionTeam: possession, discPosition,
+      reason: throwCount >= MATCH_CONFIG.maxThrowsPerPoint ? 'throw_limit' : 'action_limit',
+    }, events)
   } else if (boxScore && lastScoringThrowerId != null && lastScoringReceiverId != null) {
     recordGoal(boxScore, lastScoringThrowerId, lastScoringReceiverId)
   }
@@ -1518,6 +1525,7 @@ export function simulatePointFast({
       forceSide: resolveMarkForceSide(defenseTeam, null),
       isOpenSide,
       throwerY,
+      attackSign,
       wind,
       throwDx: actualDx,
       throwDy: actualDy,
@@ -1647,14 +1655,12 @@ export function simulatePointFast({
   }
 
   if (!scoringTeam) {
-    scoringTeam = discPosition >= 50 ? possession : possession === 'home' ? 'away' : 'home'
-    events.push(
-      createEvent(EVENT.SCORE, {
-        team: scoringTeam,
-        teamName: teamById(scoringTeam).name,
-        reason: throwCount >= MATCH_CONFIG.maxThrowsPerPoint ? 'throw_limit' : 'action_limit',
-      }),
-    )
+    clearPointPlayerMods()
+    throw new PointSimulationLimitError({
+      pointIndex, throwCount, actionCount: Math.min(actionCount, MATCH_CONFIG.maxThrowsPerPoint),
+      limit: MATCH_CONFIG.maxThrowsPerPoint, mode: 'fast', possessionTeam: possession, discPosition,
+      reason: throwCount >= MATCH_CONFIG.maxThrowsPerPoint ? 'throw_limit' : 'action_limit',
+    }, events)
   } else if (boxScore && lastScoringThrowerId != null && lastScoringReceiverId != null) {
     recordGoal(boxScore, lastScoringThrowerId, lastScoringReceiverId)
   }

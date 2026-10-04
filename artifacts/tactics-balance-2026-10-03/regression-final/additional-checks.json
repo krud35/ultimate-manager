@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-03T17:52:58.999Z",
+  "targetedEslint": {
+    "exitCode": 0,
+    "files": 21
+  },
+  "probe": {
+    "observations": [],
+    "path": "../mechanisms-final.json"
+  },
+  "sourceCandidate": "candidate-v2",
+  "note": "Final17tests allpassed; build metadata inbuild.json. Existing MatchView lint findings documented separately unchanged vsHEAD."
+}

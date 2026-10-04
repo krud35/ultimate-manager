@@ -60,57 +60,45 @@ export function normalizeForceMark(raw) {
 }
 
 /**
- * Geometria markera na boisku.
- * sideline → dynamicznie do bliższej krawędzi (home/away).
- * straight → middle (mark na wprost).
+ * Open side in GLOBAL field Y. FH/BH name the side for a right-handed thrower;
+ * changing hands never moves the mark. At midfield middle/sideline are neutral.
  */
-export function forceMarkLayoutSide(forceMark, throwerY = null) {
+export function forceOpenSideY(forceMark, throwerY = null, attackSign = 1) {
   const f = normalizeForceMark(forceMark)
-  if (f === FORCE_SIDES.FORCE_MIDDLE || f === FORCE_SIDES.FORCE_STRAIGHT) return 'middle'
+  const sign = Math.sign(attackSign) || 1
+  const centerward = Math.sign(fieldCenterY() - (throwerY ?? fieldCenterY()))
+  if (f === FORCE_SIDES.FORCE_STRAIGHT) return 0
+  if (f === FORCE_SIDES.FORCE_MIDDLE) return centerward
   if (f === FORCE_SIDES.FORCE_SIDELINE) {
-    const cy = fieldCenterY()
-    const y = throwerY ?? cy
-    return y >= cy ? 'away' : 'home'
+    return centerward === 0 ? 0 : -centerward
   }
-  if (f === FORCE_SIDES.FORCE_BACKHAND) return 'away'
-  return 'home'
+  return f === FORCE_SIDES.FORCE_BACKHAND ? -sign : sign
+}
+
+/** Marker/blocking side, not the forced/open side. Legacy labels refer to global Y. */
+export function forceMarkLayoutSide(forceMark, throwerY = null, attackSign = 1) {
+  const open = forceOpenSideY(forceMark, throwerY, attackSign)
+  return open > 0 ? 'home' : open < 0 ? 'away' : 'middle'
 }
 
 /**
- * Force Middle: technika wymuszana na podanie w szeroki środek zależy od Y rzucającego i ręki.
- * @returns {'force_forehand'|'force_backhand'}
+ * A straight/neutral mark has no lateral break side. A pass exactly on the axis
+ * is neutral too; its actual obstruction is assessed from the marker geometry.
  */
-export function resolveMiddleForceGrip({ throwerY, dominantHand }) {
-  const cy = fieldCenterY()
-  const hand =
-    dominantHand === DOMINANT_HAND.LEFT ? DOMINANT_HAND.LEFT : DOMINANT_HAND.RIGHT
-  const onHomeHalf = throwerY < cy
-  if (hand === DOMINANT_HAND.RIGHT) {
-    return onHomeHalf ? FORCE_SIDES.FORCE_FOREHAND : FORCE_SIDES.FORCE_BACKHAND
-  }
-  return onHomeHalf ? FORCE_SIDES.FORCE_BACKHAND : FORCE_SIDES.FORCE_FOREHAND
+export function isForceOpenSide(forceMark, throwerY, receiverY, attackSign = 1) {
+  const open = forceOpenSideY(forceMark, throwerY, attackSign)
+  return open === 0 || (receiverY - throwerY) * open >= -1e-9
 }
 
-/**
- * Aktywny force (grip) używany przy open/break — dla middle/sideline dynamiczny.
- */
-export function resolveActiveForceGrip(forceMark, { throwerY, dominantHand } = {}) {
-  const f = normalizeForceMark(forceMark)
-  if (f === FORCE_SIDES.FORCE_MIDDLE || f === FORCE_SIDES.FORCE_SIDELINE) {
-    return resolveMiddleForceGrip({
-      throwerY: throwerY ?? cySafe(),
-      dominantHand,
-    })
-  }
-  // Straight-up: technika „neutralna” — traktuj jak forehand na open (obie strony short).
-  if (f === FORCE_SIDES.FORCE_STRAIGHT) {
-    return FORCE_SIDES.FORCE_FOREHAND
-  }
-  return f
+/** Grip for RH on the open side. Apply handedness exactly once in the technique. */
+export function resolveActiveForceGrip(forceMark, { throwerY, attackSign = 1 } = {}) {
+  const open = forceOpenSideY(forceMark, throwerY, attackSign)
+  return open * (Math.sign(attackSign) || 1) < 0
+    ? FORCE_SIDES.FORCE_BACKHAND : FORCE_SIDES.FORCE_FOREHAND
 }
 
-function cySafe() {
-  return fieldCenterY()
+export function resolveMiddleForceGrip(ctx = {}) {
+  return resolveActiveForceGrip(FORCE_SIDES.FORCE_MIDDLE, ctx)
 }
 
 /** @deprecated użyj normalizeForceMark + forceMarkLayoutSide */
@@ -131,11 +119,21 @@ export function resolveThrowTechnique({
   forceSide,
   isOpenSide,
   throwerY,
+  attackSign = 1,
+  throwDy,
 }) {
   const hand =
     dominantHand === DOMINANT_HAND.LEFT ? DOMINANT_HAND.LEFT : DOMINANT_HAND.RIGHT
-  const force = resolveActiveForceGrip(forceSide, { throwerY, dominantHand: hand })
+  const force = resolveActiveForceGrip(forceSide, { throwerY, attackSign })
   const onOpen = !!isOpenSide
+
+  // Both lateral lanes are open under a neutral mark, but they still require
+  // opposite techniques. Retain the RH forehand fallback on the exact axis.
+  if (forceOpenSideY(forceSide, throwerY, attackSign) === 0 && Number.isFinite(throwDy)) {
+    const rhForehand = throwDy * (Math.sign(attackSign) || 1) >= 0
+    return rhForehand === (hand === DOMINANT_HAND.RIGHT)
+      ? THROW_TECHNIQUE.FOREHAND : THROW_TECHNIQUE.BACKHAND
+  }
 
   if (hand === DOMINANT_HAND.RIGHT && force === FORCE_SIDES.FORCE_FOREHAND) {
     return onOpen ? THROW_TECHNIQUE.FOREHAND : THROW_TECHNIQUE.BACKHAND
@@ -200,6 +198,8 @@ export function resolveThrowTechniqueForPlayer(thrower, ctx) {
     forceSide: ctx.forceSide,
     isOpenSide: ctx.isOpenSide,
     throwerY: ctx.throwerY,
+    attackSign: ctx.attackSign,
+    throwDy: ctx.throwDy,
   })
   const mods = throwTechniqueModifiers({
     technique,

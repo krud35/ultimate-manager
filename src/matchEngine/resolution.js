@@ -219,6 +219,7 @@ export function resolveThrow({
   isOpenSide = true,
   throwTechnique = null,
   throwerY,
+  attackSign = 1,
   laneThreats = null,
   wind = null,
   throwDx = 0,
@@ -264,6 +265,8 @@ export function resolveThrow({
     forceSide,
     isOpenSide,
     throwerY,
+    attackSign,
+    throwDy,
   })
   const technique = throwTechnique ?? techCtx.technique
   const techniqueMods = {
@@ -271,7 +274,7 @@ export function resolveThrow({
     blockRiskBonus: techCtx.blockRiskBonus,
   }
   if (throwTechnique && throwTechnique !== techCtx.technique) {
-    const alt = resolveThrowTechniqueForPlayer(thrower, { forceSide, isOpenSide, throwerY })
+    const alt = resolveThrowTechniqueForPlayer(thrower, { forceSide, isOpenSide, throwerY, attackSign, throwDy })
     techniqueMods.accuracyMult = alt.accuracyMult
     techniqueMods.blockRiskBonus = alt.blockRiskBonus
   }

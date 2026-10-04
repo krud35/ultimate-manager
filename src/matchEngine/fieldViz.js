@@ -7,9 +7,9 @@ import {
   defenseStyleForPointStart,
   pointStartRoleForTeam,
 } from './lineups.js'
-import { forceMarkLayoutSide, normalizeForceMark } from './throwTechnique.js'
+import { forceMarkLayoutSide, forceOpenSideY, normalizeForceMark } from './throwTechnique.js'
 import { forceMarkPosition } from './ai/defenderBrain.js'
-import { zoneStructuralTarget, ZONE_SLOT_ORDER, ZONE_SLOT_ROLES } from './ai/tacticsBehavior.js'
+import { hexSlotTarget, zoneStructuralTarget, ZONE_SLOT_ORDER, ZONE_SLOT_ROLES } from './ai/tacticsBehavior.js'
 import { resolveTeamZoneSlots } from './defenseZoneRoles.js'
 import {
   FIELD_DIMENSIONS,
@@ -284,20 +284,16 @@ function layoutOffenseSide(players, teamId, discMeters, throwerId, attackSign, d
 function layoutOffenseHex(players, teamId, discMeters, throwerId, attackSign, discY) {
   const ordered = orderOffenseLine(players, throwerId)
   const cy = discY ?? fieldCenterY()
-  const angles = [0, 60, 120, 180, -120, -60]
   return ordered.map((p, i) => {
     const base = playerLabelMeta(p, teamId)
     if (i === 0) {
       return { ...base, stackIndex: i, fieldRole: 'thrower', x: clampM(discMeters), y: clampY(cy) }
     }
-    const a = ((angles[(i - 1) % 6] ?? 0) * Math.PI) / 180
-    const radius = 9
     return {
       ...base,
       stackIndex: i,
       fieldRole: i === 1 ? 'dump' : 'stack',
-      x: clampM(discMeters + Math.cos(a) * attackSign * radius),
-      y: clampY(cy + Math.sin(a) * radius),
+      ...hexSlotTarget({ stackIndex: i, discX: discMeters, discY: cy, attackSign }),
     }
   })
 }
@@ -387,14 +383,15 @@ function layoutOffenseZoneO(players, teamId, discMeters, throwerId, attackSign, 
   })
 }
 
-function markPosRelativeToOffense(offensePlayer, gap = 2.2, attackSign = 1, forceSide = 'home') {
+function markPosRelativeToOffense(offensePlayer, gap = 2.2, attackSign = 1, forceSide = 'home', throwerY = null) {
   const cy = fieldCenterY()
   if (!offensePlayer) return { x: 45, y: cy }
   // Thrower: ciasny stall mark (~0.55 m) z force shade.
   if (offensePlayer.fieldRole === 'thrower') {
     return forceMarkPosition(offensePlayer.x, offensePlayer.y, forceSide, attackSign)
   }
-  const shade = forceSide === 'away' ? 0.85 : forceSide === 'home' ? -0.85 : 0
+  const layoutSide = forceMarkLayoutSide(forceSide, throwerY, attackSign)
+  const shade = layoutSide === 'away' ? 0.85 : layoutSide === 'home' ? -0.85 : 0
   return {
     x: clampM(offensePlayer.x - gap * attackSign),
     y: clampY(offensePlayer.y + shade),
@@ -405,14 +402,14 @@ function markPosRelativeToOffense(offensePlayer, gap = 2.2, attackSign = 1, forc
 function resyncDefenseMarksToOffense(defenseLayout, offenseLayout, attackSign, forceSide) {
   if (!defenseLayout?.length || !offenseLayout?.length) return defenseLayout
   const offenseById = new Map(offenseLayout.map((o) => [o.id, o]))
-  const layoutSide = forceMarkLayoutSide(forceSide)
+  const throwerY = offenseLayout.find(o => o.fieldRole === 'thrower')?.y
   return defenseLayout.map((d) => {
     if (ZONE_SLOT_ROLES.has(d.fieldRole) || d.fieldRole === 'zone_wall' || d.fieldRole === 'zone') {
       return d
     }
     const off = d.markTargetId != null ? offenseById.get(d.markTargetId) : null
     if (!off) return d
-    const pos = markPosRelativeToOffense(off, 2.6, attackSign, layoutSide)
+    const pos = markPosRelativeToOffense(off, 2.6, attackSign, forceSide, throwerY)
     return { ...d, x: pos.x, y: pos.y }
   })
 }
@@ -425,7 +422,7 @@ function layoutDefensePersonMark(
   forceMark = FORCE_SIDES.FORCE_FOREHAND,
   personMatchups = null,
 ) {
-  const layoutSide = forceMarkLayoutSide(forceMark)
+  const throwerY = offenseLayout.find(o => o.fieldRole === 'thrower')?.y
   const offenseById = new Map(offenseLayout.map((o) => [o.id, o]))
   // Reverse map: defenderId → offense layout entry (gdy matchupy są przetasowane).
   const offByDefId = new Map()
@@ -448,7 +445,7 @@ function layoutDefensePersonMark(
     }
     if (mark?.id != null) usedOffenseIds.add(mark.id)
     const pos = mark
-      ? markPosRelativeToOffense(mark, 2.6, attackSign, layoutSide)
+      ? markPosRelativeToOffense(mark, 2.6, attackSign, forceMark, throwerY)
       : { x: p.x ?? 0, y: p.y ?? 0 }
     return {
       ...playerLabelMeta(p, teamId),
@@ -484,15 +481,18 @@ function layoutDefensePerson(players, teamId, discMeters, attackSign = 1) {
  * Sloty trzymają kształt strefy niezależnie od pozycji zawodników ataku — realny ruch
  * co tick liczy zoneStructuralTarget (ai/tacticsBehavior.js), to tylko seed na klatkę 0.
  */
-function layoutDefenseZoneCup(players, teamId, discMeters, attackSign = 1, discYMeters = null, defenseTactics = null) {
+function layoutDefenseZoneCup(players, teamId, discMeters, attackSign = 1, discYMeters = null, defenseTactics = null, forceSide = FORCE_SIDES.FORCE_FOREHAND) {
   const slots = resolveTeamZoneSlots(defenseTactics, players.map((p) => p.id))
   return players.map((p, i) => {
     const { role: fieldRole, roleSlotIndex } = slots[i] ?? { role: ZONE_SLOT_ORDER[i] ?? 'zone_deep', roleSlotIndex: 0 }
-    const pos = zoneStructuralTarget(fieldRole, roleSlotIndex, {
+    const pos = fieldRole === 'zone_marker'
+      ? forceMarkPosition(discMeters, discYMeters ?? fieldCenterY(), forceSide, attackSign)
+      : zoneStructuralTarget(fieldRole, roleSlotIndex, {
       discX: discMeters,
       discY: discYMeters,
       attackSign,
       zoneKind: 'cup',
+      openSideSign: forceOpenSideY(forceSide, discYMeters, attackSign),
     })
     return {
       ...playerLabelMeta(p, teamId),
@@ -506,15 +506,18 @@ function layoutDefenseZoneCup(players, teamId, discMeters, attackSign = 1, discY
 }
 
 /** Arrowhead / junk wall — te same sloty co cup, płytsza druga linia (zoneKind='wall'). */
-function layoutDefenseZoneWall(players, teamId, discMeters, attackSign = 1, discYMeters = null, defenseTactics = null) {
+function layoutDefenseZoneWall(players, teamId, discMeters, attackSign = 1, discYMeters = null, defenseTactics = null, forceSide = FORCE_SIDES.FORCE_FOREHAND) {
   const slots = resolveTeamZoneSlots(defenseTactics, players.map((p) => p.id))
   return players.map((p, i) => {
     const { role: fieldRole, roleSlotIndex } = slots[i] ?? { role: ZONE_SLOT_ORDER[i] ?? 'zone_deep', roleSlotIndex: 0 }
-    const pos = zoneStructuralTarget(fieldRole, roleSlotIndex, {
+    const pos = fieldRole === 'zone_marker'
+      ? forceMarkPosition(discMeters, discYMeters ?? fieldCenterY(), forceSide, attackSign)
+      : zoneStructuralTarget(fieldRole, roleSlotIndex, {
       discX: discMeters,
       discY: discYMeters,
       attackSign,
       zoneKind: 'wall',
+      openSideSign: forceOpenSideY(forceSide, discYMeters, attackSign),
     })
     return {
       ...playerLabelMeta(p, teamId),
@@ -560,10 +563,6 @@ export function resolveFieldTactics(
       : defenseStyle !== DEFENSE_STYLES.ZONE_CUP &&
         defenseStyle !== DEFENSE_STYLES.ZONE_WALL
   return { attackStyle, defenseStyle, personMark }
-}
-
-function normalizeForceSide(raw) {
-  return forceMarkLayoutSide(normalizeForceMark(raw))
 }
 
 /** Force Forehand / Backhand / Middle z taktyki linii broniącej lub zdarzenia punktu. */
@@ -650,10 +649,10 @@ export function layoutPlayersOnField(
   }
 
   if (defenseStyle === DEFENSE_STYLES.ZONE_CUP) {
-    return layoutDefenseZoneCup(players, teamId, discMeters, attackSign, discYMeters, defenseTactics)
+    return layoutDefenseZoneCup(players, teamId, discMeters, attackSign, discYMeters, defenseTactics, forceSide)
   }
   if (defenseStyle === DEFENSE_STYLES.ZONE_WALL) {
-    return layoutDefenseZoneWall(players, teamId, discMeters, attackSign, discYMeters, defenseTactics)
+    return layoutDefenseZoneWall(players, teamId, discMeters, attackSign, discYMeters, defenseTactics, forceSide)
   }
   if (personMark && offenseLayout?.length) {
     return layoutDefensePersonMark(

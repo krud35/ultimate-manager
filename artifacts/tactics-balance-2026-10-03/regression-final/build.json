@@ -1,0 +1,7 @@
+{
+  "at": "2026-10-03T17:45:53.317Z",
+  "command": "npm run build -- --configLoader native",
+  "exitCode": 0,
+  "modules": 424,
+  "warning": "Existing bundle exceeds500kB"
+}

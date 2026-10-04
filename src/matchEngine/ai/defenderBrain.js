@@ -1,5 +1,5 @@
 import { clampAgentPosition } from './spatialEvaluator.js'
-import { fieldCenterY, attackDirectionX } from '../fieldDimensions.js'
+import { attackDirectionX } from '../fieldDimensions.js'
 import { FORCE_SIDES } from '../tacticsModifiers.js'
 import { forceMarkLayoutSide, normalizeForceMark } from '../throwTechnique.js'
 import { CUTTER_STATE } from './cutterBrain.js'
@@ -67,7 +67,7 @@ export const STALL_MARK_FORCE_SHADE_M = 0.42
  */
 export function forceMarkPosition(throwerX, throwerY, forceMark, attackSign = 1, markShapeBias = 0) {
   const force = normalizeForceMark(forceMark)
-  const layout = forceMarkLayoutSide(force, throwerY)
+  const layout = forceMarkLayoutSide(force, throwerY, attackSign)
   const downfield = Math.sign(attackSign || 1) || 1
 
   // Lekko przed throwerem (w stronę ataku) — typowy stall mark.
@@ -77,23 +77,16 @@ export function forceMarkPosition(throwerX, throwerY, forceMark, attackSign = 1,
   if (layout === 'middle' || force === FORCE_SIDES.FORCE_STRAIGHT) {
     dy = 0
   } else if (layout === 'away') {
-    // Force backhand (layout away): shade +Y → wymusza rzut w drugą stronę.
+    // Blocking side +Y; the open lane is in the opposite direction.
     dy = STALL_MARK_FORCE_SHADE_M
   } else {
-    // Force forehand (layout home): shade −Y.
+    // Blocking side -Y.
     dy = -STALL_MARK_FORCE_SHADE_M
   }
 
-  // Force sideline: shade w stronę bliższej krawędzi.
-  if (force === FORCE_SIDES.FORCE_SIDELINE) {
-    const cy = fieldCenterY()
-    dy = throwerY >= cy ? STALL_MARK_FORCE_SHADE_M : -STALL_MARK_FORCE_SHADE_M
-  }
-
-  // Force middle: lekko do środka boiska.
+  // Middle keeps its existing flatter angle, while blocking the sideline lane.
   if (force === FORCE_SIDES.FORCE_MIDDLE) {
-    const cy = fieldCenterY()
-    dy = throwerY >= cy ? -STALL_MARK_FORCE_SHADE_M * 0.85 : STALL_MARK_FORCE_SHADE_M * 0.85
+    dy *= 0.85
   }
 
   // KSZTAŁT MARKA (coachDirectives.markShape): −1 zamyka inside-out, +1 zamyka around.
@@ -108,7 +101,7 @@ export function forceMarkPosition(throwerX, throwerY, forceMark, attackSign = 1,
     // ciało zamyka break side, a odsłania open side. Liczenie jej jako przeciwnej dawało
     // oba bieguny w tę samą stronę: zmierzone, kąt marka −19.8° przy „no around" i −18.3°
     // przy „no inside", zamiast rozjazdu w przeciwne strony.
-    const breakSign = Math.sign(dy) || 1
+    const breakSign = Math.sign(dy)
     if (markShapeBias < 0) {
       // No inside: marker wchodzi bardziej PRZED rzucającego i ścina bok — zamyka wąski
       // tor inside-out biegnący tuż obok jego ciała w dół boiska.
@@ -321,8 +314,29 @@ export function tickDefenderBrain(agent, ctx) {
     ? Math.hypot(agent.x - targetOffense.x, agent.y - targetOffense.y)
     : 0
 
+  // Reset poach is a specific, once-per-possession instruction, independent of
+  // ordinary poach-seeking. A personal no_poach still applies to this lane leave;
+  // compliance reduces its duration and a compliant defender stays with the reset.
+  const noPoachBias = coachMods.noPoachBias ?? 0
+  const marksCurrentReset =
+    targetOffense?.isDump === true || targetOffense?.fieldRole === 'dump'
+  const resetBias = (coachMods.poachResetHandlerBias ?? 0) * (1 - noPoachBias)
+  if (
+    resetBias > 0 && noPoachBias < 0.55 && marksCurrentReset &&
+    state !== DEFENDER_STATE.POACHING && !resetPoachDone && distToDisc <= 14
+  ) {
+    const laneThreat = inLane ? 1 : 0.45
+    const earlyStall = Math.max(0, Math.min(1, (6 - stallCount) / 5))
+    const window = 2000 + 2000 * laneThreat * earlyStall
+    poachUntil = ms + window * resetBias
+    poachedFromId = targetOffense.id ?? targetOffense.player?.id
+    resetPoachDone = true
+  }
+
   // Aktywny poach — krótki wypad w lane, potem recover na marka.
-  if (ms < poachUntil && poachedFromId) {
+  // Handle a new reset poach here too: setting local state after this branch used
+  // to fall through to normal coverage and discard both the timer and once flag.
+  if (ms < poachUntil && poachedFromId != null && noPoachBias < 0.55) {
     state = DEFENDER_STATE.POACHING
     // Cel poacha: realnie groźna, nieobsadzona przestrzeń — nie stały punkt przed dyskiem.
     // Dzięki temu „deep help" i zamykanie open side wychodzą z układu boiska, a nie
@@ -368,43 +382,6 @@ export function tickDefenderBrain(agent, ctx) {
     (defProfile.maxPoachers ?? 1) >= 2
   const canPoachRole =
     distToDisc <= 9 && (styleAllowsLanePoach || marksDumpOrHandler)
-
-  // POACH NA RESECIE (coachDirectives.poachResetHandler). Dotyczy obrońcy AKTUALNEGO
-  // resetu — tego, kto w tej chwili jest dumpem (`isDump`), a nie tego, kto ma taką
-  // podrolę w formacji. Zejście jest CHWILOWE: krótkie okno na zamknięcie throwing lane,
-  // po którym wraca do krycia, więc reset nie zostaje otwarty na całą akcję.
-  // `isDump` bywa nieustawione na agencie — niezawodnym znacznikiem aktualnego resetu jest
-  // `fieldRole`, dlatego sprawdzamy oba, tak jak robi to `marksDumpOrHandler` wyżej.
-  const marksCurrentReset =
-    targetOffense?.isDump === true || targetOffense?.fieldRole === 'dump'
-  const resetBias = coachMods.poachResetHandlerBias ?? 0
-  const resetPoachOn =
-    resetBias > 0 &&
-    marksCurrentReset &&
-    !isMarkerOnThrower &&
-    state !== DEFENDER_STATE.POACHING &&
-    !agent.resetPoachDone &&
-    distToDisc <= 14
-  if (resetPoachOn) {
-    /**
-     * Zejście jest NATYCHMIASTOWE i jednorazowe na posiadanie, nie losowane co tick.
-     * Poprzednia wersja rzucała kością przy każdej próbie i nie odpalała w ogóle
-     * (zmierzone: udział poachów obrońcy resetu +0.05 pp przy bazie 0.60) — a rzut i tak
-     * nie oddawał tego, o co chodzi: obrońca ma skoczyć w lane od razu, póki rzucający
-     * dopiero skanuje pole, a nie kiedyś w trakcie akcji.
-     *
-     * Okno 2–4 s zależy od tego, ile ten poach jest wart: pełne, gdy obrońca stoi już
-     * w torze rzutu (jest czym zamknąć lane) i gdy rzucający dopiero zaczął (niski stall,
-     * bo przy wysokim reset jest potrzebny natychmiast i zostawianie go robi się drogie).
-     */
-    const laneThreat = inLane ? 1 : 0.45
-    const earlyStall = Math.max(0, Math.min(1, (6 - stallCount) / 5))
-    const window = 2000 + 2000 * laneThreat * earlyStall
-    poachUntil = ms + window * resetBias
-    poachedFromId = targetOffense.id ?? targetOffense.player?.id
-    state = DEFENDER_STATE.POACHING
-    resetPoachDone = true
-  }
 
   const poachProbe =
     !isMarkerOnThrower &&
@@ -503,7 +480,7 @@ export function tickDefenderBrain(agent, ctx) {
   }
 
   const attackSign = ctx.attackSign ?? 1
-  const layout = forceMarkLayoutSide(normalizeForceMark(forceSide), throwerAgent?.y)
+  const layout = forceMarkLayoutSide(forceSide, throwerAgent?.y ?? discPos?.y, attackSign)
   // Bez sztucznego „+2.1" — coverageCushionM zwraca teraz realny cushion (patrz komentarz
   // przy tej funkcji: poprzedni round-trip -2.1/+2.1 zerował wpływ statystyk i instrukcji).
   const baseCushion = coverageCushionM(player, defenseTactics)
@@ -624,6 +601,7 @@ export function tickDefenderBrain(agent, ctx) {
       ms < reactUntil && !behindMark && !chaseHard ? pendingTarget : null,
     poachUntil: 0,
     poachedFromId: null,
+    resetPoachDone,
     nextPoachCheckMs: poachProbe ? ms + 1100 : agent.nextPoachCheckMs ?? 0,
     lastTargetX: targetOffense?.x,
     lastTargetY: targetOffense?.y,
@@ -800,7 +778,7 @@ export function tickZoneDefenderBrain(agent, ctx) {
   const player = agent.player ?? agent
   const zoneKind = defenseMods(defenseStyle).zoneKind ?? 'cup'
   const discPos = disc ?? throwerAgent ?? { x: agent.x, y: agent.y }
-  const openSide = forceSide ? openSideSign(forceSide, discPos.y) : 0
+  const openSide = forceSide ? openSideSign(forceSide, throwerAgent?.y ?? discPos.y, attackSign) : 0
 
   const sign = Math.sign(attackSign) || 1
   const throwerId = throwerAgent?.id ?? throwerAgent?.player?.id

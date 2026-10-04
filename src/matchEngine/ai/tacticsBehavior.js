@@ -342,6 +342,15 @@ export function applyAttackThrowBias(score, ctx) {
   return s
 }
 
+/** The six existing HEX vertices, shared by initial layout and live support. */
+export function hexSlotTarget({ stackIndex, discX, discY, attackSign }) {
+  const angles = [0, 60, 120, 180, -120, -60]
+  const slot = Math.max(0, (stackIndex ?? 1) - 1)
+  const angle = angles[slot % 6] * Math.PI / 180
+  return { x: clampFieldX(discX + Math.cos(angle) * attackSign * 9),
+    y: clampFieldY(discY + Math.sin(angle) * 9) }
+}
+
 /**
  * Cel strukturalny zależny od formacji ataku.
  * Indeksy muszą zgadzać się z layoutOffense* w fieldViz.js
@@ -366,8 +375,14 @@ export function formationStructuralTarget({
   const oy = throwerPos?.y ?? disc.y
   const cy = fieldCenterY()
   const w = FIELD_DIMENSIONS.widthM
-  const openSign = openSideSign(forceSide, y)
+  const openSign = openSideSign(forceSide, oy, attackSign) || attackSign
   const r = rng?.float ? rng.float() : 0.5
+
+  // HEX support surrounds the disc regardless of handler preference. Applying a
+  // generic behind-disc reset here erased its first one/two forward vertices.
+  if (attackStyle === ATTACK_STYLES.HEX_OFFENSE) {
+    return hexSlotTarget({ stackIndex, discX: ox, discY: oy, attackSign })
+  }
 
   // Dump/reset — tylko gdy layout / podrola oznaczyły dump (nie hardcoduj index==1:
   // zone O i horizontal mają handlery na 1–2 bez roli dump).
@@ -459,17 +474,6 @@ export function formationStructuralTarget({
         y: clampFieldY(cy + floodSign * (6 + (floodIdx % 2) * 3)),
       }
     }
-    case ATTACK_STYLES.HEX_OFFENSE: {
-      // Layout: kąty [0,60,120,180,-120,-60] dla i-1
-      const angles = [0, 60, 120, 180, -120, -60]
-      const hexSlot = Math.max(0, (stackIndex ?? 1) - 1)
-      const a = (angles[hexSlot % 6] * Math.PI) / 180
-      const radius = 9
-      return {
-        x: clampFieldX(ox + Math.cos(a) * attackSign * radius),
-        y: clampFieldY(oy + Math.sin(a) * radius),
-      }
-    }
     case ATTACK_STYLES.ZONE_OFFENSE: {
       // Layout: 1–2 handlery flat, 3 popper, 4+ wings
       if (stackIndex === 1 || stackIndex === 2) {
@@ -551,11 +555,12 @@ export function shouldAttemptPoach(defender, ctx) {
    * trzyma się systemu, ma zakaz absolutny, a ten o słabej znajomości taktyki spada
    * poniżej progu i nadal czasem odpuści — czyli dokładnie tak, jak działa reszta
    * modelu compliance.
+   * Osobiste no_poach stosuje tę samą bramkę do własnego compliance.
    *
    * Nie dotyka help deep: asekuracja przestrzeni to osobna oś (helpDeepMode) i ma
    * działać nawet przy zakazie poachów.
    */
-  if ((defMods.poachSeekingMode ?? 0) <= -0.55) return false
+  if ((defMods.poachSeekingMode ?? 0) <= -0.55 || (defMods.noPoachBias ?? 0) >= 0.55) return false
   // Zawodnik z cechą `poacher` albo instrukcją `poach` poachuje NIEZALEŻNIE od stylu:
   // w zwykłym person defence tendencja stylu to 0.09, więc cecha nie miała czego mnożyć.
   // Taki zawodnik reaguje też na cuty daleko od dysku (deep help, zamykanie open side),

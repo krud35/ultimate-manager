@@ -1,0 +1,480 @@
+{
+  "purpose": "Read-only diagnosis; assertions validate fixtures and reproducibility, observations are not fixed-output tests.",
+  "resetPoach": {
+    "seed": 8103,
+    "frames": 250,
+    "durationSeconds": 5,
+    "off": {
+      "poachFrames": 0,
+      "resetDoneFrames": 0,
+      "finalPosition": [
+        45,
+        16.37096
+      ]
+    },
+    "on": {
+      "poachFrames": 131,
+      "resetDoneFrames": 250,
+      "finalPosition": [
+        44.337163,
+        20.145754
+      ]
+    },
+    "identicalTrace": false
+  },
+  "poachBan": {
+    "seed": 554,
+    "rows": [
+      {
+        "instructions": [],
+        "attempts": 0,
+        "opportunities": 10000,
+        "mode": -0.652,
+        "multiplier": 0.348
+      },
+      {
+        "instructions": [
+          "no_poach"
+        ],
+        "attempts": 0,
+        "opportunities": 10000,
+        "mode": -0.652,
+        "multiplier": 0.106001
+      },
+      {
+        "instructions": [
+          "poach"
+        ],
+        "attempts": 1195,
+        "opportunities": 10000,
+        "mode": 0,
+        "multiplier": 1.549
+      }
+    ],
+    "extraBanDoesNotIncreasePoaches": true
+  },
+  "windowScale": {
+    "seed": 333,
+    "scenes": 5000,
+    "range": [
+      19.175379,
+      62.592688
+    ],
+    "thresholds": {
+      "safeCeiling": 35,
+      "creativeFloor": 25,
+      "creativeCeiling": 55
+    },
+    "weakWindowsBelow35": 796,
+    "halfOpenWindows25To55": 4819,
+    "currentSafeBranchMatches": 796,
+    "currentCreativeBranchMatches": 4819
+  },
+  "forceGeometry": {
+    "rows": [
+      {
+        "force": "force_forehand",
+        "attackSign": 1,
+        "throwerY": 5,
+        "markerDy": -0.457628,
+        "layout": "home",
+        "openSign": 1,
+        "breakSign": -1,
+        "resetSign": 1,
+        "receiverYs": [
+          2,
+          8
+        ],
+        "open": [
+          false,
+          true
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_forehand",
+        "attackSign": 1,
+        "throwerY": 32,
+        "markerDy": -0.457628,
+        "layout": "home",
+        "openSign": 1,
+        "breakSign": -1,
+        "resetSign": 1,
+        "receiverYs": [
+          29,
+          35
+        ],
+        "open": [
+          false,
+          true
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_forehand",
+        "attackSign": -1,
+        "throwerY": 5,
+        "markerDy": 0.457628,
+        "layout": "away",
+        "openSign": -1,
+        "breakSign": 1,
+        "resetSign": -1,
+        "receiverYs": [
+          2,
+          8
+        ],
+        "open": [
+          true,
+          false
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_forehand",
+        "attackSign": -1,
+        "throwerY": 32,
+        "markerDy": 0.457628,
+        "layout": "away",
+        "openSign": -1,
+        "breakSign": 1,
+        "resetSign": -1,
+        "receiverYs": [
+          29,
+          35
+        ],
+        "open": [
+          true,
+          false
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_backhand",
+        "attackSign": 1,
+        "throwerY": 5,
+        "markerDy": 0.457628,
+        "layout": "away",
+        "openSign": -1,
+        "breakSign": 1,
+        "resetSign": -1,
+        "receiverYs": [
+          2,
+          8
+        ],
+        "open": [
+          true,
+          false
+        ],
+        "gripRight": "force_backhand",
+        "gripLeft": "force_backhand"
+      },
+      {
+        "force": "force_backhand",
+        "attackSign": 1,
+        "throwerY": 32,
+        "markerDy": 0.457628,
+        "layout": "away",
+        "openSign": -1,
+        "breakSign": 1,
+        "resetSign": -1,
+        "receiverYs": [
+          29,
+          35
+        ],
+        "open": [
+          true,
+          false
+        ],
+        "gripRight": "force_backhand",
+        "gripLeft": "force_backhand"
+      },
+      {
+        "force": "force_backhand",
+        "attackSign": -1,
+        "throwerY": 5,
+        "markerDy": -0.457628,
+        "layout": "home",
+        "openSign": 1,
+        "breakSign": -1,
+        "resetSign": 1,
+        "receiverYs": [
+          2,
+          8
+        ],
+        "open": [
+          false,
+          true
+        ],
+        "gripRight": "force_backhand",
+        "gripLeft": "force_backhand"
+      },
+      {
+        "force": "force_backhand",
+        "attackSign": -1,
+        "throwerY": 32,
+        "markerDy": -0.457628,
+        "layout": "home",
+        "openSign": 1,
+        "breakSign": -1,
+        "resetSign": 1,
+        "receiverYs": [
+          29,
+          35
+        ],
+        "open": [
+          false,
+          true
+        ],
+        "gripRight": "force_backhand",
+        "gripLeft": "force_backhand"
+      },
+      {
+        "force": "force_middle",
+        "attackSign": 1,
+        "throwerY": 5,
+        "markerDy": -0.432769,
+        "layout": "home",
+        "openSign": 1,
+        "breakSign": -1,
+        "resetSign": 1,
+        "receiverYs": [
+          2,
+          8
+        ],
+        "open": [
+          false,
+          true
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_middle",
+        "attackSign": 1,
+        "throwerY": 32,
+        "markerDy": 0.432769,
+        "layout": "away",
+        "openSign": -1,
+        "breakSign": 1,
+        "resetSign": -1,
+        "receiverYs": [
+          29,
+          35
+        ],
+        "open": [
+          true,
+          false
+        ],
+        "gripRight": "force_backhand",
+        "gripLeft": "force_backhand"
+      },
+      {
+        "force": "force_middle",
+        "attackSign": -1,
+        "throwerY": 5,
+        "markerDy": -0.432769,
+        "layout": "home",
+        "openSign": 1,
+        "breakSign": -1,
+        "resetSign": 1,
+        "receiverYs": [
+          2,
+          8
+        ],
+        "open": [
+          false,
+          true
+        ],
+        "gripRight": "force_backhand",
+        "gripLeft": "force_backhand"
+      },
+      {
+        "force": "force_middle",
+        "attackSign": -1,
+        "throwerY": 32,
+        "markerDy": 0.432769,
+        "layout": "away",
+        "openSign": -1,
+        "breakSign": 1,
+        "resetSign": -1,
+        "receiverYs": [
+          29,
+          35
+        ],
+        "open": [
+          true,
+          false
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_sideline",
+        "attackSign": 1,
+        "throwerY": 5,
+        "markerDy": 0.457628,
+        "layout": "away",
+        "openSign": -1,
+        "breakSign": 1,
+        "resetSign": -1,
+        "receiverYs": [
+          2,
+          8
+        ],
+        "open": [
+          true,
+          false
+        ],
+        "gripRight": "force_backhand",
+        "gripLeft": "force_backhand"
+      },
+      {
+        "force": "force_sideline",
+        "attackSign": 1,
+        "throwerY": 32,
+        "markerDy": -0.457628,
+        "layout": "home",
+        "openSign": 1,
+        "breakSign": -1,
+        "resetSign": 1,
+        "receiverYs": [
+          29,
+          35
+        ],
+        "open": [
+          false,
+          true
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_sideline",
+        "attackSign": -1,
+        "throwerY": 5,
+        "markerDy": 0.457628,
+        "layout": "away",
+        "openSign": -1,
+        "breakSign": 1,
+        "resetSign": -1,
+        "receiverYs": [
+          2,
+          8
+        ],
+        "open": [
+          true,
+          false
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_sideline",
+        "attackSign": -1,
+        "throwerY": 32,
+        "markerDy": -0.457628,
+        "layout": "home",
+        "openSign": 1,
+        "breakSign": -1,
+        "resetSign": 1,
+        "receiverYs": [
+          29,
+          35
+        ],
+        "open": [
+          false,
+          true
+        ],
+        "gripRight": "force_backhand",
+        "gripLeft": "force_backhand"
+      },
+      {
+        "force": "force_straight",
+        "attackSign": 1,
+        "throwerY": 5,
+        "markerDy": 0,
+        "layout": "middle",
+        "openSign": 0,
+        "breakSign": 0,
+        "resetSign": 1,
+        "receiverYs": [
+          2,
+          8
+        ],
+        "open": [
+          true,
+          true
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_straight",
+        "attackSign": 1,
+        "throwerY": 32,
+        "markerDy": 0,
+        "layout": "middle",
+        "openSign": 0,
+        "breakSign": 0,
+        "resetSign": -1,
+        "receiverYs": [
+          29,
+          35
+        ],
+        "open": [
+          true,
+          true
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_straight",
+        "attackSign": -1,
+        "throwerY": 5,
+        "markerDy": 0,
+        "layout": "middle",
+        "openSign": 0,
+        "breakSign": 0,
+        "resetSign": 1,
+        "receiverYs": [
+          2,
+          8
+        ],
+        "open": [
+          true,
+          true
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      },
+      {
+        "force": "force_straight",
+        "attackSign": -1,
+        "throwerY": 32,
+        "markerDy": 0,
+        "layout": "middle",
+        "openSign": 0,
+        "breakSign": 0,
+        "resetSign": -1,
+        "receiverYs": [
+          29,
+          35
+        ],
+        "open": [
+          true,
+          true
+        ],
+        "gripRight": "force_forehand",
+        "gripLeft": "force_forehand"
+      }
+    ],
+    "helperFacesMarker": 0,
+    "pairedLocalLanesHaveSameLabel": 0
+  },
+  "observations": []
+}

@@ -3,6 +3,7 @@ import { boxScoreRows, createBoxScore } from './boxScore.js'
 import { createEvent, EVENT, resetEventIds } from './events.js'
 import { createRng } from './rng.js'
 import { simulatePoint, simulatePointFast } from './point.js'
+import { assertMatchCanContinue, PointSimulationLimitError } from './simulationFailure.js'
 import { attachTacticsToTeam } from './tacticsModifiers.js'
 import {
   applyFatigueAfterPoint,
@@ -47,6 +48,42 @@ import { medicalInjuryChanceMult, ensureTeamFacilities } from '../career/clubFac
 import { lineupForPoint } from './participants.js'
 import { stripInjuredPlayersFromTactics } from './lineManager.js'
 import { getPlayerFullName } from '../data/mockPlayers.js'
+
+// Successful matches intentionally update the caller's players. A failed match
+// must undo those shared changes from every point, while keeping its own debug
+// copy. Descriptors preserve existing nested object/array identities as well as
+// fields removed or added by normalization, fatigue and injuries.
+const inputSnapshots = new WeakMap()
+function captureMatchInputs(teams) {
+  const objects = new Map()
+  const visit = object => {
+    if (!object || typeof object !== 'object' || objects.has(object)) return
+    const properties = Object.getOwnPropertyDescriptors(object)
+    objects.set(object, properties)
+    for (const property of Object.values(properties)) visit(property.value)
+  }
+  for (const team of teams) {
+    visit(team.players)
+    visit(team.facilities)
+  }
+  return objects
+}
+
+function restoreFailedMatchInputs(session) {
+  const objects = inputSnapshots.get(session)
+  if (!objects) return
+  // Detach before restoring the caller's graph; failed diagnostics keep the
+  // stamina, injuries and player statistics that actually existed at failure.
+  session.home = structuredClone(session.home)
+  session.away = structuredClone(session.away)
+  for (const [object, properties] of objects) {
+    for (const key of Reflect.ownKeys(object)) {
+      if (!Object.hasOwn(properties, key)) delete object[key]
+    }
+    Object.defineProperties(object, properties)
+  }
+  inputSnapshots.delete(session)
+}
 
 function prepareTeams(homeTeam, awayTeam, homeTactics, awayTactics) {
   const home = attachTacticsToTeam(
@@ -104,6 +141,7 @@ function finalizeMatch(session) {
   )
   applyFormForMatchTeams(home, away, session.boxScore, homeScore, awayScore)
   applyLoyaltyForMatchTeams(home, away, homeScore, awayScore, session.boxScore)
+  inputSnapshots.delete(session)
   return session
 }
 
@@ -224,6 +262,7 @@ export function initMatchSession({
   collectFrames = true,
 }) {
   resetEventIds()
+  const inputsBeforeMatch = captureMatchInputs([homeTeam, awayTeam])
   const { home, away } = prepareTeams(homeTeam, awayTeam, homeTactics, awayTactics)
   for (const player of home.players) {
     ensurePlayerStats(player)
@@ -259,7 +298,7 @@ export function initMatchSession({
   const rng = rngOverride ?? createRng(seed)
   const wind = normalizeWind(windOverride ?? generateWind(rng))
 
-  return {
+  const session = {
     rng,
     home,
     away,
@@ -283,15 +322,19 @@ export function initMatchSession({
     lastPoint: null,
     winner: null,
   }
+  inputSnapshots.set(session, inputsBeforeMatch)
+  return session
 }
 
 export function applySessionTactics(session, { homeTactics, awayTactics } = {}) {
+  assertMatchCanContinue(session)
   if (homeTactics) session.home.tactics = homeTactics
   if (awayTactics) session.away.tactics = awayTactics
   return session
 }
 
 export function playNextPoint(session, tacticsUpdate = {}, options = {}) {
+  assertMatchCanContinue(session)
   if (session.status === 'finished') return session
 
   const { rotateAway, rotateHome, aiHome, aiAway } = resolveAiFlags(options)
@@ -313,33 +356,47 @@ export function playNextPoint(session, tacticsUpdate = {}, options = {}) {
   // point.js) — do trybu "symuluj resztę meczu" / lig, gdzie boisko się nie renderuje.
   // Świadomie NIE przekazuje `stamina` do simulatePointFast — applyFatigueAfterPoint
   // ma wbudowany lekki fallback, gdy sprintM per rzut nie zostało nabite.
-  const pointResult = options.fastMode
-    ? simulatePointFast({
-        homeTeam: session.home,
-        awayTeam: session.away,
-        pullTeam: session.pullTeam,
-        pointIndex: session.pointIndex,
-        homeScore: session.homeScore,
-        awayScore: session.awayScore,
-        rng: session.rng,
-        boxScore: session.boxScore,
-        matchStats: session.matchStats,
-        wind: session.wind,
-      })
-    : simulatePoint({
-        collectFrames: options.collectFrames ?? session.collectFrames ?? true,
-        homeTeam: session.home,
-        awayTeam: session.away,
-        pullTeam: session.pullTeam,
-        pointIndex: session.pointIndex,
-        homeScore: session.homeScore,
-        awayScore: session.awayScore,
-        rng: session.rng,
-        boxScore: session.boxScore,
-        matchStats: session.matchStats,
-        stamina: session.stamina,
-        wind: session.wind,
-      })
+  let pointResult
+  try {
+    pointResult = options.fastMode
+      ? simulatePointFast({
+          homeTeam: session.home,
+          awayTeam: session.away,
+          pullTeam: session.pullTeam,
+          pointIndex: session.pointIndex,
+          homeScore: session.homeScore,
+          awayScore: session.awayScore,
+          rng: session.rng,
+          boxScore: session.boxScore,
+          matchStats: session.matchStats,
+          wind: session.wind,
+        })
+      : simulatePoint({
+          collectFrames: options.collectFrames ?? session.collectFrames ?? true,
+          homeTeam: session.home,
+          awayTeam: session.away,
+          pullTeam: session.pullTeam,
+          pointIndex: session.pointIndex,
+          homeScore: session.homeScore,
+          awayScore: session.awayScore,
+          rng: session.rng,
+          boxScore: session.boxScore,
+          matchStats: session.matchStats,
+          stamina: session.stamina,
+          wind: session.wind,
+        })
+  } catch (error) {
+    if (error instanceof PointSimulationLimitError) {
+      // Keep the incomplete point only for diagnostics. Nothing after this block
+      // may award a point, roll injuries or publish a completed match result.
+      session.events.push(...error.partialEvents)
+      session.status = 'failed'
+      session.failure = error.failure
+      session.winner = null
+      restoreFailedMatchInputs(session)
+    }
+    throw error
+  }
 
   session.events.push(...pointResult.events)
 
@@ -463,6 +520,7 @@ export function sessionToResult(session) {
     wind: session.wind,
     config: { ...MATCH_CONFIG },
     status: session.status,
+    ...(session.status === 'failed' ? { failure: session.failure, diagnosticsOnly: true } : {}),
     lastPoint: session.lastPoint,
   }
 }
@@ -513,6 +571,7 @@ export function simulateMatch(options) {
 }
 
 export function runRemainingMatch(session, tacticsUpdate = {}, options = {}) {
+  assertMatchCanContinue(session)
   applySessionTactics(session, tacticsUpdate)
   const rotateHome = options.rotateHome ?? true
   const rotateAway = options.rotateAway ?? true

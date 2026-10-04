@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-03T04:04:36.339Z",
+  "reports": {
+    "all": {
+      "report": "C:\\Users\\marod\\ultimate-manager-ufa\\artifacts\\engine-audit\\tactics-balance-2026-10-03-v2\\REPORT.md",
+      "completeGames": 1090,
+      "completePairs": 544,
+      "matrixCells": 85,
+      "contrasts": 93,
+      "failures": 6
+    },
+    "core": {
+      "report": "C:\\Users\\marod\\ultimate-manager-ufa\\artifacts\\engine-audit\\tactics-balance-2026-10-03-v2\\analysis\\core\\REPORT.md",
+      "completeGames": 956,
+      "completePairs": 477,
+      "matrixCells": 45,
+      "contrasts": 75,
+      "failures": 4
+    },
+    "extensions": {
+      "report": "C:\\Users\\marod\\ultimate-manager-ufa\\artifacts\\engine-audit\\tactics-balance-2026-10-03-v2\\analysis\\extensions\\REPORT.md",
+      "completeGames": 134,
+      "completePairs": 67,
+      "matrixCells": 40,
+      "contrasts": 18,
+      "failures": 2
+    }
+  }
+}

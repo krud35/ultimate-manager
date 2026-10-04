@@ -6,6 +6,7 @@ import { buildScoutingAnalysis, saveScoutingAnalysis } from '../matchEngine/scou
 import { recordMatchDevelopment } from '../career/matchDevelopment.js'
 import { teamForMatchEngine } from '../data/ufaLeagueTeams.js'
 import { simulateMatch } from '../matchEngine/index.js'
+import { assertMatchCanContinue } from '../matchEngine/simulationFailure.js'
 import {
   buildMatchStatsFromEvents,
   compactMatchStats,
@@ -378,6 +379,7 @@ export function finishRound(league) {
 
 /** Buduje rekord wyniku z wyniku silnika (mecz gracza). */
 export function leagueRecordFromEngineResult(fixture, engineResult, playedByPlayer = true, collectAnalysis = true) {
+  assertMatchCanContinue(engineResult)
   const winner =
     engineResult.homeScore > engineResult.awayScore
       ? fixture.homeTeamId

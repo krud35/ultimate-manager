@@ -38,6 +38,7 @@ import {
   optionPassesStallPolicy,
   evaluateThrowTraffic,
   evaluateThrowOptionScore,
+  applyRiskInstructionScore,
   acceptanceThresholdForStall,
 } from './throwerDecision.js'
 import {
@@ -915,7 +916,9 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     const tech = resolveThrowTechniqueForPlayer(thrower, {
       forceSide,
       isOpenSide: situation.isOpenSide,
-      throwerY: throwerPos?.y,
+      throwerY: throwerPos?.y ?? disc?.y,
+      attackSign: attackDirectionX(possessionTeam),
+      throwDy: catchPt.y - (throwerPos?.y ?? disc?.y ?? catchPt.y),
     })
     if (tech.technique === 'forehand' && situation.isOpenSide) score += 6
     if (tech.accuracyMult < 1) score -= (1 - tech.accuracyMult) * 40
@@ -978,24 +981,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     }
 
     // Safe vs creative: pewne okna vs ryzyko otwierające boisko.
-    {
-      const sep = situation.separation ?? 0
-      const window = situation.throwWindowScore ?? 0
-      const safe = throwerMods.safeOptionBias ?? 0
-      const creative = throwerMods.creativeRiskBias ?? 0
-      if (safe > 0) {
-        if (sep < 2.8) score -= safe * 28
-        else if (sep >= 4.5) score += safe * 12
-        if (window < 0.35) score -= safe * 18
-        if (isDump) score += safe * 10
-      }
-      if (creative > 0) {
-        if (!situation.isOpenSide) score += creative * 16
-        if (throwType === THROW_TYPE.OVER_THE_TOP) score += creative * 22
-        if (sep >= 2.2 && sep < 4.2) score += creative * 14
-        if (window >= 0.25 && window < 0.55) score += creative * 10
-      }
-    }
+    score = applyRiskInstructionScore(score, situation, throwType, isDump, throwerMods)
 
     // Preferuj czystą przestrzeń / unikaj grupy — lekka kara, stall 1–3 ostrzejsza.
     {
@@ -1149,7 +1135,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
   const considered =
     options.length > optionLimit
       ? [...options].sort((a, b) => b.salience - a.salience).slice(0, optionLimit)
-      : options
+      : [...options]
 
   if (globalThis.__ACCDIAG) {
     const D = globalThis.__ACCDIAG
@@ -1175,10 +1161,12 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
   }
   // Validate whichever option would win, then rerank after its geometry penalty.
   // The bounded loop can inspect every candidate, including alternatives and resets.
+  const preferForward = requireForwardPass && hardStallCount < 8
+  let resetFallback = null
   while (considered.length) {
     considered.sort((a, b) => b.score - a.score)
     const best = considered[0]
-    if (!Number.isFinite(best.score)) return finish(null)
+    if (!Number.isFinite(best.score)) return finish(resetFallback)
     if (!best.laneRead) {
       // Even the most favourable shape cannot rescue a look below this bound.
       const maxShapeGain = LANE_READ_CALIBRATION.weight >= 0
@@ -1190,7 +1178,7 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
       if (!best.laneRead) considered.shift()
       continue
     }
-    const dump = considered.find(o => o.isDump && Number.isFinite(o.score))
+    const dump = considered.find(o => o.isDump && Number.isFinite(o.score)) ?? resetFallback
     best.resetAvailable = !!dump
     best.resetScore = dump?.score ?? null
     best.acceptThreshold = threshold
@@ -1200,10 +1188,18 @@ export function scanThrowOptions(thrower, offenseAgents, defenseAgents, ctx) {
     const accepted = best.score >= contThreshold || (flowLook && best.score >= contThreshold - 10)
       || (resetTier === 'high' && best.isDump && best.score >= contThreshold - 15)
       || (stallCount >= 7 && best.forwardProgress >= 1 && best.score >= contThreshold - 22)
-    if (accepted) return finish(best)
+    if (accepted) {
+      if (!preferForward) return finish(best)
+      // After a stalled sequence, an accepted, reachable advance takes priority
+      // within the same perceived set. Keep the reset as a safety outlet if no
+      // such look survives validation; virtual urgency cannot force an
+      // unreachable forward option while the real stall still leaves time.
+      if (best.forwardProgress >= 2.5 && best.plannedArrival?.reachable) return finish(best)
+      if (best.isDump && (!resetFallback || best.score > resetFallback.score)) resetFallback = best
+    }
     considered.shift()
   }
-  return finish(null)
+  return finish(resetFallback)
 }
 
 export function separationFromSituation(situation, rng, stallCount = 1) {

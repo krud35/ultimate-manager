@@ -57,6 +57,7 @@ import DressingRoomView from './match/DressingRoomView'
 import RoundResultsView from './match/RoundResultsView'
 import { useUiLang } from '../ui/UiLangContext'
 import { matchStrings } from '../ui/strings/match'
+import { PointSimulationLimitError } from '../matchEngine/simulationFailure.js'
 import { pickCopy, UI_LANG } from '../ui/locale'
 
 function eventLabel(event, homeName, awayName, t, lang = UI_LANG.PL) {
@@ -197,6 +198,7 @@ export default function MatchView({
   const [verbose, setVerbose] = useState(false)
   const [tick, setTick] = useState(0)
   const sessionRef = useRef(null)
+  const [simulationFailure, setSimulationFailure] = useState(null)
   const [instantResult, setInstantResult] = useState(null)
   const [reviewPointIndex, setReviewPointIndex] = useState(null)
   const [playbackStep, setPlaybackStep] = useState(0)
@@ -350,7 +352,8 @@ export default function MatchView({
   )
 
   const session = sessionRef.current
-  const liveResult = session ? sessionToResult(session) : null
+  const matchFailed = !!simulationFailure || session?.status === 'failed'
+  const liveResult = session && !matchFailed ? sessionToResult(session) : null
   const result = instantResult ?? liveResult
 
   const displayEvents = useMemo(
@@ -361,7 +364,7 @@ export default function MatchView({
   const bump = () => setTick((t) => t + 1)
 
   function publishStamina(source) {
-    onMatchStaminaChange?.(source?.stamina ?? null)
+    onMatchStaminaChange?.(source?.status === 'failed' ? null : source?.stamina ?? null)
   }
 
   const matchOptions = () => ({
@@ -392,6 +395,7 @@ export default function MatchView({
   }
 
   function startInteractiveMatch() {
+    setSimulationFailure(null)
     setInstantResult(null)
     setReviewPointIndex(null)
     setPointPlaybackComplete(true)
@@ -461,7 +465,7 @@ export default function MatchView({
   }
 
   function handlePlayNextPoint() {
-    if (!sessionRef.current || sessionRef.current.status === 'finished') return
+    if (!sessionRef.current || sessionRef.current.status !== 'break') return
     const lineupCheck = validatePlayerLineup()
     if (!lineupCheck.ok) return
     lastRenderedPositionsRef.current = null
@@ -472,6 +476,7 @@ export default function MatchView({
       playNextPoint(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions())
     } catch (err) {
       console.error('[MatchView] playNextPoint failed:', err)
+      if (handleSimulationFailure(err)) return
       setPointPlaybackComplete(true)
       if (streamlined) { setFlowPaused(true); setIntervention({ key: 'error', pl: 'Nie udało się rozegrać punktu. Spróbuj ponownie.', en: 'Could not play the point. Try again.' }) }
       return
@@ -489,7 +494,7 @@ export default function MatchView({
 
   /** Punkt po punkcie: pełny model, bez zapisywania powtórki. */
   function handleSimulateNextPoint() {
-    if (!sessionRef.current || sessionRef.current.status === 'finished') return
+    if (!sessionRef.current || sessionRef.current.status !== 'break') return
     const lineupCheck = validatePlayerLineup()
     if (!lineupCheck.ok) return
     fastForwardSkipRef.current = true
@@ -501,6 +506,7 @@ export default function MatchView({
       playNextPoint(sessionRef.current, tacticsUpdateForPoint(), pointAiOptions({ collectFrames: false }))
     } catch (err) {
       console.error('[MatchView] simulate next point failed:', err)
+      if (handleSimulationFailure(err)) return
       fastForwardSkipRef.current = false
       return
     }
@@ -527,6 +533,7 @@ export default function MatchView({
   }
 
   function resumeFlow() {
+    if (sessionRef.current?.status === 'failed') return
     if (intervention) acknowledgedInterventions.current.add(intervention.key)
     setIntervention(null)
     setFlowPaused(false)
@@ -561,11 +568,18 @@ export default function MatchView({
   }
 
   function handleSimulateAll() {
-    const finished = simulateMatch({
-      ...matchOptions(),
-      ...pointAiOptions({ rotateHome: true, rotateAway: true }),
-      collectFrames: false,
-    })
+    let finished
+    try {
+      finished = simulateMatch({
+        ...matchOptions(),
+        ...pointAiOptions({ rotateHome: true, rotateAway: true }),
+        collectFrames: false,
+      })
+    } catch (error) {
+      console.error('[MatchView] simulate match failed:', error)
+      handleSimulationFailure(error)
+      return
+    }
     setInstantResult(finished)
     publishStamina(finished)
     sessionRef.current = null
@@ -614,6 +628,21 @@ export default function MatchView({
     }
   }
 
+  function handleSimulationFailure(error) {
+    if (!(error instanceof PointSimulationLimitError)) return false
+    window.clearTimeout(flowTimer.current)
+    stopAutoSim()
+    setSimulationFailure(error.failure)
+    setFlowPaused(true)
+    setIntervention(null)
+    setTacticsModalOpen(false)
+    setFieldPlaying(false)
+    setPointPlaybackComplete(true)
+    onMatchStaminaChange?.(null)
+    bump()
+    return true
+  }
+
   /** Siódemka z danego punktu jako gotowa lista zawodników — rozwiązywana ze składu
    *  SESJI w chwili liczenia, żeby ekran nie musiał dopasowywać identyfikatorów. */
   function sevenFrom(team, ids) {
@@ -635,7 +664,7 @@ export default function MatchView({
   function autoSimProduce() {
     if (!autoSimRef.current || autoSimComputingRef.current) return
     const session = sessionRef.current
-    if (!session || session.status === 'finished') return
+    if (!session || session.status !== 'break') return
     if (autoSimQueueRef.current.length >= 3) return
     autoSimComputingRef.current = true
     try {
@@ -651,6 +680,7 @@ export default function MatchView({
       console.error('[MatchView] auto sim step failed:', err)
       autoSimComputingRef.current = false
       stopAutoSim()
+      handleSimulationFailure(err)
       return
     }
     const s2 = sessionRef.current
@@ -658,8 +688,7 @@ export default function MatchView({
     // Siódemki bierzemy z tego samego źródła co normalna gra — ze zdarzenia point_start.
     const pointEvents = slicePointEvents(s2.events ?? [], pointIndex)
     const lineups = fieldLineupIdsFromPointEvents(pointEvents)
-    // Zdarzenie SCORE niesie throwerId (asysta) i receiverId (zdobywca). Punkt przyznany
-    // z limitu rzutów żadnego z nich nie ma — wtedy po prostu nikogo nie oznaczamy.
+    // Zdarzenie SCORE niesie throwerId (asysta) i receiverId (zdobywca).
     const scoreEv = pointEvents.find((e) => e.type === EVENT.SCORE)
     autoSimQueueRef.current.push({
       home: s2.homeScore ?? 0,
@@ -728,7 +757,7 @@ export default function MatchView({
   /** Symuluje pozostałe punkty PEŁNYM silnikiem, punkt po punkcie, jako ekran ładowania
    *  wyniku końcowego — z podglądem postępu, bez pytania gracza o taktykę. */
   function handleSimulateToEnd() {
-    if (!sessionRef.current || sessionRef.current.status === 'finished') return
+    if (!sessionRef.current || sessionRef.current.status !== 'break') return
     if (autoSimRef.current) return
     if (streamlined) { setFlowPaused(true); setIntervention(null) }
     const lineupCheck = validatePlayerLineup()
@@ -778,7 +807,7 @@ export default function MatchView({
   const beforeFirstPoint =
     session && session.status === 'break' && session.homeScore === 0 && session.awayScore === 0
   const canPlayPoint = session && session.status === 'break'
-  const matchLive = session && session.status !== 'finished'
+  const matchLive = session && session.status === 'break'
   const matchFinished =
     result?.status === 'finished' || session?.status === 'finished'
 
@@ -794,6 +823,14 @@ export default function MatchView({
   }, [stage, matchFinished, streamlined, pointPlaybackComplete, fieldPlaying, autoSimProgress])
 
   function resetMatch() {
+    window.clearTimeout(flowTimer.current)
+    stopAutoSim()
+    setSimulationFailure(null)
+    setFieldPlaying(false)
+    setHoldPose(null)
+    playbackPointRef.current = null
+    lastRenderedPositionsRef.current = null
+    spectatorAdvancedForRef.current = {}
     setFlowPaused(false)
     setIntervention(null)
     setReviewEvidence(false)
@@ -818,6 +855,16 @@ export default function MatchView({
     bump()
   }
 
+  function restartFailedMatch() {
+    const options = matchOptions()
+    if (!spectatorMode && homeTactics) options[`${playerSide}Tactics`] = cloneTacticsForMatch(homeTactics)
+    resetMatch()
+    sessionRef.current = initMatchSession(options)
+    if (spectatorMode) setStage('live')
+    publishStamina(sessionRef.current)
+    bump()
+  }
+
   function handleReturnToLeague() {
     setReturnPulse(true)
     window.setTimeout(() => {
@@ -828,6 +875,7 @@ export default function MatchView({
 
   useEffect(() => {
     leagueSubmittedRef.current = false
+    setSimulationFailure(null)
     acknowledgedInterventions.current = new Set()
     setFlowPaused(false)
     setIntervention(null)
@@ -1184,9 +1232,9 @@ export default function MatchView({
     pointStatsEvents.some((e) => e.type === EVENT.POINT_END || e.type === EVENT.SCORE)
 
   useEffect(() => {
-    if (!playbackStaminaMaps) return
+    if (matchFailed || !playbackStaminaMaps) return
     onMatchStaminaChange?.(playbackStaminaMaps)
-  }, [playbackStaminaMaps, onMatchStaminaChange])
+  }, [matchFailed, playbackStaminaMaps, onMatchStaminaChange])
 
   const playerStaminaMap =
     playerSide === 'home' ? playbackStaminaMaps?.home : playbackStaminaMaps?.away
@@ -1324,6 +1372,18 @@ export default function MatchView({
       : playerFinalScore < opponentFinalScore
         ? 'loss'
         : 'draw'
+
+  if (matchFailed) return (
+    <section className="um-section space-y-4" role="alert">
+      <h2 className="text-xl font-semibold">{lang === 'en' ? 'Match interrupted' : 'Mecz przerwany'}</h2>
+      <p>{lang === 'en'
+        ? 'The simulation could not finish a point. No result was saved. Restart the whole match to play again.'
+        : 'Symulacja nie zdołała zakończyć punktu. Wynik nie został zapisany. Aby zagrać ponownie, rozpocznij cały mecz od nowa.'}</p>
+      <button type="button" className="um-button um-button--primary" onClick={restartFailedMatch}>
+        {lang === 'en' ? 'Restart match' : 'Rozpocznij mecz od nowa'}
+      </button>
+    </section>
+  )
 
   return (
     <div className={`space-y-6 ${returnPulse ? 'opacity-0 transition-opacity duration-300' : ''}`}>

@@ -1,0 +1,90 @@
+{
+  "at": "2026-10-03T17:46:46.862Z",
+  "results": [
+    {
+      "name": "test-tactics-force-geometry.mjs",
+      "exitCode": 0,
+      "wallMs": 1433
+    },
+    {
+      "name": "test-tactics-poach-regression.mjs",
+      "exitCode": 0,
+      "wallMs": 1684
+    },
+    {
+      "name": "test-tactics-risk-window.mjs",
+      "exitCode": 0,
+      "wallMs": 1852
+    },
+    {
+      "name": "test-tactics-catch-continuity.mjs",
+      "exitCode": 0,
+      "wallMs": 29350
+    },
+    {
+      "name": "test-cutter-boundary-continuity.mjs",
+      "exitCode": 0,
+      "wallMs": 536
+    },
+    {
+      "name": "test-reset-decision-pressure.mjs",
+      "exitCode": 0,
+      "wallMs": 1404
+    },
+    {
+      "name": "test-tactical-behavior-fixes.mjs",
+      "exitCode": 0,
+      "wallMs": 4511
+    },
+    {
+      "name": "test-cutter-offer-continuity.mjs",
+      "exitCode": 0,
+      "wallMs": 567
+    },
+    {
+      "name": "test-pull-and-active-cutters.mjs",
+      "exitCode": 0,
+      "wallMs": 2970
+    },
+    {
+      "name": "check-reset-cuts.mjs",
+      "exitCode": 0,
+      "wallMs": 768
+    },
+    {
+      "name": "check-route-planning.mjs",
+      "exitCode": 0,
+      "wallMs": 747
+    },
+    {
+      "name": "test-new-playing-styles.mjs",
+      "exitCode": 0,
+      "wallMs": 731
+    },
+    {
+      "name": "test-style-specialties.mjs",
+      "exitCode": 0,
+      "wallMs": 788
+    },
+    {
+      "name": "test-full-no-replay.mjs",
+      "exitCode": 0,
+      "wallMs": 64376
+    },
+    {
+      "name": "test-tactics-action-limit.mjs",
+      "exitCode": 0,
+      "wallMs": 7878
+    },
+    {
+      "name": "test-tactics-forward-priority.mjs",
+      "exitCode": 0,
+      "wallMs": 1109
+    },
+    {
+      "name": "test-hex-structural-continuity.mjs",
+      "exitCode": 0,
+      "wallMs": 1220
+    }
+  ]
+}
